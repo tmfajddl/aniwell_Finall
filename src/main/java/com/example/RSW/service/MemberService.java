@@ -59,6 +59,7 @@ public class MemberService {
 
 		existsMember = getMemberByNameAndEmail(name, email);
 
+		
 		if (existsMember != null) {
 			return ResultData.from("F-8", Ut.f("이미 사용중인 이름(%s)과 이메일(%s)입니다", name, email));
 		}
