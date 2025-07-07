@@ -79,6 +79,7 @@ public class MemberService {
 	}
 
 	public Member getMemberByLoginId(String loginId) {
+		
 		return memberRepository.getMemberByLoginId(loginId);
 	}
 
