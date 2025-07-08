@@ -2,9 +2,9 @@ package com.example.RSW.service;
 
 import com.example.RSW.repository.PetVaccinationRepository;
 import com.example.RSW.vo.PetVaccination;
+import com.example.RSW.vo.ResultData;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
 import java.util.List;
 
 @Service
@@ -19,6 +19,25 @@ public class PetVaccinationService {
 
     public List<PetVaccination> getVaccinationsByPetId(int petId) {
         return petVaccinationRepository.getVaccinationByPetId(petId);
+
     }
 
+    public ResultData deletePetVaccination(int id) {
+        petVaccinationRepository.deletePetVaccination(id);
+        return ResultData.from("S-1", "접종 정보 삭제 완료");
+    }
+
+    public ResultData insertPetVaccination(int petId, String vaccineName, String injectionDate) {
+        petVaccinationRepository.insertVaccination(petId, vaccineName, injectionDate);
+        return ResultData.from("S-1", "접종 등록 완료");
+    }
+
+    public ResultData updatePetVaccination(int vaccinationId, String vaccineName, String injectionDate) {
+        petVaccinationRepository.updatePetVaccination(vaccinationId, vaccineName, injectionDate);
+        return ResultData.from("S-1", "접종 정보 수정 완료");
+    }
+
+    public PetVaccination getVaccinationsById(int vaccinationId) {
+        return petVaccinationRepository.getVaccinationById(vaccinationId);
+    }
 }

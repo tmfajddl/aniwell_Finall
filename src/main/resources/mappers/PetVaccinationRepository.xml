@@ -5,18 +5,51 @@
 
 <mapper namespace="com.example.RSW.repository.PetVaccinationRepository">
 
-    <!-- 1. 반려동물 ID로 접종 이력 조회 -->
-    <select id="getVaccinationByPetId" resultType="com.example.RSW.vo.PetVaccination">
+    <!-- 펫 ID로 접종 이력 조회 -->
+    <select id="getVaccinationByPetId" parameterType="int" resultType="com.example.RSW.vo.PetVaccination">
         SELECT
-            pv.*,
-            p.name AS petName,
-            p.species,
-            p.breed
+            pv.id,
+            pv.petId,
+            pv.vaccineName,
+            pv.injectionDate,
+            pv.nextDueDate,
+            pv.vetName,
+            pv.notes
         FROM pet_vaccination pv
-                 JOIN pet p ON pv.petId = p.id
         WHERE pv.petId = #{petId}
         ORDER BY pv.injectionDate DESC
     </select>
 
+    <!-- 백신 삭제 -->
+    <delete id="deletePetVaccination" parameterType="int">
+        DELETE FROM pet_vaccination WHERE id = #{id}
+    </delete>
+
+    <!-- 백신 등록 -->
+    <insert id="insertVaccination" parameterType="map">
+        INSERT INTO pet_vaccination (petId, vaccineName, injectionDate)
+        VALUES (#{petId}, #{vaccineName}, #{injectionDate})
+    </insert>
+
+    <!-- 백신 수정 -->
+    <update id="updatePetVaccination" parameterType="map">
+        UPDATE pet_vaccination
+        SET vaccineName = #{vaccineName}, injectionDate = #{injectionDate}
+        WHERE id = #{vaccinationId}
+    </update>
+
+    <!-- 백신 ID로 조회 -->
+    <select id="getVaccinationById" parameterType="int" resultType="com.example.RSW.vo.PetVaccination">
+        SELECT
+            pv.id,
+            pv.petId,
+            pv.vaccineName,
+            pv.injectionDate,
+            pv.nextDueDate,
+            pv.vetName,
+            pv.notes
+        FROM pet_vaccination pv
+        WHERE pv.id = #{vaccinationId}
+    </select>
 
 </mapper>
