@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.RSW.repository.PetVaccinationRepository">
+
+    <!-- 1. 반려동물 ID로 접종 이력 조회 -->
+    <select id="getVaccinationByPetId" resultType="com.example.RSW.vo.PetVaccination">
+        SELECT
+            pv.*,
+            p.name AS petName,
+            p.species,
+            p.breed
+        FROM pet_vaccination pv
+                 JOIN pet p ON pv.petId = p.id
+        WHERE pv.petId = #{petId}
+        ORDER BY pv.injectionDate DESC
+    </select>
+
+
+</mapper>

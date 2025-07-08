@@ -1,4 +1,4 @@
-DROP DATABASE IF EXISTS `aniwell`;
+DATABASE IF EXISTS `aniwell`;
 CREATE DATABASE `aniwell`;
 USE `aniwell`;
 
