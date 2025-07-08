@@ -32,7 +32,15 @@
         const calendar = new FullCalendar.Calendar(calendarEl, {
             initialView: 'dayGridMonth',
             locale: 'ko',
-            events: vaccinationEvents
+            events: vaccinationEvents,
+            eventClick: function(info) {
+                const eventId = info.event.id;
+                if (eventId) {
+                    window.location.href = '/usr/pet/vaccination/detail?vaccinationId='+eventId;
+                } else {
+                    alert("❌ 백신 ID를 찾을 수 없습니다.");
+                }
+            }
         });
 
         calendar.render();

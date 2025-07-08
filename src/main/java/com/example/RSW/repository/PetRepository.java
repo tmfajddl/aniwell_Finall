@@ -7,5 +7,17 @@ import java.util.List;
 
 @Mapper
 public interface PetRepository {
-    List<Pet> getPetsByMemberId(int memberId);
+    List<Pet> getPetsByMemberId(int memberId);  // 회원 ID로 펫 목록 조회
+
+    void deletePet(int id);
+
+    void insertPet(int memberId, String name, String species, String breed, String gender, String birthDate, double weight);
+
+    int getLastInsertId();
+
+    void updatePetWithoutPhoto(int PetId, String name, String species, String breed, String gender, String birthDate, double weight);
+
+    void updatePet(int petId, String name, String species, String breed, String gender, String birthDate, double weight, String photo);
+
+    Pet getPetsById(int petId);
 }

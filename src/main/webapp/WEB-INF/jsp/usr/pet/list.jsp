@@ -17,6 +17,8 @@
         <th>생일</th>
         <th>몸무게</th>
         <th>접종 기록</th>
+        <th>수정</th>
+        <th>삭제</th>
     </tr>
     </thead>
     <tbody>
@@ -30,6 +32,12 @@
             <td>${pet.weight} kg</td>
             <td>
                 <a href="/usr/pet/vaccination?petId=${pet.id}">📅 접종 보기</a>
+            </td>
+            <td>
+                <a href="/usr/pet/modify?petId=${pet.id}">✏️ 수정</a>
+            </td>
+            <td>
+                <a href="/usr/pet/delete?petId=${pet.id}" onclick="return confirm('정말 삭제하시겠습니까?');">❌ 삭제</a>
             </td>
         </tr>
     </c:forEach>
