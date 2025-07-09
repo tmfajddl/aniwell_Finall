@@ -14,7 +14,6 @@ import com.example.RSW.interceptor.BeforeActionInterceptor;
 import com.example.RSW.util.Ut;
 import com.example.RSW.vo.Article;
 import com.example.RSW.vo.Board;
-import com.example.RSW.vo.Qna;
 import com.example.RSW.vo.Reply;
 import com.example.RSW.vo.ResultData;
 import com.example.RSW.vo.Rq;
@@ -41,8 +40,6 @@ public class UsrArticleController {
     @Autowired
     private ReplyService replyService;
 
-    @Autowired
-    private QnaService qnaService;
 
     UsrArticleController(BeforeActionInterceptor beforeActionInterceptor) {
         this.beforeActionInterceptor = beforeActionInterceptor;
@@ -119,9 +116,8 @@ public class UsrArticleController {
     }
 
     @RequestMapping("/usr/article/detail")
-    public String showDetail(@RequestParam("id") int id, @RequestParam("boardId") int boardId, Model model) {
-
-        int loginedMemberId = rq.getLoginedMemberId();
+    public String showDetail(HttpServletRequest req, Model model, int id) {
+        Rq rq = (Rq) req.getAttribute("rq");
 
         Article article = articleService.getForPrintArticle(rq.getLoginedMemberId(), id);
 
@@ -131,21 +127,19 @@ public class UsrArticleController {
             model.addAttribute("userCanMakeReaction", usersReactionRd.isSuccess());
         }
 
-//		댓글
-        List<Reply> replies = replyService.getForPrintReplies("article", id);
+        List<Reply> replies = replyService.getForPrintReplies(rq.getLoginedMemberId(), "article", id);
 
         int repliesCount = replies.size();
 
         model.addAttribute("replies", replies);
         model.addAttribute("repliesCount", repliesCount);
 
+        model.addAttribute("article", article);
         model.addAttribute("usersReaction", usersReactionRd.getData1());
         model.addAttribute("isAlreadyAddGoodRp",
                 reactionPointService.isAlreadyAddGoodRp(rq.getLoginedMemberId(), id, "article"));
         model.addAttribute("isAlreadyAddBadRp",
                 reactionPointService.isAlreadyAddBadRp(rq.getLoginedMemberId(), id, "article"));
-
-        model.addAttribute("article", article);
 
         return "usr/article/detail";
     }
