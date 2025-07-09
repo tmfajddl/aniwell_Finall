@@ -78,8 +78,11 @@ public class QnaService {
     }
 
     public void delete(int id) {
-        qnaRepository.delete(id);
+        qnaRepository.markInactive(id);
     }
 
+    public void modify(int id, String title, String body) {
+        qnaRepository.modify(id, title, body);
+    }
 
 }

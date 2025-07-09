@@ -18,6 +18,7 @@
         <result property="regDate" column="regDate"/>
         <result property="updateDate" column="updateDate"/>
         <result property="isActive" column="isActive"/>
+        <result property="isFaq" column="isFaq"/>
     </resultMap>
 
     <insert id="saveUserQna" parameterType="com.example.RSW.vo.Qna">
@@ -51,14 +52,14 @@
 
 
     <update id="markQnaAsDeleted" parameterType="int">
-        UPDATE qna
+        UPDATE Qna
         SET isActive   = FALSE,
             updateDate = NOW()
         WHERE id = #{id}
     </update>
 
     <update id="updateQna" parameterType="map">
-        UPDATE qna
+        UPDATE Qna
         SET title      = #{title},
             body       = #{body},
             isSecret   = #{isSecret},
@@ -67,7 +68,7 @@
     </update>
 
     <update id="updateIsAnswered" parameterType="map">
-        UPDATE qna
+        UPDATE Qna
         SET isAnswered = #{isAnswered},
             updateDate = NOW()
         WHERE id = #{id}
@@ -76,29 +77,44 @@
     <select id="findAll" resultMap="qnaResultMap">
         SELECT q.*,
                m.name AS memberName,
+               q.isFaq,
                EXISTS(SELECT 1 FROM vet_answer va WHERE va.qna_id = q.id) AS hasAnswer
-        FROM qna q
+        FROM Qna q
                  JOIN member m ON q.memberId = m.id
         ORDER BY q.regDate DESC
+
     </select>
+
 
     <select id="findById" parameterType="int" resultMap="qnaResultMap">
         SELECT q.*, m.name AS memberName
-        FROM qna q
+        FROM Qna q
                  JOIN member m ON q.memberId = m.id
         WHERE q.id = #{id}
     </select>
 
     <update id="update">
-        UPDATE qna
+        UPDATE Qna
         SET title = #{title},
             body = #{body}
         WHERE id = #{id}
     </update>
 
-    <delete id="delete" parameterType="int">
-        DELETE FROM qna WHERE id = #{id}
-    </delete>
+    <update id="markInactive" parameterType="int">
+        UPDATE Qna
+        SET isActive = 0
+        WHERE id = #{id}
+    </update>
+
+
+    <update id="modify">
+        UPDATE Qna
+        SET title = #{title},
+            body = #{body},
+            updateDate = NOW()
+        WHERE id = #{id}
+    </update>
+
 
 
 </mapper>

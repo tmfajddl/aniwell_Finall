@@ -24,4 +24,6 @@ public class Qna {
     private String memberName;
 
     private boolean hasAnswer;
+
+    private int isFaq;
 }
