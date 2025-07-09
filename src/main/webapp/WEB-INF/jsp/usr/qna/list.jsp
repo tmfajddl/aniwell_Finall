@@ -50,9 +50,18 @@
                     <a href="/usr/qna/detail?id=${qna.id}" class="text-blue-700 hover:underline">
                             ${qna.title}
                     </a>
+                    <c:choose>
+                        <c:when test="${qna.answered}">
+                            <span class="ml-2 text-green-600 font-semibold">[답변 완료]</span>
+                        </c:when>
+                        <c:otherwise>
+                            <span class="ml-2 text-yellow-500 font-semibold">[답변 대기]</span>
+                        </c:otherwise>
+                    </c:choose>
                 </li>
             </c:forEach>
         </ul>
+
     </div>
 
 </div>

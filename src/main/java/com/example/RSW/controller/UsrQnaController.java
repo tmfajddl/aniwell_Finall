@@ -11,6 +11,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.util.List;
 
 @Controller
@@ -46,6 +47,7 @@ public class UsrQnaController {
     public String showQnaDetail(Model model, int id) {
         Qna qna = qnaService.getQnaById(id);
         model.addAttribute("qna", qna);
+        model.addAttribute("rq", rq);
         return "usr/qna/detail";
     }
 
@@ -77,6 +79,64 @@ public class UsrQnaController {
         qnaService.writeUserQna(loginedMemberId, title, body, isSecret);
 
         return ResultData.from("S-1", "질문이 성공적으로 등록되었습니다.");
+    }
+
+    @RequestMapping("/usr/qna/doDelete")
+    @ResponseBody
+    public void doDelete(@RequestParam int id) throws IOException {
+        Qna qna = qnaService.getQnaById(id);
+
+        if (qna == null || !qna.isActive()) {
+            rq.printHistoryBack("존재하지 않는 질문입니다.");
+            return;
+        }
+
+        if (qna.getMemberId() != rq.getLoginedMemberId()) {
+            rq.printHistoryBack("권한이 없습니다.");
+            return;
+        }
+
+        qnaService.deleteQna(id);
+        rq.printReplace("S-1", "질문이 삭제되었습니다.", "/usr/qna/list");
+    }
+
+    @RequestMapping("/usr/qna/modify")
+    public String showModifyForm(@RequestParam int id, Model model) {
+        Qna qna = qnaService.getQnaById(id);
+
+        if (qna == null || !qna.isActive()) {
+            return rq.historyBackOnView("존재하지 않는 질문입니다.");
+        }
+
+        if (qna.getMemberId() != rq.getLoginedMemberId()) {
+            return rq.historyBackOnView("권한이 없습니다.");
+        }
+
+        model.addAttribute("qna", qna);
+        return "usr/qna/modify"; // 이게 바로 modify.jsp와 연결됨
+    }
+
+    @RequestMapping(value = "/usr/qna/doModify", method = RequestMethod.POST)
+    @ResponseBody
+    public String doModify(@RequestParam int id,
+                           @RequestParam String title,
+                           @RequestParam String body,
+                           @RequestParam(defaultValue = "false") boolean isSecret) throws IOException {
+
+        Qna qna = qnaService.getQnaById(id);
+
+        if (qna == null || !qna.isActive()) {
+            return rq.historyBackOnView("존재하지 않는 질문입니다.");
+        }
+
+        if (qna.getMemberId() != rq.getLoginedMemberId()) {
+            return rq.historyBackOnView("권한이 없습니다.");
+        }
+
+        qnaService.modifyQna(id, title, body, isSecret);
+
+        rq.printReplace("S-1", "질문이 수정되었습니다.", "/usr/qna/detail?id=" + id);
+        return null;
     }
 
 

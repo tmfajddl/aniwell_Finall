@@ -15,14 +15,17 @@
     <select id="getFaqList" resultType="com.example.RSW.vo.Qna">
         SELECT *
         FROM Qna
-        WHERE isFromUser = FALSE AND isActive = TRUE
+        WHERE isFromUser = FALSE
+          AND isActive = TRUE
         ORDER BY orderNo ASC
     </select>
 
     <select id="getUserQnaByMemberId" resultType="com.example.RSW.vo.Qna">
         SELECT *
         FROM Qna
-        WHERE isFromUser = TRUE AND isActive = TRUE AND memberId = #{memberId}
+        WHERE isFromUser = TRUE
+          AND isActive = TRUE
+          AND memberId = #{memberId}
         ORDER BY regDate DESC
     </select>
 
@@ -31,5 +34,22 @@
         FROM Qna
         WHERE id = #{id}
     </select>
+
+    <update id="markQnaAsDeleted" parameterType="int">
+        UPDATE qna
+        SET isActive   = FALSE,
+            updateDate = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateQna" parameterType="map">
+        UPDATE qna
+        SET title      = #{title},
+            body       = #{body},
+            isSecret   = #{isSecret},
+            updateDate = NOW()
+        WHERE id = #{id}
+    </update>
+
 
 </mapper>

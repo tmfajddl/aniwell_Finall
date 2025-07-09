@@ -38,4 +38,11 @@ public class QnaService {
         return qnaRepository.getUserQnaByMemberId(memberId);
     }
 
+    public void deleteQna(int id) {
+        qnaRepository.markQnaAsDeleted(id);
+    }
+
+    public void modifyQna(int id, String title, String body, boolean isSecret) {
+        qnaRepository.updateQna(id, title, body, isSecret);
+    }
 }
