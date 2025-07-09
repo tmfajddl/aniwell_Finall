@@ -109,7 +109,7 @@ CREATE TABLE walk_crew (
   id INT(10) UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
   title VARCHAR(100) NOT NULL,
   descriptoin TEXT NOT NULL,
-  AREA VARCHAR(100) NOT NULL,
+  district_id INT NOT NULL COMMENT 'FK → district(id)',
   leaderId INT(10) NOT NULL,
   createdAt DATETIME NOT NULL DEFAULT NOW()
 );
@@ -165,6 +165,14 @@ CREATE TABLE vaccine_schedule (
   intervalMonths INT NOT NULL COMMENT '백신 주기 (개월 단위)',
   type ENUM('Initial', 'Annual') NOT NULL COMMENT '초기 예방접종 또는 연간 접종 구분',
   description TEXT NULL
+-- 지역 정보 테이블
+-- 시(city) → 구(district) → 동(dong) 구조의 행정동 정보를 저장
+
+CREATE TABLE district (
+  id INT AUTO_INCREMENT PRIMARY KEY COMMENT 'PK, 고유 ID',  
+  city VARCHAR(50) NOT NULL COMMENT '시/도 이름 (예: 서울특별시, 대전광역시)',  
+  district VARCHAR(50) NOT NULL COMMENT '구/군 이름 (예: 서구, 중구)',  
+  dong VARCHAR(50) NOT NULL COMMENT '동네 이름 (예: 갈마동, 둔산동)'
 );
 
 
@@ -174,21 +182,21 @@ INSERT INTO board SET regDate = NOW(), updateDate = NOW(), CODE = 'notice', NAME
 INSERT INTO board SET regDate = NOW(), updateDate = NOW(), CODE = 'crew', NAME = '크루모집';
 INSERT INTO board SET regDate = NOW(), updateDate = NOW(), CODE = 'qna', NAME = '질의응답';
 
-INSERT INTO `MEMBER`
+INSERT INTO MEMBER
 SET regDate = NOW(), updateDate = NOW(),
     loginId = 'admin', loginPw = '1234', address = '서울시 중구',
     authLevel = 7, NAME = '관리자', nickname = 'admin',
     cellphone = '010-1234-5678', email = 'admin@example.com',
     authName = '관리자';
 
-INSERT INTO `MEMBER`
+INSERT INTO MEMBER
 SET regDate = NOW(), updateDate = NOW(),
     loginId = 'vet1', loginPw = 'abcd', address = '대전시 서구',
     authLevel = 3, NAME = '홍수의', nickname = '수의사홍',
     cellphone = '010-2222-3333', email = 'vet@example.com',
     authName = '수의사';
 
-INSERT INTO `MEMBER`
+INSERT INTO MEMBER
 SET regDate = NOW(), updateDate = NOW(),
     loginId = 'user1', loginPw = 'userpw', address = '청주시 상당구',
     authLevel = 1, NAME = '홍길동', nickname = '길동이',
@@ -282,3 +290,26 @@ BEGIN
 END $$
 
 DELIMITER ;
+
+INSERT INTO pet (memberId, NAME, species, breed, gender, birthDate, weight) VALUES
+(1, '콩이', '강아지', '말티즈', '암컷', '2021-05-10', 3.5),
+(2, '루비', '고양이', '러시안블루', '암컷', '2020-03-15', 4.2),
+(3, '밤비', '강아지', '푸들', '수컷', '2019-11-01', 5.1),
+(1, '나비', '고양이', '코리안숏헤어', '수컷', '2022-08-30', 3.8),
+(4, '초코', '강아지', '시츄', '암컷', '2018-07-12', 4.0),
+(5, '하양이', '고양이', '페르시안', '암컷', '2023-02-25', 2.6);
+
+
+INSERT INTO article (regDate, updateDate, title, `body`) VALUES
+(NOW(), NOW(), '강아지 예방접종 중요성', '강아지도 사람처럼 예방접종이 필요합니다.'),
+(NOW(), NOW(), '고양이 발정기 대처법', '고양이의 발정기 행동과 대처 방법을 알려드립니다.'),
+(NOW(), NOW(), '반려동물과 산책하기 좋은 장소', '서울에서 강아지와 산책하기 좋은 공원 소개.');
+
+
+INSERT INTO pet_vaccination (petId, vaccineName, injectionDate, nextDueDate, vetName, notes) VALUES
+(1, '혼합백신', '2024-06-01', '2025-06-01', '서울동물병원 김수진', '정기 접종 완료'),
+(2, '광견병백신', '2024-03-20', '2025-03-20', '펫케어동물병원 이준호', '다음 접종 예약 필요'),
+(3, '장염백신', '2024-07-01', '2025-07-01', '행복동물병원 박서연', '컨디션 양호');
+
+
+##예시용 코드-----------------------------------------------------
