@@ -20,4 +20,6 @@ public class Qna {
     private boolean isAnswered;
     private int memberId;
     private boolean isActive;
+
+    private String memberName;
 }

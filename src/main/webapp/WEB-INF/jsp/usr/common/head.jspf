@@ -27,9 +27,9 @@
 </head>
 
 <body>
-<header>
-    <div class="flex h-20 mx-auto items-center text-3xl">
-        <a href="/">LOGO</a>
+<header class="fixed top-0 left-0 w-full bg-white shadow z-50">
+    <div class="max-w-7xl mx-auto p-4 flex items-center">
+        <a href="/" class="text-xl font-bold">LOGO</a>
         <div class="flex-grow"></div>
         <ul class="flex gap-4">
 
@@ -58,6 +58,9 @@
                     <ul class="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow">
                         <li><a href="/usr/qna/list">질문 목록</a></li>
                         <li><a href="/usr/qna/ask">질문 등록</a></li>
+                        <c:if test="${rq.loginedMember != null && rq.loginedMember.authLevel == 3}">
+                            <li><a href="/usr/vetAnswer/vetList">수의사 질문 리스트</a></li>
+                        </c:if>
                     </ul>
                 </div>
             </li>

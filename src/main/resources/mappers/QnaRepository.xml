@@ -6,13 +6,27 @@
 
 <mapper namespace="com.example.RSW.repository.QnaRepository">
 
+    <resultMap id="qnaResultMap" type="com.example.RSW.vo.Qna">
+        <result property="id" column="id"/>
+        <result property="memberId" column="memberId"/>
+        <result property="title" column="title"/>
+        <result property="body" column="body"/>
+        <result property="isSecret" column="isSecret"/>
+        <result property="isFromUser" column="isFromUser"/>
+        <result property="isAnswered" column="isAnswered"/>
+        <result property="orderNo" column="orderNo"/>
+        <result property="regDate" column="regDate"/>
+        <result property="updateDate" column="updateDate"/>
+        <result property="isActive" column="isActive"/>
+    </resultMap>
+
     <insert id="saveUserQna" parameterType="com.example.RSW.vo.Qna">
         INSERT INTO Qna
         (memberId, title, `body`, isSecret, isFromUser, isAnswered, isActive, regDate, updateDate)
         VALUES (#{memberId}, #{title}, #{body}, #{secret}, #{fromUser}, #{answered}, #{active}, NOW(), NOW());
     </insert>
 
-    <select id="getFaqList" resultType="com.example.RSW.vo.Qna">
+    <select id="getFaqList" resultMap="qnaResultMap">
         SELECT *
         FROM Qna
         WHERE isFromUser = FALSE
@@ -20,7 +34,7 @@
         ORDER BY orderNo ASC
     </select>
 
-    <select id="getUserQnaByMemberId" resultType="com.example.RSW.vo.Qna">
+    <select id="getUserQnaByMemberId" resultMap="qnaResultMap">
         SELECT *
         FROM Qna
         WHERE isFromUser = TRUE
@@ -29,11 +43,12 @@
         ORDER BY regDate DESC
     </select>
 
-    <select id="getQnaById" parameterType="int" resultType="com.example.RSW.vo.Qna">
+    <select id="getQnaById" parameterType="int" resultMap="qnaResultMap">
         SELECT *
         FROM Qna
         WHERE id = #{id}
     </select>
+
 
     <update id="markQnaAsDeleted" parameterType="int">
         UPDATE qna
@@ -50,6 +65,21 @@
             updateDate = NOW()
         WHERE id = #{id}
     </update>
+
+    <update id="updateIsAnswered" parameterType="map">
+        UPDATE qna
+        SET isAnswered = #{isAnswered},
+            updateDate = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <select id="findAll" resultMap="qnaResultMap">
+        SELECT q.*, m.name AS memberName
+        FROM qna q
+                 JOIN member m ON q.memberId = m.id
+        ORDER BY q.regDate DESC
+    </select>
+
 
 
 </mapper>
