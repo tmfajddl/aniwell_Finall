@@ -219,8 +219,6 @@ public class PetController {
     public String doVaccinationModify(@RequestParam("vaccinationId") int vaccinationId, String vaccineName, String injectionDate) {
 
 
-        // 비번은 안바꾸는거 가능(사용자) 비번 null 체크는 x
-
         if (Ut.isEmptyOrNull(vaccineName)) {
             return Ut.jsHistoryBack("F-1", "백신명을 입력하세요");
         }
