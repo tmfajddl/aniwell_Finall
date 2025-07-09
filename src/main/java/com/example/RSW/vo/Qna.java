@@ -15,7 +15,7 @@ public class Qna {
     private String regDate;
     private String updateDate;
     private int orderNo;
-    private boolean isSecret;
+    private boolean secret;
     private boolean isFromUser;
     private boolean isAnswered;
     private int memberId;
@@ -26,4 +26,8 @@ public class Qna {
     private boolean hasAnswer;
 
     private int isFaq;
+
+    public boolean isSecret() {
+        return secret;
+    }
 }
