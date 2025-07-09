@@ -9,19 +9,14 @@
 
     <!-- 공통 CSS -->
     <link rel="stylesheet" href="/resource/common.css"/>
-
     <!-- 공통 JS -->
-    <script src="/resource/common.js" defer="defer"></script>
-
+    <script src="/resource/common.js" defer></script>
     <!-- jQuery -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
-
     <!-- Tailwind CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.1.4/tailwind.min.css">
-
     <!-- Daisy UI -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/daisyui/4.12.23/full.css"/>
 </head>
@@ -31,31 +26,29 @@
     <div class="max-w-7xl mx-auto p-4 flex items-center">
         <a href="/" class="text-xl font-bold">LOGO</a>
         <div class="flex-grow"></div>
-        <ul class="flex gap-4">
 
-            <!-- 홈 -->
+        <ul class="flex gap-4 items-center">
+
+            <!-- 기본 메뉴 -->
             <li><a class="hover:underline" href="/">HOME</a></li>
-
-            <!-- 게시판(공지사항만) -->
             <li><a class="hover:underline" href="/usr/article/list?boardId=1">공지사항</a></li>
 
-
-            <!-- 반려동물 -->
+            <!-- 반려동물 메뉴 -->
             <li>
                 <div class="dropdown dropdown-hover">
                     <div tabindex="0" role="button">반려동물</div>
-                    <ul class="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow">
+                    <ul class="dropdown-content menu bg-base-100 rounded-box w-52 p-2 shadow">
                         <li><a href="/usr/pet/list?memberId=${rq.loginedMember.id}">반려동물 목록</a></li>
                         <li><a href="/usr/pet/join">반려동물 등록</a></li>
                     </ul>
                 </div>
             </li>
 
-            <!-- Q&A -->
+            <!-- Q&A 메뉴 -->
             <li>
                 <div class="dropdown dropdown-hover">
                     <div tabindex="0" role="button">Q&A</div>
-                    <ul class="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow">
+                    <ul class="dropdown-content menu bg-base-100 rounded-box w-52 p-2 shadow">
                         <li><a href="/usr/qna/list">질문 목록</a></li>
                         <li><a href="/usr/qna/ask">질문 등록</a></li>
                         <c:if test="${rq.loginedMember != null && rq.loginedMember.authLevel == 3}">
@@ -69,12 +62,27 @@
             <li>
                 <div class="dropdown dropdown-hover">
                     <div tabindex="0" role="button">산책 크루</div>
-                    <ul class="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow">
+                    <ul class="dropdown-content menu bg-base-100 rounded-box w-52 p-2 shadow">
                         <li><a href="/usr/walkCrew/list">크루 목록</a></li>
                         <li><a href="/usr/walkCrew/create">크루 모집</a></li>
                     </ul>
                 </div>
             </li>
+
+            <!-- ✅ 관리자 메뉴 -->
+            <c:if test="${rq.loginedMember != null && rq.loginedMember.authLevel == 7}">
+                <li>
+                    <div class="dropdown dropdown-hover">
+                        <div tabindex="0" role="button" class="text-red-600 font-bold">관리자</div>
+                        <ul class="dropdown-content menu bg-base-100 rounded-box w-52 p-2 shadow">
+                            <li><a href="/adm/qna/list">QnA 관리</a></li>
+                            <li><a href="/adm/member/list">회원 관리</a></li>
+                            <li><a href="/adm/article/list">게시글 관리</a></li>
+                        </ul>
+                    </div>
+                </li>
+            </c:if>
+
 
             <!-- 로그인/회원가입 -->
             <c:if test="${!rq.logined}">
@@ -98,5 +106,5 @@
 
 <!-- 현재 페이지 제목 출력 -->
 <c:if test="${not empty pageTitle}">
-<h1 class="text-xl font-bold p-4">${pageTitle}</h1>
+<h1 class="text-xl font-bold p-4 mt-20">${pageTitle}</h1>
 </c:if>
