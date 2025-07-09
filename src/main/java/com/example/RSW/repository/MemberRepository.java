@@ -4,6 +4,8 @@ import org.apache.ibatis.annotations.Mapper;
 
 import com.example.RSW.vo.Member;
 
+import java.util.List;
+
 @Mapper
 public interface MemberRepository {
 
@@ -25,4 +27,9 @@ public interface MemberRepository {
 
 	void withdraw(int id);
 
+    List<Member> findAll();
+
+	void updateAuthLevel(int memberId, int authLevel);
+
+	List<Member> findAllWithVetCert();
 }

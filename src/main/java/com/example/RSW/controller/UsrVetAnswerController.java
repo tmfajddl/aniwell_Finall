@@ -51,7 +51,7 @@ public class UsrVetAnswerController {
         }
 
         // 4. 답변 저장
-        vetAnswerService.write(qnaId, loginedMember.getId(), loginedMember.getName(), answer);
+        vetAnswerService.write(qnaId, loginedMember.getId(), answer, loginedMember.getNickname());
 
         // 5. QnA isAnswered = true로 업데이트
         qnaService.markAsAnswered(qnaId);

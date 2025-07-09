@@ -11,7 +11,7 @@
         <result property="memberId" column="memberId"/>
         <result property="title" column="title"/>
         <result property="body" column="body"/>
-        <result property="isSecret" column="isSecret"/>
+        <result property="secret" column="isSecret"/>
         <result property="isFromUser" column="isFromUser"/>
         <result property="isAnswered" column="isAnswered"/>
         <result property="orderNo" column="orderNo"/>
@@ -24,8 +24,9 @@
     <insert id="saveUserQna" parameterType="com.example.RSW.vo.Qna">
         INSERT INTO Qna
         (memberId, title, `body`, isSecret, isFromUser, isAnswered, isActive, regDate, updateDate)
-        VALUES (#{memberId}, #{title}, #{body}, #{secret}, #{fromUser}, #{answered}, #{active}, NOW(), NOW());
+        VALUES (#{memberId}, #{title}, #{body}, #{secret}, #{isFromUser}, #{isAnswered}, #{isActive}, NOW(), NOW());
     </insert>
+
 
     <select id="getFaqList" resultMap="qnaResultMap">
         SELECT *
@@ -75,28 +76,33 @@
     </update>
 
     <select id="findAll" resultMap="qnaResultMap">
-        SELECT q.*,
+        SELECT q.id, q.title, q.body, q.memberId,
+               q.isSecret, q.isFromUser, q.isAnswered, q.orderNo,
+               q.regDate, q.updateDate, q.isActive, q.isFaq,
                m.name AS memberName,
-               q.isFaq,
                EXISTS(SELECT 1 FROM vet_answer va WHERE va.qna_id = q.id) AS hasAnswer
         FROM Qna q
                  JOIN member m ON q.memberId = m.id
         ORDER BY q.regDate DESC
-
     </select>
 
 
+
     <select id="findById" parameterType="int" resultMap="qnaResultMap">
-        SELECT q.*, m.name AS memberName
+        SELECT q.id, q.title, q.body, q.memberId,
+               q.isSecret, q.isFromUser, q.isAnswered, q.orderNo,
+               q.regDate, q.updateDate, q.isActive, q.isFaq,
+               m.name AS memberName
         FROM Qna q
                  JOIN member m ON q.memberId = m.id
         WHERE q.id = #{id}
     </select>
 
+
     <update id="update">
         UPDATE Qna
         SET title = #{title},
-            body = #{body}
+            body  = #{body}
         WHERE id = #{id}
     </update>
 
@@ -109,12 +115,10 @@
 
     <update id="modify">
         UPDATE Qna
-        SET title = #{title},
-            body = #{body},
+        SET title      = #{title},
+            body       = #{body},
             updateDate = NOW()
         WHERE id = #{id}
     </update>
-
-
 
 </mapper>

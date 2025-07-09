@@ -10,6 +10,13 @@
         <p class="text-sm text-gray-600 mb-2">작성자: ${qna.memberName}</p>
         <div class="border-t pt-3 mb-3">
             <p>${qna.body}</p>
+            <p class="text-sm text-gray-500 mb-1">
+                비밀글 여부:
+                <c:choose>
+                    <c:when test="${qna.secret}">✅ 비밀글</c:when>
+                    <c:otherwise>❌ 공개글</c:otherwise>
+                </c:choose>
+            </p>
         </div>
 
         <!-- 질문 수정/삭제 버튼 -->

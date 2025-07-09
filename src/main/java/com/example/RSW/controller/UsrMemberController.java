@@ -1,5 +1,7 @@
 package com.example.RSW.controller;
 
+import com.example.RSW.service.VetCertificateService;
+import com.example.RSW.vo.VetCertificate;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -15,6 +17,11 @@ import com.example.RSW.util.Ut;
 import com.example.RSW.service.MemberService;
 
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.File;
+import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Controller
 public class UsrMemberController {
@@ -24,6 +31,9 @@ public class UsrMemberController {
 
     @Autowired
     private MemberService memberService;
+
+    @Autowired
+    private VetCertificateService vetCertificateService;
 
     @RequestMapping("/usr/member/doLogout")
     @ResponseBody
@@ -86,6 +96,11 @@ public class UsrMemberController {
 
         // 로그인 후 rq 객체를 세션에 저장하여 이후 요청에서도 사용
         req.getSession().setAttribute("rq", rq);  // 세션에 rq 객체 저장
+
+        // ✅ 관리자라면 대시보드로 이동
+        if (member.getAuthLevel() == 7) {
+            afterLoginUri = "/adm/dashboard";
+        }
 
         return Ut.jsReplace("S-1", Ut.f("%s님 환영합니다", member.getNickname()), afterLoginUri);
     }
@@ -293,4 +308,83 @@ public class UsrMemberController {
 
         return Ut.jsReplace("S-1", "회원 탈퇴가 완료되었습니다.", "/");
     }
+
+    @RequestMapping("/usr/member/vetCert")
+    public String showVetCertForm(HttpServletRequest req, Model model) {
+        Rq rq = (Rq) req.getAttribute("rq");
+
+        // 수의사 신청자인지 확인
+        if (!"수의사".equals(rq.getLoginedMember().getAuthName())) {
+            model.addAttribute("errorMsg", "수의사만 인증서 제출이 가능합니다.");
+            return "common/error";
+        }
+
+        return "usr/member/vetCertUpload"; // JSP 경로
+    }
+
+    @RequestMapping("/usr/member/doVetCertUpload")
+    @ResponseBody
+    public String doVetCertUpload(HttpServletRequest req, @RequestParam("file") MultipartFile file) {
+        Rq rq = (Rq) req.getAttribute("rq");
+
+        if (file.isEmpty()) {
+            return Ut.jsHistoryBack("F-1", "파일을 선택해주세요.");
+        }
+
+        try {
+            String originalFilename = file.getOriginalFilename();
+            String uuid = UUID.randomUUID().toString();
+            String savedFileName = uuid + "_" + originalFilename;
+            String uploadDir = "C:/upload/vet_certificates";
+
+            File dir = new File(uploadDir);
+            if (!dir.exists()) {
+                dir.mkdirs();
+            }
+
+            file.transferTo(new File(uploadDir + "/" + savedFileName));
+
+            VetCertificate cert = new VetCertificate();
+            cert.setMemberId(rq.getLoginedMemberId());
+            cert.setFileName(originalFilename);
+            cert.setFilePath(savedFileName);
+            cert.setUploadedAt(LocalDateTime.now());
+            cert.setApproved(0); // 대기 상태
+
+            vetCertificateService.registerCertificate(cert);
+
+            return Ut.jsReplace("S-1", "수의사 인증서가 등록되었습니다. 관리자 승인을 기다려주세요.", "myCert");
+
+        } catch (Exception e) {
+            return Ut.jsHistoryBack("F-2", "파일 업로드 중 오류가 발생했습니다.");
+        }
+    }
+
+    @RequestMapping("/usr/member/myCert")
+    public String showMyCertificate(HttpServletRequest req, Model model) {
+        Rq rq = (Rq) req.getAttribute("rq");
+
+        VetCertificate cert = vetCertificateService.getCertificateByMemberId(rq.getLoginedMemberId());
+
+        model.addAttribute("cert", cert);
+        return "usr/member/myCert";
+    }
+
+    @RequestMapping("/usr/member/deleteVetCert")
+    @ResponseBody
+    public String deleteVetCert(HttpServletRequest req) {
+        Rq rq = (Rq) req.getAttribute("rq");
+        VetCertificate cert = vetCertificateService.getCertificateByMemberId(rq.getLoginedMemberId());
+
+        if (cert == null) {
+            return Ut.jsHistoryBack("F-1", "삭제할 인증서가 없습니다.");
+        }
+
+        vetCertificateService.deleteCertificateWithFile(cert);
+
+        return Ut.jsReplace("S-1", "인증서가 삭제되었습니다.", "/usr/member/vetCert");
+    }
+
+
+
 }

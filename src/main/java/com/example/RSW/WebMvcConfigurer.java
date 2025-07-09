@@ -1,5 +1,6 @@
 package com.example.RSW;
 
+
 import com.example.RSW.interceptor.BeforeActionInterceptor;
 import com.example.RSW.interceptor.NeedLoginInterceptor;
 import com.example.RSW.interceptor.NeedLogoutInterceptor;
@@ -24,6 +25,8 @@ public class WebMvcConfigurer implements org.springframework.web.servlet.config.
     // NeedLogoutInterceptor 불러오기(연결)
     @Autowired
     NeedLogoutInterceptor needLogoutInterceptor;
+
+
 
     // 인터셉터 등록(적용)
     public void addInterceptors(InterceptorRegistry registry) {
@@ -81,6 +84,9 @@ public class WebMvcConfigurer implements org.springframework.web.servlet.config.
         ir.addPathPatterns("/usr/member/doFindLoginId");
         ir.addPathPatterns("/usr/member/findLoginPw");
         ir.addPathPatterns("/usr/member/doFindLoginPw");
+
+
+
 
     }
 
