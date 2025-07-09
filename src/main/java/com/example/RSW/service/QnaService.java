@@ -19,8 +19,15 @@ public class QnaService {
     }
 
     public Qna getQnaById(int id) {
-        return qnaRepository.getQnaById(id);
+        Qna qna = qnaRepository.getQnaById(id);
+        if (qna == null) {
+            System.out.println("DEBUG: Qna is null");
+        } else {
+            System.out.println("DEBUG: qna.isAnswered = " + qna.isAnswered());
+        }
+        return qna;
     }
+
 
     public void writeUserQna(int loginedMemberId, String title, String body, boolean isSecret) {
         Qna qna = new Qna();
@@ -44,5 +51,18 @@ public class QnaService {
 
     public void modifyQna(int id, String title, String body, boolean isSecret) {
         qnaRepository.updateQna(id, title, body, isSecret);
+    }
+
+    public void markAsAnswered(int qnaId) {
+        qnaRepository.updateIsAnswered(true, qnaId);
+    }
+
+
+    public List<Qna> getAllQuestions() {
+        return qnaRepository.findAll();
+    }
+
+    public void markAsAnsweredFalse(int qnaId) {
+        qnaRepository.updateIsAnswered(false, qnaId);
     }
 }

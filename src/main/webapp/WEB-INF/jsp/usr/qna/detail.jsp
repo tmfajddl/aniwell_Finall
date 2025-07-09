@@ -1,6 +1,7 @@
-<%@ page contentType="text/html; charset=UTF-8" %>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 
+<%@ include file="/WEB-INF/jsp/usr/common/head.jspf" %>
 <!DOCTYPE html>
 <html>
 <head>
@@ -39,20 +40,66 @@
         ${qna.body}
     </div>
 
-    <!-- 답변이 있을 경우 -->
-    <c:if test="${qna.answered}">
-        <div class="bg-green-50 p-4 border-l-4 border-green-400 rounded">
-            <strong class="text-green-700">📢 수의사 답변</strong>
-            <p class="mt-2 text-gray-800 whitespace-pre-line">
-                (답변 내용은 vet_answer 테이블에서 추후 연동)
-            </p>
-        </div>
+    <!-- 수의사 답변 -->
+    <c:if test="${not empty vetAnswers}">
+        <c:forEach var="vetAnswer" items="${vetAnswers}">
+            <div class="bg-green-50 p-4 border-l-4 border-green-400 rounded mb-4 relative">
+                <strong class="text-green-700">📢 수의사 답변 - ${vetAnswer.vetName}</strong>
+
+                <!-- 답변 텍스트와 수정 폼 영역 -->
+                <div class="answer-view" id="answer-view-${vetAnswer.id}">
+                    <p class="mt-2 text-gray-800 whitespace-pre-line">
+                            ${vetAnswer.answer}
+                    </p>
+                </div>
+
+                <div class="answer-edit hidden" id="answer-edit-${vetAnswer.id}">
+                    <form action="/usr/vetAnswer/doModify" method="post"
+                          onsubmit="return submitVetAnswerModify(event, ${vetAnswer.id});">
+                        <input type="hidden" name="id" value="${vetAnswer.id}"/>
+                        <textarea name="answer" rows="4"
+                                  class="w-full p-2 border rounded">${vetAnswer.answer}</textarea>
+                        <div class="mt-2">
+                            <button type="submit" class="bg-blue-600 text-white px-3 py-1 rounded mr-2">저장</button>
+                            <button type="button" class="bg-gray-400 text-white px-3 py-1 rounded"
+                                    onclick="toggleEditForm(${vetAnswer.id}, false)">취소
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <p class="mt-2 text-sm text-gray-500">
+                    작성일: ${vetAnswer.answerAt}
+                </p>
+
+                <c:if test="${rq.loginedMember != null && rq.loginedMember.id == vetAnswer.memberId}">
+                    <div class="mt-2">
+                        <button type="button"
+                                class="text-blue-600 hover:underline mr-4 bg-transparent border-none p-0 cursor-pointer"
+                                onclick="toggleEditForm(${vetAnswer.id}, true)">
+                            수정
+                        </button>
+
+                        <form action="/usr/vetAnswer/doDelete" method="post" style="display:inline;">
+                            <input type="hidden" name="id" value="${vetAnswer.id}"/>
+                            <button type="submit" onclick="return confirm('정말 삭제하시겠습니까?');"
+                                    class="text-red-600 hover:underline bg-transparent border-none p-0 cursor-pointer">
+                                삭제
+                            </button>
+                        </form>
+                    </div>
+                </c:if>
+            </div>
+        </c:forEach>
     </c:if>
+
 
     <c:if test="${rq.loginedMemberId == qna.memberId}">
         <div class="mt-6 space-x-2">
-            <a href="/usr/qna/modify?id=${qna.id}" class="text-sm text-white bg-yellow-500 px-3 py-1 rounded hover:bg-yellow-600">수정</a>
-            <a href="/usr/qna/doDelete?id=${qna.id}" class="text-sm text-white bg-red-500 px-3 py-1 rounded hover:bg-red-600"
+            <a href="/usr/qna/modify?id=${qna.id}"
+               class="text-sm text-white bg-yellow-500 px-3 py-1 rounded hover:bg-yellow-600">수정</a>
+            <a href="/usr/qna/doDelete?id=${qna.id}"
+               class="text-sm text-white bg-red-500 px-3 py-1 rounded hover:bg-red-600"
                onclick="return confirm('정말 삭제하시겠습니까?');">삭제</a>
         </div>
     </c:if>
@@ -62,6 +109,48 @@
     </div>
 
 </div>
+
+<script>
+    function toggleEditForm(id, show) {
+        const viewDiv = document.getElementById('answer-view-' + id);
+        const editDiv = document.getElementById('answer-edit-' + id);
+
+        if (show) {
+            viewDiv.classList.add('hidden');
+            editDiv.classList.remove('hidden');
+        } else {
+            viewDiv.classList.remove('hidden');
+            editDiv.classList.add('hidden');
+        }
+    }
+
+    function submitVetAnswerModify(event, id) {
+        event.preventDefault();
+
+        const form = event.target;
+        const formData = new FormData(form);
+
+        fetch(form.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+            .then(res => res.text())
+            .then(html => {
+                // <script> 태그 제거하고 eval
+                const scriptContent = html.replace(/<script[^>]*>([\s\S]*?)<\/script>/gi, '$1');
+                eval(scriptContent);
+            })
+            .catch(err => {
+                alert('수정 처리 중 오류가 발생했습니다.');
+                console.error(err);
+            });
+
+        return false;
+    }
+</script>
 
 </body>
 </html>

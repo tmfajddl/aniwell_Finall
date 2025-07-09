@@ -21,4 +21,9 @@ public interface QnaRepository {
     void markQnaAsDeleted(int id);
 
     void updateQna(int id, String title, String body, boolean isSecret);
+
+
+    int updateIsAnswered(@Param("isAnswered") boolean isAnswered, @Param("id") int id);
+
+    List<Qna> findAll();
 }
