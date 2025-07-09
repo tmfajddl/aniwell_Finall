@@ -6,7 +6,8 @@
 <title>크루 등록</title>
 
 <!-- Kakao Maps JS SDK (키 바인딩 확인) -->
-<script src="http://dapi.kakao.com/v2/maps/sdk.js?appkey=e168f5867f0ad1b66e9692a214050110&libraries=services"></script>
+<script
+	src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=e168f5867f0ad1b66e9692a214050110&libraries=services"></script>
 
 
 <style>
@@ -103,10 +104,8 @@ button[type="submit"] {
 
 	<form action="/usr/walkCrew/doCreate" method="post">
 
-		<label for="title">제목</label>
-		<input type="text" name="title" id="title" required />
-
-		<label for="descriptoin">설명</label>
+		<label for="title">제목</label> <input type="text" name="title"
+			id="title" required /> <label for="descriptoin">설명</label>
 		<textarea name="descriptoin" id="descriptoin" rows="5" required></textarea>
 
 		<!-- 동 선택 -->
@@ -114,9 +113,8 @@ button[type="submit"] {
 		<div class="dong-list" id="dongList">
 			<small>현재 위치를 기반으로 동네를 불러옵니다</small>
 		</div>
-		<input type="hidden" name="dong" id="selectedDong" />
-
-		<input type="hidden" name="leaderId" value="${rq.loginedMemberId}" />
+		<input type="hidden" name="dong" id="selectedDong" /> <input
+			type="hidden" name="leaderId" value="${rq.loginedMemberId}" />
 
 		<button type="submit">등록</button>
 	</form>
