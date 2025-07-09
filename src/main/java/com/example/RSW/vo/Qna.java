@@ -22,4 +22,6 @@ public class Qna {
     private boolean isActive;
 
     private String memberName;
+
+    private boolean hasAnswer;
 }
