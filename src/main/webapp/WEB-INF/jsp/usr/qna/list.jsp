@@ -2,81 +2,60 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 
 <!DOCTYPE html>
-<html>
+<html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>Q&A</title>
+    <title>QnA 목록</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <style>
-        .faq-box, .my-question-box {
-            height: 300px;
-            overflow-y: auto;
-        }
-    </style>
 </head>
-<body class="bg-gray-100">
+<body class="bg-gray-100 min-h-screen flex justify-center items-start p-10">
 
-<!-- 상단: 자주 묻는 질문 제목 리스트 -->
-<div class="faq-box space-y-2 mb-4">
-    <c:forEach var="faq" items="${qnas}">
-        <div class="bg-gray-100 p-2 rounded hover:bg-gray-200">
-            <a href="/usr/qna/list?selectedId=${faq.id}" class="block text-sm font-semibold text-gray-800">
-                    ${faq.title}
-            </a>
+<div class="flex w-full max-w-7xl space-x-6">
+
+    <!-- 왼쪽: 자주 묻는 질문 -->
+    <div class="flex flex-col space-y-6 w-3/4">
+
+        <!-- 1. 자주 묻는 질문 제목 목록 -->
+        <div class="bg-white p-6 rounded-xl shadow">
+            <h2 class="text-xl font-bold mb-4">📌 자주 묻는 질문 목록</h2>
+            <ol class="list-decimal list-inside space-y-2">
+                <c:forEach var="qna" items="${qnas}">
+                    <li class="text-blue-800 font-semibold">${qna.title}</li>
+                </c:forEach>
+            </ol>
         </div>
-    </c:forEach>
-</div>
 
-<!-- 하단: 선택된 질문/답변 출력 -->
-<div class="bg-white p-4 rounded shadow min-h-[150px]">
-    <c:choose>
-        <c:when test="${not empty selectedQna}">
-            <h3 class="text-md font-bold mb-2">Q. ${selectedQna.title}</h3>
-            <p class="text-gray-700 whitespace-pre-line">A. ${selectedQna.body}</p>
-        </c:when>
-        <c:otherwise>
-            <p class="text-gray-400">자세히 볼 질문을 선택해주세요.</p>
-        </c:otherwise>
-    </c:choose>
-</div>
-
-<!-- 오른쪽 질문 등록창 -->
-<div class="w-1/4 p-6 bg-white rounded shadow">
-    <form id="askForm">
-        <div class="mb-4">
-            <label class="block font-bold">제목</label>
-            <input name="title" type="text" class="w-full border rounded p-2" required>
+        <!-- 2. 전체 질문/답변 내용 -->
+        <div class="bg-white p-6 rounded-xl shadow space-y-6">
+            <h2 class="text-xl font-bold mb-4">📖 질문과 답변</h2>
+            <c:forEach var="qna" items="${qnas}">
+                <div class="bg-gray-50 p-4 rounded-md shadow">
+                    <h3 class="text-blue-700 font-semibold mb-2">Q. ${qna.title}</h3>
+                    <p class="text-gray-800">A. ${qna.body}</p>
+                </div>
+            </c:forEach>
         </div>
-        <div class="mb-4">
-            <label class="block font-bold">내용</label>
-            <textarea name="body" class="w-full border rounded p-2 h-32" required></textarea>
-        </div>
-        <div class="mb-4">
-            <label>
-                <input type="checkbox" name="isSecret">
-                비공개
-            </label>
-        </div>
-        <button type="submit" class="w-full bg-blue-500 text-white py-2 rounded">질문 남기기!!!!</button>
-    </form>
-</div>
-</div>
+    </div>
 
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script>
-    $('#askForm').on('submit', function (e) {
-        e.preventDefault();
+    <!-- 내 질문 목록 위에 버튼 추가 -->
+    <div class="w-1/4 bg-white p-6 rounded-xl shadow h-[500px] overflow-y-auto">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-lg font-bold">🙋 내 질문 목록</h2>
+            <a href="/usr/qna/ask" class="text-sm bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600">질문 등록</a>
+        </div>
 
-        $.post('/usr/qna/doAsk', $(this).serialize(), function (data) {
-            if (data.resultCode.startsWith('S-')) {
-                alert(data.msg);
-                location.reload();
-            } else {
-                alert(data.msg);
-            }
-        });
-    });
-</script>
+        <ul class="space-y-3 text-sm text-gray-700">
+            <c:forEach var="qna" items="${myQnas}">
+                <li class="bg-gray-50 p-3 rounded shadow">
+                    <a href="/usr/qna/detail?id=${qna.id}" class="text-blue-700 hover:underline">
+                            ${qna.title}
+                    </a>
+                </li>
+            </c:forEach>
+        </ul>
+    </div>
+
+</div>
 
 </body>
 </html>

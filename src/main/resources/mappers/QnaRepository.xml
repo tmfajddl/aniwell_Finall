@@ -26,4 +26,10 @@
         ORDER BY regDate DESC
     </select>
 
+    <select id="getQnaById" parameterType="int" resultType="com.example.RSW.vo.Qna">
+        SELECT *
+        FROM Qna
+        WHERE id = #{id}
+    </select>
+
 </mapper>
