@@ -56,9 +56,11 @@
         SELECT * FROM vet_answer WHERE qna_id = #{qnaId}
     </select>
 
-    <insert id="insert">
-        INSERT INTO vet_answer (qna_id, answer, answerAt, vetName)
-        VALUES (#{qnaId}, #{answer}, NOW(), #{vetName})
+    <insert id="insert" parameterType="map">
+        INSERT INTO vet_answer (qna_id, memberId, vetName, answer, answerAt)
+        VALUES (#{qnaId}, #{memberId}, #{vetName}, #{answer}, NOW())
     </insert>
+
+
 
 </mapper>

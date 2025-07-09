@@ -33,4 +33,7 @@ public interface QnaRepository {
 
     void delete(@Param("id") int id);
 
+    void modify(int id, String title, String body);
+
+    void markInactive(int id);
 }

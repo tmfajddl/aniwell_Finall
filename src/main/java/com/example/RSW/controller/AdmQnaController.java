@@ -3,6 +3,7 @@ package com.example.RSW.controller;
 import com.example.RSW.service.QnaService;
 import com.example.RSW.service.VetAnswerService;
 import com.example.RSW.vo.Qna;
+import com.example.RSW.vo.Rq;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -18,6 +19,8 @@ import java.util.List;
 @RequestMapping("/adm/qna")
 public class AdmQnaController {
 
+    @Autowired
+    private Rq rq;
     @Autowired
     private  QnaService qnaService;
 
@@ -38,10 +41,12 @@ public class AdmQnaController {
     }
 
     @PostMapping("/doAnswer")
-    public String doAnswer(@RequestParam int qnaId, @RequestParam String answer, @RequestParam String vetName) {
+    public String doAnswer(@RequestParam int qnaId, @RequestParam String answer) {
+        String vetName = rq.getLoginedMember().getNickname(); // 또는 이름
         vetAnswerService.write(qnaId, answer, vetName);
         return "redirect:/adm/qna/detail?id=" + qnaId;
     }
+
 
     @PostMapping("/doUpdateAnswer")
     public String doUpdateAnswer(@RequestParam int id, @RequestParam String answer) {
@@ -57,19 +62,21 @@ public class AdmQnaController {
     }
 
     @GetMapping("/edit")
-    public String showQnaEditForm(@RequestParam int id, Model model) {
+    public String showEditForm(@RequestParam int id, Model model) {
         model.addAttribute("qna", qnaService.findById(id));
-        return "adm/qna/edit";
+        return "adm/qna/edit"; // edit.jsp 존재해야 함
     }
 
-    @PostMapping("/doEdit")
-    public String doQnaEdit(@RequestParam int id, @RequestParam String title, @RequestParam String body) {
-        qnaService.update(id, title, body);
+    @PostMapping("/doModify")
+    public String doModify(@RequestParam int id,
+                           @RequestParam String title,
+                           @RequestParam String body) {
+        qnaService.modify(id, title, body);
         return "redirect:/adm/qna/detail?id=" + id;
     }
 
     @PostMapping("/doDelete")
-    public String doQnaDelete(@RequestParam int id) {
+    public String doDelete(@RequestParam int id) {
         qnaService.delete(id);
         return "redirect:/adm/qna/list";
     }
