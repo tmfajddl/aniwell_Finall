@@ -1,10 +1,9 @@
 package com.example.RSW.controller;
 
 import com.example.RSW.service.QnaService;
+import com.example.RSW.service.VetAnswerService;
 import com.example.RSW.util.Ut;
-import com.example.RSW.vo.Qna;
-import com.example.RSW.vo.ResultData;
-import com.example.RSW.vo.Rq;
+import com.example.RSW.vo.*;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -22,6 +21,9 @@ public class UsrQnaController {
 
     @Autowired
     private QnaService qnaService;
+
+    @Autowired
+    private VetAnswerService vetAnswerService;
 
     // 질문 리스트 페이지
     @RequestMapping("/usr/qna/list")
@@ -47,6 +49,11 @@ public class UsrQnaController {
     public String showQnaDetail(Model model, int id) {
         Qna qna = qnaService.getQnaById(id);
         model.addAttribute("qna", qna);
+
+        // 수의사 답변 리스트 조회
+        List<VetAnswer> vetAnswers = vetAnswerService.getByQnaId(id);
+        model.addAttribute("vetAnswers", vetAnswers);
+
         model.addAttribute("rq", rq);
         return "usr/qna/detail";
     }
@@ -138,7 +145,6 @@ public class UsrQnaController {
         rq.printReplace("S-1", "질문이 수정되었습니다.", "/usr/qna/detail?id=" + id);
         return null;
     }
-
 
 
 }
