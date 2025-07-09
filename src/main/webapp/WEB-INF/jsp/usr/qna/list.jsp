@@ -17,6 +17,15 @@
     <!-- 왼쪽: 자주 묻는 질문 -->
     <div class="flex flex-col space-y-6 w-3/4">
 
+        <c:if test="${rq.loginedMember != null && rq.loginedMember.authLevel == 7}">
+            <div class="mb-4">
+                <a href="/adm/qna/write"
+                   class="inline-block bg-blue-700 text-white px-4 py-2 rounded hover:bg-blue-800">
+                    ✍️ 자주 묻는 질문 등록
+                </a>
+            </div>
+        </c:if>
+
         <!-- 1. 자주 묻는 질문 제목 목록 -->
         <div class="bg-white p-6 rounded-xl shadow">
             <h2 class="text-xl font-bold mb-4">📌 자주 묻는 질문 목록</h2>
@@ -26,6 +35,7 @@
                 </c:forEach>
             </ol>
         </div>
+
 
         <!-- 2. 전체 질문/답변 내용 -->
         <div class="bg-white p-6 rounded-xl shadow space-y-6">
@@ -67,6 +77,7 @@
     </div>
 
 </div>
+
 
 </body>
 </html>
