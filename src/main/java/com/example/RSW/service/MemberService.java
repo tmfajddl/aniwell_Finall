@@ -9,6 +9,8 @@ import com.example.RSW.util.Ut;
 import com.example.RSW.vo.Member;
 import com.example.RSW.vo.ResultData;
 
+import java.util.List;
+
 @Service
 public class MemberService {
 
@@ -108,6 +110,15 @@ public class MemberService {
 	public ResultData withdrawMember(int id) {
 		memberRepository.withdraw(id);
 		return ResultData.from("S-1", "탈퇴 처리 완료");
+	}
+
+	public List<Member> getAllMembers() {
+		return memberRepository.findAllWithVetCert();
+	}
+
+
+	public void updateAuthLevel(int memberId, int authLevel) {
+		memberRepository.updateAuthLevel(memberId, authLevel);
 	}
 
 

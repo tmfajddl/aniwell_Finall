@@ -67,7 +67,12 @@ public class QnaService {
     }
 
     public List<Qna> findAll() {
-        return qnaRepository.findAll();
+        List<Qna> list = qnaRepository.findAll();
+        for (Qna q : list) {
+            System.out.println("DEBUG isSecret: " + q.isSecret()); // ← 여기서 오류 나면 EL도 터짐
+        }
+        return list;
+//        return qnaRepository.findAll();
     }
 
     public Qna findById(int id) {

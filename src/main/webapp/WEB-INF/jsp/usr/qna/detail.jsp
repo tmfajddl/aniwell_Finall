@@ -1,4 +1,4 @@
-<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 
 <%@ include file="/WEB-INF/jsp/usr/common/head.jspf" %>
@@ -91,6 +91,27 @@
                 </c:if>
             </div>
         </c:forEach>
+    </c:if>
+    <!-- 수의사 로그인 시 답변 폼 표시 (아직 본인이 답변 안 한 경우만) -->
+    <c:if test="${rq.loginedMember != null && rq.loginedMember.authLevel == 3}">
+        <c:set var="alreadyAnswered" value="false"/>
+        <c:forEach var="va" items="${vetAnswers}">
+            <c:if test="${va.memberId == rq.loginedMemberId}">
+                <c:set var="alreadyAnswered" value="true"/>
+            </c:if>
+        </c:forEach>
+
+        <c:if test="${!alreadyAnswered}">
+            <div class="mt-8 bg-gray-50 p-4 rounded border">
+                <h2 class="font-bold text-lg mb-2">✏️ 수의사 답변 작성</h2>
+                <form method="post" action="/usr/vetAnswer/doWrite">
+                    <input type="hidden" name="qnaId" value="${qna.id}"/>
+                    <textarea name="answer" rows="5" class="w-full p-2 border rounded"
+                              placeholder="답변을 입력해주세요."></textarea>
+                    <button type="submit" class="mt-2 bg-blue-600 text-white px-4 py-2 rounded">등록</button>
+                </form>
+            </div>
+        </c:if>
     </c:if>
 
 
