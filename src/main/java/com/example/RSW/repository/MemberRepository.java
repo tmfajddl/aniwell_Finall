@@ -7,7 +7,7 @@ import com.example.RSW.vo.Member;
 @Mapper
 public interface MemberRepository {
 
-	int doJoin(String loginId, String loginPw, String name, String nickname, String cellphoneNum,
+	int doJoin(String loginId, String loginPw, String name, String nickname, String cellphone,
 			   String email, String address, String authName, int authLevel);
 
 	public Member getMemberById(int id);
@@ -18,9 +18,11 @@ public interface MemberRepository {
 
 	public Member getMemberByNameAndEmail(String name, String email);
 
-	public void modify(int loginedMemberId, String loginPw, String name, String nickname, String cellphoneNum,
+	public void modify(int loginedMemberId, String loginPw, String name, String nickname, String cellphone,
 			String email);
 
-	public void modifyWithoutPw(int loginedMemberId, String name, String nickname, String cellphoneNum, String email);
+	public void modifyWithoutPw(int loginedMemberId, String name, String nickname, String cellphone, String email);
+
+	void withdraw(int id);
 
 }
