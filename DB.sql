@@ -208,6 +208,13 @@ INSERT INTO district SET city = '서울특별시', district = '강남구', dong 
 INSERT INTO district SET city = '대전광역시', district = '서구', dong = '둔산동';
 INSERT INTO district SET city = '부산광역시', district = '해운대구', dong = '우동';
 
+-- 크루 모집 예시 데이터
+INSERT INTO walk_crew (title, DESCRIPTION, district_id, leaderId, createdAt) VALUES
+('한강 강아지 산책모임', '주말마다 반포 한강공원에서 산책하는 크루입니다.', 1, 1, NOW()),
+('둔산동 고양이 산책크루', '고양이와 함께 산책하기 위해 모였습니다.', 2, 3, NOW()),
+('해운대 멍냥 크루', '부산 해운대에서 주기적으로 모이는 산책 모임입니다.', 3, 2, NOW());
+
+
 -- 🐶 홍길동(user1)의 반려동물 강아지 '초코'
 INSERT INTO pet
 SET memberId = 4, NAME = '초코', species = '강아지', breed = '말티즈',
