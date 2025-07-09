@@ -48,7 +48,7 @@ public class MemberService {
 		memberRepository.modify(actor.getId(), Ut.sha256(tempPassword), null, null, null, null);
 	}
 
-	public ResultData<Integer> join(String loginId, String loginPw, String name, String nickname, String cellphoneNum,
+	public ResultData<Integer> join(String loginId, String loginPw, String name, String nickname, String cellphone,
 									String email, String address, String authName, int authLevel) {
 
 		// 아이디 중복 체크
@@ -64,7 +64,7 @@ public class MemberService {
 		}
 
 		// 회원가입 처리 (필수 컬럼을 테이블에 맞게 추가)
-		memberRepository.doJoin(loginId, loginPw, name, nickname, cellphoneNum, email, address, authName, authLevel);
+		memberRepository.doJoin(loginId, loginPw, name, nickname, cellphone, email, address, authName, authLevel);
 
 		// 최근 삽입된 회원 ID 조회
 		int id = memberRepository.getLastInsertId();
@@ -88,21 +88,27 @@ public class MemberService {
 		return memberRepository.getMemberById(id);
 	}
 
-	public ResultData modify(int loginedMemberId, String loginPw, String name, String nickname, String cellphoneNum,
+	public ResultData modify(int loginedMemberId, String loginPw, String name, String nickname, String cellphone,
 			String email) {
 
 		loginPw = Ut.sha256(loginPw);
 
-		memberRepository.modify(loginedMemberId, loginPw, name, nickname, cellphoneNum, email);
+		memberRepository.modify(loginedMemberId, loginPw, name, nickname, cellphone, email);
 
 		return ResultData.from("S-1", "회원정보 수정 완료");
 	}
 
-	public ResultData modifyWithoutPw(int loginedMemberId, String name, String nickname, String cellphoneNum,
+	public ResultData modifyWithoutPw(int loginedMemberId, String name, String nickname, String cellphone,
 			String email) {
-		memberRepository.modifyWithoutPw(loginedMemberId, name, nickname, cellphoneNum, email);
+		memberRepository.modifyWithoutPw(loginedMemberId, name, nickname, cellphone, email);
 
 		return ResultData.from("S-1", "회원정보 수정 완료");
 	}
+
+	public ResultData withdrawMember(int id) {
+		memberRepository.withdraw(id);
+		return ResultData.from("S-1", "탈퇴 처리 완료");
+	}
+
 
 }
