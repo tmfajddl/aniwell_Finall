@@ -65,4 +65,21 @@ public class QnaService {
     public void markAsAnsweredFalse(int qnaId) {
         qnaRepository.updateIsAnswered(false, qnaId);
     }
+
+    public List<Qna> findAll() {
+        return qnaRepository.findAll();
+    }
+
+    public Qna findById(int id) {
+        return qnaRepository.findById(id);
+    }
+    public void update(int id, String title, String body) {
+        qnaRepository.update(id, title, body);
+    }
+
+    public void delete(int id) {
+        qnaRepository.delete(id);
+    }
+
+
 }

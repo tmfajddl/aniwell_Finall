@@ -32,5 +32,23 @@ public class VetAnswerService {
     public void delete(int id) {
         vetAnswerRepository.delete(id);
     }
+
+    public int getQnaIdByAnswerId(int answerId) {
+        return vetAnswerRepository.getQnaIdByAnswerId(answerId);
+    }
+
+    public VetAnswer findByQnaId(int qnaId) {
+        return vetAnswerRepository.findByQnaId(qnaId);
+    }
+
+    public void write(int qnaId, String answer, String vetName) {
+        vetAnswerRepository.insert(qnaId, answer, vetName);
+    }
+
+    public void update(int id, String answer) {
+        vetAnswerRepository.update(id, answer);
+    }
+
+
 }
 

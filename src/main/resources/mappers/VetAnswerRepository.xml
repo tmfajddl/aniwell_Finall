@@ -20,22 +20,45 @@
     </insert>
 
     <select id="getByQnaId" parameterType="int" resultMap="VetAnswerResultMap">
-        SELECT * FROM vet_answer WHERE qna_id = #{qnaId} ORDER BY answerAt DESC
+        SELECT *
+        FROM vet_answer
+        WHERE qna_id = #{qnaId}
+        ORDER BY answerAt DESC
     </select>
 
     <select id="getById" parameterType="int" resultMap="VetAnswerResultMap">
-        SELECT * FROM vet_answer WHERE id = #{id}
+        SELECT *
+        FROM vet_answer
+        WHERE id = #{id}
     </select>
 
     <update id="update" parameterType="map">
         UPDATE vet_answer
-        SET answer = #{answer}, answerAt = NOW()
+        SET answer   = #{answer},
+            answerAt = NOW()
         WHERE id = #{id}
     </update>
 
 
     <delete id="delete" parameterType="int">
-        DELETE FROM vet_answer WHERE id = #{id}
+        DELETE
+        FROM vet_answer
+        WHERE id = #{id}
     </delete>
+
+    <select id="getQnaIdByAnswerId" resultType="int">
+        SELECT qna_id
+        FROM vet_answer
+        WHERE id = #{answerId}
+    </select>
+
+    <select id="findByQnaId" resultType="com.example.RSW.vo.VetAnswer">
+        SELECT * FROM vet_answer WHERE qna_id = #{qnaId}
+    </select>
+
+    <insert id="insert">
+        INSERT INTO vet_answer (qna_id, answer, answerAt, vetName)
+        VALUES (#{qnaId}, #{answer}, NOW(), #{vetName})
+    </insert>
 
 </mapper>
