@@ -31,7 +31,8 @@
         </div>
     </div>
 
-    <c:if test="${qna.isFaq != 1}">
+    <c:if test="${qna.isFaq != null && qna.isFaq != 1}">
+    <p>isFaq 값: ${qna.isFaq}</p>
         <c:choose>
             <c:when test="${empty answer}">
                 <form action="/adm/qna/doAnswer" method="post" class="space-y-4">
