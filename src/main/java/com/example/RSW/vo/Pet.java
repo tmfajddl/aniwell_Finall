@@ -18,6 +18,5 @@ public class Pet {
     private String photo;
     private Timestamp createdAt;
     private Timestamp updatedAt;
-
 }
 
