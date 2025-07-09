@@ -26,18 +26,6 @@
     SELECT LAST_INSERT_ID()
   </select>
 
-  <select id="getMemberByNameAndEmail" parameterType="string"
-    resultType="com.example.RSW.vo.Member">
-    SELECT * FROM `member`
-    WHERE `name` = #{name}
-    AND email = #{email}
-  </select>
-
-  <select id="getMemberByLoginId" parameterType="string"
-    resultType="com.example.RSW.vo.Member">
-    SELECT * FROM `member`
-    WHERE loginId = #{loginId}
-  </select>
 
 	<select id="getMemberByNameAndEmail" parameterType="string"
 		resultType="com.example.RSW.vo.Member">
@@ -53,11 +41,6 @@
 		WHERE loginId = #{loginId}
 	</select>
 
-	<select id="getMemberById" parameterType="int"
-		resultType="com.example.RSW.vo.Member">
-		SELECT * FROM `member`
-		WHERE id = #{id}
-	</select>
 
   <select id="getMemberById" parameterType="int"
     resultType="com.example.RSW.vo.Member">
