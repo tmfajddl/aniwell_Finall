@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="com.example.RSW.repository.QnaRepository">
+
+    <insert id="saveUserQna" parameterType="com.example.RSW.vo.Qna">
+        INSERT INTO Qna
+        (memberId, title, `body`, isSecret, isFromUser, isAnswered, isActive, regDate, updateDate)
+        VALUES (#{memberId}, #{title}, #{body}, #{secret}, #{fromUser}, #{answered}, #{active}, NOW(), NOW());
+    </insert>
+
+    <select id="getFaqList" resultType="com.example.RSW.vo.Qna">
+        SELECT *
+        FROM Qna
+        WHERE isFromUser = FALSE AND isActive = TRUE
+        ORDER BY orderNo ASC
+    </select>
+
+    <select id="getUserQnaByMemberId" resultType="com.example.RSW.vo.Qna">
+        SELECT *
+        FROM Qna
+        WHERE isFromUser = TRUE AND isActive = TRUE AND memberId = #{memberId}
+        ORDER BY regDate DESC
+    </select>
+
+</mapper>
