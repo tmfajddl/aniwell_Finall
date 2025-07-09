@@ -52,4 +52,10 @@
         WHERE pv.id = #{vaccinationId}
     </select>
 
+    <select id="getPetIdById" parameterType="int" resultType="int">
+        SELECT petId
+        FROM pet_vaccination
+        WHERE id = #{vaccinationId}
+    </select>
+
 </mapper>

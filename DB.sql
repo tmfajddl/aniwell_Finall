@@ -26,7 +26,7 @@ CREATE TABLE MEMBER (
   NAME CHAR(20) NOT NULL,
   nickname CHAR(20) NOT NULL,
   cellphone CHAR(20) NOT NULL,
-  email CHAR(20) NOT NULL,
+  email CHAR(50) NOT NULL,
   delStatus TINYINT(1) UNSIGNED NOT NULL DEFAULT 0 COMMENT '탈퇴 여부 (0=탈퇴 전, 1=탈퇴 후)',
   authName CHAR(30) NOT NULL COMMENT '일반 또는 수의사',
   delDate DATETIME COMMENT '탈퇴 날짜'
@@ -100,7 +100,7 @@ CREATE TABLE pet_vaccination (
   vaccineName VARCHAR(100) NULL,
   injectionDate DATE NOT NULL,
   nextDueDate DATE NOT NULL COMMENT '다음 접종 자동계산 기입(같은 접종이름, 업데이트 되도록)',
-  vetName VARCHAR(100),
+  vetName VARCHAR(100) NULL,
   notes TEXT NULL
 );
 
@@ -201,12 +201,12 @@ INSERT INTO district SET city = '부산광역시', district = '해운대구', do
 
 -- 🐶 홍길동(user1)의 반려동물 강아지 '초코'
 INSERT INTO pet
-SET memberId = 3, name = '초코', species = '강아지', breed = '말티즈',
+SET memberId = 4, name = '초코', species = '강아지', breed = '말티즈',
     gender = '수컷', birthDate = '2022-03-15', weight = 4.2;
 
 -- 🐱 홍길동(user1)의 반려동물 고양이 '나비'
 INSERT INTO pet
-SET memberId = 3, name = '나비', species = '고양이', breed = '코리안숏헤어',
+SET memberId = 4, name = '나비', species = '고양이', breed = '코리안숏헤어',
     gender = '암컷', birthDate = '2023-01-10', weight = 3.5;
 
 -- 💉 초코(강아지)의 종합백신 접종 기록 (다음 예정 포함)
