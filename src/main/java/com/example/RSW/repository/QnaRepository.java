@@ -26,4 +26,11 @@ public interface QnaRepository {
     int updateIsAnswered(@Param("isAnswered") boolean isAnswered, @Param("id") int id);
 
     List<Qna> findAll();
+
+    Qna findById(int id);
+
+    void update(@Param("id") int id, @Param("title") String title, @Param("body") String body);
+
+    void delete(@Param("id") int id);
+
 }

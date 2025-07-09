@@ -74,12 +74,31 @@
     </update>
 
     <select id="findAll" resultMap="qnaResultMap">
-        SELECT q.*, m.name AS memberName
+        SELECT q.*,
+               m.name AS memberName,
+               EXISTS(SELECT 1 FROM vet_answer va WHERE va.qna_id = q.id) AS hasAnswer
         FROM qna q
                  JOIN member m ON q.memberId = m.id
         ORDER BY q.regDate DESC
     </select>
 
+    <select id="findById" parameterType="int" resultMap="qnaResultMap">
+        SELECT q.*, m.name AS memberName
+        FROM qna q
+                 JOIN member m ON q.memberId = m.id
+        WHERE q.id = #{id}
+    </select>
+
+    <update id="update">
+        UPDATE qna
+        SET title = #{title},
+            body = #{body}
+        WHERE id = #{id}
+    </update>
+
+    <delete id="delete" parameterType="int">
+        DELETE FROM qna WHERE id = #{id}
+    </delete>
 
 
 </mapper>

@@ -21,5 +21,11 @@ public interface VetAnswerRepository {
     void update(int id, String answer);
 
     void delete(int id);
+
+    int getQnaIdByAnswerId(@Param("answerId") int answerId);
+
+    VetAnswer findByQnaId(int qnaId);
+
+    void insert(int qnaId, String answer, String vetName);
 }
 
