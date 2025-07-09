@@ -14,7 +14,7 @@
 		loginPw = #{loginPw},
 		`name` = #{name},
 		nickname = #{nickname},
-		cellphone = #{cellphoneNum},
+		cellphone = #{cellphone},
 		email = #{email},
 		address = #{address},
 		authName = #{authName},
@@ -59,8 +59,8 @@
 			<if test="nickname != null">
 				nickname = #{nickname},
 			</if>
-			<if test="cellphoneNum != null">
-				cellphoneNum = #{cellphoneNum},
+			<if test="cellphone != null">
+				cellphone = #{cellphone},
 			</if>
 			<if test="email != null">
 				email = #{email},
@@ -79,8 +79,8 @@
 			<if test="nickname != null">
 				nickname = #{nickname},
 			</if>
-			<if test="cellphoneNum != null">
-				cellphoneNum = #{cellphoneNum},
+			<if test="cellphone != null">
+				cellphone = #{cellphone},
 			</if>
 			<if test="email != null">
 				email = #{email},
@@ -89,5 +89,11 @@
 		</set>
 		WHERE id = #{loginedMemberId}
 	</update>
+
+	<delete id="withdraw">
+		DELETE FROM member WHERE id = #{id}
+	</delete>
+
+
 
 </mapper>
