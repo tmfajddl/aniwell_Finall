@@ -22,11 +22,15 @@
         SET regDate = NOW(),
 		updateDate =
 		NOW(),
-		memberId = #{loginedMemberId}, relTypeCode = #{relTypeCode}, relId = #{relId}, `body` = #{body}
+		memberId = #{loginedMemberId},
+            relTypeCode = #{relTypeCode},
+            relId = #{relId},
+            `body` = #{body}
     </insert>
 
     <select id="getLastInsertId" parameterType="int">
-        SELECT LAST_INSERT_ID()
+        SELECT
+            LAST_INSERT_ID()
     </select>
 
     <select id="getReply" parameterType="int">
@@ -37,9 +41,14 @@
 
     <update id="modifyReply">
         UPDATE reply
-        SET `body`     = #{body},
+        SET `body` = #{body},
             updateDate = NOW()
         WHERE id = #{id}
     </update>
+
+    <delete id="deleteReply">
+        DELETE FROM reply
+        WHERE id = #{id}
+    </delete>
 
 </mapper>
