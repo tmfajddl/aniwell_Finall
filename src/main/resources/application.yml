@@ -30,3 +30,6 @@ custom:
   siteMainUri: http://localhost:8080
   emailFrom: no-reply@localhost
   emailFromName: aniwell
+
+kakao:
+  rest-api-key: ${KAKAO_REST_API_KEY}
