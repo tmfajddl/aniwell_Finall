@@ -76,10 +76,19 @@
     </update>
 
     <select id="findAll" resultMap="qnaResultMap">
-        SELECT q.id, q.title, q.body, q.memberId,
-               q.isSecret, q.isFromUser, q.isAnswered, q.orderNo,
-               q.regDate, q.updateDate, q.isActive, q.isFaq,
-               m.name AS memberName,
+        SELECT q.id,
+               q.title,
+               q.body,
+               q.memberId,
+               q.isSecret,
+               q.isFromUser,
+               q.isAnswered,
+               q.orderNo,
+               q.regDate,
+               q.updateDate,
+               q.isActive,
+               q.isFaq,
+               m.name                                                     AS memberName,
                EXISTS(SELECT 1 FROM vet_answer va WHERE va.qna_id = q.id) AS hasAnswer
         FROM Qna q
                  JOIN member m ON q.memberId = m.id
@@ -87,11 +96,19 @@
     </select>
 
 
-
     <select id="findById" parameterType="int" resultMap="qnaResultMap">
-        SELECT q.id, q.title, q.body, q.memberId,
-               q.isSecret, q.isFromUser, q.isAnswered, q.orderNo,
-               q.regDate, q.updateDate, q.isActive, q.isFaq,
+        SELECT q.id,
+               q.title,
+               q.body,
+               q.memberId,
+               q.isSecret,
+               q.isFromUser,
+               q.isAnswered,
+               q.orderNo,
+               q.regDate,
+               q.updateDate,
+               q.isActive,
+               q.isFaq,
                m.name AS memberName
         FROM Qna q
                  JOIN member m ON q.memberId = m.id
@@ -120,5 +137,13 @@
             updateDate = NOW()
         WHERE id = #{id}
     </update>
+
+    <insert id="insert" parameterType="map">
+        INSERT INTO Qna
+        (memberId, title, body, isSecret, isFaq, regDate, updateDate, isAnswered)
+        VALUES (#{memberId}, #{title}, #{body}, #{isSecret}, #{isFaq}, NOW(), NOW(), 0)
+    </insert>
+
+
 
 </mapper>

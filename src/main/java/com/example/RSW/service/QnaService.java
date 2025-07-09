@@ -78,6 +78,7 @@ public class QnaService {
     public Qna findById(int id) {
         return qnaRepository.findById(id);
     }
+
     public void update(int id, String title, String body) {
         qnaRepository.update(id, title, body);
     }
@@ -88,6 +89,10 @@ public class QnaService {
 
     public void modify(int id, String title, String body) {
         qnaRepository.modify(id, title, body);
+    }
+
+    public void writeFaq(int memberId, String title, String body) {
+        qnaRepository.insert(memberId, title, body, false, true); // isSecret = false, isFaq = true
     }
 
 }

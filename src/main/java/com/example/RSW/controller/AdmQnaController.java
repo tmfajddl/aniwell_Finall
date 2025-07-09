@@ -22,7 +22,7 @@ public class AdmQnaController {
     @Autowired
     private Rq rq;
     @Autowired
-    private  QnaService qnaService;
+    private QnaService qnaService;
 
     @Autowired
     private VetAnswerService vetAnswerService;
@@ -80,5 +80,18 @@ public class AdmQnaController {
         qnaService.delete(id);
         return "redirect:/adm/qna/list";
     }
+
+    @GetMapping("/write")
+    public String showWriteForm() {
+        return "adm/qna/write";
+    }
+
+    @PostMapping("/doWrite")
+    public String doWrite(@RequestParam String title, @RequestParam String body) {
+        int memberId = rq.getLoginedMemberId(); // 관리자 ID
+        qnaService.writeFaq(memberId, title, body); // isFaq = 1로 저장
+        return "redirect:/adm/qna/list";
+    }
+
 
 }
