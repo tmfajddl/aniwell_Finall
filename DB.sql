@@ -108,7 +108,7 @@ CREATE TABLE pet_vaccination (
 CREATE TABLE walk_crew (
   id INT(10) UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
   title VARCHAR(100) NOT NULL,
-  descriptoin TEXT NOT NULL,
+  `description` TEXT NOT NULL,
   district_id INT NOT NULL COMMENT 'FK → district(id)',
   leaderId INT(10) NOT NULL,
   createdAt DATETIME NOT NULL DEFAULT NOW()
@@ -163,8 +163,9 @@ CREATE TABLE pet_analysis (
 CREATE TABLE vaccine_schedule (
   vaccineName VARCHAR(100) PRIMARY KEY,
   intervalMonths INT NOT NULL COMMENT '백신 주기 (개월 단위)',
-  type ENUM('Initial', 'Annual') NOT NULL COMMENT '초기 예방접종 또는 연간 접종 구분',
-  description TEXT NULL
+  TYPE ENUM('Initial', 'Annual') NOT NULL COMMENT '초기 예방접종 또는 연간 접종 구분',
+  DESCRIPTION TEXT NULL
+  );
 -- 지역 정보 테이블
 -- 시(city) → 구(district) → 동(dong) 구조의 행정동 정보를 저장
 
@@ -209,12 +210,12 @@ INSERT INTO district SET city = '부산광역시', district = '해운대구', do
 
 -- 🐶 홍길동(user1)의 반려동물 강아지 '초코'
 INSERT INTO pet
-SET memberId = 4, name = '초코', species = '강아지', breed = '말티즈',
+SET memberId = 4, NAME = '초코', species = '강아지', breed = '말티즈',
     gender = '수컷', birthDate = '2022-03-15', weight = 4.2;
 
 -- 🐱 홍길동(user1)의 반려동물 고양이 '나비'
 INSERT INTO pet
-SET memberId = 4, name = '나비', species = '고양이', breed = '코리안숏헤어',
+SET memberId = 4, NAME = '나비', species = '고양이', breed = '코리안숏헤어',
     gender = '암컷', birthDate = '2023-01-10', weight = 3.5;
 
 -- 💉 초코(강아지)의 종합백신 접종 기록 (다음 예정 포함)
@@ -246,7 +247,7 @@ VALUES
 (2, '/images/pets/2_03.jpg', 'happy', 0.91, NOW());
 
 -- 백신 종류 및 주기 데이터 삽입
-INSERT INTO vaccine_schedule (vaccineName, intervalMonths, type, description) VALUES
+INSERT INTO vaccine_schedule (vaccineName, intervalMonths, TYPE, DESCRIPTION) VALUES
 ('Rabies', 12, 'Initial', '인간에게 감염될 수 있는 치명적인 바이러스 예방'),
 ('Parvovirus', 12, 'Initial', '파보 바이러스에 의한 위장관 질환 예방'),
 ('Distemper', 12, 'Initial', '강아지의 심각한 바이러스성 질병 예방'),
@@ -257,24 +258,11 @@ INSERT INTO vaccine_schedule (vaccineName, intervalMonths, type, description) VA
 ('Feline Panleukopenia', 12, 'Annual', '고양이의 위장관 질환과 관련된 바이러스 예방'),
 ('FIP', 12, 'Annual', '고양이의 배액 질환과 관련된 질병 예방');
 ##예시용 코드-----------------------------------------------------
-select *
-from pet_vaccination;
 
-select *
-from pet;
-
-select *
-from vaccine_schedule;
-
-select *
-from `member`;
-
-
-
-
+  -- 백신 이름에 맞는 주기 가져오기
 DELIMITER $$
 
-CREATE TRIGGER auto_set_next_due_date
+CREATE TRIGGER set_next_due_date
 BEFORE INSERT ON pet_vaccination
 FOR EACH ROW
 BEGIN
@@ -285,11 +273,12 @@ BEGIN
   FROM vaccine_schedule
   WHERE vaccineName = NEW.vaccineName;
 
-  -- 접종일을 기준으로 다음 접종일 계산 (주기 더하기)
+  -- 접종일을 기준으로 다음 접종일 계산
   SET NEW.nextDueDate = DATE_ADD(NEW.injectionDate, INTERVAL v_interval MONTH);
 END $$
 
 DELIMITER ;
+
 
 INSERT INTO pet (memberId, NAME, species, breed, gender, birthDate, weight) VALUES
 (1, '콩이', '강아지', '말티즈', '암컷', '2021-05-10', 3.5),
@@ -313,3 +302,4 @@ INSERT INTO pet_vaccination (petId, vaccineName, injectionDate, nextDueDate, vet
 
 
 ##예시용 코드-----------------------------------------------------
+
