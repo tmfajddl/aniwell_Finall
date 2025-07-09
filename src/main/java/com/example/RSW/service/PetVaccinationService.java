@@ -28,7 +28,12 @@ public class PetVaccinationService {
     }
 
     public ResultData insertPetVaccination(int petId, String vaccineName, String injectionDate) {
+        // 동일 백신의 이전 접종 기록 → nextDueDate NULL 처리
+        petVaccinationRepository.invalidateNextDueDates(petId, vaccineName);
+
+        // 새 백신 등록
         petVaccinationRepository.insertVaccination(petId, vaccineName, injectionDate);
+
         return ResultData.from("S-1", "접종 등록 완료");
     }
 
@@ -43,5 +48,20 @@ public class PetVaccinationService {
 
     public int getPetIdById(int vaccinationId) {
         return petVaccinationRepository.getPetIdById(vaccinationId);
+    }
+
+    public ResultData updatePetVaccinationWithNotes(int vaccinationId, String vaccineName, String injectionDate, String notes) {
+        petVaccinationRepository.updatePetVaccinationWithNotes(vaccinationId, vaccineName, injectionDate,notes);
+        return ResultData.from("S-1", "접종 정보 수정 완료");
+    }
+
+    public ResultData insertPetVaccinationWithNotes(int petId, String vaccineName, String injectionDate, String notes) {
+        // 동일 백신의 이전 접종 기록 → nextDueDate NULL 처리
+        petVaccinationRepository.invalidateNextDueDates(petId, vaccineName);
+
+        // 새 백신 등록
+        petVaccinationRepository.insertPetVaccinationWithNotes(petId, vaccineName, injectionDate, notes);
+
+        return ResultData.from("S-1", "접종 등록 완료");
     }
 }
