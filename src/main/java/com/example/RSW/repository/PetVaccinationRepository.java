@@ -17,4 +17,6 @@ public interface PetVaccinationRepository {
     void updatePetVaccination(int vaccinationId, String vaccineName, String injectionDate);
 
     PetVaccination getVaccinationById(int vaccinationId);
+
+    int getPetIdById(int vaccinationId);
 }

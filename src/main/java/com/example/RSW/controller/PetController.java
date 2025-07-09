@@ -23,6 +23,9 @@ import java.util.Map;
 public class PetController {
 
     @Autowired
+    Rq rq;
+
+    @Autowired
     private PetService petService;
 
     @Autowired
@@ -47,8 +50,6 @@ public class PetController {
     @ResponseBody
     public String doJoin(HttpServletRequest req, String name, String species, String breed,
                          String gender, String birthDate, double weight) {
-
-        Rq rq = (Rq) req.getAttribute("rq");
 
         if (Ut.isEmptyOrNull(name)) {
             return Ut.jsHistoryBack("F-1", "이름을 입력하세요");
@@ -76,7 +77,8 @@ public class PetController {
 
         ResultData joinRd = petService.insertPet(rq.getLoginedMemberId(),name,species,breed,gender,birthDate,weight);
 
-        return Ut.jsReplace(joinRd.getResultCode(), joinRd.getMsg(), "../member/myPage");
+        int id =rq.getLoginedMemberId();
+        return Ut.jsReplace(joinRd.getResultCode(), joinRd.getMsg(), "../pet/list?memberId="+id);
     }
 
     @RequestMapping("/usr/pet/modify")
@@ -91,8 +93,6 @@ public class PetController {
     @ResponseBody
     public String doModify(HttpServletRequest req, @RequestParam("petId") int petId, String name, String species, String breed,
                            String gender, String birthDate, double weight, String photo) {
-
-        Rq rq = (Rq) req.getAttribute("rq");
 
         // 비번은 안바꾸는거 가능(사용자) 비번 null 체크는 x
 
@@ -128,7 +128,9 @@ public class PetController {
             modifyRd = petService.updatePet(petId, name,species,breed,gender,birthDate,weight,photo);
         }
 
-        return Ut.jsReplace(modifyRd.getResultCode(), modifyRd.getMsg(), "../pet/petPage");
+        int id = rq.getLoginedMemberId();
+
+        return Ut.jsReplace(modifyRd.getResultCode(), modifyRd.getMsg(), "../pet/list?memberId="+id);
     }
 
     @RequestMapping("/usr/pet/vaccination")
@@ -172,9 +174,11 @@ public class PetController {
     }
 
     @RequestMapping("/usr/pet/delete")
-    public String doDelete(@RequestParam("petId") int petId) {
+    public String doDelete(HttpServletRequest req, @RequestParam("petId") int petId) {
+
         ResultData deleteRd = petService.deletePet(petId);
-        return Ut.jsReplace(deleteRd.getResultCode(), deleteRd.getMsg(), "../member/myPage"); // JSP 경로
+        int id = rq.getLoginedMemberId();
+        return Ut.jsReplace(deleteRd.getResultCode(), deleteRd.getMsg(), "../pet/list?memberId="+id); // JSP 경로
     }
 
     @RequestMapping("/usr/pet/vaccination/registration")
@@ -186,8 +190,7 @@ public class PetController {
     @ResponseBody
     public String doRegistration(HttpServletRequest req, @RequestParam("petId") int petId, String vaccineName, String injectionDate) {
 
-        Rq rq = (Rq) req.getAttribute("rq");
-
+        int id = petId;
         if (Ut.isEmptyOrNull(String.valueOf(petId))) {
             return Ut.jsHistoryBack("F-1", "애완동물을 선택하세요");
         }
@@ -201,8 +204,7 @@ public class PetController {
         }
 
         ResultData registrationRd = petVaccinationService.insertPetVaccination(petId,vaccineName,injectionDate);
-
-        return Ut.jsReplace(registrationRd.getResultCode(), registrationRd.getMsg(), "../pet/vaccination");
+        return Ut.jsReplace(registrationRd.getResultCode(), registrationRd.getMsg(), "../vaccination?petId="+id);
     }
 
     @RequestMapping("/usr/pet/vaccination/modify")
@@ -214,9 +216,8 @@ public class PetController {
 
     @RequestMapping("/usr/pet/vaccination/doModify")
     @ResponseBody
-    public String doVaccinationModify(HttpServletRequest req, @RequestParam("vaccinationId") int vaccinationId, String vaccineName, String injectionDate) {
+    public String doVaccinationModify(@RequestParam("vaccinationId") int vaccinationId, String vaccineName, String injectionDate) {
 
-        Rq rq = (Rq) req.getAttribute("rq");
 
         // 비번은 안바꾸는거 가능(사용자) 비번 null 체크는 x
 
@@ -229,8 +230,8 @@ public class PetController {
         }
 
         ResultData modifyRd = petVaccinationService.updatePetVaccination( vaccinationId, vaccineName,injectionDate);
-
-        return Ut.jsReplace(modifyRd.getResultCode(), modifyRd.getMsg(), "../pet/vaccination");
+        int id = petVaccinationService.getPetIdById(vaccinationId);
+        return Ut.jsReplace(modifyRd.getResultCode(), modifyRd.getMsg(), "../vaccination?petId="+id);
     }
 
     @RequestMapping("/usr/pet/vaccination/detail")
@@ -242,7 +243,8 @@ public class PetController {
 
     @RequestMapping("/usr/pet/vaccination/delete")
     public String doVaccinationDelete(@RequestParam("vaccinationId") int  vaccinationId) {
+        int id = petVaccinationService.getPetIdById(vaccinationId);
         ResultData deleteRd = petVaccinationService.deletePetVaccination(vaccinationId);
-        return Ut.jsReplace(deleteRd.getResultCode(), deleteRd.getMsg(), "../pet/vaccination"); // JSP 경로
+        return Ut.jsReplace(deleteRd.getResultCode(), deleteRd.getMsg(), "../vaccination?petId="+id); // JSP 경로
     }
 }

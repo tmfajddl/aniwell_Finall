@@ -15,7 +15,7 @@ public interface PetRepository {
 
     int getLastInsertId();
 
-    void updatePetWithoutPhoto(int PetId, String name, String species, String breed, String gender, String birthDate, double weight);
+    void updatePetWithoutPhoto(int petId, String name, String species, String breed, String gender, String birthDate, double weight);
 
     void updatePet(int petId, String name, String species, String breed, String gender, String birthDate, double weight, String photo);
 

@@ -40,4 +40,8 @@ public class PetVaccinationService {
     public PetVaccination getVaccinationsById(int vaccinationId) {
         return petVaccinationRepository.getVaccinationById(vaccinationId);
     }
+
+    public int getPetIdById(int vaccinationId) {
+        return petVaccinationRepository.getPetIdById(vaccinationId);
+    }
 }

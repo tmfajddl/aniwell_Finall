@@ -6,16 +6,21 @@
 <mapper namespace="com.example.RSW.repository.MemberRepository">
 
   <insert id="doJoin" parameterType="map">
-    INSERT INTO `member` SET
-    regDate = NOW(),
-    updateDate = NOW(),
-    loginId = #{loginId},
-    loginPw = #{loginPw},
-    `name` = #{name},
-    nickname = #{nickname},
-    cellphoneNum = #{cellphoneNum},
-    email = #{email}
+    INSERT INTO `member`
+    SET
+      regDate = NOW(),
+        updateDate = NOW(),
+        loginId = #{loginId},
+      loginPw = #{loginPw},
+      `name` = #{name},
+      nickname = #{nickname},
+      cellphone = #{cellphoneNum},
+      email = #{email},
+      address = #{address},
+      authName = #{authName},
+      authLevel = #{authLevel}
   </insert>
+
 
   <select id="getLastInsertId" parameterType="int">
     SELECT LAST_INSERT_ID()

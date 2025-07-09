@@ -1,12 +1,13 @@
-
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <html>
 <head>
-    <title>Title</title>
+  <title>백신 등록</title>
 </head>
 <body>
-<form action="/usr/pet/vaccination/doRegistration" method="post">
-  <input type="hidden" name="petId" value="${petId}" />
+<h1>백신 등록</h1>
+
+<!-- petId 파라미터를 가져오는 방법 -->
+<form action="/usr/pet/vaccination/doRegistration?petId=${param.petId}" method="post">
 
   <label for="vaccineName">백신 이름:</label>
   <select id="vaccineName" name="vaccineName" required>
@@ -27,7 +28,5 @@
 
   <button type="submit">등록</button>
 </form>
-
-
 </body>
 </html>
