@@ -17,4 +17,8 @@ public interface QnaRepository {
     void saveUserQna(Qna qna);
 
     List<Qna> getUserQnaByMemberId(int memberId);
+
+    void markQnaAsDeleted(int id);
+
+    void updateQna(int id, String title, String body, boolean isSecret);
 }
