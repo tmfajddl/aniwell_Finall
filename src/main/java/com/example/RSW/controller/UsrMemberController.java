@@ -35,6 +35,7 @@ public class UsrMemberController {
     @Autowired
     private VetCertificateService vetCertificateService;
 
+
     @RequestMapping("/usr/member/doLogout")
     @ResponseBody
     public String doLogin(HttpServletRequest req) {
