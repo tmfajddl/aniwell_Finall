@@ -72,6 +72,10 @@ public class UsrQnaController {
                             @RequestParam String body,
                             @RequestParam(required = false, defaultValue = "false") boolean isSecret) {
 
+        if (rq.getLoginedMemberId() == 0) {
+            return ResultData.from("F-A", "로그인 후 질문 등록이 가능합니다.");
+        }
+
         Rq rq = (Rq) req.getAttribute("rq");
         int loginedMemberId = rq.getLoginedMemberId();
 

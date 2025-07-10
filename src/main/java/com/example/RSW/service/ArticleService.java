@@ -162,4 +162,8 @@ public class ArticleService {
         return articleRepository.getBadRP(relId);
     }
 
+    public List<Article> getAllArticles() {
+        return articleRepository.findAll(); // 또는 관리자용 정렬/필터링 포함
+    }
+
 }
