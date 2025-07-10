@@ -1,86 +1,114 @@
+<%@ page contentType="text/html;charset=UTF-8" %>
 
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+
 <html>
 <head>
-    <title>Title</title>
-</head>
-<body>
-<html lang="ko">
-<head>
-  <meta charset="UTF-8">
-  <title>로그인</title>
+  <title>Login</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      background-color: #f0f0f0;
+      margin: 0;
+      background-color: #999;
+      font-family: 'Arial', sans-serif;
+    }
+
+    .popup-container {
+      display: flex;
+      width: 600px;
+      height: 400px;
+      margin: 100px auto;
+      background: white;
+      border-radius: 15px;
+      overflow: hidden;
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    .left-panel {
+      width: 50%;
+      padding: 40px 30px;
+      background-color: white;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .left-panel h1 {
+      margin-bottom: 30px;
+      font-size: 28px;
+    }
+
+    .left-panel input {
+      width: 100%;
+      margin-bottom: 15px;
+      padding: 8px;
+      border: none;
+      border-bottom: 1px solid #aaa;
+      outline: none;
+      background: transparent;
+    }
+
+    .sign-in-button {
+      margin-top: 10px;
+      background-color: #f5d76e;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 10px;
+      box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+      cursor: pointer;
+    }
+
+    .sign-in-button:hover {
+      background-color: #f7e08c;
+    }
+
+    .right-panel {
+      width: 50%;
+      background: linear-gradient(135deg, #c0d9c9, #f2eb99);
       display: flex;
       justify-content: center;
       align-items: center;
-      height: 100vh;
-      margin: 0;
+      flex-direction: column;
     }
-    .login-container {
-      background: white;
-      padding: 30px;
-      border-radius: 8px;
-      box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-      width: 300px;
-    }
-    .login-container h2 {
-      text-align: center;
-      margin-bottom: 20px;
-    }
-    .login-container input {
-      width: 100%;
-      padding: 10px;
-      margin: 10px 0;
-      border-radius: 4px;
-      border: 1px solid #ccc;
-    }
-    .login-container button {
-      width: 100%;
-      padding: 10px;
-      background-color: #4CAF50;
-      color: white;
+
+    .sign-up-button {
+      background-color: #a8cbb5;
       border: none;
-      border-radius: 4px;
+      padding: 10px 20px;
+      border-radius: 10px;
+      box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
       cursor: pointer;
     }
-    .login-container button:hover {
-      background-color: #45a049;
+
+    .sign-up-button:hover {
+      background-color: #b9e0c8;
     }
-    .error-message {
-      color: red;
-      font-size: 12px;
-      text-align: center;
+
+    .logo-img {
+      margin-top: 20px;
+      width: 100px;
+      opacity: 0.9;
     }
   </style>
 </head>
 <body>
 
-<div class="login-container">
-  <h2>로그인</h2>
+<div class="popup-container">
+  <!-- 로그인 폼 -->
+  <form class="left-panel" action="/usr/member/doLogin" method="post">
+    <h1>LOGIN</h1>
+    <input type="text" name="loginId" placeholder="ID" required>
+    <input type="password" name="loginPw" placeholder="PW" required>
+    <button class="sign-in-button" type="submit">sign in</button>
 
-  <!-- 로그인 실패 메시지 표시 -->
-  <c:if test="${param.error != null}">
-    <div class="error-message">아이디 또는 비밀번호를 확인해주세요.</div>
-  </c:if>
-
-  <form action="/usr/member/doLogin" method="post">
-    <input type="text" name="loginId" placeholder="아이디" required><br>
-    <input type="password" name="loginPw" placeholder="비밀번호" required><br>
-    <button type="submit">로그인</button>
+    <!-- 로고 이미지 -->
+    <img class="logo-img" src="/img/logo.png" alt="Aniwell Logo">
   </form>
 
-  <div style="text-align: center; margin-top: 10px;">
-    <a href="/usr/member/findLoginId">아이디 찾기</a> |
-    <a href="/usr/member/findLoginPw">비밀번호 찾기</a>
+  <!-- 회원가입 버튼 -->
+  <div class="right-panel">
+    <button class="sign-up-button" onclick="location.href='/usr/member/join'">sign up</button>
   </div>
 </div>
-
-</body>
-</html>
 
 </body>
 </html>

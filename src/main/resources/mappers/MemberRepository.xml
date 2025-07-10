@@ -5,6 +5,7 @@
 
 <mapper namespace="com.example.RSW.repository.MemberRepository">
 
+
     <insert id="doJoin" parameterType="map">
         INSERT INTO `member`
         SET regDate = NOW(),
@@ -110,6 +111,7 @@
         FROM member m
                  LEFT JOIN vet_certificate v ON m.id = v.memberId
     </select>
+
 
 
 </mapper>

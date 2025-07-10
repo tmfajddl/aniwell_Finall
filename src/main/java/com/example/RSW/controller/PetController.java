@@ -13,7 +13,13 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -48,37 +54,50 @@ public class PetController {
 
     @RequestMapping("/usr/pet/doJoin")
     @ResponseBody
-    public String doJoin(HttpServletRequest req, String name, String species, String breed,
-                         String gender, String birthDate, double weight) {
+    public String doJoin(HttpServletRequest req,
+                         @RequestParam("photo") MultipartFile photo,
+                         @RequestParam String name,
+                         @RequestParam String species,
+                         @RequestParam String breed,
+                         @RequestParam String gender,
+                         @RequestParam String birthDate,
+                         @RequestParam double weight) {
 
-        if (Ut.isEmptyOrNull(name)) {
-            return Ut.jsHistoryBack("F-1", "이름을 입력하세요");
+        // 유효성 검사 생략 안 함
+        if (Ut.isEmptyOrNull(name)) return Ut.jsHistoryBack("F-1", "이름을 입력하세요");
+        if (Ut.isEmptyOrNull(species)) return Ut.jsHistoryBack("F-2", "종을 입력하세요");
+        if (Ut.isEmptyOrNull(breed)) return Ut.jsHistoryBack("F-3", "품종을 입력하세요");
+        if (Ut.isEmptyOrNull(gender)) return Ut.jsHistoryBack("F-4", "성별을 입력하세요");
+        if (Ut.isEmptyOrNull(birthDate)) return Ut.jsHistoryBack("F-5", "생일을 입력하세요");
+        if (Ut.isEmptyOrNull(String.valueOf(weight))) return Ut.jsHistoryBack("F-6", "몸무게를 입력하세요");
+
+        // 1. 파일 저장 처리
+        String imagePath = null;
+        if (!photo.isEmpty()) {
+            String uploadDir = "/Users/e-suul/Desktop/aniwell_uploads"; // 실제 저장 경로
+            File uploadFolder = new File(uploadDir);
+            if (!uploadFolder.exists()) uploadFolder.mkdirs();
+
+            String fileName = System.currentTimeMillis() + "_" + photo.getOriginalFilename();
+            File dest = new File(uploadDir, fileName);
+
+            try {
+                photo.transferTo(dest);
+                imagePath = "/uploads/" + fileName; // DB에 저장할 경로
+            } catch (IOException e) {
+                e.printStackTrace();
+                return Ut.jsHistoryBack("F-7", "사진 업로드 중 오류 발생");
+            }
         }
-        if (Ut.isEmptyOrNull(species)) {
-            return Ut.jsHistoryBack("F-2", "종을 입력하세요");
 
-        }
-        if (Ut.isEmptyOrNull(breed)) {
-            return Ut.jsHistoryBack("F-3", "중성화여부를 입력하세요");
+        // 2. 서비스로 전달
+        ResultData joinRd = petService.insertPet(
+                rq.getLoginedMemberId(),
+                name, species, breed, gender, birthDate, weight, imagePath
+        );
 
-        }
-        if (Ut.isEmptyOrNull(gender)) {
-            return Ut.jsHistoryBack("F-4", "성별을 입력하세요");
-
-        }
-        if (Ut.isEmptyOrNull(birthDate)) {
-            return Ut.jsHistoryBack("F-5", "생일을 입력하세요");
-
-        }
-        if (Ut.isEmptyOrNull(String.valueOf(weight))) {
-            return Ut.jsHistoryBack("F-6", "몸무게를 입력하세요");
-
-        }
-
-        ResultData joinRd = petService.insertPet(rq.getLoginedMemberId(),name,species,breed,gender,birthDate,weight);
-
-        int id =rq.getLoginedMemberId();
-        return Ut.jsReplace(joinRd.getResultCode(), joinRd.getMsg(), "../pet/list?memberId="+id);
+        int id = rq.getLoginedMemberId();
+        return Ut.jsReplace(joinRd.getResultCode(), joinRd.getMsg(), "../pet/list?memberId=" + id);
     }
 
     @RequestMapping("/usr/pet/modify")
@@ -92,7 +111,7 @@ public class PetController {
     @RequestMapping("/usr/pet/doModify")
     @ResponseBody
     public String doModify(HttpServletRequest req, @RequestParam("petId") int petId, String name, String species, String breed,
-                           String gender, String birthDate, double weight, String photo) {
+                           String gender, String birthDate, double weight, MultipartFile photo) {
 
         // 비번은 안바꾸는거 가능(사용자) 비번 null 체크는 x
 
@@ -120,17 +139,35 @@ public class PetController {
 
         }
 
-        ResultData modifyRd;
+        String photoPath = null;
 
-        if (Ut.isEmptyOrNull(photo)) {
-            modifyRd = petService.updatePetyWithoutPhoto(petId, name,species,breed,gender,birthDate,weight);
+        if (photo != null && !photo.isEmpty()) {
+            try {
+                String uploadDir = "/Users/e-suul/Desktop/AniwellProject/src/main/resources/static/img/pet/";
+                String newFilename = System.currentTimeMillis() + "_" + photo.getOriginalFilename();
+                Path filePath = Paths.get(uploadDir + newFilename);
+
+                Files.createDirectories(filePath.getParent()); // 폴더 없으면 생성
+                photo.transferTo(filePath.toFile());
+
+                photoPath = "/img/pet/" + newFilename; // DB에는 상대경로만 저장
+
+            } catch (Exception e) {
+                e.printStackTrace();
+                return Ut.jsHistoryBack("F-1", "사진 업로드 실패");
+            }
+        }
+
+
+        ResultData modifyRd;
+        if (photoPath == null) {
+            modifyRd = petService.updatePetyWithoutPhoto(petId, name, species, breed, gender, birthDate, weight);
         } else {
-            modifyRd = petService.updatePet(petId, name,species,breed,gender,birthDate,weight,photo);
+            modifyRd = petService.updatePet(petId, name, species, breed, gender, birthDate, weight, photoPath);
         }
 
         int id = rq.getLoginedMemberId();
-
-        return Ut.jsReplace(modifyRd.getResultCode(), modifyRd.getMsg(), "../pet/list?memberId="+id);
+        return Ut.jsReplace(modifyRd.getResultCode(), modifyRd.getMsg(), "../pet/list?memberId=" + id);
     }
 
     @RequestMapping("/usr/pet/vaccination")
@@ -173,6 +210,7 @@ public class PetController {
         return "usr/pet/analysis"; // JSP 경로
     }
 
+    @ResponseBody
     @RequestMapping("/usr/pet/delete")
     public String doDelete(HttpServletRequest req, @RequestParam("petId") int petId) {
 
@@ -188,24 +226,26 @@ public class PetController {
 
     @RequestMapping("/usr/pet/vaccination/doRegistration")
     @ResponseBody
-    public String doRegistration(HttpServletRequest req, @RequestParam("petId") int petId, String vaccineName, String injectionDate) {
+    public ResultData doRegistration(HttpServletRequest req,
+                                     @RequestParam("petId") int petId,
+                                     String vaccineName,
+                                     String injectionDate, String notes) {
 
-        int id = petId;
-        if (Ut.isEmptyOrNull(String.valueOf(petId))) {
-            return Ut.jsHistoryBack("F-1", "애완동물을 선택하세요");
-        }
         if (Ut.isEmptyOrNull(vaccineName)) {
-            return Ut.jsHistoryBack("F-2", "백신 이름을 입력하세요");
-
+            return ResultData.from("F-2", "백신 이름을 입력하세요");
         }
         if (Ut.isEmptyOrNull(injectionDate)) {
-            return Ut.jsHistoryBack("F-3", "접종날짜를 입력하세요");
-
+            return ResultData.from("F-3", "접종 날짜를 입력하세요");
         }
 
-        ResultData registrationRd = petVaccinationService.insertPetVaccination(petId,vaccineName,injectionDate);
-        return Ut.jsReplace(registrationRd.getResultCode(), registrationRd.getMsg(), "../vaccination?petId="+id);
+        if (notes == null) {
+            return petVaccinationService.insertPetVaccination(petId, vaccineName, injectionDate);
+        } else {
+            return petVaccinationService.insertPetVaccinationWithNotes(petId, vaccineName, injectionDate,notes);
+        }
     }
+
+
 
     @RequestMapping("/usr/pet/vaccination/modify")
     public String showVaccinationModify(@RequestParam("vaccinationId") int vaccinationId, Model model) {
@@ -216,7 +256,7 @@ public class PetController {
 
     @RequestMapping("/usr/pet/vaccination/doModify")
     @ResponseBody
-    public String doVaccinationModify(@RequestParam("vaccinationId") int vaccinationId, String vaccineName, String injectionDate) {
+    public String doVaccinationModify(@RequestParam("vaccinationId") int vaccinationId, String vaccineName, String injectionDate, String notes) {
 
 
         if (Ut.isEmptyOrNull(vaccineName)) {
@@ -226,9 +266,18 @@ public class PetController {
             return Ut.jsHistoryBack("F-2", "접종일자를 입력하세요");
 
         }
+        if (Ut.isEmptyOrNull(injectionDate)) {
+            return Ut.jsHistoryBack("F-2", "다음일자를 입력하세요");
 
+        }
 
-        ResultData modifyRd = petVaccinationService.updatePetVaccination( vaccinationId, vaccineName,injectionDate);
+        ResultData modifyRd;
+        if (notes == null) {
+            modifyRd = petVaccinationService.updatePetVaccination( vaccinationId, vaccineName,injectionDate);
+        } else {
+            modifyRd = petVaccinationService.updatePetVaccinationWithNotes( vaccinationId, vaccineName,injectionDate,notes);
+        }
+
         int id = petVaccinationService.getPetIdById(vaccinationId);
         return Ut.jsReplace(modifyRd.getResultCode(), modifyRd.getMsg(), "../vaccination?petId="+id);
     }
@@ -240,10 +289,11 @@ public class PetController {
         return "usr/pet/vaccinationDetail";  // 상세보기 JSP 페이지
     }
 
+    @ResponseBody
     @RequestMapping("/usr/pet/vaccination/delete")
     public String doVaccinationDelete(@RequestParam("vaccinationId") int  vaccinationId) {
         int id = petVaccinationService.getPetIdById(vaccinationId);
         ResultData deleteRd = petVaccinationService.deletePetVaccination(vaccinationId);
-        return Ut.jsReplace(deleteRd.getResultCode(), deleteRd.getMsg(), "../vaccination?petId="+id); // JSP 경로
+        return "jsReplace('/usr/pet/vaccination?petId=" + id + "', '삭제가 완료되었습니다.');";
     }
 }

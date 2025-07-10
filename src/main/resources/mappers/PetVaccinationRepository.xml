@@ -31,10 +31,21 @@
         VALUES (#{petId}, #{vaccineName}, #{injectionDate})
     </insert>
 
+    <insert id="insertPetVaccinationWithNotes" parameterType="map">
+        INSERT INTO pet_vaccination (petId, vaccineName, injectionDate,notes)
+        VALUES (#{petId}, #{vaccineName}, #{injectionDate}, #{notes})
+    </insert>
+
     <!-- 백신 수정 -->
     <update id="updatePetVaccination" parameterType="map">
         UPDATE pet_vaccination
         SET vaccineName = #{vaccineName}, injectionDate = #{injectionDate}
+        WHERE id = #{vaccinationId}
+    </update>
+
+    <update id="updatePetVaccinationWithNotes" parameterType="map">
+        UPDATE pet_vaccination
+        SET vaccineName = #{vaccineName}, injectionDate = #{injectionDate}, notes = #{notes}
         WHERE id = #{vaccinationId}
     </update>
 
@@ -57,5 +68,12 @@
         FROM pet_vaccination
         WHERE id = #{vaccinationId}
     </select>
+
+    <update id="invalidateNextDueDates">
+        UPDATE pet_vaccination
+        SET nextDueDate = NULL
+        WHERE petId = #{petId}
+          AND vaccineName = #{vaccineName}
+    </update>
 
 </mapper>

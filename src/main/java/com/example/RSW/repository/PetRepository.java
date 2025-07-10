@@ -11,7 +11,7 @@ public interface PetRepository {
 
     void deletePet(int id);
 
-    void insertPet(int memberId, String name, String species, String breed, String gender, String birthDate, double weight);
+    void insertPet(int memberId, String name, String species, String breed, String gender, String birthDate, double weight, String photo);
 
     int getLastInsertId();
 
