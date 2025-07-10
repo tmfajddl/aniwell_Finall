@@ -188,7 +188,8 @@
     <div id="galleryContent"></div>
   </div>
 
-  <button>감정 일기</button>
+  <button onclick="location.href='/usr/pet/daily?petId=${pet.id}'">감정 일기</button>
+
 </div>
 
 <!-- 📌 본문 콘텐츠 -->
