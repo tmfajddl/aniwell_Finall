@@ -295,7 +295,6 @@
         </c:if>
     </div>
 
-
     <div style="margin-bottom: 40px;">
         <form action="/usr/pet/join" method="get">
             <button type="submit" style="padding: 10px 20px; background: #e3e9ce; border: none; border-radius: 10px; font-weight: bold; cursor: pointer;">
