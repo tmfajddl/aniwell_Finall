@@ -92,6 +92,7 @@
                EXISTS(SELECT 1 FROM vet_answer va WHERE va.qna_id = q.id) AS hasAnswer
         FROM Qna q
                  JOIN member m ON q.memberId = m.id
+        WHERE q.isActive = 1
         ORDER BY q.regDate DESC
     </select>
 
@@ -123,11 +124,11 @@
         WHERE id = #{id}
     </update>
 
-    <update id="markInactive" parameterType="int">
-        UPDATE Qna
-        SET isActive = 0
+    <delete id="delete" parameterType="int">
+        DELETE FROM Qna
         WHERE id = #{id}
-    </update>
+    </delete>
+
 
 
     <update id="modify">
