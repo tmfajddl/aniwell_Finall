@@ -51,4 +51,6 @@ public class WalkCrewService {
 	public void deleteCrew(int id) {
 		walkCrewRepository.deleteById(id);
 	}
+
+	public List<WalkCrew> getWalkCrews(int memberId) { return walkCrewRepository.getWalkCrews(memberId);}
 }

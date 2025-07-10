@@ -59,7 +59,7 @@
   <div class="menu-icon"></div>
   <div class="menu-icon"></div>
 
-  <a class="menu-button" href="/usr/member/myPage">나의 정보</a>
+  <a class="menu-button" href="/usr/member/myPage">내정보</a>
   <a class="menu-button" href="/usr/walkCrew/list">산책 크루</a>
 
   <c:if test="${!rq.logined}">

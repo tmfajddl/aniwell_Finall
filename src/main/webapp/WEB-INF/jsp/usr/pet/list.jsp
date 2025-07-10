@@ -245,36 +245,83 @@
     <h2>🐾 반려동물 등록증</h2>
 
     <div class="carousel-container">
-        <c:forEach var="pet" items="${pets}">
-            <a href="/usr/pet/modify?petId=${pet.id}" class="card" style="text-decoration: none; color: inherit;">
-                <h3>반려동물등록증</h3>
-                <div class="content">
-                    <c:choose>
-                        <c:when test="${not empty pet.photo}">
-                            <img src="${pet.photo}" alt="사진">
-                        </c:when>
-                        <c:otherwise>
-                            <img src="/img/default-pet.png" alt="사진">
-                        </c:otherwise>
-                    </c:choose>
-                    이름: ${pet.name} <br>
-                    품종: ${pet.breed} <br>
-                    생일: ${pet.birthDate} <br>
-                    성별: ${pet.gender}
-                </div>
-                <div class="date">${pet.createdAt}</div>
-            </a>
-        </c:forEach>
+    <c:forEach var="pet" items="${pets}">
+        <div class="card">
+            <h3>반려동물등록증</h3>
+            <div class="content" onclick="location.href='/usr/pet/petPage?petId=${pet.id}'" style="cursor:pointer;">
+                <c:choose>
+                    <c:when test="${not empty pet.photo}">
+                        <img src="${pet.photo}" alt="사진">
+                    </c:when>
+                    <c:otherwise>
+                        <img src="/img/default-pet.png" alt="사진">
+                    </c:otherwise>
+                </c:choose>
+                이름: ${pet.name} <br>
+                품종: ${pet.breed} <br>
+                생일: ${pet.birthDate} <br>
+                성별: ${pet.gender}
+            </div>
+            <div class="date">${pet.createdAt}</div>
 
-        <c:if test="${fn:length(pets) < 3}">
-            <c:forEach begin="1" end="${3 - fn:length(pets)}">
-                <div class="card empty"></div>
-            </c:forEach>
-        </c:if>
+            <!-- ✏️ 수정 버튼 -->
+            <button class="edit-btn" data-pet-id="${pet.id}" style="margin-top:10px; padding:6px 12px; background:#d6eabb; border:none; border-radius:6px; cursor:pointer;">
+                수정하기
+            </button>
+        </div>
+    </c:forEach>
+
+    <c:if test="${fn:length(pets) < 3}">
+        <c:forEach begin="1" end="${3 - fn:length(pets)}">
+            <div class="card empty"></div>
+        </c:forEach>
+    </c:if>
+</div>
+
+    <!-- ✨ 수정 팝업 영역 -->
+    <div id="editPopup" style="
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 600px;
+  height: 90%;
+  background: white;
+  box-shadow: 0 0 20px rgba(0,0,0,0.3);
+  border-radius: 16px;
+  z-index: 9999;
+  display: none;
+  overflow-y: auto;
+">
+        <button onclick="closeEditPopup()" style="position:absolute; top:12px; right:12px; background:#eee; border:none; padding:4px 8px; border-radius:6px;">❌</button>
+        <div id="editPopupContent" style="padding:20px;"></div>
     </div>
 
+
     <form action="/usr/pet/join" method="get">
-        <button type="submit" class="register-button">+ 반려동물 등록하기</button>
+        <!-- ✅ 등록 팝업 영역 추가 -->
+        <div id="registerPopup" style="
+  position: fixed;
+  top: 5%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 600px;
+  height: 90%;
+  background: white;
+  box-shadow: 0 0 20px rgba(0,0,0,0.3);
+  border-radius: 16px;
+  z-index: 9999;
+  display: none;
+  overflow-y: auto;
+">
+            <button onclick="closeRegisterPopup()" style="position:absolute; top:12px; right:12px; background:#eee; border:none; padding:4px 8px; border-radius:6px;">❌</button>
+            <div id="registerPopupContent" style="padding:20px;"></div>
+        </div>
+
+        <!-- ✅ 기존 등록 버튼 → 팝업 트리거로 변경 -->
+        <button type="button" class="register-button" onclick="openRegisterPopup()">+ 반려동물 등록하기</button>
+
+        <!-- ✅ 등록 팝업 열기 함수 -->
     </form>
 
     <!-- 👇 산책 크루 출력 영역 -->
@@ -294,5 +341,75 @@
     </div>
 </div>
 
+<script>
+    // ✏️ 수정 버튼 클릭 시 팝업 열기
+    document.addEventListener('click', function (e) {
+        if (e.target.classList.contains('edit-btn')) {
+            const petId = e.target.getAttribute('data-pet-id');
+            fetch('/usr/pet/modify?petId=' + petId)
+                .then(res => res.text())
+                .then(html => {
+                    document.getElementById('editPopupContent').innerHTML = html;
+                    document.getElementById('editPopup').style.display = 'block';
+                });
+        }
+    });
+
+    function closeEditPopup() {
+        document.getElementById('editPopup').style.display = 'none';
+    }
+</script>
+
+<script>
+    function openRegisterPopup() {
+        fetch('/usr/pet/join')
+            .then(res => res.text())
+            .then(html => {
+                document.getElementById('registerPopupContent').innerHTML = html;
+                document.getElementById('registerPopup').style.display = 'block';
+            });
+    }
+    function closeRegisterPopup() {
+        document.getElementById('registerPopup').style.display = 'none';
+    }
+</script>
+
+<!-- 수정 폼 -->
+<script>
+    function previewPhoto(input) {
+        const preview = document.getElementById('photo-preview');
+        const file = input.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                preview.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+
+    function confirmDelete() {
+        if (confirm("정말 삭제하시겠어요? 🐾")) {
+            const petId = document.querySelector('input[name="petId"]').value;
+            location.href = '/usr/pet/delete?petId=' + petId;
+        }
+    }
+</script>
+<!-- 등록 폼 -->
+<script>
+    const photoInput = document.getElementById('photoInput');
+    const photoPreview = document.getElementById('photoPreview');
+
+    photoInput.addEventListener('change', function () {
+        const file = this.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            photoPreview.style.backgroundImage = "url('" + e.target.result + "')";
+        };
+        reader.readAsDataURL(file);
+    });
+</script>
 </body>
 </html>

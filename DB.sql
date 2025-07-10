@@ -489,4 +489,9 @@ from vaccine_schedule;
 select *
 from `member`;
 
+select *
+from pet_analysis;
+
+select *
+from walk_crew;
 

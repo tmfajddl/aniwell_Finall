@@ -21,4 +21,6 @@ public interface WalkCrewRepository {
 	void update(WalkCrew walkCrew); // 크루 정보 수정
 
 	void deleteById(@Param("id") int id); // 크루 삭제
+
+    List<WalkCrew> getWalkCrews(@Param("memberId") int memberId);
 }
