@@ -121,5 +121,8 @@ public class MemberService {
 		memberRepository.updateAuthLevel(memberId, authLevel);
 	}
 
+	public List<Member> getForPrintMembers(String searchType, String searchKeyword) {
+		return memberRepository.getForPrintMembers(searchType, searchKeyword);
+	}
 
 }

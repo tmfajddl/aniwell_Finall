@@ -93,7 +93,8 @@
         </c:forEach>
     </c:if>
     <!-- 수의사 로그인 시 답변 폼 표시 (아직 본인이 답변 안 한 경우만) -->
-    <c:if test="${rq.loginedMember != null && rq.loginedMember.authLevel == 3 && !qna.isFaq}">
+    <c:if test="${rq.loginedMember != null && rq.loginedMember.authLevel == 3 && qna.isFaq == 0}">
+
         <c:set var="alreadyAnswered" value="false"/>
         <c:forEach var="va" items="${vetAnswers}">
             <c:if test="${va.memberId == rq.loginedMemberId}">
