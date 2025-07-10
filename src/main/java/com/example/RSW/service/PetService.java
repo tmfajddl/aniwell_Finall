@@ -28,11 +28,18 @@ public class PetService {
          return ResultData.from("S-1", "애완동물 삭제 완료");
      }
 
-    public ResultData insertPet(int memberId, String name, String species, String breed, String gender, String birthDate, double weight) {
-        petRepository.insertPet(memberId,name,species,breed,gender,birthDate,weight);
+    public ResultData insertPet(int memberId, String name, String species, String breed,
+                                String gender, String birthDate, double weight, String photo) {
+
+        // DB에 저장
+        petRepository.insertPet(memberId, name, species, breed, gender, birthDate, weight, photo);
+
+        // 방금 등록된 pet의 id 가져오기
         int id = petRepository.getLastInsertId();
-        return ResultData.from("S-1", "반려동물 등록 성공", "등록 성공 id",id);
+
+        return ResultData.from("S-1", "반려동물 등록 성공", "등록 성공 id", id);
     }
+
 
     public ResultData updatePetyWithoutPhoto(int petId, String name, String species, String breed, String gender, String birthDate, double weight) {
         petRepository.updatePetWithoutPhoto(petId, name,species,breed,gender,birthDate,weight);
