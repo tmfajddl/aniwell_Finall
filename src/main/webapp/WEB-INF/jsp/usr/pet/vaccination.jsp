@@ -301,6 +301,7 @@
 
             const form = e.target;
             const formData = new FormData(form);
+            const petId = formData.get('petId'); // ← hidden 필드에서 가져옴
 
             if (!petId || petId === 'undefined') {
                 alert('petId가 유효하지 않습니다!');
@@ -311,17 +312,21 @@
                 method: 'POST',
                 body: formData
             })
-                .then(res => res.json()) // ← JSON 응답
+                .then(res => res.json())
                 .then(data => {
-                    if (data.resultCode.startsWith('S-')) {
-                        location.href = '/usr/pet/vaccination?petId=' + petId;
+                    if (data.resultCode && data.resultCode.startsWith('S-')) {
+                        alert('✅ 등록 완료!');
+                        // ✅ 팝업 닫기
+                        document.getElementById('addVaccineCard')?.remove();
+                        // ✅ 페이지 새로고침
+                        location.reload();
                     } else {
-                        alert(data.msg);
+                        alert('❌ 등록 실패: ' + (data.msg || '서버 오류'));
                     }
                 })
                 .catch(err => {
                     console.error('등록 실패:', err);
-                    alert('등록 중 오류가 발생했습니다.');
+                    alert('❌ 등록 중 오류가 발생했습니다.');
                 });
         }
     });
