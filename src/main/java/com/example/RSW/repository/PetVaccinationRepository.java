@@ -19,4 +19,10 @@ public interface PetVaccinationRepository {
     PetVaccination getVaccinationById(int vaccinationId);
 
     int getPetIdById(int vaccinationId);
+
+    void updatePetVaccinationWithNotes(int vaccinationId, String vaccineName, String injectionDate, String notes);
+
+    void insertPetVaccinationWithNotes(int petId, String vaccineName, String injectionDate, String notes);
+
+    void invalidateNextDueDates(int petId, String vaccineName);
 }
