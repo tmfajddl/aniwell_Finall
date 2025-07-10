@@ -3,6 +3,7 @@ package com.example.RSW.controller;
 import com.example.RSW.service.PetAnalysisService;
 import com.example.RSW.service.PetService;
 import com.example.RSW.service.PetVaccinationService;
+import com.example.RSW.service.WalkCrewService;
 import com.example.RSW.util.Ut;
 import com.example.RSW.vo.*;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -21,11 +22,9 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.LocalDateTime;
 import java.util.*;
 
 @Controller
@@ -38,21 +37,58 @@ public class PetController {
     private PetService petService;
 
     @Autowired
+    private WalkCrewService walkCrewService;
+
+    @Autowired
     private PetVaccinationService petVaccinationService;
 
     @Autowired
     private PetAnalysisService petAnalysisService;
 
 
-    @RequestMapping("/usr/pet/test")
-    public String showTest() {
-        return "usr/pet/test"; // JSP or Thymeleaf 페이지
+    @RequestMapping("/usr/pet/petPage")
+    public String showTest(@RequestParam("petId") int petId, Model model) throws Exception{
+        Pet pet = petService.getPetsById(petId);
+        model.addAttribute("pet", pet);
+
+        List<PetVaccination> list = petVaccinationService.getVaccinationsByPetId(petId);
+
+        List<Map<String, Object>> events = new ArrayList<>();
+        for (PetVaccination pv : list) {
+            // ✅ 1. 접종 이벤트
+            Map<String, Object> injEvent = new HashMap<>();
+            injEvent.put("id", pv.getId());
+            injEvent.put("title", pv.getVaccineName() + " 접종");
+            injEvent.put("start", pv.getInjectionDate().toString());
+            injEvent.put("color", "#4caf50");
+
+            events.add(injEvent);
+
+            // ✅ 2. 다음 예정 이벤트 (nextDueDate가 null이 아닐 때만)
+            if (pv.getNextDueDate() != null) {
+                Map<String, Object> nextEvent = new HashMap<>();
+                nextEvent.put("id", pv.getId());
+                nextEvent.put("title", pv.getPetName() + " - " + pv.getVaccineName() + " 다음 예정");
+                nextEvent.put("start", pv.getNextDueDate().toString());
+                nextEvent.put("color", "#f44336");
+
+                events.add(nextEvent);
+            }
+        }
+
+        // ✅ JSON으로 변환하여 JSP에 전달
+        ObjectMapper objectMapper = new ObjectMapper();
+        String eventsJson = objectMapper.writeValueAsString(events);
+        model.addAttribute("eventsJson", eventsJson);
+        return "/usr/pet/petPage"; // JSP or Thymeleaf 페이지
     }
     @RequestMapping("/usr/pet/list")
     public String showPetList(@RequestParam("memberId") int memberId, Model model) {
         List<Pet> pets = petService.getPetsByMemberId(memberId);
+        List<WalkCrew> crews = walkCrewService.getWalkCrews(memberId);
 
         model.addAttribute("pets", pets);
+        model.addAttribute("crews", crews);
         return "usr/pet/list"; // JSP or Thymeleaf 페이지
     }
 
@@ -179,45 +215,18 @@ public class PetController {
         return Ut.jsReplace(modifyRd.getResultCode(), modifyRd.getMsg(), "../pet/list?memberId=" + id);
     }
 
-    @RequestMapping("/usr/pet/vaccination")
-    public String showPetVaccination(@RequestParam("petId") int petId, Model model) throws Exception {
-        List<PetVaccination> list = petVaccinationService.getVaccinationsByPetId(petId);
-
-        List<Map<String, Object>> events = new ArrayList<>();
-        for (PetVaccination pv : list) {
-            // ✅ 1. 접종 이벤트
-            Map<String, Object> injEvent = new HashMap<>();
-            injEvent.put("id", pv.getId());
-            injEvent.put("title", pv.getPetName() + " - " + pv.getVaccineName() + " 접종");
-            injEvent.put("start", pv.getInjectionDate().toString());
-            injEvent.put("color", "#4caf50");
-
-            events.add(injEvent);
-
-            // ✅ 2. 다음 예정 이벤트 (nextDueDate가 null이 아닐 때만)
-            if (pv.getNextDueDate() != null) {
-                Map<String, Object> nextEvent = new HashMap<>();
-                nextEvent.put("id", pv.getId());
-                nextEvent.put("title", pv.getPetName() + " - " + pv.getVaccineName() + " 다음 예정");
-                nextEvent.put("start", pv.getNextDueDate().toString());
-                nextEvent.put("color", "#f44336");
-
-                events.add(nextEvent);
-            }
-        }
-
-        // ✅ JSON으로 변환하여 JSP에 전달
-        ObjectMapper objectMapper = new ObjectMapper();
-        String eventsJson = objectMapper.writeValueAsString(events);
-        model.addAttribute("eventsJson", eventsJson);
-
-        return "usr/pet/vaccination";  // 👉 JSP 파일 경로
-    }
-
 
     @RequestMapping("/usr/pet/analysis")
     public String showAnalysisForm() {
         return "usr/pet/emotion";  // 분석 요청 form (이미지 경로 선택)
+    }
+
+    @RequestMapping("/usr/pet/gallery")
+    public String showGallery(@RequestParam("petId") int petId, Model model) {
+        List<PetAnalysis> analysisList = petAnalysisService.getAnalysisByPetId(petId);
+
+        model.addAttribute("analysisList", analysisList);
+        return "usr/pet/gallery";  // 분석 요청 form (이미지 경로 선택)
     }
 
     @PostMapping("/usr/pet/analysis/do")
