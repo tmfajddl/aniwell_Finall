@@ -54,37 +54,50 @@ public class PetController {
 
     @RequestMapping("/usr/pet/doJoin")
     @ResponseBody
-    public String doJoin(HttpServletRequest req, String name, String species, String breed,
-                         String gender, String birthDate, double weight) {
+    public String doJoin(HttpServletRequest req,
+                         @RequestParam("photo") MultipartFile photo,
+                         @RequestParam String name,
+                         @RequestParam String species,
+                         @RequestParam String breed,
+                         @RequestParam String gender,
+                         @RequestParam String birthDate,
+                         @RequestParam double weight) {
 
-        if (Ut.isEmptyOrNull(name)) {
-            return Ut.jsHistoryBack("F-1", "이름을 입력하세요");
+        // 유효성 검사 생략 안 함
+        if (Ut.isEmptyOrNull(name)) return Ut.jsHistoryBack("F-1", "이름을 입력하세요");
+        if (Ut.isEmptyOrNull(species)) return Ut.jsHistoryBack("F-2", "종을 입력하세요");
+        if (Ut.isEmptyOrNull(breed)) return Ut.jsHistoryBack("F-3", "품종을 입력하세요");
+        if (Ut.isEmptyOrNull(gender)) return Ut.jsHistoryBack("F-4", "성별을 입력하세요");
+        if (Ut.isEmptyOrNull(birthDate)) return Ut.jsHistoryBack("F-5", "생일을 입력하세요");
+        if (Ut.isEmptyOrNull(String.valueOf(weight))) return Ut.jsHistoryBack("F-6", "몸무게를 입력하세요");
+
+        // 1. 파일 저장 처리
+        String imagePath = null;
+        if (!photo.isEmpty()) {
+            String uploadDir = "/Users/e-suul/Desktop/aniwell_uploads"; // 실제 저장 경로
+            File uploadFolder = new File(uploadDir);
+            if (!uploadFolder.exists()) uploadFolder.mkdirs();
+
+            String fileName = System.currentTimeMillis() + "_" + photo.getOriginalFilename();
+            File dest = new File(uploadDir, fileName);
+
+            try {
+                photo.transferTo(dest);
+                imagePath = "/uploads/" + fileName; // DB에 저장할 경로
+            } catch (IOException e) {
+                e.printStackTrace();
+                return Ut.jsHistoryBack("F-7", "사진 업로드 중 오류 발생");
+            }
         }
-        if (Ut.isEmptyOrNull(species)) {
-            return Ut.jsHistoryBack("F-2", "종을 입력하세요");
 
-        }
-        if (Ut.isEmptyOrNull(breed)) {
-            return Ut.jsHistoryBack("F-3", "품종을 입력하세요");
+        // 2. 서비스로 전달
+        ResultData joinRd = petService.insertPet(
+                rq.getLoginedMemberId(),
+                name, species, breed, gender, birthDate, weight, imagePath
+        );
 
-        }
-        if (Ut.isEmptyOrNull(gender)) {
-            return Ut.jsHistoryBack("F-4", "성별을 입력하세요");
-
-        }
-        if (Ut.isEmptyOrNull(birthDate)) {
-            return Ut.jsHistoryBack("F-5", "생일을 입력하세요");
-
-        }
-        if (Ut.isEmptyOrNull(String.valueOf(weight))) {
-            return Ut.jsHistoryBack("F-6", "몸무게를 입력하세요");
-
-        }
-
-        ResultData joinRd = petService.insertPet(rq.getLoginedMemberId(),name,species,breed,gender,birthDate,weight);
-
-        int id =rq.getLoginedMemberId();
-        return Ut.jsReplace(joinRd.getResultCode(), joinRd.getMsg(), "../pet/list?memberId="+id);
+        int id = rq.getLoginedMemberId();
+        return Ut.jsReplace(joinRd.getResultCode(), joinRd.getMsg(), "../pet/list?memberId=" + id);
     }
 
     @RequestMapping("/usr/pet/modify")

@@ -98,7 +98,6 @@
       font-weight: bold;
       cursor: pointer;
     }
-
   </style>
 </head>
 <body>
@@ -139,18 +138,18 @@
 </div>
 
 <script>
-  const photoInput = document.getElementById('photoInput');
-  const photoPreview = document.getElementById('photoPreview');
+  var photoInput = document.getElementById('photoInput');
+  var photoPreview = document.getElementById('photoPreview');
 
   photoInput.addEventListener('change', function () {
-    const file = this.files[0];
+    var file = this.files[0];
     if (!file) return;
 
-    const reader = new FileReader();
+    var reader = new FileReader();
     reader.onload = function (e) {
-      photoPreview.style.backgroundImage = `url('${e.target.result}')`;
+      photoPreview.style.backgroundImage = "url('" + e.target.result + "')";
     };
-    reader.readAsDataURL(file); // base64 URL로 변환해서 미리보기 표시
+    reader.readAsDataURL(file);
   });
 </script>
 </body>
