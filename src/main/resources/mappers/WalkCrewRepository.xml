@@ -9,11 +9,10 @@
 	<insert id="insert">
 		INSERT INTO walk_crew
 		SET title = #{title},
-		descriptoin = #{descriptoin},
-		city = #{city},
-		district = #{district},
-		dong = #{dong},
-		leaderId = #{leaderId},
+		description = #{description},
+		district_id = #{districtId},
+		leaderId =
+		#{leaderId},
 		createdAt = NOW()
 	</insert>
 
@@ -39,8 +38,8 @@
 	<update id="update">
 		UPDATE walk_crew
 		SET title = #{title},
-		descriptoin =
-		#{descriptoin},
+		description =
+		#{description},
 		area = #{area},
 		leaderId = #{leaderId}
 		WHERE id = #{id}
@@ -50,5 +49,15 @@
 	<delete id="deleteById">
 		DELETE FROM walk_crew WHERE id = #{id}
 	</delete>
+
+	<insert id="insertMemberToCrew">
+		INSERT INTO walk_crew_member
+		SET memberId =
+		#{memberId},
+		crewId = #{crewId},
+		joinedAt = NOW()
+	</insert>
+
+
 
 </mapper>
