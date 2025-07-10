@@ -53,7 +53,7 @@
   <script>
     // 전화번호 형식 검사
     function validateForm() {
-      const phone = document.querySelector('[name="cellphoneNum"]');
+      const phone = document.querySelector('[name="cellphone"]');
       const phonePattern = /^\d{3}-\d{3,4}-\d{4}$/;
 
       if (!phonePattern.test(phone.value)) {
