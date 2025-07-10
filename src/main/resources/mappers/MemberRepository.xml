@@ -112,6 +112,29 @@
                  LEFT JOIN vet_certificate v ON m.id = v.memberId
     </select>
 
+    <select id="getForPrintMembers" resultType="com.example.RSW.vo.Member">
+        SELECT *
+        FROM member
+        WHERE 1 = 1
+        <if test="searchType != null and searchKeyword != null and searchKeyword != ''">
+            <choose>
+                <when test="searchType == 'authLevel'">
+                    AND authLevel = #{searchKeyword}
+                </when>
+                <when test="searchType == 'loginId'">
+                    AND loginId LIKE CONCAT('%', #{searchKeyword}, '%')
+                </when>
+                <when test="searchType == 'name'">
+                    AND name LIKE CONCAT('%', #{searchKeyword}, '%')
+                </when>
+                <when test="searchType == 'id'">
+                    AND id = #{searchKeyword}
+                </when>
+            </choose>
+        </if>
+        ORDER BY id DESC
+    </select>
+
 
 
 </mapper>

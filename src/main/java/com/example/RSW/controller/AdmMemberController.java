@@ -21,12 +21,15 @@ public class AdmMemberController {
     @Autowired
     private VetCertificateService vetCertificateService;
 
-    @GetMapping("/list")
-    public String showMemberList(Model model) {
-        List<Member> members = memberService.getAllMembers();
+    @RequestMapping("/list")
+    public String showMemberList(@RequestParam(defaultValue = "") String searchType,
+                                 @RequestParam(defaultValue = "") String searchKeyword,
+                                 Model model) {
+        List<Member> members = memberService.getForPrintMembers(searchType, searchKeyword);
         model.addAttribute("members", members);
         return "adm/member/list";
     }
+
 
     @PostMapping("/changeAuth")
     @ResponseBody

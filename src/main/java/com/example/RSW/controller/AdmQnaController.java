@@ -77,6 +77,7 @@ public class AdmQnaController {
 
     @PostMapping("/doDelete")
     public String doDelete(@RequestParam int id) {
+        System.out.println("삭제 요청 id: " + id); // 로그 확인
         qnaService.delete(id);
         return "redirect:/adm/qna/list";
     }
