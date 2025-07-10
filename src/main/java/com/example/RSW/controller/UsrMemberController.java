@@ -97,10 +97,6 @@ public class UsrMemberController {
         // 로그인 후 rq 객체를 세션에 저장하여 이후 요청에서도 사용
         req.getSession().setAttribute("rq", rq);  // 세션에 rq 객체 저장
 
-        // ✅ 관리자라면 대시보드로 이동
-        if (member.getAuthLevel() == 7) {
-            afterLoginUri = "/adm/dashboard";
-        }
 
         return Ut.jsReplace("S-1", Ut.f("%s님 환영합니다", member.getNickname()), afterLoginUri);
     }
