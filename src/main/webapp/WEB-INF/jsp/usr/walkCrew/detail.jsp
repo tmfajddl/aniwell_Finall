@@ -68,6 +68,7 @@ button[type="submit"] {
 			<!-- ✔️ 예: 서울특별시 종로구 청운동 -->
 		</div>
 
+
 		<div class="field">
 			<div class="label">작성일:</div>
 			<div>
