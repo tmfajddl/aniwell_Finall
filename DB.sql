@@ -113,9 +113,20 @@ CREATE TABLE pet_vaccination
     petId         INT(10) NOT NULL COMMENT 'FK',
     vaccineName   VARCHAR(100) NULL,
     injectionDate DATE         NOT NULL,
-    nextDueDate   DATE         NOT NULL COMMENT '다음 접종 자동계산 기입(같은 접종이름, 업데이트 되도록)',
-    vetName       VARCHAR(100) NOT NULL,
+    nextDueDate   DATE         NULL COMMENT '다음 접종 자동계산 기입(같은 접종이름, 업데이트 되도록)',
+    vetName       VARCHAR(100)  NULL,
     notes         TEXT NULL
+);
+
+CREATE TABLE pet_analysis (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY COMMENT '분석 결과 ID',
+  petId INT UNSIGNED NOT NULL COMMENT '반려동물 ID (FK)',
+  imagePath VARCHAR(255) NOT NULL COMMENT '분석에 사용된 이미지 경로 또는 URL',
+  emotionResult VARCHAR(50) NOT NULL COMMENT '감정 분석 결과 (예: happy, angry 등)',
+  confidence FLOAT NOT NULL COMMENT '분석 결과의 신뢰도 (0.0 ~ 1.0)',
+  analyzedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '분석 수행 일시',
+  
+  CONSTRAINT fk_pet_analysis_petId FOREIGN KEY (petId) REFERENCES pet(id) ON DELETE CASCADE
 );
 
 -- 산책 모임 테이블
@@ -153,6 +164,8 @@ CREATE TABLE pet
     birthDate DATE          NOT NULL,
     weight    DECIMAL(5, 2) NOT NULL
 );
+
+ALTER TABLE pet ADD COLUMN photo VARCHAR(255);
 
 -- 게시글 테이블
 CREATE TABLE article
@@ -206,11 +219,6 @@ CREATE TABLE reply
     `body`      TEXT     NOT NULL
 );
 
-
---  reply 테이블에 좋아요 관련 컬럼 추가
-ALTER TABLE reply ADD COLUMN goodReactionPoint INT(10) UNSIGNED NOT NULL DEFAULT 0;
-ALTER TABLE reply ADD COLUMN badReactionPoint INT(10) UNSIGNED NOT NULL DEFAULT 0;
-
 -- QnA 테이블
 CREATE TABLE Qna
 (
@@ -239,7 +247,21 @@ UPDATE Qna SET isSecret = 0 WHERE id IN (4, 5, 6, 11); -- 공개글
 
 SELECT * FROM Qna;
 
+-- reply 테이블 생성
+CREATE TABLE reply
+(
+    id          INT(10) UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    regDate     DATETIME NOT NULL,
+    updateDate  DATETIME NOT NULL,
+    memberId    INT(10) UNSIGNED NOT NULL,
+    relTypeCode CHAR(50) NOT NULL COMMENT '관련 데이터 타입 코드',
+    relId       INT(10) NOT NULL COMMENT '관련 데이터 번호',
+    `body`      TEXT     NOT NULL
+);
 
+--  reply 테이블에 좋아요 관련 컬럼 추가
+ALTER TABLE reply ADD COLUMN goodReactionPoint INT(10) UNSIGNED NOT NULL DEFAULT 0;
+ALTER TABLE reply ADD COLUMN badReactionPoint INT(10) UNSIGNED NOT NULL DEFAULT 0;
 
 -- reactionPoint 테이블 생성
 
@@ -269,10 +291,37 @@ CREATE TABLE vet_certificate
     FOREIGN KEY (memberId) REFERENCES MEMBER(id) ON DELETE CASCADE
 );
 
-SELECT * FROM vet_certificate;
+-- 백신 종류 및 주기 테이블
+CREATE TABLE vaccine_schedule (
+  vaccineName VARCHAR(100) PRIMARY KEY,
+  intervalMonths INT NOT NULL COMMENT '백신 주기 (개월 단위)',
+  type ENUM('Initial', 'Annual') NOT NULL COMMENT '초기 예방접종 또는 연간 접종 구분',
+  description TEXT NULL
+  )
 
+DELIMITER $$
 
-SELECT id, loginId, NAME FROM MEMBER WHERE id = 4;
+CREATE TRIGGER auto_set_next_due_date
+BEFORE INSERT ON pet_vaccination
+FOR EACH ROW
+BEGIN
+  DECLARE v_interval INT DEFAULT NULL;
+
+  -- 백신 이름에 맞는 주기 가져오기
+  SELECT intervalMonths INTO v_interval
+  FROM vaccine_schedule
+  WHERE vaccineName = NEW.vaccineName
+  LIMIT 1;
+
+  -- 주기값과 날짜가 null이 아닐 때만 설정
+  IF v_interval IS NOT NULL AND NEW.injectionDate IS NOT NULL THEN
+    SET NEW.nextDueDate = DATE_ADD(NEW.injectionDate, INTERVAL v_interval MONTH);
+  ELSE
+    SET NEW.nextDueDate = NULL;
+  END IF;
+END $$
+
+DELIMITER ;
 
 
 ##예시용
@@ -360,6 +409,18 @@ VALUES
 (1, '강아지가 설사를 자주 하는데 병원에 데려가야 하나요?',
  '3일 이상 지속되거나 피가 섞이면 병원에 방문해야 합니다.',
  FALSE, FALSE, TRUE, 3, NOW(), NOW(), TRUE);
+ 
+ -- 백신 종류 및 주기 데이터 삽입
+INSERT INTO vaccine_schedule (vaccineName, intervalMonths, type, description) VALUES
+('Rabies', 12, 'Initial', '인간에게 감염될 수 있는 치명적인 바이러스 예방'),
+('Parvovirus', 12, 'Initial', '파보 바이러스에 의한 위장관 질환 예방'),
+('Distemper', 12, 'Initial', '강아지의 심각한 바이러스성 질병 예방'),
+('Feline Distemper', 12, 'Initial', '고양이의 심각한 바이러스성 질병 예방'),
+('Feline Leukemia', 12, 'Initial', '고양이의 면역 체계를 약화시키는 바이러스 예방'),
+('Leptospirosis', 12, 'Annual', '물과 흙을 통해 퍼지는 세균 감염 예방'),
+('Bordetella', 12, 'Annual', '기침과 관련된 바이러스 예방'),
+('Feline Panleukopenia', 12, 'Annual', '고양이의 위장관 질환과 관련된 바이러스 예방'),
+('FIP', 12, 'Annual', '고양이의 배액 질환과 관련된 질병 예방');
 
 
 ##예시용코드-----------------------------------------------------
@@ -389,7 +450,7 @@ WHERE id NOT IN (
     SELECT MIN(id) FROM MEMBER WHERE loginId = 'vet1'
 );
 
-
+SET SQL_SAFE_UPDATES = 0;
 
 -- 비밀번호 sha로 변경
 
@@ -413,3 +474,19 @@ WHERE id IN (1, 2, 3);
 
 
 SELECT id, title, isFaq FROM qna ORDER BY id;
+
+
+
+select *
+from pet_vaccination;
+
+select *
+from pet;
+
+select *
+from vaccine_schedule;
+
+select *
+from `member`;
+
+

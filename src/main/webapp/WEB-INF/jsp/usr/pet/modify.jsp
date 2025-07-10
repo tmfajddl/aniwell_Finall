@@ -147,7 +147,7 @@
 
     <div class="form-section">
       <div class="photo-area">
-        <img id="photo-preview" src="${pet.photo != null ? pet.photo : '/img/default-pet.png'}" alt="사진" />
+        <img src="${pet.photo != null ? pet.photo : '/img/default-pet.png'}" alt="사진" />
         <label class="photo-upload" for="photo">📷</label>
         <input type="file" id="photo" name="photo" accept="image/*" onchange="previewPhoto(this)">
       </div>
