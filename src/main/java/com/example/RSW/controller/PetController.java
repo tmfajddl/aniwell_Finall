@@ -1,9 +1,6 @@
 package com.example.RSW.controller;
 
-import com.example.RSW.service.PetAnalysisService;
-import com.example.RSW.service.PetService;
-import com.example.RSW.service.PetVaccinationService;
-import com.example.RSW.service.WalkCrewService;
+import com.example.RSW.service.*;
 import com.example.RSW.util.Ut;
 import com.example.RSW.vo.*;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -25,6 +22,7 @@ import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDate;
 import java.util.*;
 
 @Controller
@@ -44,6 +42,9 @@ public class PetController {
 
     @Autowired
     private PetAnalysisService petAnalysisService;
+
+    @Autowired
+    private CalendarEventService calendarEventService;
 
 
     @RequestMapping("/usr/pet/petPage")
@@ -399,4 +400,70 @@ public class PetController {
         ResultData deleteRd = petVaccinationService.deletePetVaccination(vaccinationId);
         return "jsReplace('/usr/pet/vaccination?petId=" + id + "', '삭제가 완료되었습니다.');";
     }
+
+    @RequestMapping("/usr/pet/daily")
+    public String showDaily(@RequestParam("petId") int petId, Model model) {
+        List<CalendarEvent> events = calendarEventService.getEventsByPetId(petId);
+        model.addAttribute("events", events);
+        model.addAttribute("petId", petId); // 👉 jsp에서 다시 요청 시 필요
+        return "usr/pet/daily";  // 상세보기 jsp
+    }
+
+    @RequestMapping("/usr/pet/daily/write")
+    @ResponseBody
+    public String addEvent(@RequestParam("petId") int petId,
+                           @RequestParam("eventDate") String eventDateStr,
+                           @RequestParam("content") String content) {
+
+        if (Ut.isEmptyOrNull(content)) {
+            return Ut.jsHistoryBack("F-1", "내용을 입력하세요");
+        }
+
+        if (Ut.isEmptyOrNull(eventDateStr)) {
+            return Ut.jsHistoryBack("F-1", "날짜를 입력하세요");
+        }
+
+        LocalDate eventDate = LocalDate.parse(eventDateStr); // 문자열 → 날짜
+
+        ResultData doWriteRd = calendarEventService.insert(rq.getLoginedMemberId(), eventDate, petId, content);
+
+        return Ut.jsReplace(doWriteRd.getResultCode(), doWriteRd.getMsg(), "/usr/pet/daily?petId=" + petId);
+    }
+
+    @RequestMapping("/usr/pet/daily/domodify")
+    @ResponseBody
+    public String updateEvent(@RequestParam("id") int id,
+                              @RequestParam("eventDate") String eventDateStr,
+                              @RequestParam("content") String content) {
+
+        if (Ut.isEmptyOrNull(content)) {
+            return Ut.jsHistoryBack("F-1", "내용을 입력하세요");
+        }
+
+        CalendarEvent calendarEvent = calendarEventService.getEventsById(id);
+        if (calendarEvent == null) {
+            return Ut.jsHistoryBack("F-1", "해당 게시글은 존재하지 않습니다.");
+        }
+
+        LocalDate eventDate = LocalDate.parse(eventDateStr);
+
+        ResultData doModifyRd = calendarEventService.update(id, eventDate, content);
+
+        return Ut.jsReplace(doModifyRd.getResultCode(), doModifyRd.getMsg(), "/usr/pet/daily?petId=" + calendarEvent.getPetId());
+    }
+
+    @RequestMapping("/usr/pet/daily/delete")
+    @ResponseBody
+    public String deleteEvent(@RequestParam("id") int id) {
+        CalendarEvent calendarEvent = calendarEventService.getEventsById(id);
+        if (calendarEvent == null) {
+            return Ut.jsHistoryBack("F-1", "해당 게시글은 존재하지 않습니다.");
+        }
+
+        calendarEventService.delete(id);
+
+        return Ut.jsReplace("S-1", "삭제가 완료되었습니다.", "/usr/pet/daily?petId=" + calendarEvent.getPetId());
+    }
+
+
 }
