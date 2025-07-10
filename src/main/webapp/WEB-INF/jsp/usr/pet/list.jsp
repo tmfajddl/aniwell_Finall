@@ -288,9 +288,11 @@
             </a>
         </c:forEach>
 
-        <c:forEach var="i" begin="1" end="${3 - fn:length(pets)}">
-            <div class="card empty"></div>
-        </c:forEach>
+        <c:if test="${fn:length(pets) < 3}">
+            <c:forEach var="i" begin="1" end="${3 - fn:length(pets)}">
+                <div class="card empty"></div>
+            </c:forEach>
+        </c:if>
     </div>
 
 
