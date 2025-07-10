@@ -1,6 +1,7 @@
-<%@ page contentType="text/html;charset=UTF-8" %>
+<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
+<%@ include file="/WEB-INF/jsp/usr/common/sidebar.jspf" %>
 <html>
 <head>
     <title>반려동물 선택</title>
@@ -12,7 +13,7 @@
             display: flex;
         }
 
-        /* 사이드 메뉴 */
+        /* 사이드바 */
         .sidebar {
             width: 120px;
             background: linear-gradient(to bottom, #cfe6b8, #e3e9ce);
@@ -30,14 +31,6 @@
             margin-bottom: 20px;
         }
 
-        .menu-icon {
-            width: 24px;
-            height: 3px;
-            background: #333;
-            margin: 5px 0;
-            border-radius: 2px;
-        }
-
         .menu-button {
             margin: 20px 0;
             padding: 10px 14px;
@@ -49,7 +42,7 @@
             box-shadow: 1px 1px 5px rgba(0,0,0,0.1);
         }
 
-        /* 메인 컨텐츠 */
+        /* 메인 */
         .main {
             flex: 1;
             padding: 40px;
@@ -62,6 +55,7 @@
             margin-bottom: 30px;
         }
 
+        /* 카드 캐러셀 */
         .carousel-container {
             position: relative;
             width: 900px;
@@ -134,27 +128,23 @@
             padding-top: 6px;
         }
 
-        /* 빈 카드 (디폴트) */
         .card.empty {
             background: url('/img/default-card.png') no-repeat center/cover;
             padding: 0;
         }
 
-        .nav-buttons {
-            margin-bottom: 40px;
-        }
-
-        .nav-buttons button {
-            padding: 8px 16px;
-            margin: 0 10px;
-            background: #a8cbb5;
+        /* 등록 버튼 */
+        .register-button {
+            padding: 10px 20px;
+            background: #e3e9ce;
             border: none;
             border-radius: 10px;
             font-weight: bold;
             cursor: pointer;
+            margin-bottom: 40px;
         }
 
-        /* 크루 목록 */
+        /* 산책 크루 섹션 */
         .crew-section {
             display: flex;
             width: 800px;
@@ -167,21 +157,34 @@
 
         .crew-list {
             flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
         }
 
-        .crew-item {
+        .crew-card {
             background: #fef7cd;
-            margin-bottom: 10px;
-            padding: 10px;
+            padding: 12px 16px;
             border-radius: 12px;
             font-size: 14px;
+            box-shadow: 1px 1px 5px rgba(0,0,0,0.05);
         }
 
-        .crew-image {
+        .crew-name {
+            font-weight: bold;
+            margin-bottom: 6px;
+        }
+
+        .crew-desc {
+            font-size: 13px;
+            color: #555;
+        }
+
+        .crew-illustration {
             width: 180px;
             height: 180px;
             background: url('/img/walk-image.png') no-repeat center/cover;
-            border-radius: 12px;
+            border-radius: 14px;
             margin-left: 20px;
         }
     </style>
@@ -218,56 +221,31 @@
 
         window.addEventListener('DOMContentLoaded', function () {
             updateCards();
-
             const container = document.querySelector('.carousel-container');
 
-            // 모바일 터치 이벤트
-            container.addEventListener('touchstart', function (e) {
-                startX = e.touches[0].clientX;
-            });
-
-            container.addEventListener('touchend', function (e) {
+            container.addEventListener('touchstart', e => startX = e.touches[0].clientX);
+            container.addEventListener('touchend', e => {
                 const endX = e.changedTouches[0].clientX;
-                if (startX - endX > 50) {
-                    next();
-                } else if (endX - startX > 50) {
-                    prev();
-                }
+                if (startX - endX > 50) next();
+                else if (endX - startX > 50) prev();
             });
 
-            // PC 마우스 드래그 이벤트
-            container.addEventListener('mousedown', function (e) {
-                startX = e.clientX;
-            });
-
-            container.addEventListener('mouseup', function (e) {
+            container.addEventListener('mousedown', e => startX = e.clientX);
+            container.addEventListener('mouseup', e => {
                 const endX = e.clientX;
-                if (startX - endX > 50) {
-                    next();
-                } else if (endX - startX > 50) {
-                    prev();
-                }
+                if (startX - endX > 50) next();
+                else if (endX - startX > 50) prev();
             });
         });
     </script>
-
 </head>
 <body>
-
-<div class="sidebar">
-    <div class="logo"></div>
-    <div class="menu-icon"></div>
-    <div class="menu-icon"></div>
-    <div class="menu-icon"></div>
-    <button class="menu-button">나의 정보</button>
-    <button class="menu-button">산책 크루</button>
-</div>
 
 <div class="main">
     <h2>🐾 반려동물 등록증</h2>
 
     <div class="carousel-container">
-        <c:forEach var="pet" items="${pets}" varStatus="status">
+        <c:forEach var="pet" items="${pets}">
             <a href="/usr/pet/modify?petId=${pet.id}" class="card" style="text-decoration: none; color: inherit;">
                 <h3>반려동물등록증</h3>
                 <div class="content">
@@ -289,27 +267,30 @@
         </c:forEach>
 
         <c:if test="${fn:length(pets) < 3}">
-            <c:forEach var="i" begin="1" end="${3 - fn:length(pets)}">
+            <c:forEach begin="1" end="${3 - fn:length(pets)}">
                 <div class="card empty"></div>
             </c:forEach>
         </c:if>
     </div>
 
-    <div style="margin-bottom: 40px;">
-        <form action="/usr/pet/join" method="get">
-            <button type="submit" style="padding: 10px 20px; background: #e3e9ce; border: none; border-radius: 10px; font-weight: bold; cursor: pointer;">
-                + 반려동물 등록하기
-            </button>
-        </form>
-    </div>
+    <form action="/usr/pet/join" method="get">
+        <button type="submit" class="register-button">+ 반려동물 등록하기</button>
+    </form>
 
+    <!-- 👇 산책 크루 출력 영역 -->
     <div class="crew-section">
         <div class="crew-list">
-            <div class="crew-item">크루명<br>크루 한줄소개</div>
-            <div class="crew-item">크루명</div>
-            <div class="crew-item">크루명</div>
+            <c:forEach var="crew" items="${crews}">
+                <div class="crew-card">
+                    <div class="crew-name">${crew.name}</div>
+                    <div class="crew-desc">${crew.description}</div>
+                </div>
+            </c:forEach>
+            <c:if test="${empty crews}">
+                <div class="crew-card">참여 중인 크루가 없습니다.</div>
+            </c:if>
         </div>
-        <div class="crew-image"></div>
+        <div class="crew-illustration"></div>
     </div>
 </div>
 
