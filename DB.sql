@@ -298,6 +298,15 @@ CREATE TABLE vaccine_schedule (
   type ENUM('Initial', 'Annual') NOT NULL COMMENT '초기 예방접종 또는 연간 접종 구분',
   description TEXT NULL
   )
+  
+  CREATE TABLE calendar_event (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  memberId INT NOT NULL,                  
+  petId INT NULL,                        
+  eventDate DATE NOT NULL,               
+  content TEXT NOT NULL,                 
+  createdAt DATETIME DEFAULT NOW()       
+);
 
 DELIMITER $$
 
