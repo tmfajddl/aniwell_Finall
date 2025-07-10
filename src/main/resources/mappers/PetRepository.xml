@@ -26,9 +26,11 @@
     </delete>
 
     <!-- 펫 등록 -->
-    <insert id="insertPet" parameterType="map">
-        INSERT INTO pet (memberId, name, species, breed, gender, birthDate, weight)
-        VALUES (#{memberId}, #{name}, #{species}, #{breed}, #{gender}, #{birthDate}, #{weight})
+    <insert id="insertPet">
+        INSERT INTO pet
+        (memberId, name, species, breed, gender, birthDate, weight, photo)
+        VALUES
+            (#{memberId}, #{name}, #{species}, #{breed}, #{gender}, #{birthDate}, #{weight}, #{photo})
     </insert>
 
     <!-- 마지막 삽입된 ID 조회 -->
