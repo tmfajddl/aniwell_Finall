@@ -35,8 +35,6 @@ public interface QnaRepository {
 
     void modify(int id, String title, String body);
 
-    void markInactive(int id);
-
     void insert(int memberId, String title, String body, boolean isSecret, boolean isFaq);
 
 }

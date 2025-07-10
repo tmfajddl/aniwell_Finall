@@ -206,6 +206,11 @@ CREATE TABLE reply
     `body`      TEXT     NOT NULL
 );
 
+
+--  reply 테이블에 좋아요 관련 컬럼 추가
+ALTER TABLE reply ADD COLUMN goodReactionPoint INT(10) UNSIGNED NOT NULL DEFAULT 0;
+ALTER TABLE reply ADD COLUMN badReactionPoint INT(10) UNSIGNED NOT NULL DEFAULT 0;
+
 -- QnA 테이블
 CREATE TABLE Qna
 (
@@ -234,21 +239,7 @@ UPDATE Qna SET isSecret = 0 WHERE id IN (4, 5, 6, 11); -- 공개글
 
 SELECT * FROM Qna;
 
--- reply 테이블 생성
-CREATE TABLE reply
-(
-    id          INT(10) UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
-    regDate     DATETIME NOT NULL,
-    updateDate  DATETIME NOT NULL,
-    memberId    INT(10) UNSIGNED NOT NULL,
-    relTypeCode CHAR(50) NOT NULL COMMENT '관련 데이터 타입 코드',
-    relId       INT(10) NOT NULL COMMENT '관련 데이터 번호',
-    `body`      TEXT     NOT NULL
-);
 
---  reply 테이블에 좋아요 관련 컬럼 추가
-ALTER TABLE reply ADD COLUMN goodReactionPoint INT(10) UNSIGNED NOT NULL DEFAULT 0;
-ALTER TABLE reply ADD COLUMN badReactionPoint INT(10) UNSIGNED NOT NULL DEFAULT 0;
 
 -- reactionPoint 테이블 생성
 
