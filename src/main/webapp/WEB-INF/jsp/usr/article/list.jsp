@@ -111,16 +111,6 @@
 			</c:if>
 		</div>
 	</div>
-
-	<!-- 	직관적인 페이징 -->
-	<div class="flex justify-center mt-4">
-		<div class="btn-group join ">
-
-			<c:forEach begin="1" end="${pagesCount }" var="i">
-				<a class="join-item btn btn-sm ${param.page == i ? 'btn-active' : ''}" href="?page=${i }&boardId=${param.boardId}">${i }</a>
-			</c:forEach>
-		</div>
-	</div>
 </section>
 
 

@@ -3,6 +3,7 @@ package com.example.RSW.repository;
 import org.apache.ibatis.annotations.Mapper;
 
 import com.example.RSW.vo.Member;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
@@ -32,4 +33,7 @@ public interface MemberRepository {
 	void updateAuthLevel(int memberId, int authLevel);
 
 	List<Member> findAllWithVetCert();
+
+	List<Member> getForPrintMembers(@Param("searchType") String searchType, @Param("searchKeyword") String searchKeyword);
+
 }
