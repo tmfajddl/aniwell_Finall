@@ -130,7 +130,7 @@
     }
 
     function validateForm() {
-      const phone = document.querySelector('[name="cellphoneNum"]');
+      const phone = document.querySelector('[name="cellphone"]');
       const phonePattern = /^\d{3}-\d{3,4}-\d{4}$/;
       if (!phonePattern.test(phone.value)) {
         alert("전화번호 형식이 올바르지 않습니다. 예: 000-0000-0000");
