@@ -22,5 +22,10 @@ public interface WalkCrewRepository {
 
 	void deleteById(@Param("id") int id); // 크루 삭제
 
-    List<WalkCrew> getWalkCrews(@Param("memberId") int memberId);
+
+	void insertMemberToCrew(int memberId, int crewId); // 크루 참가
+
+
+  List<WalkCrew> getWalkCrews(@Param("memberId") int memberId);
+
 }
