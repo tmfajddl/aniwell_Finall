@@ -23,4 +23,7 @@ public interface DistrictRepository {
 
 	// ✅ districtId로 단건 조회 (크루 상세에서 사용)
 	District getDistrictById(@Param("id") int id);
+
+	District findByDong(String dong);
 }
+

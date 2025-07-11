@@ -66,6 +66,7 @@ button[type="submit"] {
 		<div class="dong-list" id="dongListContainer"></div>
 
 		<input type="hidden" name="selectedDong" id="selectedDong" />
+		<input type="hidden" name="districtId" id="districtIdInput" />
 
 		<button type="submit">등록</button>
 	</form>
@@ -75,7 +76,6 @@ button[type="submit"] {
 	</div>
 
 	<script>
-	  // Kakao Maps API 로드 후 콜백 실행
 	  function loadKakaoMap(callback) {
 	    const script = document.createElement("script");
 	    script.src = "https://dapi.kakao.com/v2/maps/sdk.js?appkey=${kakaoJsKey}&autoload=false&libraries=services";
@@ -148,6 +148,13 @@ button[type="submit"] {
 	              b.style.backgroundColor = "";
 	            });
 	            btn.style.backgroundColor = "#ddd";
+
+	            // ✅ 선택한 동으로부터 districtId 조회
+	            fetch("/usr/walkCrew/getDistrictId?dong=" + encodeURIComponent(dong))
+	              .then(response => response.text())
+	              .then(districtId => {
+	                document.getElementById("districtIdInput").value = districtId;
+	              });
 	          };
 	          container.appendChild(btn);
 	        });

@@ -107,4 +107,8 @@ public class DistrictService {
 		return districtRepository.findDongsByCityAndDistrict(city, district);
 	}
 
+	public District findByDong(String dong) {
+		return districtRepository.findByDong(dong);
+	}
+
 }
