@@ -19,6 +19,7 @@ import com.example.RSW.vo.Member;
 import com.example.RSW.vo.ResultData;
 import com.example.RSW.util.Ut;
 import com.example.RSW.config.AppConfig;
+import com.example.RSW.repository.DistrictRepository;
 import com.example.RSW.service.DistrictService;
 import com.example.RSW.service.MemberService;
 import com.example.RSW.service.WalkCrewService;
@@ -34,6 +35,9 @@ public class UsrWalkCrewController {
 	@Autowired
 	public DistrictService districtService;
 
+	@Autowired
+	private DistrictRepository districtRepository;
+	
 	private final WalkCrewService walkCrewService;
 
 	@Autowired
@@ -43,10 +47,13 @@ public class UsrWalkCrewController {
 
 	// 크루 목록 페이지 이동 (예: /usr/walkCrew/list)
 	@GetMapping("/list")
-	public String showCrewList(Model model) {
+	public String showCrewList(HttpServletRequest req, Model model) {
+		Rq rq = (Rq) req.getAttribute("rq"); // 필터 또는 인터셉터에서 세팅된 Rq
+		model.addAttribute("rq", rq); // JSP에서 사용 가능하게 전달
+
 		List<WalkCrew> crews = walkCrewService.getAllCrews();
 		model.addAttribute("crews", crews);
-		return "usr/walkCrew/list"; // => /WEB-INF/views/usr/walkCrew/list.jsp
+		return "usr/walkCrew/list";
 	}
 
 	// 크루 등록 폼 페이지
@@ -61,8 +68,21 @@ public class UsrWalkCrewController {
 
 	// 크루 등록 처리
 	@PostMapping("/doCreate")
-	public String doCreate(WalkCrew walkCrew) {
+	public String doCreate(WalkCrew walkCrew, HttpServletRequest req) {
+		Rq rq = (Rq) req.getAttribute("rq");
+
+		if (!rq.isLogined()) {
+			return "redirect:/usr/member/login?msg=로그인 후 이용해주세요.";
+		}
+
+		// ✅ 디버깅용 로그 출력
+		System.out.println("city = " + walkCrew.getCity());
+		System.out.println("district = " + walkCrew.getDistrict());
+		System.out.println("dong = " + walkCrew.getDong());
+
+		walkCrew.setLeaderId(rq.getLoginedMemberId()); // ✅ 로그인된 사용자 ID 주입
 		walkCrewService.createCrew(walkCrew);
+
 		return "redirect:/usr/walkCrew/list";
 	}
 
@@ -97,10 +117,15 @@ public class UsrWalkCrewController {
 	@PostMapping("/join")
 	public String joinCrew(@RequestParam("crewId") int crewId, HttpServletRequest req) {
 		Rq rq = (Rq) req.getAttribute("rq");
-		int memberId = rq.getLoginedMemberId();
 
+		if (!rq.isLogined()) {
+			return "redirect:/usr/member/login?msg=로그인 후 이용해주세요.";
+		}
+
+		int memberId = rq.getLoginedMemberId();
 		walkCrewService.joinCrew(memberId, crewId);
-		return "redirect:/usr/walkCrew/detail?id=" + crewId;
+
+		return "redirect:/usr/walkCrew/detail/" + crewId;
 	}
 
 	@GetMapping("/getDongs")
@@ -111,9 +136,9 @@ public class UsrWalkCrewController {
 
 	@GetMapping("/getDistrictId")
 	@ResponseBody
-	public String getDistrictId(@RequestParam String dong) {
-		District district = districtService.findByDong(dong);
-		return district != null ? String.valueOf(district.getId()) : "0";
+	public String getDistrictId(@RequestParam String city, @RequestParam String district, @RequestParam String dong) {
+		int id = districtRepository.getDistrictIdByFullAddress(city, district, dong);
+		return String.valueOf(id);
 	}
 
 }

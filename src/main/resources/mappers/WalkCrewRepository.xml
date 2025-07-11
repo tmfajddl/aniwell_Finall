@@ -40,8 +40,24 @@
 
 	<!-- 전체 크루 리스트 -->
 	<select id="findAll" resultType="com.example.RSW.vo.WalkCrew">
-		SELECT * FROM walk_crew
+		SELECT
+		wc.id,
+		wc.title,
+		wc.description,
+		wc.district_id AS districtId,
+		wc.leaderId,
+		wc.createdAt,
+		m.nickname,
+		d.city,
+		d.district,
+		d.dong
+		FROM walk_crew wc
+		LEFT JOIN member m
+		ON wc.leaderId = m.id
+		LEFT JOIN district d ON wc.district_id = d.id
+		ORDER BY wc.createdAt DESC
 	</select>
+
 
 	<!-- 크루 수정 -->
 	<update id="update">
@@ -69,14 +85,29 @@
 
 	<select id="getAllCrews"
 		resultType="com.example.RSW.vo.WalkCrew">
-		SELECT w.*, d.city
-		FROM walk_crew w
-		JOIN district d ON w.district_id = d.id
-		ORDER BY w.createdAt DESC
+		SELECT
+		wc.id,
+		wc.title,
+		wc.description,
+		wc.district_id AS
+		districtId,
+		wc.leaderId,
+		wc.createdAt,
+		m.nickname,
+		d.city,
+		d.district,
+		d.dong
+		FROM walk_crew wc
+		INNER JOIN member m ON wc.leaderId = m.id
+		INNER
+		JOIN
+		district d ON wc.district_id = d.id
+		ORDER BY wc.createdAt DESC
 	</select>
 
 
-	<select id="getWalkCrews" resultType="com.example.RSW.vo.WalkCrew">
+	<select id="getWalkCrews"
+		resultType="com.example.RSW.vo.WalkCrew">
 		SELECT * FROM walk_crew WHERE id = #{memberId}
 	</select>
 
