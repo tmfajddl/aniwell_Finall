@@ -452,7 +452,8 @@
       if (file) {
         const reader = new FileReader();
         reader.onload = function (e) {
-          document.getElementById('preview').innerHTML = `<img src="${e.target.result}" style="max-width:100%; border-radius:12px; border:3px solid #f3df87;" />`;
+          document.getElementById('preview').innerHTML = '<img src="' + e.target.result + '" style="max-width:100%; border-radius:12px; border:3px solid #f3df87;" />';
+
         };
         reader.readAsDataURL(file);
       }
@@ -487,7 +488,8 @@
                 const maxIdx = values.indexOf(Math.max(...values));
                 const displayLabel = labelMap[labels[maxIdx]] || labels[maxIdx];
 
-                document.getElementById('resultText').textContent = `가장 높은 감정: ${displayLabel} (${values[maxIdx]}%)`;
+                document.getElementById('resultText').textContent = '가장 높은 감정: ' + displayLabel + ' (' + values[maxIdx] + '%)';
+
 
                 if (emotionChart) emotionChart.destroy();
                 const ctx = document.getElementById('emotionChart').getContext('2d');
