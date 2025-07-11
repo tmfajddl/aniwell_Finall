@@ -58,8 +58,12 @@ public class WalkCrewService {
 		walkCrewRepository.deleteById(id);
 	}
 
+
 	public void joinCrew(int memberId, int crewId) {
 		walkCrewRepository.insertMemberToCrew(memberId, crewId);
 	}
+
+
+	public List<WalkCrew> getWalkCrews(int memberId) { return walkCrewRepository.getWalkCrews(memberId);}
 
 }
