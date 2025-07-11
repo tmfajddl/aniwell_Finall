@@ -4,6 +4,7 @@ USE `aniwell`;
 
 -- ✅ 게시판
 CREATE TABLE `board` (
+
   `id` INT(10) UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
   `regDate` DATETIME NOT NULL,
   `updateDate` DATETIME NOT NULL,
@@ -11,10 +12,12 @@ CREATE TABLE `board` (
   `name` CHAR(20) NOT NULL UNIQUE COMMENT '게시판 이름',
   `delStatus` TINYINT(1) UNSIGNED NOT NULL DEFAULT 0,
   `delDate` DATETIME
+
 );
 
 -- ✅ 회원
 CREATE TABLE `member` (
+
   `id` INT(10) UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
   `regDate` DATETIME NOT NULL,
   `updateDate` DATETIME NOT NULL,
@@ -33,6 +36,7 @@ CREATE TABLE `member` (
 
 -- ✅ 반려동물
 CREATE TABLE `pet` (
+
   `id` INT(10) UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
   `memberId` INT(10) NOT NULL,
   `name` VARCHAR(50) NOT NULL,
@@ -46,6 +50,7 @@ CREATE TABLE `pet` (
 
 -- ✅ 게시글
 CREATE TABLE `article` (
+
   `id` INT(10) UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
   `regDate` DATETIME NOT NULL DEFAULT NOW(),
   `updateDate` DATETIME NOT NULL DEFAULT NOW(),
@@ -57,10 +62,13 @@ CREATE TABLE `article` (
   `goodReactionPoint` INT(10) UNSIGNED NOT NULL DEFAULT 0,
   `badReactionPoint` INT(10) UNSIGNED NOT NULL DEFAULT 0,
   `repliesCount` INT(10) UNSIGNED NOT NULL DEFAULT 0
+
+
 );
 
 -- ✅ 댓글
 CREATE TABLE `reply` (
+
   `id` INT(10) UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
   `regDate` DATETIME NOT NULL,
   `updateDate` DATETIME NOT NULL,
@@ -74,6 +82,7 @@ CREATE TABLE `reply` (
 
 -- ✅ 반려동물 행동 분석
 CREATE TABLE `pet_behavior_analysis` (
+
   `id` INT(10) UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
   `memberId` INT(10) NOT NULL,
   `petId` INT(10) NOT NULL,
@@ -82,10 +91,12 @@ CREATE TABLE `pet_behavior_analysis` (
   `behaviorLabel` VARCHAR(100) NOT NULL,
   `confidence` DECIMAL(5, 2) NOT NULL,
   `imageUrl` TEXT
+
 );
 
 -- ✅ 반려동물 감정 분석
 CREATE TABLE `pet_analysis` (
+
   `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `petId` INT UNSIGNED NOT NULL,
   `imagePath` VARCHAR(255) NOT NULL,
@@ -93,10 +104,12 @@ CREATE TABLE `pet_analysis` (
   `confidence` FLOAT NOT NULL,
   `analyzedAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (`petId`) REFERENCES `pet`(`id`) ON DELETE CASCADE
+
 );
 
 -- ✅ 반려동물 건강 로그
 CREATE TABLE `pet__health_log` (
+
   `id` INT(10) UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
   `petId` INT(10) NOT NULL,
   `logDate` DATETIME NOT NULL,
@@ -104,36 +117,44 @@ CREATE TABLE `pet__health_log` (
   `waterWeight` DECIMAL(6, 2) NOT NULL,
   `litterCount` INT(10) NOT NULL,
   `notes` TEXT
+
 );
 
 -- ✅ 산책 모임
 CREATE TABLE `walk_crew` (
+
   `id` INT(10) UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
   `title` VARCHAR(100) NOT NULL,
   `description` TEXT NOT NULL,
   `district_id` INT NOT NULL,
   `leaderId` INT(10) NOT NULL,
   `createdAt` DATETIME NOT NULL DEFAULT NOW()
+
 );
 
 -- ✅ 산책 모임 멤버
 CREATE TABLE `walk_crew_member` (
+
   `id` INT(10) UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
   `crewId` INT(10) NOT NULL,
   `memberId` INT(10) NOT NULL,
   `joinedAt` DATETIME NOT NULL
+
 );
 
 -- ✅ 지역 정보
 CREATE TABLE `district` (
+
   `id` INT AUTO_INCREMENT PRIMARY KEY,
   `city` VARCHAR(50) NOT NULL,
   `district` VARCHAR(50) NOT NULL,
   `dong` VARCHAR(50) NOT NULL
+
 );
 
 -- ✅ 백신 접종
 CREATE TABLE `pet_vaccination` (
+
   `id` INT(10) UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
   `petId` INT(10) NOT NULL,
   `vaccineName` VARCHAR(100),
@@ -141,18 +162,22 @@ CREATE TABLE `pet_vaccination` (
   `nextDueDate` DATE,
   `vetName` VARCHAR(100),
   `notes` TEXT
+
 );
 
 -- ✅ 백신 종류 및 주기
 CREATE TABLE `vaccine_schedule` (
+
   `vaccineName` VARCHAR(100) PRIMARY KEY,
   `intervalMonths` INT NOT NULL,
   `type` ENUM('Initial', 'Annual') NOT NULL,
   `description` TEXT
+
 );
 
 -- ✅ 캘린더 이벤트
 CREATE TABLE `calendar_event` (
+
   `id` INT AUTO_INCREMENT PRIMARY KEY,
   `memberId` INT NOT NULL,
   `petId` INT,
@@ -160,10 +185,12 @@ CREATE TABLE `calendar_event` (
   `eventDate` DATE NOT NULL,
   `content` TEXT NOT NULL,
   `createdAt` DATETIME DEFAULT NOW()
+
 );
 
 -- ✅ QnA
 CREATE TABLE `qna` (
+
   `id` INT(10) UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
   `memberId` INT(10) UNSIGNED NOT NULL,
   `title` VARCHAR(100) NOT NULL,
@@ -176,20 +203,24 @@ CREATE TABLE `qna` (
   `updateDate` DATETIME NOT NULL,
   `isActive` BOOLEAN DEFAULT TRUE,
   `isFaq` TINYINT(1) NOT NULL DEFAULT 0
+
 );
 
 -- ✅ 수의사 답변
 CREATE TABLE `vet_answer` (
+
   `id` INT(10) UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
   `memberId` INT(10) NOT NULL,
   `answer` TEXT,
   `answerAt` DATETIME NOT NULL DEFAULT NOW(),
   `vetName` VARCHAR(100) NOT NULL,
   `qna_id` INT(10) UNSIGNED NOT NULL
+
 );
 
 -- ✅ 추천 장소
 CREATE TABLE `pet_recommendation` (
+
   `id` INT(10) UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
   `memberId` INT(10) NOT NULL,
   `type` ENUM('병원', '용품') NOT NULL,
@@ -198,10 +229,12 @@ CREATE TABLE `pet_recommendation` (
   `phone` VARCHAR(50) NOT NULL,
   `mapUrl` TEXT NOT NULL,
   `createdAt` DATETIME NOT NULL DEFAULT NOW()
+
 );
 
 -- ✅ BLE 활동
 CREATE TABLE `pet_ble_activity` (
+
   `id` INT(10) UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
   `petId` INT(10) NOT NULL,
   `zoneName` VARCHAR(100) NOT NULL,
@@ -209,10 +242,12 @@ CREATE TABLE `pet_ble_activity` (
   `exitedAt` DATETIME NOT NULL,
   `durationSec` INT NOT NULL,
   `rssi` INT(10) NOT NULL
+
 );
 
 -- ✅ 좋아요/싫어요
 CREATE TABLE `reactionPoint` (
+
   `id` INT(10) UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
   `regDate` DATETIME NOT NULL,
   `updateDate` DATETIME NOT NULL,
@@ -220,6 +255,7 @@ CREATE TABLE `reactionPoint` (
   `relTypeCode` CHAR(50) NOT NULL,
   `relId` INT(10) NOT NULL,
   `point` INT(10) NOT NULL
+
 );
 
 
@@ -238,7 +274,9 @@ ALTER TABLE `pet_behavior_analysis` ADD CONSTRAINT `fk_behavior_pet` FOREIGN KEY
 ALTER TABLE `walk_crew` ADD CONSTRAINT `fk_walkcrew_district` FOREIGN KEY (`district_id`) REFERENCES `district` (`id`);
 
 ALTER TABLE `walk_crew_member`
+
   ADD CONSTRAINT `fk_walkcrew_member_crew` FOREIGN KEY (`crewId`) REFERENCES `walk_crew` (`id`) ON DELETE CASCADE,
+
   ADD CONSTRAINT `fk_walkcrew_member_member` FOREIGN KEY (`memberId`) REFERENCES `member` (`id`) ON DELETE CASCADE;
 
 
@@ -275,6 +313,7 @@ SET `regDate` = NOW(), `updateDate` = NOW(),
 
 -- ✅ 지역 정보
 INSERT INTO `district` (`city`, `district`, `dong`) VALUES
+
 ('서울특별시', '강남구', '역삼동'),
 ('대전광역시', '서구', '둔산동'),
 ('부산광역시', '해운대구', '우동');
@@ -293,9 +332,11 @@ INSERT INTO `article` (`regDate`, `updateDate`, `memberId`, `boardId`, `title`, 
 (NOW(), NOW(), 1, 1, '고양이 발정기 대처법', '고양이의 발정기 행동과 대처 방법을 알려드립니다.'),
 (NOW(), NOW(), 1, 1, '반려동물과 산책하기 좋은 장소', '서울에서 강아지와 산책하기 좋은 공원 소개.');
 
+
 -- ✅ QnA
 INSERT INTO `qna` (`memberId`, `title`, `body`, `isSecret`, `isFromUser`, `isAnswered`, `orderNo`, `regDate`, `updateDate`, `isActive`)
 VALUES
+
 (1, '강아지는 언제부터 예방접종을 시작해야 하나요?', '보통 생후 6~8주부터 시작하며, 이후 매년 추가 접종이 필요합니다.', FALSE, FALSE, TRUE, 1, NOW(), NOW(), TRUE),
 (1, '고양이 중성화 수술은 언제 하는 게 좋나요?', '암컷은 생후 6개월 전후, 수컷은 생후 5~6개월에 하는 것이 일반적입니다.', FALSE, FALSE, TRUE, 2, NOW(), NOW(), TRUE),
 (1, '강아지가 설사를 자주 하는데 병원에 데려가야 하나요?', '3일 이상 지속되거나 피가 섞이면 병원에 방문해야 합니다.', FALSE, FALSE, TRUE, 3, NOW(), NOW(), TRUE);
@@ -308,6 +349,7 @@ INSERT INTO `vaccine_schedule` (`vaccineName`, `intervalMonths`, `type`, `descri
 ('Leptospirosis', 12, 'Annual', '물과 흙을 통해 퍼지는 세균 감염 예방');
 
 
+
 ############# 📜 테스트용 코드 ###################
 
 
@@ -317,6 +359,7 @@ INSERT INTO `vaccine_schedule` (`vaccineName`, `intervalMonths`, `type`, `descri
 DELIMITER $$
 
 CREATE TRIGGER `auto_set_next_due_date`
+
 BEFORE INSERT ON `pet_vaccination`
 FOR EACH ROW
 BEGIN
@@ -332,6 +375,7 @@ BEGIN
   ELSE
     SET NEW.`nextDueDate` = NULL;
   END IF;
+
 END$$
 
 DELIMITER ;
@@ -342,6 +386,7 @@ ALTER TABLE `article` ADD COLUMN `repliesCount` INT(10) UNSIGNED NOT NULL DEFAUL
 DELIMITER $$
 
 CREATE TRIGGER `trg_reply_count_update`
+
 AFTER INSERT ON `reply`
 FOR EACH ROW
 BEGIN
@@ -361,6 +406,7 @@ BEGIN
     SET `repliesCount` = `repliesCount` - 1
     WHERE `id` = OLD.`relId`;
   END IF;
+
 END$$
 
 DELIMITER ;
