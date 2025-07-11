@@ -172,13 +172,13 @@
             <version>2.9.3</version>
         </dependency>
 
+
         <dependency>
             <groupId>com.cloudinary</groupId>
             <artifactId>cloudinary-http44</artifactId>
             <version>1.36.0</version>
         </dependency>
 
-<<<<<<< HEAD
         <!-- Google OAuth -->
         <dependency>
             <groupId>com.google.api-client</groupId>
@@ -196,8 +196,11 @@
             <version>2.10.1</version>
         </dependency>
 
-=======
->>>>>>> 860dba721d57510e4c5280d28b6ccf6c79cd63fd
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-thymeleaf</artifactId>
+		</dependency>
+
     </dependencies>
 
 
