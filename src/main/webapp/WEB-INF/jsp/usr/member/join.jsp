@@ -164,6 +164,7 @@
       <button type="button" class="next-button" onclick="goToStep(2)">다음</button>
     </div>
 
+
     <!-- STEP 2 -->
     <div class="form-step" id="step2">
       <h2>Contact Info</h2>
