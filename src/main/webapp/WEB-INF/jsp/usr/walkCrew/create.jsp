@@ -4,6 +4,11 @@
 <html>
 <head>
 <title>크루 등록</title>
+
+<!-- Kakao Maps JS SDK (키 바인딩 확인) -->
+<script src="http://dapi.kakao.com/v2/maps/sdk.js?appkey=e168f5867f0ad1b66e9692a214050110&libraries=services"></script>
+
+
 <style>
 form {
 	width: 60%;
@@ -19,7 +24,7 @@ label {
 	margin-top: 15px;
 }
 
-input[type="text"], textarea, select {
+input[type="text"], textarea {
 	width: 100%;
 	padding: 10px;
 	margin-top: 5px;
@@ -39,6 +44,58 @@ button[type="submit"] {
 	border-radius: 5px;
 }
 </style>
+
+<script>
+        // 페이지 로딩 시 현재 위치로 구(district) → 동 리스트 자동 호출
+        window.onload = () => {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+
+                    const geocoder = new kakao.maps.services.Geocoder();
+                    geocoder.coord2RegionCode(lng, lat, function(result, status) {
+                        if (status === kakao.maps.services.Status.OK) {
+                            const region = result.find(r => r.region_type === "H");
+                            const district = region.region_2depth_name;
+
+                            fetch(`/usr/api/dongList?district=${district}`)
+                                .then(res => res.json())
+                                .then(data => {
+                                    const dongListDiv = document.querySelector("#dongList");
+                                    dongListDiv.innerHTML = "";
+
+                                    if (data.length === 0) {
+                                        dongListDiv.innerHTML = "동 정보가 없습니다.";
+                                        return;
+                                    }
+
+                                    data.forEach(dong => {
+                                        const btn = document.createElement("button");
+                                        btn.type = "button";
+                                        btn.textContent = dong;
+                                        btn.onclick = () => {
+                                            document.querySelector("#selectedDong").value = dong;
+                                            document.querySelectorAll("#dongList button").forEach(b => {
+                                                b.style.backgroundColor = "";
+                                                b.style.color = "";
+                                            });
+                                            btn.style.backgroundColor = "#4CAF50";
+                                            btn.style.color = "white";
+                                        };
+                                        dongListDiv.appendChild(btn);
+                                    });
+                                });
+                        }
+                    });
+                }, function(err) {
+                    console.warn("위치 접근 실패:", err);
+                });
+            } else {
+                alert("이 브라우저는 위치 정보를 지원하지 않습니다.");
+            }
+        };
+    </script>
 </head>
 <body>
 
@@ -52,24 +109,13 @@ button[type="submit"] {
 		<label for="descriptoin">설명</label>
 		<textarea name="descriptoin" id="descriptoin" rows="5" required></textarea>
 
-		<!-- 지역 구 선택 -->
-		<label for="area">지역(구)</label>
-		<select id="area" name="area" required>
-			<option value="">-- 구 선택 --</option>
-			<option value="서구">서구</option>
-			<option value="중구">중구</option>
-			<option value="유성구">유성구</option>
-			<!-- 동적으로 받아오려면 JS에서 fetch 로 삽입 -->
-		</select>
-
-		<!-- 동 리스트 출력 (선택된 구에 따라) -->
+		<!-- 동 선택 -->
 		<label>동 선택</label>
 		<div class="dong-list" id="dongList">
-			<small>지역(구)를 선택하면 해당 동네가 표시됩니다</small>
+			<small>현재 위치를 기반으로 동네를 불러옵니다</small>
 		</div>
 		<input type="hidden" name="dong" id="selectedDong" />
 
-		<!-- 작성자 ID는 로그인 세션에서 가져오고 hidden 처리 -->
 		<input type="hidden" name="leaderId" value="${rq.loginedMemberId}" />
 
 		<button type="submit">등록</button>
@@ -78,40 +124,6 @@ button[type="submit"] {
 	<div style="text-align: center;">
 		<a href="/usr/walkCrew/list">← 목록으로 돌아가기</a>
 	</div>
-
-	<script>
-    document.querySelector("#area").addEventListener("change", function () {
-        const district = this.value;
-        const dongListDiv = document.querySelector("#dongList");
-        dongListDiv.innerHTML = "불러오는 중...";
-
-        fetch(`/usr/api/dongList?district=${district}`)
-            .then(res => res.json())
-            .then(data => {
-                dongListDiv.innerHTML = "";
-
-                if (data.length === 0) {
-                    dongListDiv.innerHTML = "해당 지역의 동 정보가 없습니다.";
-                    return;
-                }
-
-                data.forEach(dong => {
-                    const btn = document.createElement("button");
-                    btn.type = "button";
-                    btn.textContent = dong;
-                    btn.onclick = () => {
-                        document.querySelector("#selectedDong").value = dong;
-
-                        // 선택 시 강조
-                        document.querySelectorAll("#dongList button").forEach(b => b.style.backgroundColor = "");
-                        btn.style.backgroundColor = "#4CAF50";
-                        btn.style.color = "white";
-                    };
-                    dongListDiv.appendChild(btn);
-                });
-            });
-    });
-</script>
 
 </body>
 </html>
