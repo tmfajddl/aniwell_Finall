@@ -59,11 +59,6 @@ button[type="submit"] {
 
 		<div class="field">
 			<div class="label">지역:</div>
-			<div>${crew.districtId}</div>
-		</div>
-
-		<div class="field">
-			<div class="label">지역:</div>
 			<div>${crewLocation}</div>
 			<!-- ✔️ 예: 서울특별시 종로구 청운동 -->
 		</div>

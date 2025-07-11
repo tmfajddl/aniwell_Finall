@@ -19,9 +19,18 @@
 
 	<!-- 크루 단건 조회 -->
 	<select id="findById" resultType="com.example.RSW.vo.WalkCrew">
-		SELECT * FROM walk_crew WHERE
-		id = #{id}
+		SELECT
+		id,
+		title,
+		description,
+		district_id AS districtId,
+		leaderId,
+		createdAt
+		FROM walk_crew
+		WHERE id =
+		#{id}
 	</select>
+
 
 	<!-- 지역별 크루 리스트 -->
 	<select id="findByArea" resultType="com.example.RSW.vo.WalkCrew">
@@ -58,6 +67,13 @@
 		joinedAt = NOW()
 	</insert>
 
+	<select id="getAllCrews"
+		resultType="com.example.RSW.vo.WalkCrew">
+		SELECT w.*, d.city
+		FROM walk_crew w
+		JOIN district d ON w.district_id = d.id
+		ORDER BY w.createdAt DESC
+	</select>
 
 
 </mapper>

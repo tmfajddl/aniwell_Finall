@@ -72,6 +72,9 @@ public class UsrWalkCrewController {
 	public String showDetail(@PathVariable int id, Model model) {
 		WalkCrew crew = walkCrewService.getCrewById(id);
 
+		// ✅ 여기서 districtId 로그 확인
+		System.out.println("📌 crew.districtId = " + crew.getDistrictId());
+
 		// ✅ createdAt → Date 변환
 		Date createdDate = Date.from(crew.getCreatedAt().atZone(ZoneId.systemDefault()).toInstant());
 
@@ -104,6 +107,13 @@ public class UsrWalkCrewController {
 	@ResponseBody
 	public List<String> getDongs(@RequestParam String city, @RequestParam String district) {
 		return districtService.findDongsByCityAndDistrict(city, district);
+	}
+
+	@GetMapping("/getDistrictId")
+	@ResponseBody
+	public String getDistrictId(@RequestParam String dong) {
+		District district = districtService.findByDong(dong);
+		return district != null ? String.valueOf(district.getId()) : "0";
 	}
 
 }
