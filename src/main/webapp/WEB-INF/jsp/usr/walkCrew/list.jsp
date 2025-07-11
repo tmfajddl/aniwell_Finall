@@ -1,9 +1,23 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt"%>
 
 <html>
 <head>
-<title>크루 모집 목록</title>
+<title>크루 모집 리스트</title>
+
+<script>
+	// ✅ 로그인 여부에 따라 분기 처리
+	function goToCreate(isLogined) {
+		if (isLogined) {
+			location.href = '/usr/walkCrew/create';
+		} else {
+			alert('로그인 후 이용해주세요.');
+			location.href = '/usr/member/login';
+		}
+	}
+</script>
+
 <style>
 table {
 	width: 80%;
@@ -21,13 +35,14 @@ th {
 	background-color: #f1f1f1;
 }
 
-a.button {
+a.button, button.button {
 	display: inline-block;
 	padding: 6px 12px;
 	background-color: #4CAF50;
 	color: white;
 	text-decoration: none;
 	border-radius: 4px;
+	cursor: pointer;
 }
 </style>
 </head>
@@ -35,8 +50,9 @@ a.button {
 
 	<h2 style="text-align: center;">🚶‍♀️ 크루 모집 리스트</h2>
 
+	<!-- ✅ 로그인 여부에 따라 동작 달라지는 버튼 -->
 	<div style="text-align: center; margin-bottom: 20px;">
-		<a href="/usr/walkCrew/create" class="button">크루 등록</a>
+		<button class="button" onclick="goToCreate(${rq != null && rq.logined})">크루 등록</button>
 	</div>
 
 	<table>
@@ -55,13 +71,18 @@ a.button {
 				<tr>
 					<td>${crew.id}</td>
 					<td>${crew.title}</td>
-					<td>${crew.city}</td>
-					<!-- ✅ 시 표시 -->
-					<td>${crew.leaderId}</td>
 					<td>
-						<fmt:formatDate value="${crew.createdAt}" pattern="yyyy-MM-dd HH:mm:ss" />
-						<!-- ✅ 수정됨 -->
+						<c:choose>
+							<c:when test="${not empty crew.city}">
+								${crew.city} ${crew.district} ${crew.dong}
+							</c:when>
+							<c:otherwise>-</c:otherwise>
+						</c:choose>
 					</td>
+					<td>
+						<c:out value="${crew.nickname}" default="알 수 없음" />
+					</td>
+					<td>${crew.createdAt.toLocalDate()}</td>
 					<td>
 						<a href="/usr/walkCrew/detail/${crew.id}" class="button">보기</a>
 					</td>

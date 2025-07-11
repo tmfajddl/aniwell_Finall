@@ -5,7 +5,6 @@
 <head>
 <title>크루 등록</title>
 
-
 <style>
 form {
 	width: 60%;
@@ -52,13 +51,11 @@ button[type="submit"] {
 	<form action="/usr/walkCrew/doCreate" method="post">
 		<h2>🚀 새 크루 등록</h2>
 
-
 		<label>제목</label>
 		<input type="text" name="title" required />
 
 		<label>설명</label>
 		<textarea name="description" rows="5" required></textarea>
-
 
 		<label>동 선택</label>
 		<div>
@@ -71,7 +68,6 @@ button[type="submit"] {
 		<input type="hidden" name="selectedDong" id="selectedDong" />
 		<input type="hidden" name="districtId" id="districtIdInput" />
 
-
 		<button type="submit">등록</button>
 	</form>
 
@@ -80,6 +76,9 @@ button[type="submit"] {
 	</div>
 
 	<script>
+	  let currentCity = '';
+	  let currentDistrict = '';
+
 	  function loadKakaoMap(callback) {
 	    const script = document.createElement("script");
 	    script.src = "https://dapi.kakao.com/v2/maps/sdk.js?appkey=${kakaoJsKey}&autoload=false&libraries=services";
@@ -106,10 +105,9 @@ button[type="submit"] {
 
 	                  const parts = fullAddr.split(" ");
 	                  if (parts.length >= 3) {
-	                    const city = parts[0];
-	                    const district = parts[1];
-
-	                    loadDongList(city, district);
+	                    currentCity = parts[0];
+	                    currentDistrict = parts[1];
+	                    loadDongList(currentCity, currentDistrict);
 	                  }
 	                  break;
 	                }
@@ -153,8 +151,10 @@ button[type="submit"] {
 	            });
 	            btn.style.backgroundColor = "#ddd";
 
-	            // ✅ 선택한 동으로부터 districtId 조회
-	            fetch("/usr/walkCrew/getDistrictId?dong=" + encodeURIComponent(dong))
+	            // ✅ 수정된 부분: city + district + dong 모두 포함
+	            fetch("/usr/walkCrew/getDistrictId?city=" + encodeURIComponent(currentCity)
+	                + "&district=" + encodeURIComponent(currentDistrict)
+	                + "&dong=" + encodeURIComponent(dong))
 	              .then(response => response.text())
 	              .then(districtId => {
 	                document.getElementById("districtIdInput").value = districtId;
