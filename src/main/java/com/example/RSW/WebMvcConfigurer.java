@@ -91,7 +91,7 @@ public class WebMvcConfigurer implements org.springframework.web.servlet.config.
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         registry.addResourceHandler("/uploads/**")  // 웹에서 요청할 경로
-                .addResourceLocations("file:/Users/e-suul/Desktop/aniwell_upload/"); // 실제 로컬 폴더
+                .addResourceLocations("file:/Users/e-suul/Desktop/aniwell_uploads/"); // 실제 로컬 폴더
     }
     }
 
