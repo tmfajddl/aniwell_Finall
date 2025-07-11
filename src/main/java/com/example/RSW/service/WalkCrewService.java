@@ -62,6 +62,4 @@ public class WalkCrewService {
 		walkCrewRepository.insertMemberToCrew(memberId, crewId);
 	}
 
-	
-
 }

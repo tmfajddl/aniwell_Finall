@@ -52,4 +52,25 @@
 		dong = #{dong}
 	</insert>
 
+	<select id="findByDong" parameterType="string"
+		resultType="com.example.RSW.vo.District">
+		SELECT *
+		FROM district
+		WHERE dong = #{dong}
+		LIMIT 1
+	</select>
+
+
+	<!-- ✅ districtId 기준으로 단건 조회 -->
+	<select id="getDistrictById" parameterType="int"
+		resultType="com.example.RSW.vo.District">
+		SELECT
+		id,
+		city AS sido,
+		district AS sigungu,
+		dong
+		FROM district
+		WHERE id = #{id}
+	</select>
+
 </mapper>
