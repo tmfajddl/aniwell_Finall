@@ -308,6 +308,8 @@ CREATE TABLE vaccine_schedule (
   createdAt DATETIME DEFAULT NOW()       
 );
 
+ALTER TABLE calendar_event ADD COLUMN title VARCHAR(100) NOT NULL AFTER petId;
+
 DELIMITER $$
 
 CREATE TRIGGER auto_set_next_due_date
