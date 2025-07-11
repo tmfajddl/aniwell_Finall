@@ -20,8 +20,13 @@ public class Member {
 	private String loginPw;
 	private String name;
 	private String nickname;
-	private String cellphoneNum;
+	private String cellphone;
 	private String email;
 	private boolean delStatus;
 	private LocalDateTime delDate;
+	private int authLevel;
+	private String authName;
+
+	private String vetCertUrl;        // 인증서 경로
+	private Integer vetCertApproved;  // 승인 상태
 }

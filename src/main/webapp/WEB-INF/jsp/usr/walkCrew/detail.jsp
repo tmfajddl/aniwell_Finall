@@ -48,7 +48,7 @@ h2 {
 
 		<div class="field">
 			<div class="label">지역:</div>
-			<div>${crew.area}</div>
+			<div>${crew.districtId}</div>
 		</div>
 
 		<div class="field">
@@ -59,7 +59,8 @@ h2 {
 		<div class="field">
 			<div class="label">작성일:</div>
 			<div>
-				<fmt:formatDate value="${crew.createdAt}" pattern="yyyy-MM-dd HH:mm" />
+				<fmt:formatDate value="${createdDate}" pattern="yyyy-MM-dd HH:mm:ss" />
+
 			</div>
 		</div>
 
