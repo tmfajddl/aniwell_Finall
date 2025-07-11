@@ -5,6 +5,7 @@
 <head>
 <title>크루 등록</title>
 
+
 <style>
 form {
 	width: 60%;
@@ -51,11 +52,13 @@ button[type="submit"] {
 	<form action="/usr/walkCrew/doCreate" method="post">
 		<h2>🚀 새 크루 등록</h2>
 
+
 		<label>제목</label>
 		<input type="text" name="title" required />
 
 		<label>설명</label>
 		<textarea name="description" rows="5" required></textarea>
+
 
 		<label>동 선택</label>
 		<div>
@@ -67,6 +70,7 @@ button[type="submit"] {
 
 		<input type="hidden" name="selectedDong" id="selectedDong" />
 		<input type="hidden" name="districtId" id="districtIdInput" />
+
 
 		<button type="submit">등록</button>
 	</form>
