@@ -30,11 +30,7 @@ public class UsrQnaController {
     public String showQnaList(Model model,
                               @RequestParam(value = "selectedId", required = false) Integer selectedId) {
         List<Qna> qnas = qnaService.getPublicFaqList(); // 자주 묻는 질문
-
         List<Qna> myQnas = qnaService.getUserQnaByMemberId(rq.getLoginedMemberId());
-        if (rq.isLogined()) {
-            myQnas = qnaService.getUserQnaByMemberId(rq.getLoginedMemberId());
-        }
 
         Qna selectedQna = null;
         if (selectedId != null) {
@@ -44,9 +40,6 @@ public class UsrQnaController {
         model.addAttribute("qnas", qnas);
         model.addAttribute("myQnas", myQnas);
         model.addAttribute("selectedQna", selectedQna);
-
-        model.addAttribute("isLogined", rq.isLogined());
-
         return "usr/qna/list";
     }
 
@@ -78,8 +71,6 @@ public class UsrQnaController {
                             @RequestParam String title,
                             @RequestParam String body,
                             @RequestParam(required = false, defaultValue = "false") boolean isSecret) {
-
-
 
         Rq rq = (Rq) req.getAttribute("rq");
         int loginedMemberId = rq.getLoginedMemberId();
