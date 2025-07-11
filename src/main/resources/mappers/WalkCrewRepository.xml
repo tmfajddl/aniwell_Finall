@@ -76,4 +76,9 @@
 	</select>
 
 
+	<select id="getWalkCrews" resultType="com.example.RSW.vo.WalkCrew">
+		SELECT * FROM walk_crew WHERE id = #{memberId}
+	</select>
+
+
 </mapper>
