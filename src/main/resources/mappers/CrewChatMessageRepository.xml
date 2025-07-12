@@ -5,9 +5,9 @@
 
 <mapper namespace="com.example.RSW.repository.CrewChatMessageRepository">
 
-    <insert id="insertMessage" parameterType="CrewChatMessage">
-        INSERT INTO crew_chat_message (crewId, senderId, content, sentAt)
-        VALUES (#{crewId}, #{senderId}, #{content}, #{sentAt})
+    <insert id="insertMessage">
+        INSERT INTO crew_chat_message (crewId, senderId, nickname, content, sentAt)
+        VALUES (#{crewId}, #{senderId}, #{nickname}, #{content}, #{sentAt})
     </insert>
 
     <select id="getMessagesByCrewId" parameterType="int" resultType="CrewChatMessage">

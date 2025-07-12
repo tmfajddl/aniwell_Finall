@@ -10,4 +10,6 @@ public class CrewChatMessage {
     private int senderId;
     private String content;
     private LocalDateTime sentAt;
+
+    private String nickname;
 }
