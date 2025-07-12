@@ -15,6 +15,7 @@ public class CalendarEventService {
     @Autowired
     private CalendarEventRepository calendarEventRepository;
 
+    // 감정일지 등록
     public ResultData insert(int memberId, LocalDate eventDate, String title, int petId, String content) {
         int affectedRows = calendarEventRepository.insert(memberId, eventDate, title, petId, content);
 
@@ -25,6 +26,7 @@ public class CalendarEventService {
         return ResultData.from("S-1", "감정일기가 등록되었습니다.");
     }
 
+    //감정 일지 업데이트
     public ResultData update(int id, LocalDate eventDate, String title, String content) {
         int affectedRows = calendarEventRepository.update(id, eventDate, title,  content);
 
@@ -35,22 +37,27 @@ public class CalendarEventService {
         return ResultData.from("S-1", "감정일기가 수정되었습니다.");
     }
 
+    //감정 일지 삭제
     public void delete(int id) {
         calendarEventRepository.delete(id);
     }
 
+    //멤버 ID로 등록된 감정일지 가져오기
     public List<CalendarEvent> getEventsByMemberId(int memberId) {
         return calendarEventRepository.findByMemberId(memberId);
     }
 
+    // 펫 ID로 등록된 감정일지 가져오기
     public List<CalendarEvent> getEventsByPetId(int petId) {
         return calendarEventRepository.findByPetId(petId);
     }
 
+    // ID로 등록된 감정일지 가져오기
     public CalendarEvent getEventsById(int id) {
         return calendarEventRepository.getEventsById(id);
     }
 
+    // 등록 날짜와 펫 ID로 등록된 감정일지 가져오기
     public List<CalendarEvent> getEventByDateAndPetId(LocalDate eventDate, int petId) {
         return calendarEventRepository.getEventByDateAndPetId(eventDate,petId);
     }
