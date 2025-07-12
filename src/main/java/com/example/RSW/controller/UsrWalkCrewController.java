@@ -55,15 +55,16 @@ public class UsrWalkCrewController {
 		Rq rq = (Rq) req.getAttribute("rq"); // 필터 또는 인터셉터에서 세팅된 Rq
 		model.addAttribute("rq", rq); // JSP에서 사용 가능하게 전달
 
-		List<WalkCrew> crews = walkCrewService.getAllCrews();
+		List<WalkCrew> crews = walkCrewService.getAllCrews();// 전체 크루 리스트 조회
 		model.addAttribute("crews", crews);
 		return "usr/walkCrew/list";
 	}
 
-	// 크루 등록 폼 페이지
+	// ✅ AppConfig에서 Kakao Key 가져오기 위한 DI
 	@Autowired
 	private AppConfig appConfig; // @Value 주입된 클래스
 
+	// ✅ 크루 등록 폼 페이지 출력
 	@GetMapping("/create")
 	public String showCreateForm(Model model) {
 		model.addAttribute("kakaoJsKey", appConfig.getKakaoJavascriptKey()); // JSP에서 사용될 키
@@ -85,7 +86,7 @@ public class UsrWalkCrewController {
 		System.out.println("dong = " + walkCrew.getDong());
 
 		walkCrew.setLeaderId(rq.getLoginedMemberId()); // ✅ 로그인된 사용자 ID 주입
-		walkCrewService.createCrew(walkCrew);
+		walkCrewService.createCrew(walkCrew);// 서비스 호출하여 DB에 저장
 
 		return "redirect:/usr/walkCrew/list";
 	}
@@ -118,6 +119,7 @@ public class UsrWalkCrewController {
 		return "usr/walkCrew/detail";
 	}
 
+	// ✅ 크루 참가 처리
 	@PostMapping("/join")
 	public String joinCrew(@RequestParam("crewId") int crewId, HttpServletRequest req) {
 		Rq rq = (Rq) req.getAttribute("rq");
@@ -129,6 +131,7 @@ public class UsrWalkCrewController {
 
 		int memberId = rq.getLoginedMemberId();
 
+		// 이미 참가했는지 확인
 		if (!walkCrewService.hasAlreadyJoined(crewId, memberId)) {
 			walkCrewService.addMemberToCrew(crewId, memberId);
 			String encodedMsg = URLEncoder.encode("참가 신청이 완료되었습니다.", StandardCharsets.UTF_8);
@@ -139,6 +142,7 @@ public class UsrWalkCrewController {
 		}
 	}
 
+	// ✅ 신청자 목록 보기 (크루장만 접근 가능)
 	@GetMapping("/requestList")
 	public String showRequestList(@RequestParam int crewId, HttpServletRequest req, Model model) {
 		Rq rq = (Rq) req.getAttribute("rq");
@@ -153,6 +157,7 @@ public class UsrWalkCrewController {
 			return "redirect:/usr/walkCrew/detail/" + crewId + "?msg=해당 페이지에 접근 권한이 없습니다.";
 		}
 
+		// 신청자 리스트 조회
 		List<Map<String, Object>> applicants = walkCrewService.getApplicantsByCrewId(crewId);
 		model.addAttribute("applicants", applicants);
 		model.addAttribute("crewId", crewId);
@@ -160,6 +165,7 @@ public class UsrWalkCrewController {
 		return "usr/walkCrew/requestList";
 	}
 
+	// ✅ 신청자 상세 정보 보기
 	@GetMapping("/requestDetail")
 	public String showRequestDetail(@RequestParam int crewId, @RequestParam int memberId, HttpServletRequest req,
 			Model model) {
@@ -187,17 +193,19 @@ public class UsrWalkCrewController {
 		return "usr/walkCrew/requestDetail";
 	}
 
+	// ✅ 특정 시, 구에 해당하는 동 목록 반환 (Ajax)
 	@GetMapping("/getDongs")
 	@ResponseBody
 	public List<String> getDongs(@RequestParam String city, @RequestParam String district) {
-		return districtService.findDongsByCityAndDistrict(city, district);
+		return districtService.findDongsByCityAndDistrict(city, district);// 동 리스트 반환
 	}
 
+	// ✅ 선택된 시/구/동에 해당하는 districtId 반환 (Ajax)
 	@GetMapping("/getDistrictId")
 	@ResponseBody
 	public String getDistrictId(@RequestParam String city, @RequestParam String district, @RequestParam String dong) {
 		int id = districtRepository.getDistrictIdByFullAddress(city, district, dong);
-		return String.valueOf(id);
+		return String.valueOf(id);// 정수 → 문자열 변환 후 반환
 	}
 
 }
