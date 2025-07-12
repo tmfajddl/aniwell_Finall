@@ -1,6 +1,7 @@
 package com.example.RSW.controller;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -28,6 +29,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.time.ZoneId;
 import java.util.Date;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+
 @Controller
 @RequestMapping("/usr/walkCrew")
 public class UsrWalkCrewController {
@@ -37,7 +41,7 @@ public class UsrWalkCrewController {
 
 	@Autowired
 	private DistrictRepository districtRepository;
-	
+
 	private final WalkCrewService walkCrewService;
 
 	@Autowired
@@ -119,13 +123,68 @@ public class UsrWalkCrewController {
 		Rq rq = (Rq) req.getAttribute("rq");
 
 		if (!rq.isLogined()) {
-			return "redirect:/usr/member/login?msg=로그인 후 이용해주세요.";
+			String encodedMsg = URLEncoder.encode("로그인 후 이용해주세요.", StandardCharsets.UTF_8);
+			return "redirect:/usr/member/login?msg=" + encodedMsg;
 		}
 
 		int memberId = rq.getLoginedMemberId();
-		walkCrewService.joinCrew(memberId, crewId);
 
-		return "redirect:/usr/walkCrew/detail/" + crewId;
+		if (!walkCrewService.hasAlreadyJoined(crewId, memberId)) {
+			walkCrewService.addMemberToCrew(crewId, memberId);
+			String encodedMsg = URLEncoder.encode("참가 신청이 완료되었습니다.", StandardCharsets.UTF_8);
+			return "redirect:/usr/walkCrew/detail/" + crewId + "?msg=" + encodedMsg;
+		} else {
+			String encodedMsg = URLEncoder.encode("이미 참가한 크루입니다.", StandardCharsets.UTF_8);
+			return "redirect:/usr/walkCrew/detail/" + crewId + "?msg=" + encodedMsg;
+		}
+	}
+
+	@GetMapping("/requestList")
+	public String showRequestList(@RequestParam int crewId, HttpServletRequest req, Model model) {
+		Rq rq = (Rq) req.getAttribute("rq");
+		if (!rq.isLogined()) {
+			return "redirect:/usr/member/login?msg=로그인 후 이용해주세요.";
+		}
+
+		int loginedMemberId = rq.getLoginedMemberId();
+		WalkCrew crew = walkCrewService.getCrewById(crewId);
+
+		if (crew.getLeaderId() != loginedMemberId) {
+			return "redirect:/usr/walkCrew/detail/" + crewId + "?msg=해당 페이지에 접근 권한이 없습니다.";
+		}
+
+		List<Map<String, Object>> applicants = walkCrewService.getApplicantsByCrewId(crewId);
+		model.addAttribute("applicants", applicants);
+		model.addAttribute("crewId", crewId);
+
+		return "usr/walkCrew/requestList";
+	}
+
+	@GetMapping("/requestDetail")
+	public String showRequestDetail(@RequestParam int crewId, @RequestParam int memberId, HttpServletRequest req,
+			Model model) {
+		Rq rq = (Rq) req.getAttribute("rq");
+
+		if (!rq.isLogined()) {
+			return "redirect:/usr/member/login?msg=로그인 후 이용해주세요.";
+		}
+
+		// 크루장인지 확인
+		WalkCrew crew = walkCrewService.getCrewById(crewId);
+		if (crew.getLeaderId() != rq.getLoginedMemberId()) {
+			return "redirect:/usr/walkCrew/detail/" + crewId + "?msg=해당 페이지에 접근 권한이 없습니다.";
+		}
+
+		// 신청자 정보 가져오기
+		Map<String, Object> applicant = walkCrewService.getApplicantDetail(crewId, memberId);
+		if (applicant == null) {
+			return "redirect:/usr/walkCrew/requestList?crewId=" + crewId + "&msg=신청자 정보를 찾을 수 없습니다.";
+		}
+
+		model.addAttribute("applicant", applicant);
+		model.addAttribute("crewId", crewId);
+
+		return "usr/walkCrew/requestDetail";
 	}
 
 	@GetMapping("/getDongs")

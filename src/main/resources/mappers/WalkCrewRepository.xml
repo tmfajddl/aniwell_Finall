@@ -111,5 +111,44 @@
 		SELECT * FROM walk_crew WHERE id = #{memberId}
 	</select>
 
+	<!-- ✅ 특정 멤버가 해당 크루에 이미 참가했는지 확인 -->
+	<select id="countByCrewIdAndMemberId" resultType="int">
+		SELECT COUNT(*)
+		FROM walk_crew_member
+		WHERE crewId = #{crewId} AND memberId =
+		#{memberId}
+	</select>
+
+	<!-- ✅ 크루에 멤버 등록 -->
+	<insert id="insertCrewMember">
+		INSERT INTO walk_crew_member (crewId, memberId,
+		joinedAt)
+		VALUES (#{crewId}, #{memberId}, NOW())
+	</insert>
+
+	<select id="getApplicantsByCrewId" resultType="map">
+		SELECT
+		m.id AS
+		memberId,
+		m.name AS memberName,
+		wcm.joinedAt
+		FROM walk_crew_member wcm
+		INNER JOIN member m ON wcm.memberId = m.id
+		WHERE wcm.crewId = #{crewId}
+	</select>
+
+	<select id="getApplicantDetail" resultType="map">
+		SELECT
+		m.id AS memberId,
+		m.name AS memberName,
+		m.nickname AS memberNickname,
+		m.address AS memberAddress,
+		m.authLevel,
+		wcm.joinedAt
+		FROM walk_crew_member wcm
+		INNER JOIN member m ON wcm.memberId = m.id
+		WHERE wcm.crewId = #{crewId} AND wcm.memberId = #{memberId}
+	</select>
+
 
 </mapper>

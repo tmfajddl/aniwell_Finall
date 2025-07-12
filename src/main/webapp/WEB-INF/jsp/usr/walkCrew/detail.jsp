@@ -45,6 +45,15 @@ button[type="submit"] {
 <body>
 
 	<div class="container">
+
+		<!-- ✅ 참가 메시지 출력 영역 -->
+		<c:if test="${not empty param.msg}">
+			<div
+				style="background-color: #e0ffe0; border: 1px solid #4CAF50; padding: 10px; margin-bottom: 20px; text-align: center; color: #2e7d32; font-weight: bold;">
+				${param.msg}</div>
+		</c:if>
+
+
 		<h2>📌 크루 상세정보</h2>
 
 		<div class="field">
