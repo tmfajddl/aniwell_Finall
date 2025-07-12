@@ -36,9 +36,6 @@ public class PetController {
     private WalkCrewService walkCrewService;
 
     @Autowired
-    private CrewChatMessageService chatService;
-
-    @Autowired
     private PetVaccinationService petVaccinationService;
 
     @Autowired
@@ -48,16 +45,19 @@ public class PetController {
     private CalendarEventService calendarEventService;
 
 
+    //주변 펫 샵 조회
     @GetMapping("/usr/pet/petPlace")
     public String showTest() {
         return "usr/pet/petPlace";
     }
 
+    // 채팅(미완성)
     @GetMapping("/usr/walkCrew/test")
     public String showChat(HttpSession session, Model model) {
         return "usr/walkCrew/crewChat";
     }
 
+    //펫 상세페이지
     @RequestMapping("/usr/pet/petPage")
     public String showTest(@RequestParam("petId") int petId, Model model) throws Exception{
         Pet pet = petService.getPetsById(petId);
@@ -67,48 +67,51 @@ public class PetController {
 
         List<Map<String, Object>> events = new ArrayList<>();
         for (PetVaccination pv : list) {
-            // ✅ 1. 접종 이벤트
+            // 접종 이벤트
             Map<String, Object> injEvent = new HashMap<>();
             injEvent.put("id", pv.getId());
             injEvent.put("title", pv.getVaccineName() + " 접종");
             injEvent.put("start", pv.getInjectionDate().toString());
-            injEvent.put("color", "#4caf50");
+            injEvent.put("color", "#4caf50"); //캘린더 표시 색 (변경 가능)
 
-            events.add(injEvent);
+            events.add(injEvent); // 접종한 백신 데이터
 
-            // ✅ 2. 다음 예정 이벤트 (nextDueDate가 null이 아닐 때만)
+            // 다음 예정 이벤트 (이름이 같은 백신 들어오면 마지막 접종의 다음 날짜만 표시)
             if (pv.getNextDueDate() != null) {
                 Map<String, Object> nextEvent = new HashMap<>();
                 nextEvent.put("id", pv.getId());
                 nextEvent.put("title", pv.getPetName() + " - " + pv.getVaccineName() + " 다음 예정");
                 nextEvent.put("start", pv.getNextDueDate().toString());
-                nextEvent.put("color", "#f44336");
+                nextEvent.put("color", "#f44336"); //캘린더 표시 색 (변경 가능)
 
-                events.add(nextEvent);
+                events.add(nextEvent); // 최종적인 다음 날짜
             }
         }
 
-        // ✅ JSON으로 변환하여 JSP에 전달
         ObjectMapper objectMapper = new ObjectMapper();
         String eventsJson = objectMapper.writeValueAsString(events);
-        model.addAttribute("eventsJson", eventsJson);
+        model.addAttribute("eventsJson", eventsJson); // 접종이벤트 내용 넘김
         return "/usr/pet/petPage"; // JSP or Thymeleaf 페이지
     }
+
+    // 등록한 펫 목록 / 가입한 크루 목록
     @RequestMapping("/usr/pet/list")
     public String showPetList(@RequestParam("memberId") int memberId, Model model) {
         List<Pet> pets = petService.getPetsByMemberId(memberId);
         List<WalkCrew> crews = walkCrewService.getWalkCrews(memberId);
 
-        model.addAttribute("pets", pets);
-        model.addAttribute("crews", crews);
+        model.addAttribute("pets", pets); // 해당 멤버가 등록한 펫ID
+        model.addAttribute("crews", crews); // 해당 멤버가 가입한 크루목록
         return "usr/pet/list"; // JSP or Thymeleaf 페이지
     }
 
+    //펫등록 페이지 이동
     @RequestMapping("/usr/pet/join")
     public String showJoin(HttpServletRequest req) {
         return "/usr/pet/join";
     }
 
+    // 펫 등록 로직
     @RequestMapping("/usr/pet/doJoin")
     @ResponseBody
     public String doJoin(HttpServletRequest req,
@@ -120,7 +123,7 @@ public class PetController {
                          @RequestParam String birthDate,
                          @RequestParam double weight) {
 
-        // 유효성 검사 생략 안 함
+        // 유효성 검사
         if (Ut.isEmptyOrNull(name)) return Ut.jsHistoryBack("F-1", "이름을 입력하세요");
         if (Ut.isEmptyOrNull(species)) return Ut.jsHistoryBack("F-2", "종을 입력하세요");
         if (Ut.isEmptyOrNull(breed)) return Ut.jsHistoryBack("F-3", "품종을 입력하세요");
@@ -131,7 +134,7 @@ public class PetController {
         // 1. 파일 저장 처리
         String imagePath = null;
         if (!photo.isEmpty()) {
-            String uploadDir = "/Users/e-suul/Desktop/aniwell_uploads"; // 실제 저장 경로
+            String uploadDir = "/Users/e-suul/Desktop/aniwell_uploads"; // 실제 저장 경로(변경 필요)
             File uploadFolder = new File(uploadDir);
             if (!uploadFolder.exists()) uploadFolder.mkdirs();
 
@@ -157,6 +160,8 @@ public class PetController {
         return Ut.jsReplace(joinRd.getResultCode(), joinRd.getMsg(), "../pet/list?memberId=" + id);
     }
 
+    //펫 정보 수정 페이지로 이동
+
     @RequestMapping("/usr/pet/modify")
     public String showModify(@RequestParam("petId") int petId, Model model) {
         Pet pet = petService.getPetsById(petId);
@@ -165,12 +170,13 @@ public class PetController {
         return "usr/pet/modify";
     }
 
+
+    // 펫 정보 수정 로직
     @RequestMapping("/usr/pet/doModify")
     @ResponseBody
     public String doModify(HttpServletRequest req, @RequestParam("petId") int petId, String name, String species, String breed,
                            String gender, String birthDate, double weight, MultipartFile photo) {
 
-        // 비번은 안바꾸는거 가능(사용자) 비번 null 체크는 x
 
         if (Ut.isEmptyOrNull(name)) {
             return Ut.jsHistoryBack("F-1", "이름을 입력하세요");
@@ -180,7 +186,7 @@ public class PetController {
 
         }
         if (Ut.isEmptyOrNull(breed)) {
-            return Ut.jsHistoryBack("F-3", "중성화여부를 입력하세요");
+            return Ut.jsHistoryBack("F-3", "품종을 입력하세요");
 
         }
         if (Ut.isEmptyOrNull(gender)) {
@@ -200,7 +206,7 @@ public class PetController {
 
         if (photo != null && !photo.isEmpty()) {
             try {
-                String uploadDir = "/Users/e-suul/Desktop/AniwellProject/src/main/resources/static/img/pet/";
+                String uploadDir = "/Users/e-suul/Desktop/AniwellProject/src/main/resources/static/img/pet/"; // 사진 저장 경로
                 String newFilename = System.currentTimeMillis() + "_" + photo.getOriginalFilename();
                 Path filePath = Paths.get(uploadDir + newFilename);
 
@@ -216,6 +222,8 @@ public class PetController {
         }
 
 
+        //사진이 있는 경우와 없는 결우 로직 나눔
+
         ResultData modifyRd;
         if (photoPath == null) {
             modifyRd = petService.updatePetyWithoutPhoto(petId, name, species, breed, gender, birthDate, weight);
@@ -227,20 +235,23 @@ public class PetController {
         return Ut.jsReplace(modifyRd.getResultCode(), modifyRd.getMsg(), "../pet/list?memberId=" + id);
     }
 
-
+    // 감정 분석 페이지 이동
     @RequestMapping("/usr/pet/analysis")
     public String showAnalysisForm() {
         return "usr/pet/emotion";  // 분석 요청 form (이미지 경로 선택)
     }
 
+    // 감정 갤러리 이동
     @RequestMapping("/usr/pet/gallery")
     public String showGallery(@RequestParam("petId") int petId, Model model) {
         List<PetAnalysis> analysisList = petAnalysisService.getAnalysisByPetId(petId);
 
+        //감정 분석 사진 목록 리스트
         model.addAttribute("analysisList", analysisList);
         return "usr/pet/gallery";  // 분석 요청 form (이미지 경로 선택)
     }
 
+    // 감정 분석 로직
     @PostMapping("/usr/pet/analysis/do")
     @ResponseBody
     public Map<String, Object> doAnalysis(
@@ -300,16 +311,16 @@ public class PetController {
             petAnalysisService.save(analysis);
 
             // 6. 응답 반환
-            result.put("emotionResult", emotion);
-            result.put("confidence", String.format("%.2f", confidence));
-            result.put("imagePath", "/uploads/" + fileName);
+            result.put("emotionResult", emotion); // 최종 감정
+            result.put("confidence", String.format("%.2f", confidence)); // 최종 감정의 정확도
+            result.put("imagePath", "/uploads/" + fileName); // 넣은 이미지
 
-            // 🔥 감정별 확률 map 추가
+            // 감정별 확률 map 추가
             Map<String, Double> probabilities = new HashMap<>();
             root.get("probabilities").fields().forEachRemaining(entry -> {
                 probabilities.put(entry.getKey(), entry.getValue().asDouble());
             });
-            result.put("probabilities", probabilities);
+            result.put("probabilities", probabilities); // 감정 분석 내용
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -321,10 +332,7 @@ public class PetController {
         return result;
     }
 
-
-
-
-
+    // 펫 삭제 로직
     @ResponseBody
     @RequestMapping("/usr/pet/delete")
     public String doDelete(HttpServletRequest req, @RequestParam("petId") int petId) {
@@ -334,11 +342,13 @@ public class PetController {
         return Ut.jsReplace(deleteRd.getResultCode(), deleteRd.getMsg(), "../pet/list?memberId="+id); // JSP 경로
     }
 
+    // 백신 등록 페이지 이동
     @RequestMapping("/usr/pet/vaccination/registration")
     public String showRegistration(HttpServletRequest req,@RequestParam("petId") int petId) {
         return "/usr/pet/vaccinationRegistration";
     }
 
+    // 백신 등록 로직
     @RequestMapping("/usr/pet/vaccination/doRegistration")
     @ResponseBody
     public ResultData doRegistration(HttpServletRequest req,
@@ -353,6 +363,7 @@ public class PetController {
             return ResultData.from("F-3", "접종 날짜를 입력하세요");
         }
 
+        //비고 있는 경우와 없는 경우 로직 분리
         if (notes == null) {
             return petVaccinationService.insertPetVaccination(petId, vaccineName, injectionDate);
         } else {
@@ -360,15 +371,14 @@ public class PetController {
         }
     }
 
-
-
+    //백신 수정 페이지 이동
     @RequestMapping("/usr/pet/vaccination/modify")
     public String showVaccinationModify(@RequestParam("vaccinationId") int vaccinationId, Model model) {
         PetVaccination petVaccination = petVaccinationService.getVaccinationsById(vaccinationId);
-        model.addAttribute("petVaccination", petVaccination);
+        model.addAttribute("petVaccination", petVaccination); // 해당 id에 해당하는 백신
         return "usr/pet/vaccinationModify";
     }
-
+    //백신 수정 로직
     @RequestMapping("/usr/pet/vaccination/doModify")
     @ResponseBody
     public String doVaccinationModify(@RequestParam("vaccinationId") int vaccinationId, String vaccineName, String injectionDate, String notes) {
@@ -386,6 +396,7 @@ public class PetController {
 
         }
 
+        //비고 있는 경우와 없는 경우 로직 분리
         ResultData modifyRd;
         if (notes == null) {
             modifyRd = petVaccinationService.updatePetVaccination( vaccinationId, vaccineName,injectionDate);
@@ -397,13 +408,15 @@ public class PetController {
         return Ut.jsReplace(modifyRd.getResultCode(), modifyRd.getMsg(), "../vaccination?petId="+id);
     }
 
+    //백신 정보 상세보기
     @RequestMapping("/usr/pet/vaccination/detail")
     public String showVaccinationDetail(@RequestParam("vaccinationId") int vaccinationId, Model model) {
         PetVaccination petVaccination = petVaccinationService.getVaccinationsById(vaccinationId);
-        model.addAttribute("petVaccination", petVaccination);
-        return "usr/pet/vaccinationDetail";  // 상세보기 JSP 페이지
+        model.addAttribute("petVaccination", petVaccination); // 해당 id에 해당하는 백신
+        return "usr/pet/vaccinationDetail";
     }
 
+    //벡신 지우는 로직
     @ResponseBody
     @RequestMapping("/usr/pet/vaccination/delete")
     public String doVaccinationDelete(@RequestParam("vaccinationId") int  vaccinationId) {
@@ -412,14 +425,16 @@ public class PetController {
         return "jsReplace('/usr/pet/vaccination?petId=" + id + "', '삭제가 완료되었습니다.');";
     }
 
+    //펫 감정일기 페이지 이동
     @RequestMapping("/usr/pet/daily")
     public String showDaily(@RequestParam("petId") int petId, Model model) {
         List<CalendarEvent> events = calendarEventService.getEventsByPetId(petId);
-        model.addAttribute("events", events);
-        model.addAttribute("petId", petId); // 👉 jsp에서 다시 요청 시 필요
-        return "usr/pet/daily";  // 상세보기 jsp
+        model.addAttribute("events", events); // 감정일기에 등록된 이벤트들
+        model.addAttribute("petId", petId); // 해당 펫의 ID
+        return "usr/pet/daily";
     }
 
+    // 펫 감정일지 등록 로직(json 결과 출력)
     @RequestMapping("/usr/pet/daily/write")
     @ResponseBody
     public Map<String, Object> addEvent(@RequestParam("petId") int petId,
@@ -465,8 +480,8 @@ public class PetController {
             // DB 저장
             ResultData doWriteRd = calendarEventService.insert(loginedMemberId, eventDate, title, petId, content);
 
-            result.put("resultCode", doWriteRd.getResultCode());
-            result.put("msg", doWriteRd.getMsg());
+            result.put("resultCode", doWriteRd.getResultCode()); // S- 또는 F-
+            result.put("msg", doWriteRd.getMsg()); // 오류 메세지 및 성공 메세지
             return result;
 
         } catch (Exception e) {
@@ -477,8 +492,7 @@ public class PetController {
         }
     }
 
-
-
+    // 감정일지 수정 로직(json 결과 출력)
     @RequestMapping("/usr/pet/daily/domodify")
     @ResponseBody
     public Map<String, Object> updateEvent(@RequestParam("id") int id,
@@ -514,8 +528,8 @@ public class PetController {
             // DB 저장
             ResultData doWriteRd = calendarEventService.update(id, eventDate, title, content);
 
-            result.put("resultCode", doWriteRd.getResultCode());
-            result.put("msg", doWriteRd.getMsg());
+            result.put("resultCode", doWriteRd.getResultCode()); // S- 또는 F-
+            result.put("msg", doWriteRd.getMsg()); // 오류 메세지 및 성공 메세지
             return result;
 
         } catch (Exception e) {
@@ -526,6 +540,7 @@ public class PetController {
         }
     }
 
+    //감정일지 삭제 로직(json 결과 출력)
     @RequestMapping("/usr/pet/daily/delete")
     @ResponseBody
     public Map<String, Object> deleteEvent(@RequestParam("id") int id) {
@@ -546,6 +561,7 @@ public class PetController {
         return result;
     }
 
+    //일 기 상세 보기 로직(json 결과 출력)
     @RequestMapping("/usr/pet/daily/detail")
     @ResponseBody
     public Map<String, Object> detailEvent(@RequestParam("id") int id) {
