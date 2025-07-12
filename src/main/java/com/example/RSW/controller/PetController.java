@@ -6,13 +6,11 @@ import com.example.RSW.vo.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.BufferedReader;
@@ -38,6 +36,9 @@ public class PetController {
     private WalkCrewService walkCrewService;
 
     @Autowired
+    private CrewChatMessageService chatService;
+
+    @Autowired
     private PetVaccinationService petVaccinationService;
 
     @Autowired
@@ -46,6 +47,16 @@ public class PetController {
     @Autowired
     private CalendarEventService calendarEventService;
 
+
+    @GetMapping("/usr/pet/petPlace")
+    public String showTest() {
+        return "usr/pet/petPlace";
+    }
+
+    @GetMapping("/usr/walkCrew/test")
+    public String showChat(HttpSession session, Model model) {
+        return "usr/walkCrew/crewChat";
+    }
 
     @RequestMapping("/usr/pet/petPage")
     public String showTest(@RequestParam("petId") int petId, Model model) throws Exception{
@@ -411,59 +422,150 @@ public class PetController {
 
     @RequestMapping("/usr/pet/daily/write")
     @ResponseBody
-    public String addEvent(@RequestParam("petId") int petId,
-                           @RequestParam("eventDate") String eventDateStr,
-                           @RequestParam("content") String content) {
+    public Map<String, Object> addEvent(@RequestParam("petId") int petId,
+                                        @RequestParam("eventDate") String eventDateStr,
+                                        @RequestParam("title") String title,
+                                        @RequestParam("content") String content,
+                                        HttpServletRequest req) {
+        Map<String, Object> result = new HashMap<>();
 
-        if (Ut.isEmptyOrNull(content)) {
-            return Ut.jsHistoryBack("F-1", "내용을 입력하세요");
+        try {
+            // 유효성 검사
+            if (Ut.isEmptyOrNull(title)) {
+                result.put("resultCode", "F-1");
+                result.put("msg", "감정을 선택하세요");
+                return result;
+            }
+
+            if (Ut.isEmptyOrNull(content)) {
+                result.put("resultCode", "F-2");
+                result.put("msg", "내용을 입력하세요");
+                return result;
+            }
+
+            if (Ut.isEmptyOrNull(eventDateStr)) {
+                result.put("resultCode", "F-3");
+                result.put("msg", "날짜를 선택하세요");
+                return result;
+            }
+
+            // 날짜 파싱
+            LocalDate eventDate = LocalDate.parse(eventDateStr);
+
+            // petId로 memberId 추출
+            Pet pet = petService.getPetsById(petId);
+            if (pet == null) {
+                result.put("resultCode", "F-4");
+                result.put("msg", "해당 반려동물을 찾을 수 없습니다.");
+                return result;
+            }
+
+            int loginedMemberId = pet.getMemberId();
+
+            // DB 저장
+            ResultData doWriteRd = calendarEventService.insert(loginedMemberId, eventDate, title, petId, content);
+
+            result.put("resultCode", doWriteRd.getResultCode());
+            result.put("msg", doWriteRd.getMsg());
+            return result;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            result.put("resultCode", "F-500");
+            result.put("msg", "서버 오류: " + e.getMessage());
+            return result;
         }
-
-        if (Ut.isEmptyOrNull(eventDateStr)) {
-            return Ut.jsHistoryBack("F-1", "날짜를 입력하세요");
-        }
-
-        LocalDate eventDate = LocalDate.parse(eventDateStr); // 문자열 → 날짜
-
-        ResultData doWriteRd = calendarEventService.insert(rq.getLoginedMemberId(), eventDate, petId, content);
-
-        return Ut.jsReplace(doWriteRd.getResultCode(), doWriteRd.getMsg(), "/usr/pet/daily?petId=" + petId);
     }
+
+
 
     @RequestMapping("/usr/pet/daily/domodify")
     @ResponseBody
-    public String updateEvent(@RequestParam("id") int id,
+    public Map<String, Object> updateEvent(@RequestParam("id") int id,
                               @RequestParam("eventDate") String eventDateStr,
+                              @RequestParam("title") String title,
                               @RequestParam("content") String content) {
 
-        if (Ut.isEmptyOrNull(content)) {
-            return Ut.jsHistoryBack("F-1", "내용을 입력하세요");
+        Map<String, Object> result = new HashMap<>();
+
+        try {
+            // 유효성 검사
+            if (Ut.isEmptyOrNull(title)) {
+                result.put("resultCode", "F-1");
+                result.put("msg", "감정을 선택하세요");
+                return result;
+            }
+
+            if (Ut.isEmptyOrNull(content)) {
+                result.put("resultCode", "F-2");
+                result.put("msg", "내용을 입력하세요");
+                return result;
+            }
+
+            if (Ut.isEmptyOrNull(eventDateStr)) {
+                result.put("resultCode", "F-3");
+                result.put("msg", "날짜를 선택하세요");
+                return result;
+            }
+
+            // 날짜 파싱
+            LocalDate eventDate = LocalDate.parse(eventDateStr);
+
+            // DB 저장
+            ResultData doWriteRd = calendarEventService.update(id, eventDate, title, content);
+
+            result.put("resultCode", doWriteRd.getResultCode());
+            result.put("msg", doWriteRd.getMsg());
+            return result;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            result.put("resultCode", "F-500");
+            result.put("msg", "서버 오류: " + e.getMessage());
+            return result;
         }
-
-        CalendarEvent calendarEvent = calendarEventService.getEventsById(id);
-        if (calendarEvent == null) {
-            return Ut.jsHistoryBack("F-1", "해당 게시글은 존재하지 않습니다.");
-        }
-
-        LocalDate eventDate = LocalDate.parse(eventDateStr);
-
-        ResultData doModifyRd = calendarEventService.update(id, eventDate, content);
-
-        return Ut.jsReplace(doModifyRd.getResultCode(), doModifyRd.getMsg(), "/usr/pet/daily?petId=" + calendarEvent.getPetId());
     }
 
     @RequestMapping("/usr/pet/daily/delete")
     @ResponseBody
-    public String deleteEvent(@RequestParam("id") int id) {
+    public Map<String, Object> deleteEvent(@RequestParam("id") int id) {
+        Map<String, Object> result = new HashMap<>();
+
         CalendarEvent calendarEvent = calendarEventService.getEventsById(id);
         if (calendarEvent == null) {
-            return Ut.jsHistoryBack("F-1", "해당 게시글은 존재하지 않습니다.");
+            result.put("resultCode", "F-1");
+            result.put("msg", "해당 일기를 찾을 수 없습니다.");
+            return result;
         }
 
         calendarEventService.delete(id);
 
-        return Ut.jsReplace("S-1", "삭제가 완료되었습니다.", "/usr/pet/daily?petId=" + calendarEvent.getPetId());
+        result.put("resultCode", "S-1");
+        result.put("msg", "삭제가 완료되었습니다.");
+        result.put("petId", calendarEvent.getPetId());
+        return result;
     }
+
+    @RequestMapping("/usr/pet/daily/detail")
+    @ResponseBody
+    public Map<String, Object> detailEvent(@RequestParam("id") int id) {
+        CalendarEvent calendarEvent = calendarEventService.getEventsById(id);
+
+        if (calendarEvent == null) {
+            return Map.of(
+                    "resultCode", "F-1",
+                    "msg", "해당 일기를 찾을 수 없습니다."
+            );
+        }
+
+        return Map.of(
+                "resultCode", "S-1",
+                "calendarEvent", calendarEvent
+        );
+    }
+
+
+
 
 
 }
