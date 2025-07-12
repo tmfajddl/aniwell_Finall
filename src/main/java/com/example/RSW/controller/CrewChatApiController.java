@@ -19,6 +19,7 @@ public class CrewChatApiController {
         this.chatService = chatService;
     }
 
+    // 해당 채팅방의 채팅 목록 넘기기
     @GetMapping("/{crewId}/messages")
     public List<CrewChatMessage> getChatMessages(@PathVariable int crewId) {
         return chatService.getMessagesByCrewId(crewId);
