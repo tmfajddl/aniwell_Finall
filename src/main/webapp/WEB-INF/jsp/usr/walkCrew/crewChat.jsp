@@ -1,4 +1,6 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <html>
 <head>
   <title>Aniwell 크루 채팅</title>
@@ -11,6 +13,7 @@
       margin: 0;
       padding: 20px;
     }
+
     #chatBox {
       width: 90%;
       max-width: 500px;
@@ -22,52 +25,69 @@
       padding: 20px;
       overflow-y: scroll;
     }
+
     .msg {
       display: flex;
       margin: 12px 0;
-      align-items: flex-start;
+      align-items: flex-end;
     }
+
     .msg.me {
       justify-content: flex-end;
     }
+
     .profile {
-      width: 40px;
-      height: 40px;
+      width: 36px;
+      height: 36px;
       border-radius: 50%;
-      background-color: #fff0d9;
-      margin-right: 12px;
-      border: 2px solid #ffe4a3;
+      margin-right: 8px;
+      object-fit: cover;
+      border: 2px solid #eee4c1;
     }
+
+    .profile-placeholder {
+      width: 36px;
+      height: 36px;
+      margin-right: 8px;
+    }
+
+    .bubble-wrap {
+      max-width: 70%;
+    }
+
     .bubble {
-      max-width: 60%;
-      padding: 12px;
+      padding: 10px;
       background-color: #fff9d4;
       border-radius: 18px;
       box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      position: relative;
       white-space: pre-wrap;
     }
+
     .msg.me .bubble {
       background-color: #d0f4e1;
     }
+
     .nickname {
       font-size: 13px;
       font-weight: bold;
       margin-bottom: 4px;
       color: #585858;
     }
+
     .time {
       font-size: 11px;
       color: #aaa;
       text-align: right;
       margin-top: 4px;
     }
+
     .date-divider {
       text-align: center;
       color: #888;
       margin: 20px 0 10px;
       font-size: 13px;
     }
+
     #chatInput {
       width: 80%;
       max-width: 400px;
@@ -77,6 +97,7 @@
       outline: none;
       box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
+
     #sendBtn {
       padding: 10px 16px;
       background-color: #A7CFB3;
@@ -92,55 +113,27 @@
 
 <h2 style="text-align:center; margin-bottom:20px;">🗨️ 산책 크루 채팅</h2>
 
-<div id="chatBox">
-  <!-- 이전 채팅 예시 -->
-  <div class="date-divider">2025.07.11</div>
+<div id="chatBox"></div>
 
-  <div class="msg">
-    <img src="/img/logo.png" class="profile">
-    <div>
-      <div class="nickname">멍멍이엄마</div>
-      <div class="bubble">안녕하세요! 산책 시간 맞춰볼까요?</div>
-      <div class="time">14:03</div>
-    </div>
-  </div>
-
-  <div class="msg">
-    <img src="/img/logo.png" class="profile">
-    <div>
-      <div class="nickname">멍멍이엄마</div>
-      <div class="bubble">내일 오후 5시 어때요?</div>
-      <div class="time">14:04</div>
-    </div>
-  </div>
-
-  <div class="msg">
-    <img src="/img/logo.png" class="profile">
-    <div>
-      <div class="nickname">멍멍이엄마</div>
-      <div class="bubble">장소는 평화공원 앞!</div>
-      <div class="time">14:04</div>
-    </div>
-  </div>
-</div>
-
-<br style="clear:both;"/>
 <div style="text-align:center; margin-top:20px;">
   <input type="text" id="chatInput" placeholder="메시지를 입력하세요">
   <button id="sendBtn" type="button">전송</button>
 </div>
 
+<c:set var="nickname" value="${loginedMember.nickname}" />
+<c:set var="photo" value="${pet.photo}" />
 <script>
+  const crewId = ${crewId};
+  const senderId = ${loginedMember.id};
+  const senderNickname = "${fn:escapeXml(nickname)}";
+  const senderPhoto = "${fn:escapeXml(photo)}";
+
   let stompClient = null;
-  const crewId = 1;
-  const senderId = 123;
-
-  const userMap = {
-    123: { nickname: "나", profile: "/img/me.jpeg" },
-    456: { nickname: "멍멍이엄마", profile: "/img/logo.png" }
-  };
-
   let lastDate = "";
+  let lastGroupKey = "";
+  let groupBuffer = [];
+  let isSending = false;
+  let enterPressed = false;
 
   function connect() {
     const socket = new SockJS("/ws");
@@ -155,60 +148,143 @@
   }
 
   function sendMessage() {
+    if (isSending) return;
+    isSending = true;
+
     const input = document.getElementById("chatInput");
     const content = input.value.trim();
-    if (content === "") return;
+    if (content === "") {
+      isSending = false;
+      return;
+    }
 
     const message = {
       crewId: crewId,
       senderId: senderId,
+      nickname: senderNickname,
       content: content,
-      sentAt: new Date().toISOString()
+      photo: senderPhoto
+      // sentAt은 절대 여기 넣지 마세요!
     };
 
     stompClient.send("/app/chat.send/" + crewId, {}, JSON.stringify(message));
-    renderMessage(message);
     input.value = "";
+
+    setTimeout(() => {
+      isSending = false;
+    }, 300);
   }
 
-  function handleEnter(e) {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage();
-    }
-  }
+
+  let messageQueue = [];
+  let flushTimeout = null;
 
   function renderMessage(msg) {
-    const isMe = msg.senderId === senderId;
-    const user = userMap[msg.senderId] || { nickname: "알 수 없음", profile: "/img/default.png" };
+    const msgDate = formatDateOnly(msg.sentAt);
+    const timeKey = msg.sentAt.slice(0, 16); // "2025-07-12T17:34"
+    const groupKey = msg.senderId + "_" + timeKey;
     const chatBox = document.getElementById("chatBox");
 
-    const msgDate = formatDateOnly(msg.sentAt);
     if (lastDate !== msgDate) {
       const divider = document.createElement("div");
       divider.className = "date-divider";
       divider.textContent = msgDate;
       chatBox.appendChild(divider);
       lastDate = msgDate;
+      lastGroupKey = "";
     }
 
-    const msgDiv = document.createElement("div");
-    msgDiv.className = "msg" + (isMe ? " me" : "");
-
-    let html = "";
-    if (!isMe) {
-      html += "<img src='" + user.profile + "' class='profile'>";
+    if (groupKey !== lastGroupKey && groupBuffer.length > 0) {
+      renderGroup(groupBuffer);
+      groupBuffer = [];
     }
 
-    html += "<div>";
-    html += "<div class='nickname'>" + user.nickname + "</div>";
-    html += "<div class='bubble'>" + msg.content + "</div>";
-    html += "<div class='time'>" + formatTime(msg.sentAt) + "</div>";
-    html += "</div>";
+    groupBuffer.push(msg);
+    lastGroupKey = groupKey;
 
-    msgDiv.innerHTML = html;
-    chatBox.appendChild(msgDiv);
-    scrollToBottom();
+    // 메시지를 받을 때마다 렌더링 예약
+    if (flushTimeout) clearTimeout(flushTimeout);
+
+    flushTimeout = setTimeout(() => {
+      if (groupBuffer.length > 0) {
+        renderGroup(groupBuffer);
+        groupBuffer = [];
+      }
+    }, 300); // ← 지연 시간을 충분히 줌
+  }
+
+
+
+  function renderGroup(messages) {
+    if (messages.length === 0) return;
+
+    const firstMsg = messages[0];
+    const lastMsg = messages[messages.length - 1];
+    const isMe = firstMsg.senderId == senderId;
+    const chatBox = document.getElementById("chatBox");
+
+    messages.forEach((msg, index) => {
+      const isFirst = index === 0;
+      const isLast = index === messages.length - 1;
+
+      const msgDiv = document.createElement("div");
+      msgDiv.className = "msg" + (isMe ? " me" : "");
+
+      if (!isMe) {
+        if (isFirst) {
+          const profileImg = document.createElement("img");
+          profileImg.className = "profile";
+          profileImg.src = msg.photo || "/img/default-pet.png";
+          msgDiv.appendChild(profileImg);
+        } else {
+          const placeholder = document.createElement("div");
+          placeholder.className = "profile-placeholder";
+          msgDiv.appendChild(placeholder);
+        }
+      }
+
+      const bubbleWrap = document.createElement("div");
+      bubbleWrap.className = "bubble-wrap";
+
+      if (!isMe && isFirst) {
+        const nicknameDiv = document.createElement("div");
+        nicknameDiv.className = "nickname";
+        nicknameDiv.textContent = msg.nickname || "알 수 없음";
+        bubbleWrap.appendChild(nicknameDiv);
+      }
+
+      const bubble = document.createElement("div");
+      bubble.className = "bubble";
+      bubble.textContent = msg.content;
+      bubbleWrap.appendChild(bubble);
+
+      if (isLast) {
+        const time = document.createElement("div");
+        time.className = "time";
+        time.textContent = formatTime(msg.sentAt);
+        bubbleWrap.appendChild(time);
+      }
+
+      msgDiv.appendChild(bubbleWrap);
+      chatBox.appendChild(msgDiv);
+    });
+
+    // 화면에 그려진 다음에 스크롤이 아래로 내려가게!!!
+    requestAnimationFrame(() => {
+      scrollToBottom();
+    });
+  }
+
+  function loadPreviousMessages() {
+    fetch("/usr/walkCrew/chat/api/" + crewId + "/messages")
+            .then(res => res.json())
+            .then(data => {
+              data.forEach(renderMessage);
+              renderGroup(groupBuffer);
+              groupBuffer = [];
+              scrollToBottom();
+              setTimeout(scrollToBottom, 100);
+            });
   }
 
   function formatDateOnly(isoTime) {
@@ -223,27 +299,37 @@
 
   function scrollToBottom() {
     const chatBox = document.getElementById("chatBox");
-    setTimeout(function () {
+    setTimeout(() => {
       chatBox.scrollTop = chatBox.scrollHeight;
     }, 30);
-  }
-
-  function loadPreviousMessages() {
-    fetch("/api/chat/" + crewId + "/messages")
-            .then(res => res.json())
-            .then(data => {
-              data.forEach(renderMessage);
-            });
   }
 
   document.addEventListener("DOMContentLoaded", function () {
     document.getElementById("sendBtn").addEventListener("click", sendMessage);
 
-    // 🎯 중복 방지용 enter handler 등록
+    let isComposing = false;
+
+    document.getElementById("chatInput").addEventListener("compositionstart", () => {
+      isComposing = true;
+    });
+
+    document.getElementById("chatInput").addEventListener("compositionend", () => {
+      isComposing = false;
+    });
+
     document.getElementById("chatInput").addEventListener("keydown", function (e) {
-      if (e.key === "Enter" && !e.shiftKey) {
+      if (e.key === "Enter" && !e.shiftKey && !isComposing) {
         e.preventDefault();
-        sendMessage();
+        if (!enterPressed) {
+          enterPressed = true;
+          sendMessage();
+        }
+      }
+    });
+
+    document.getElementById("chatInput").addEventListener("keyup", function (e) {
+      if (e.key === "Enter") {
+        enterPressed = false;
       }
     });
 
