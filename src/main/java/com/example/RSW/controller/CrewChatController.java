@@ -1,35 +1,75 @@
 package com.example.RSW.controller;
 
 import com.example.RSW.service.CrewChatMessageService;
-import com.example.RSW.vo.CrewChatMessage;
-import org.springframework.messaging.handler.annotation.*;
+import com.example.RSW.service.CrewMemerService;
+import com.example.RSW.service.MemberService;
+import com.example.RSW.service.PetService;
+import com.example.RSW.vo.*;
+import jakarta.servlet.http.HttpSession;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.handler.annotation.DestinationVariable;
+import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.List;
 
 @Controller
 public class CrewChatController {
 
-    private final SimpMessagingTemplate messagingTemplate;
-    private final CrewChatMessageService chatService;
+    @Autowired
+    private CrewChatMessageService chatService;
 
-    public CrewChatController(SimpMessagingTemplate messagingTemplate,
-                              CrewChatMessageService chatService) {
-        this.messagingTemplate = messagingTemplate;
-        this.chatService = chatService;
+    @Autowired
+    private MemberService memberService;
+
+    @Autowired
+    private CrewMemerService crewMemerService;
+
+    @Autowired
+    private PetService petService;
+
+    @Autowired
+    private SimpMessagingTemplate messagingTemplate;
+
+    // 채팅 페이지
+    @RequestMapping("/usr/walkCrew/chat")
+    public String showChatPage(@RequestParam int crewId, HttpSession session, Model model) {
+        int loginedMemberId = (int) session.getAttribute("loginedMemberId");
+        Member member = memberService.getMemberById(loginedMemberId);
+        WalkCrewMember crewMember = crewMemerService.getCrewMemberById(loginedMemberId);
+        Pet pet = petService.getPetsById(crewMember.getPetId());
+
+        // 크루 참여 여부 확인
+        boolean isMember = crewMemerService.isCrewMember(crewId, loginedMemberId);
+        if (!isMember) {
+            return "redirect:/usr/walkCrew/list";
+        }
+
+        model.addAttribute("crewId", crewId);
+        model.addAttribute("loginedMember", member);
+        model.addAttribute("pet", pet);
+
+        return "usr/walkCrew/crewChat";
     }
 
-    //채팅 전송 로직
+    // 메시지 저장 + 브로드캐스트 (WebSocket endpoint)
     @MessageMapping("/chat.send/{crewId}")
     public void sendMessage(@DestinationVariable int crewId, CrewChatMessage message) {
-        message.setSentAt(LocalDateTime.now());
-
-        // DB에 저장
+        message.setSentAt(LocalDateTime.now(ZoneId.of("Asia/Seoul")));
         chatService.saveMessage(message);
-
-        // 구독자에게 메시지 전달
         messagingTemplate.convertAndSend("/topic/crew/" + crewId, message);
     }
-}
 
+
+    // 이전 채팅 불러오기
+    @RequestMapping("/usr/walkCrew/chat/api/{crewId}/messages")
+    @ResponseBody
+    public List<CrewChatMessage> getMessages(@PathVariable int crewId) {
+        return chatService.getMessagesByCrewId(crewId);
+    }
+}
