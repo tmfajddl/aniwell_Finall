@@ -47,12 +47,12 @@ public class CrewChatController {
         // 크루 참여 여부 확인
         boolean isMember = crewMemerService.isCrewMember(crewId, loginedMemberId);
         if (!isMember) {
-            return "redirect:/usr/walkCrew/list";
+            return "redirect:/usr/walkCrew/list"; // 참여 안했으면 크루 리스트로 이동
         }
 
-        model.addAttribute("crewId", crewId);
-        model.addAttribute("loginedMember", member);
-        model.addAttribute("pet", pet);
+        model.addAttribute("crewId", crewId); // 해당 크루의 id
+        model.addAttribute("loginedMember", member); // 로그인 한 멤버
+        model.addAttribute("pet", pet); // 크루 가입한 펫
 
         return "usr/walkCrew/crewChat";
     }

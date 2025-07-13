@@ -45,22 +45,28 @@ public class PetController {
     private CalendarEventService calendarEventService;
 
 
-    //주변 펫 샵 조회
-    @GetMapping("/usr/pet/petPlace")
-    public String showTest() {
-        return "usr/pet/petPlace";
+    //테스트용
+    @RequestMapping("/usr/pet/test")
+    public String test() {
+        return "usr/pet/test";
     }
 
-    // 채팅(미완성)
-    @GetMapping("/usr/walkCrew/crewChat")
-    public String showChat(HttpSession session, Model model) {
-        return "usr/walkCrew/crewChat";
+
+    //주변 펫 샵 조회
+    @RequestMapping("/usr/pet/petPlace")
+    public String showTest() {
+        return "usr/pet/petPlace";
     }
 
     //펫 상세페이지
     @RequestMapping("/usr/pet/petPage")
     public String showTest(@RequestParam("petId") int petId, Model model) throws Exception{
+
+        int memberId = rq.getLoginedMemberId();
         Pet pet = petService.getPetsById(petId);
+        if(pet.getMemberId() != memberId){
+            return Ut.jsHistoryBack("F-1", "권한이 없습니다.");
+        }
         model.addAttribute("pet", pet);
 
         List<PetVaccination> list = petVaccinationService.getVaccinationsByPetId(petId);
@@ -97,6 +103,10 @@ public class PetController {
     // 등록한 펫 목록 / 가입한 크루 목록
     @RequestMapping("/usr/pet/list")
     public String showPetList(@RequestParam("memberId") int memberId, Model model) {
+        int loginId = rq.getLoginedMemberId();
+        if(loginId != memberId){
+            return Ut.jsHistoryBack("F-1", "권한이 없습니다.");
+        }
         List<Pet> pets = petService.getPetsByMemberId(memberId);
         List<WalkCrew> crews = walkCrewService.getWalkCrews(memberId);
 
@@ -164,7 +174,12 @@ public class PetController {
 
     @RequestMapping("/usr/pet/modify")
     public String showModify(@RequestParam("petId") int petId, Model model) {
+
+        int memberId = rq.getLoginedMemberId();
         Pet pet = petService.getPetsById(petId);
+        if(pet.getMemberId() != memberId){
+            return Ut.jsHistoryBack("F-1", "권한이 없습니다.");
+        }
 
         model.addAttribute("pet", pet);
         return "usr/pet/modify";
@@ -176,7 +191,11 @@ public class PetController {
     @ResponseBody
     public String doModify(HttpServletRequest req, @RequestParam("petId") int petId, String name, String species, String breed,
                            String gender, String birthDate, double weight, MultipartFile photo) {
-
+        int memberId = rq.getLoginedMemberId();
+        Pet pet = petService.getPetsById(petId);
+        if(pet.getMemberId() != memberId){
+            return Ut.jsHistoryBack("F-0", "권한이 없습니다.");
+        }
 
         if (Ut.isEmptyOrNull(name)) {
             return Ut.jsHistoryBack("F-1", "이름을 입력하세요");
@@ -244,6 +263,12 @@ public class PetController {
     // 감정 갤러리 이동
     @RequestMapping("/usr/pet/gallery")
     public String showGallery(@RequestParam("petId") int petId, Model model) {
+
+        int memberId = rq.getLoginedMemberId();
+        Pet pet = petService.getPetsById(petId);
+        if(pet.getMemberId() != memberId){
+            return Ut.jsHistoryBack("F-1", "권한이 없습니다.");
+        }
         List<PetAnalysis> analysisList = petAnalysisService.getAnalysisByPetId(petId);
 
         //감정 분석 사진 목록 리스트
@@ -336,6 +361,11 @@ public class PetController {
     @ResponseBody
     @RequestMapping("/usr/pet/delete")
     public String doDelete(HttpServletRequest req, @RequestParam("petId") int petId) {
+        int memberId = rq.getLoginedMemberId();
+        Pet pet = petService.getPetsById(petId);
+        if(pet.getMemberId() != memberId){
+            return Ut.jsHistoryBack("F-1", "권한이 없습니다.");
+        }
 
         ResultData deleteRd = petService.deletePet(petId);
         int id = rq.getLoginedMemberId();
@@ -345,6 +375,11 @@ public class PetController {
     // 백신 등록 페이지 이동
     @RequestMapping("/usr/pet/vaccination/registration")
     public String showRegistration(HttpServletRequest req,@RequestParam("petId") int petId) {
+        int memberId = rq.getLoginedMemberId();
+        Pet pet = petService.getPetsById(petId);
+        if(pet.getMemberId() != memberId){
+            return Ut.jsHistoryBack("F-1", "권한이 없습니다.");
+        }
         return "/usr/pet/vaccinationRegistration";
     }
 
@@ -355,6 +390,12 @@ public class PetController {
                                      @RequestParam("petId") int petId,
                                      String vaccineName,
                                      String injectionDate, String notes) {
+
+        int memberId = rq.getLoginedMemberId();
+        Pet pet = petService.getPetsById(petId);
+        if(pet.getMemberId() != memberId){
+            return ResultData.from("F-0", "권한이 없습니다.");
+        }
 
         if (Ut.isEmptyOrNull(vaccineName)) {
             return ResultData.from("F-2", "백신 이름을 입력하세요");
@@ -375,43 +416,62 @@ public class PetController {
     @RequestMapping("/usr/pet/vaccination/modify")
     public String showVaccinationModify(@RequestParam("vaccinationId") int vaccinationId, Model model) {
         PetVaccination petVaccination = petVaccinationService.getVaccinationsById(vaccinationId);
+        int petId = petVaccination.getPetId();
+        int memberId = rq.getLoginedMemberId();
+        Pet pet = petService.getPetsById(petId);
+        if(pet.getMemberId() != memberId){
+            return Ut.jsHistoryBack("F-0", "권한이 없습니다.");
+        }
         model.addAttribute("petVaccination", petVaccination); // 해당 id에 해당하는 백신
         return "usr/pet/vaccinationModify";
     }
     //백신 수정 로직
     @RequestMapping("/usr/pet/vaccination/doModify")
     @ResponseBody
-    public String doVaccinationModify(@RequestParam("vaccinationId") int vaccinationId, String vaccineName, String injectionDate, String notes) {
+    public ResultData doVaccinationModify(@RequestParam("vaccinationId") int vaccinationId,
+                                          @RequestParam String vaccineName,
+                                          @RequestParam String injectionDate,
+                                          @RequestParam(required = false) String notes) {
 
+        PetVaccination petVaccination = petVaccinationService.getVaccinationsById(vaccinationId);
+        int petId = petVaccination.getPetId();
+        int memberId = rq.getLoginedMemberId();
+        Pet pet = petService.getPetsById(petId);
+
+        if (pet.getMemberId() != memberId) {
+            return ResultData.from("F-0", "권한이 없습니다.");
+        }
 
         if (Ut.isEmptyOrNull(vaccineName)) {
-            return Ut.jsHistoryBack("F-1", "백신명을 입력하세요");
+            return ResultData.from("F-1", "백신명을 입력하세요");
         }
+
         if (Ut.isEmptyOrNull(injectionDate)) {
-            return Ut.jsHistoryBack("F-2", "접종일자를 입력하세요");
-
-        }
-        if (Ut.isEmptyOrNull(injectionDate)) {
-            return Ut.jsHistoryBack("F-2", "다음일자를 입력하세요");
-
+            return ResultData.from("F-2", "접종일자를 입력하세요");
         }
 
-        //비고 있는 경우와 없는 경우 로직 분리
         ResultData modifyRd;
-        if (notes == null) {
-            modifyRd = petVaccinationService.updatePetVaccination( vaccinationId, vaccineName,injectionDate);
+        if (Ut.isEmptyOrNull(notes)) {
+            modifyRd = petVaccinationService.updatePetVaccination(vaccinationId, vaccineName, injectionDate);
         } else {
-            modifyRd = petVaccinationService.updatePetVaccinationWithNotes( vaccinationId, vaccineName,injectionDate,notes);
+            modifyRd = petVaccinationService.updatePetVaccinationWithNotes(vaccinationId, vaccineName, injectionDate, notes);
         }
 
-        int id = petVaccinationService.getPetIdById(vaccinationId);
-        return Ut.jsReplace(modifyRd.getResultCode(), modifyRd.getMsg(), "../vaccination?petId="+id);
+        return ResultData.from("S-1", "수정 완료");
     }
+
 
     //백신 정보 상세보기
     @RequestMapping("/usr/pet/vaccination/detail")
     public String showVaccinationDetail(@RequestParam("vaccinationId") int vaccinationId, Model model) {
         PetVaccination petVaccination = petVaccinationService.getVaccinationsById(vaccinationId);
+        int petId = petVaccination.getPetId();
+        int memberId = rq.getLoginedMemberId();
+        Pet pet = petService.getPetsById(petId);
+        if(pet.getMemberId() != memberId){
+            return Ut.jsHistoryBack("F-0", "권한이 없습니다.");
+        }
+
         model.addAttribute("petVaccination", petVaccination); // 해당 id에 해당하는 백신
         return "usr/pet/vaccinationDetail";
     }
@@ -420,14 +480,27 @@ public class PetController {
     @ResponseBody
     @RequestMapping("/usr/pet/vaccination/delete")
     public String doVaccinationDelete(@RequestParam("vaccinationId") int  vaccinationId) {
-        int id = petVaccinationService.getPetIdById(vaccinationId);
-        ResultData deleteRd = petVaccinationService.deletePetVaccination(vaccinationId);
-        return "jsReplace('/usr/pet/vaccination?petId=" + id + "', '삭제가 완료되었습니다.');";
+
+        PetVaccination petVaccination = petVaccinationService.getVaccinationsById(vaccinationId);
+        int petId = petVaccination.getPetId();
+        int memberId = rq.getLoginedMemberId();
+        Pet pet = petService.getPetsById(petId);
+        if(pet.getMemberId() != memberId){
+            return Ut.jsHistoryBack("F-0", "권한이 없습니다.");
+        }
+        petVaccinationService.deletePetVaccination(vaccinationId);
+        return "jsReplace('/usr/pet/vaccination?petId=" + petId + "', '삭제가 완료되었습니다.');";
     }
 
     //펫 감정일기 페이지 이동
     @RequestMapping("/usr/pet/daily")
     public String showDaily(@RequestParam("petId") int petId, Model model) {
+
+        int memberId = rq.getLoginedMemberId();
+        Pet pet = petService.getPetsById(petId);
+        if(pet.getMemberId() != memberId){
+            return Ut.jsHistoryBack("F-1", "권한이 없습니다.");
+        }
         List<CalendarEvent> events = calendarEventService.getEventsByPetId(petId);
         model.addAttribute("events", events); // 감정일기에 등록된 이벤트들
         model.addAttribute("petId", petId); // 해당 펫의 ID
@@ -442,6 +515,7 @@ public class PetController {
                                         @RequestParam("title") String title,
                                         @RequestParam("content") String content,
                                         HttpServletRequest req) {
+
         Map<String, Object> result = new HashMap<>();
 
         try {
@@ -579,9 +653,5 @@ public class PetController {
                 "calendarEvent", calendarEvent
         );
     }
-
-
-
-
 
 }
