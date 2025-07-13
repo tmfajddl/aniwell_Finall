@@ -35,4 +35,5 @@ public interface MemberRepository {
 	List<Member> getForPrintMembersWithCert(@Param("searchType") String searchType,
 											@Param("searchKeyword") String searchKeyword);
 
+	String getNicknameById(int memberId);
 }
