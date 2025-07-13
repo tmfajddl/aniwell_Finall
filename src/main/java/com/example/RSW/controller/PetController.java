@@ -52,7 +52,7 @@ public class PetController {
     }
 
     // 채팅(미완성)
-    @GetMapping("/usr/walkCrew/test")
+    @GetMapping("/usr/walkCrew/crewChat")
     public String showChat(HttpSession session, Model model) {
         return "usr/walkCrew/crewChat";
     }
