@@ -1,5 +1,8 @@
 package com.example.RSW.service;
 
+import com.example.RSW.repository.ArticleRepository;
+import com.example.RSW.repository.MemberRepository;
+import com.example.RSW.vo.Article;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -16,6 +19,15 @@ public class ReactionPointService {
 
     @Autowired
     private ReactionPointRepository reactionPointRepository;
+
+    @Autowired
+    private ArticleRepository articleRepository;
+
+    @Autowired
+    private MemberRepository memberRepository;
+
+    @Autowired
+    private NotificationService notificationService;
 
     public ReactionPointService(ReactionPointRepository reactionPointRepository) {
         this.reactionPointRepository = reactionPointRepository;
@@ -113,4 +125,29 @@ public class ReactionPointService {
         return false;
     }
 
+
+    public ResultData<?> toggleReaction(int memberId, String relTypeCode, int relId) {
+        boolean isReacted = reactionPointRepository.existsByMemberIdAndRelTypeCodeAndRelId(memberId, relTypeCode, relId);
+
+        if (isReacted) {
+            reactionPointRepository.delete(memberId, relTypeCode, relId);
+            return ResultData.from("S-2", "좋아요 취소");
+        }
+
+        reactionPointRepository.insert(memberId, relTypeCode, relId);
+
+        // ✅ 알림 처리
+        if (relTypeCode.equals("post")) {
+            Article article = articleRepository.getArticleById(relId);
+            if (article != null && article.getMemberId() != memberId) {
+                String nickname = memberRepository.getNicknameById(memberId);
+                String message = "❤️ " + nickname + "님이 회원님의 글에 좋아요를 눌렀습니다.";
+                String link = "/usr/post/detail?id=" + relId;
+
+                notificationService.notifyMember(article.getMemberId(), message, link);
+            }
+        }
+
+        return ResultData.from("S-1", "좋아요 성공");
+    }
 }

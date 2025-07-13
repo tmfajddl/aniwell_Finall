@@ -3,7 +3,7 @@
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.example.demo.repository.NotificationRepository">
+<mapper namespace="com.example.RSW.repository.NotificationRepository">
 
     <select id="findByMemberIdOrderByRegDateDesc" resultType="com.example.RSW.vo.Notification" parameterType="int">
         SELECT *
@@ -13,18 +13,16 @@
     </select>
 
     <select id="existsByMemberIdAndTitleAndLink" resultType="boolean">
-
-        SELECT COUNT(*) > 0
-        FROM notification
-        WHERE memberId = #{memberId}
-          AND link = #{link}
-          AND title = #{title}
-
+        SELECT EXISTS (SELECT 1
+                       FROM notification
+                       WHERE memberId = #{memberId}
+                         AND title = #{title}
+                         AND link = #{link})
     </select>
 
     <insert id="save" parameterType="com.example.RSW.vo.Notification" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO notification (memberId, title, link, regDate, isRead)
-        VALUES (#{memberId}, #{title}, #{link}, #{regDate}, #{isRead})
+        VALUES (#{memberId}, #{title}, #{link}, #{regDate}, #{read})
     </insert>
 
     <select id="findById" resultType="com.example.RSW.vo.Notification" parameterType="int">
@@ -57,32 +55,10 @@
     </update>
 
 
-    <delete id="deleteById">
-        DELETE
-        FROM notification
-        WHERE id = #{id}
-          AND memberId = #{memberId}
-    </delete>
-
-    <update id="updateRead">
-        UPDATE notification
-        SET isRead = true
-        WHERE id = #{notificationId}
-          AND memberId = #{memberId}
-    </update>
-
-    <delete id="deleteByLinkAndTitle">
-        DELETE
-        FROM notification
-        WHERE memberId = #{memberId}
-          AND link = #{link}
-          AND title = #{title}
-    </delete>
-
-    <insert id="insert" parameterType="Notification">
+    <insert id="insert" parameterType="com.example.RSW.vo.Notification">
         INSERT INTO notification
-            (memberId, title, link, regDate, isRead, type, sender_id)
-        VALUES
-            (#{memberId}, #{title}, #{link}, #{regDate}, #{read}, #{type}, #{senderId})
+            (memberId, title, link, isRead, regDate)
+        VALUES (#{memberId}, #{title}, #{link}, #{read}, #{regDate})
     </insert>
+
 </mapper>
