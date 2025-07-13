@@ -35,4 +35,8 @@ public interface WalkCrewRepository {
 
 	Map<String, Object> getApplicantDetail(@Param("crewId") int crewId, @Param("memberId") int memberId);
 
+	int isApprovedMember(int crewId, int memberId);
+
+	void updateMemberStatusToApproved(@Param("crewId") int crewId, @Param("memberId") int memberId);
+
 }

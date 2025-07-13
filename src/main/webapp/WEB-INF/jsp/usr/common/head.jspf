@@ -65,6 +65,8 @@
                     <ul class="dropdown-content menu bg-base-100 rounded-box w-52 p-2 shadow">
                         <li><a href="/usr/walkCrew/list">크루 목록</a></li>
                         <li><a href="/usr/walkCrew/create">크루 모집</a></li>
+                        <li><a href="/usr/walkCrew/create">크루 카페</a></li>
+                        <li><a href="/usr/walkCrew/create">크루 신청리스트</a></li>
                     </ul>
                 </div>
             </li>
