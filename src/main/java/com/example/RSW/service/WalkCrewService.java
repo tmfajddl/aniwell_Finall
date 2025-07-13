@@ -85,4 +85,13 @@ public class WalkCrewService {
 		return walkCrewRepository.getApplicantDetail(crewId, memberId);
 	}
 
+	public boolean isApprovedMember(int crewId, int memberId) {
+	    return walkCrewRepository.isApprovedMember(crewId, memberId) > 0;
+	}
+
+	public void approveMember(int crewId, int memberId) {
+	    walkCrewRepository.updateMemberStatusToApproved(crewId, memberId);
+	}
+
+	
 }

@@ -128,12 +128,15 @@
 
 	<select id="getApplicantsByCrewId" resultType="map">
 		SELECT
-		m.id AS memberId,
+		m.id AS
+		memberId,
 		m.name AS memberName,
 		wcm.joinedAt AS joinedAt
-		FROM walk_crew_member wcm
+		FROM
+		walk_crew_member wcm
 		INNER JOIN member m ON wcm.memberId = m.id
-		WHERE wcm.crewId = #{crewId}
+		WHERE
+		wcm.crewId = #{crewId}
 	</select>
 
 
@@ -153,6 +156,21 @@
 		WHERE wcm.crewId = #{crewId}
 		AND wcm.memberId = #{memberId}
 	</select>
+
+	<select id="isApprovedMember" resultType="int">
+		SELECT COUNT(*) FROM
+		walk_crew_member
+		WHERE crewId = #{crewId}
+		AND memberId = #{memberId}
+		AND
+		status = 'approved'
+	</select>
+
+	<update id="updateMemberStatusToApproved">
+		UPDATE walk_crew_member
+		SET status = 'approved'
+		WHERE crewId = #{crewId} AND memberId = #{memberId}
+	</update>
 
 
 </mapper>

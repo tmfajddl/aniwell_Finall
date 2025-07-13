@@ -1,3 +1,4 @@
+
 DROP DATABASE IF EXISTS `aniwell`;
 CREATE DATABASE `aniwell`;
 USE `aniwell`;
@@ -66,6 +67,7 @@ CREATE TABLE walk_crew_member
     memberId INT(10) NOT NULL COMMENT 'PK, FK',
     joinedAt DATETIME NOT NULL
 );
+
 
 -- 북마크 테이블
 CREATE TABLE bookmark
@@ -288,6 +290,47 @@ CREATE TABLE vaccine_schedule (
 
 ALTER TABLE calendar_event ADD COLUMN title VARCHAR(100) NOT NULL AFTER petId;
 
+-- crew_article
+CREATE TABLE crew_article (
+  id INT(10) UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
+  crewId INT(10) UNSIGNED NOT NULL,
+  memberId INT(10) UNSIGNED NOT NULL,
+  title VARCHAR(200) NOT NULL,
+  BODY TEXT NOT NULL,
+  TYPE VARCHAR(20) NOT NULL DEFAULT 'free',
+  regDate DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updateDate DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT fk_crew_article_crew FOREIGN KEY (crewId) REFERENCES walk_crew(id),
+  CONSTRAINT fk_crew_article_member FOREIGN KEY (memberId) REFERENCES MEMBER(id)
+);
+
+-- crew_photo
+CREATE TABLE crew_photo (
+  id INT(10) UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
+  crewId INT(10) UNSIGNED NOT NULL,
+  memberId INT(10) UNSIGNED NOT NULL,
+  imagePath VARCHAR(255) NOT NULL,
+  regDate DATETIME DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_crew_photo_crew FOREIGN KEY (crewId) REFERENCES walk_crew(id),
+  CONSTRAINT fk_crew_photo_member FOREIGN KEY (memberId) REFERENCES MEMBER(id)
+);
+
+-- crew_schedule
+CREATE TABLE crew_schedule (
+  id INT(10) UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
+  crewId INT(10) UNSIGNED NOT NULL,
+  title VARCHAR(100) NOT NULL,
+  DESCRIPTION TEXT,
+  eventDate DATE NOT NULL,
+  regDate DATETIME DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_crew_schedule_crew FOREIGN KEY (crewId) REFERENCES walk_crew(id)
+);
+
+
+ALTER TABLE walk_crew_member
+ADD COLUMN STATUS ENUM('pending', 'approved', 'rejected') NOT NULL DEFAULT 'pending' COMMENT '승인 상태';
+
+
 ############# 📜 테스트용 코드 ###################
 
 -- ✅ 게시판 샘플
@@ -410,3 +453,37 @@ END$$
 DELIMITER ;
 
 ############# 💣 트리거 ###################
+
+
+SELECT leaderId
+FROM walk_crew
+WHERE leaderId NOT IN (SELECT id FROM MEMBER);
+
+SELECT id, title, district_id, leaderId, createdAt
+FROM walk_crew
+ORDER BY id DESC
+LIMIT 10;
+
+SELECT * FROM walk_crew_member ORDER BY joinedAt DESC;
+
+SELECT
+	m.id AS memberId,
+	m.name AS memberName,
+	wcm.joinedAt
+FROM walk_crew_member wcm
+INNER JOIN MEMBER m ON wcm.memberId = m.id
+WHERE wcm.crewId = 17;
+
+
+SELECT * FROM district WHERE city='대전광역시' AND district='중구' AND dong='용두동';
+
+
+SELECT * FROM district ORDER BY id DESC LIMIT 10;
+
+SELECT * FROM district WHERE id = 5 LIMIT 0, 1000;
+
+
+
+DESC district;
+
+SELECT * FROM walk_crew

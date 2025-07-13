@@ -208,4 +208,12 @@ public class UsrWalkCrewController {
 		return String.valueOf(id);// 정수 → 문자열 변환 후 반환
 	}
 
+	// 참가 요청 권한
+	@PostMapping("/approveApplicant")
+	@ResponseBody
+	public ResultData approveApplicant(@RequestParam int crewId, @RequestParam int memberId) {
+	    walkCrewService.approveMember(crewId, memberId);
+	    return ResultData.from("S-1", "참가 요청을 수락했습니다.");
+	}
+
 }
