@@ -81,10 +81,10 @@ button[type="submit"] {
 		</div>
 
 		<!-- 참가 버튼 -->
-		<c:if test="${not empty rq.loginedMemberId}">
+		<c:if test="${rq.loginedMemberId ne crew.leaderId}">
 			<form method="post" action="/usr/walkCrew/join">
 				<input type="hidden" name="crewId" value="${crew.id}" />
-				<button type="submit">🙋 참가하기</button>
+				<button type="submit">참가하기</button>
 			</form>
 		</c:if>
 

@@ -49,30 +49,30 @@ h2 {
 
 		<div class="field">
 			<div class="label">회원 ID:</div>
-			<div>${applicant.memberId}</div>
+			<div>${applicant.memberid}</div>
 		</div>
 
 		<div class="field">
 			<div class="label">이름:</div>
-			<div>${applicant.memberName}</div>
+			<div>${applicant.membername}</div>
 		</div>
 
 		<div class="field">
 			<div class="label">닉네임:</div>
-			<div>${applicant.memberNickname}</div>
+			<div>${applicant.membernickname}</div>
 		</div>
 
 		<div class="field">
 			<div class="label">주소:</div>
-			<div>${applicant.memberAddress}</div>
+			<div>${applicant.memberaddress}</div>
 		</div>
 
 		<div class="field">
 			<div class="label">권한:</div>
 			<div>
 				<c:choose>
-					<c:when test="${applicant.authLevel == 7}">관리자</c:when>
-					<c:when test="${applicant.authLevel == 3}">수의사</c:when>
+					<c:when test="${applicant.authlevel == 7}">관리자</c:when>
+					<c:when test="${applicant.authlevel == 3}">수의사</c:when>
 					<c:otherwise>일반</c:otherwise>
 				</c:choose>
 			</div>
@@ -81,11 +81,13 @@ h2 {
 		<div class="field">
 			<div class="label">신청일:</div>
 			<div>
-				<fmt:formatDate value="${applicant.joinedAt}" pattern="yyyy-MM-dd HH:mm:ss" />
+				<fmt:formatDate value="${applicant.joinedat}"
+					pattern="yyyy-MM-dd HH:mm:ss" />
 			</div>
 		</div>
 
-		<a class="back-link" href="/usr/walkCrew/requestList?crewId=${crewId}">← 신청자 목록으로 돌아가기</a>
+		<a class="back-link" href="/usr/walkCrew/requestList?crewId=${crewId}">←
+			신청자 목록으로 돌아가기</a>
 	</div>
 
 </body>
