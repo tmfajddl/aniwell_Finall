@@ -135,21 +135,9 @@
 
   // 메세지 불러오기
   function renderMessage(msg) {
-    const msgDate = formatDateOnly(msg.sentAt);
     const timeKey = msg.sentAt.slice(0, 16); // 분 단위
     const groupKey = msg.senderId + "_" + timeKey;
-    const chatBox = document.getElementById("chatBox");
 
-    if (lastDate !== msgDate) {
-      const divider = document.createElement("div");
-      divider.className = "date-divider";
-      divider.textContent = msgDate;
-      chatBox.appendChild(divider);
-      lastDate = msgDate;
-      lastGroupKey = ""; // 새로운 날짜니까 그룹 초기화
-    }
-
-    // 그룹이 달라졌으면 이전 그룹 먼저 렌더링
     if (groupKey !== lastGroupKey && groupBuffer.length > 0) {
       renderGroup(groupBuffer);
       groupBuffer = [];
@@ -158,7 +146,6 @@
     groupBuffer.push(msg);
     lastGroupKey = groupKey;
 
-    // 메시지 들어올 때마다 300ms 후 렌더링 (실시간 대응)
     clearTimeout(flushTimeout);
     flushTimeout = setTimeout(() => {
       if (groupBuffer.length > 0) {
@@ -169,12 +156,23 @@
   }
 
 
+
   function renderGroup(messages) {
     if (!messages.length) return;
 
+    const lastMsg = messages[messages.length - 1];
+    const msgDate = formatDateOnly(lastMsg.sentAt);
+
+    if (lastDate !== msgDate) {
+      const divider = document.createElement("div");
+      divider.className = "date-divider";
+      divider.textContent = msgDate;
+      document.getElementById("chatBox").appendChild(divider);
+      lastDate = msgDate;
+    }
+
     const currentTimeKey = formatTime(messages[0].sentAt);
 
-    // ⛔ 같은 시각의 기존 .time 요소만 제거
     const allTimeElements = document.querySelectorAll(".msg .time");
     allTimeElements.forEach(function (el) {
       if (el.textContent === currentTimeKey) {
@@ -228,6 +226,7 @@
 
     requestAnimationFrame(scrollToBottom);
   }
+
 
 
 
