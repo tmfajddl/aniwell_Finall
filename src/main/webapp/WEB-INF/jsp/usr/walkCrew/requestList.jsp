@@ -1,6 +1,7 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt"%>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions"%>
 
 <html>
 <head>
@@ -35,6 +36,13 @@ a.btn {
 
 	<h2 style="text-align: center;">🙋 참가 신청자 목록</h2>
 
+	<!-- ✅ 디버깅용: applicant 값 확인 -->
+	<pre>
+	<c:forEach var="applicant" items="${applicants}">
+	  ${applicant}
+	</c:forEach>
+	</pre>
+
 	<table>
 		<thead>
 			<tr>
@@ -47,14 +55,11 @@ a.btn {
 		<tbody>
 			<c:forEach var="applicant" items="${applicants}">
 				<tr>
-					<td>${applicant.memberid}</td>
-					<td>${applicant.membername}</td>
-					<td>
-						<fmt:formatDate value="${applicant.joinedat}" pattern="yyyy-MM-dd HH:mm" />
-					</td>
-
-					<td>
-						<a class="btn" href="/usr/walkCrew/requestDetail?crewId=${crewId}&memberId=${applicant.memberid}"> 상세보기 </a>
+					<td>${applicant.memberId}</td>
+					<td>${applicant.memberName}</td>
+					<td>${fn:replace(fn:substring(applicant.joinedAt, 0, 16), 'T', ' ')}</td>
+					<td><a class="btn"
+						href="/usr/walkCrew/requestDetail?crewId=${crewId}&memberId=${applicant.memberId}">상세보기</a>
 					</td>
 				</tr>
 			</c:forEach>
