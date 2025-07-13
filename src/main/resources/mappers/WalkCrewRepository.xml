@@ -128,26 +128,30 @@
 
 	<select id="getApplicantsByCrewId" resultType="map">
 		SELECT
-		m.id AS
-		memberId,
+		m.id AS memberId,
 		m.name AS memberName,
-		wcm.joinedAt
+		wcm.joinedAt AS joinedAt
 		FROM walk_crew_member wcm
 		INNER JOIN member m ON wcm.memberId = m.id
 		WHERE wcm.crewId = #{crewId}
 	</select>
 
+
+
 	<select id="getApplicantDetail" resultType="map">
 		SELECT
-		m.id AS memberId,
+		m.id AS
+		memberId,
 		m.name AS memberName,
 		m.nickname AS memberNickname,
-		m.address AS memberAddress,
+		m.address
+		AS memberAddress,
 		m.authLevel,
 		wcm.joinedAt
 		FROM walk_crew_member wcm
 		INNER JOIN member m ON wcm.memberId = m.id
-		WHERE wcm.crewId = #{crewId} AND wcm.memberId = #{memberId}
+		WHERE wcm.crewId = #{crewId}
+		AND wcm.memberId = #{memberId}
 	</select>
 
 
