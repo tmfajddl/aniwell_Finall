@@ -126,8 +126,26 @@
 
     function updateAuthLevel() {
       const auth = document.querySelector('[name="authName"]').value;
-      document.getElementById('authLevel').value = auth === '수의사' ? 9 : 1;
+      document.getElementById('authLevel').value = auth === '수의사' ? 3 : 1;
     }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const phoneInput = document.getElementById('cellphone');
+
+      phoneInput.addEventListener('input', function () {
+        let value = phoneInput.value.replace(/\D/g, ''); // 숫자만 남기기
+
+        if (value.length <= 3) {
+          phoneInput.value = value;
+        } else if (value.length <= 7) {
+          phoneInput.value = value.slice(0, 3) + '-' + value.slice(3);
+        } else if (value.length <= 11) {
+          phoneInput.value = value.slice(0, 3) + '-' + value.slice(3, 7) + '-' + value.slice(7, 11);
+        } else {
+          phoneInput.value = value.slice(0, 3) + '-' + value.slice(3, 7) + '-' + value.slice(7, 11);
+        }
+      });
+    });
 
     function validateForm() {
       const phone = document.querySelector('[name="cellphone"]');
@@ -168,7 +186,7 @@
     <!-- STEP 2 -->
     <div class="form-step" id="step2">
       <h2>Contact Info</h2>
-      <input type="text" name="cellphone" placeholder="PHONE NUMBER (000-0000-0000)" required>
+      <input type="text" name="cellphone" id="cellphone" placeholder="PHONE NUMBER (000-0000-0000)" required>
       <input type="email" name="email" placeholder="EMAIL" required>
       <input type="text" name="address" placeholder="ADDRESS" required>
 
