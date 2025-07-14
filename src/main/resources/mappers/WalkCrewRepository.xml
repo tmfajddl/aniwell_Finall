@@ -169,8 +169,16 @@
 	<update id="updateMemberStatusToApproved">
 		UPDATE walk_crew_member
 		SET status = 'approved'
-		WHERE crewId = #{crewId} AND memberId = #{memberId}
+		WHERE
+		crewId = #{crewId} AND memberId = #{memberId}
 	</update>
 
-
+	<select id="findByLeaderId"
+		resultType="com.example.RSW.vo.WalkCrew">
+		SELECT *
+		FROM walk_crew
+		WHERE leaderId = #{leaderId}
+		ORDER BY createdAt DESC
+		LIMIT 1
+	</select>
 </mapper>
