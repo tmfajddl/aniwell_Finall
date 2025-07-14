@@ -329,7 +329,7 @@
         <div class="crew-list">
             <c:forEach var="crew" items="${crews}">
                 <div class="crew-card">
-                    <div class="crew-name">${crew.name}</div>
+                    <div class="crew-name">${crew.title}</div>
                     <div class="crew-desc">${crew.description}</div>
                 </div>
             </c:forEach>
