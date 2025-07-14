@@ -76,6 +76,17 @@
       font-size: 18px;
       cursor: pointer;
     }
+    .type-label {
+      display: inline-block;
+      font-size: 12px;
+      background-color: #ffd4da;
+      color: #a03340;
+      border-radius: 4px;
+      padding: 2px 6px;
+      margin-left: 6px;
+      font-weight: bold;
+      vertical-align: middle;
+    }
   </style>
 </head>
 <body>
@@ -89,17 +100,33 @@
     <button onclick="searchPlaces('애견카페')">☕ 애견카페</button>
     <button onclick="searchPlaces('공원')">🐾 공원</button>
     <button onclick="searchPlaces('펫호텔')">🏨 펫호텔</button>
+    <button onclick="showFavoritesOnly()">🌟 즐겨찾기만 보기</button>
   </div>
   <div id="placeList"></div>
 </div>
 
 <script>
   const memberId = ${memberId};
+
   const favoriteNames = new Set([
     <c:forEach var="name" items="${favoriteNames}" varStatus="status">
     "${name}"<c:if test="${!status.last}">,</c:if>
     </c:forEach>
   ]);
+
+  const favoritePlaces = [
+    <c:forEach var="p" items="${favoriteplaces}" varStatus="status">
+    {
+      name: "${p.name}",
+      address: "${p.address}",
+      phone: "${p.phone}",
+      type: "${p.type}",
+      mapUrl: "${p.mapUrl}"
+    }<c:if test="${!status.last}">,</c:if>
+    </c:forEach>
+  ];
+
+
 
   let map, currentLocation, markers = [], searchResults = [], currentType = "";
 
@@ -166,7 +193,7 @@
               "<strong>" + place.place_name + "</strong><br>" +
               (place.road_address_name || place.address_name) + "<br>" +
               "📞 " + (place.phone || "없음") +
-              "<button class='fav-btn' onclick='toggleFavorite(event, " + idx + ")'>" + (isFav ? "💖" : "🤍") + "</button>";
+              "<button class='fav-btn' onclick='toggleFavorite(event, " + idx + ")'>" + (isFav ? "❤️" : "🤍") + "</button>";
 
       item.onclick = function () {
         focusPlace(idx);
@@ -207,7 +234,7 @@
             .then(function(result) {
               if (result === "added") {
                 favoriteNames.add(place.place_name);
-                btn.textContent = "💖";
+                btn.textContent = "❤️";
               } else if (result === "removed") {
                 favoriteNames.delete(place.place_name);
                 btn.textContent = "🤍";
@@ -246,6 +273,105 @@
 
     item.insertAdjacentElement("afterend", detail);
   }
+
+  function showFavoritesOnly() {
+    clearMarkers();
+    placeListEl.innerHTML = "";
+
+    fetch('/usr/pet/recommend/list?memberId=' + memberId)
+            .then(res => res.json())
+            .then(favorites => {
+              if (!favorites.length) {
+                placeListEl.innerHTML = "<p style='padding: 20px; text-align: center; color: #999;'>즐겨찾기한 장소가 없습니다.</p>";
+                return;
+              }
+
+              favorites.forEach((place, idx) => {
+                const geocoder = new kakao.maps.services.Geocoder();
+                geocoder.addressSearch(place.address, function(result, status) {
+                  if (status === kakao.maps.services.Status.OK) {
+                    const pos = new kakao.maps.LatLng(result[0].y, result[0].x);
+
+                    const marker = new kakao.maps.Marker({
+                      map: map,
+                      position: pos,
+                      title: place.name,
+                      image: pawMarkerImage
+                    });
+                    markers.push(marker);
+
+                    const item = document.createElement("div");
+                    item.className = "place-item";
+                    item.id = "fav-place-" + idx;
+                    item.innerHTML =
+                            "<strong>" + place.name + "</strong>" +
+                            "<span class='type-label'>" + place.type + "</span><br>" +
+                            place.address + "<br>" +
+                            "📞 " + place.phone +
+                            "<button class='fav-btn' onclick='removeFavorite(event, \"" + place.name + "\")'>💖</button>";
+
+                    item.onclick = function () {
+                      toggleFavoriteDetail(item, place);
+                      map.panTo(pos);
+                    };
+
+                    placeListEl.appendChild(item);
+
+                    kakao.maps.event.addListener(marker, "click", function () {
+                      item.scrollIntoView({ behavior: "smooth", block: "center" });
+                      item.click(); // 👉 리스트 아이템 클릭 효과 그대로 재활용
+                      map.panTo(pos);
+                    });
+                  }
+                });
+              });
+            });
+  }
+
+  function toggleFavoriteDetail(item, place) {
+    const detailEl = item.nextElementSibling;
+
+    if (item.classList.contains("selected")) {
+      item.classList.remove("selected");
+      if (detailEl && detailEl.classList.contains("place-details")) detailEl.remove();
+      return;
+    }
+
+    document.querySelectorAll(".place-item").forEach(el => el.classList.remove("selected"));
+    document.querySelectorAll(".place-details").forEach(el => el.remove());
+
+    const detail = document.createElement("div");
+    detail.className = "place-details";
+    detail.innerHTML =
+            "<strong>" + place.name + "</strong><br>" +
+            "<p>🏠 " + place.address + "</p>" +
+            "<p>📞 " + place.phone + "</p>" +
+            "<p><a href='" + place.mapUrl + "' target='_blank'>🔗 카카오에서 보기</a></p>";
+
+    item.insertAdjacentElement("afterend", detail);
+    item.classList.add("selected");
+  }
+
+
+
+  function removeFavorite(event, name) {
+    event.stopPropagation();
+    const params = "memberId=" + memberId + "&name=" + encodeURIComponent(name);
+    fetch('/usr/pet/recommend/toggle', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: params
+    })
+            .then(res => res.text())
+            .then(result => {
+              if (result === "removed") {
+                alert("즐겨찾기에서 삭제했어요!");
+                location.reload(); // 새로고침으로 반영
+              }
+            });
+  }
+
+
 </script>
 </body>
 </html>

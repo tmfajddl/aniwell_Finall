@@ -5,8 +5,8 @@
 
 <mapper namespace="com.example.RSW.repository.PetRecommendationRepository">
 
-    <select id="selectPlaceNamesByMemberId" resultType="string">
-        SELECT name FROM pet_recommendation WHERE memberId = #{memberId}
+    <select id="selectPlaceNamesByMemberId" resultType="com.example.RSW.vo.PetRecommendation">
+        SELECT * FROM pet_recommendation WHERE memberId = #{memberId}
     </select>
 
     <select id="countByMemberAndName" resultType="int">
@@ -21,5 +21,11 @@
     <delete id="deleteByMemberAndName">
         DELETE FROM pet_recommendation WHERE memberId = #{memberId} AND name = #{name}
     </delete>
+
+    <select id="getFavoriteNamesOnly" resultType="string">
+        SELECT name
+        FROM pet_recommendation
+        WHERE memberId = #{memberId}
+    </select>
 
 </mapper>
