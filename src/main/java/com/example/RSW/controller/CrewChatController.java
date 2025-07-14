@@ -41,7 +41,7 @@ public class CrewChatController {
     public String showChatPage(@RequestParam int crewId, HttpSession session, Model model) {
         int loginedMemberId = (int) session.getAttribute("loginedMemberId");
         Member member = memberService.getMemberById(loginedMemberId);
-        WalkCrewMember crewMember = crewMemerService.getCrewMemberById(loginedMemberId);
+        WalkCrewMember crewMember = crewMemerService.getCrewMemberById(crewId, loginedMemberId);
         Pet pet = petService.getPetsById(crewMember.getPetId());
 
         // 크루 참여 여부 확인
