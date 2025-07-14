@@ -180,6 +180,7 @@
       }
     });
 
+
     const firstMsg = messages[0];
     const isMe = firstMsg.senderId === senderId;
     const chatBox = document.getElementById("chatBox");

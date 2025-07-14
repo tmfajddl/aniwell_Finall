@@ -16,6 +16,7 @@
         SELECT *
         FROM walk_crew_member
         WHERE memberId = #{memberId}
+          AND crewId = #{crewId}
     </select>
 
 </mapper>

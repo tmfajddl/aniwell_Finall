@@ -7,5 +7,5 @@ import org.apache.ibatis.annotations.Mapper;
 public interface CrewMemerRepository {
     boolean isCrewMember(int crewId, int memberId);
 
-    WalkCrewMember getCrewMemberById(int memberId);
+    WalkCrewMember getCrewMemberById(int crewId, int memberId);
 }
