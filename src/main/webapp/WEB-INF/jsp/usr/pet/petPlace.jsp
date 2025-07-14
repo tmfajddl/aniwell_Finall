@@ -1,4 +1,7 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %> <%-- fn:length, fn:contains 등 --%>
+
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -48,6 +51,7 @@
       border-left: 5px solid #ffb6c1;
       border-radius: 6px;
       cursor: pointer;
+      position: relative;
     }
     .place-item:hover {
       background: #ffeef0;
@@ -64,11 +68,13 @@
       margin-top: 8px;
     }
     .fav-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
       background: none;
       border: none;
-      font-size: 16px;
+      font-size: 18px;
       cursor: pointer;
-      margin-left: 5px;
     }
   </style>
 </head>
@@ -78,22 +84,27 @@
 <div id="sidebar">
   <h3>📍 내 주변 펫 장소</h3>
   <div id="filterBtns">
-    <button data-type="애견용품" onclick="searchPlaces('애견용품')">🐶 애견용품</button>
-    <button data-type="동물병원" onclick="searchPlaces('동물병원')">🏥 동물병원</button>
-    <button data-type="애견카페" onclick="searchPlaces('애견카페')">☕ 애견카페</button>
-    <button data-type="공원" onclick="searchPlaces('공원')">🐾 공원</button>
-    <button data-type="펫호텔" onclick="searchPlaces('펫호텔')">🏨 펫호텔</button>
-    <button onclick="showFavorites()">🌟 즐겨찾기 보기</button>
+    <button onclick="searchPlaces('애견용품')">🐶 애견용품</button>
+    <button onclick="searchPlaces('동물병원')">🏥 동물병원</button>
+    <button onclick="searchPlaces('애견카페')">☕ 애견카페</button>
+    <button onclick="searchPlaces('공원')">🐾 공원</button>
+    <button onclick="searchPlaces('펫호텔')">🏨 펫호텔</button>
   </div>
   <div id="placeList"></div>
 </div>
 
 <script>
-  var map, currentLocation, markers = [], searchResults = [], currentType = "", memberId = 1;
-  var placeListEl = document.getElementById("placeList");
-  var isShowingFavorites = false;
+  const memberId = ${memberId};
+  const favoriteNames = new Set([
+    <c:forEach var="name" items="${favoriteNames}" varStatus="status">
+    "${name}"<c:if test="${!status.last}">,</c:if>
+    </c:forEach>
+  ]);
 
-  var pawMarkerImage = new kakao.maps.MarkerImage(
+  let map, currentLocation, markers = [], searchResults = [], currentType = "";
+
+  const placeListEl = document.getElementById("placeList");
+  const pawMarkerImage = new kakao.maps.MarkerImage(
           "/img/paw-marker2.png",
           new kakao.maps.Size(64, 64),
           { offset: new kakao.maps.Point(32, 64) }
@@ -120,9 +131,8 @@
   }
 
   function searchPlaces(keyword) {
-    isShowingFavorites = false;
-
-    var ps = new kakao.maps.services.Places();
+    currentType = keyword;
+    const ps = new kakao.maps.services.Places();
     ps.keywordSearch(keyword, function(data, status) {
       if (status !== kakao.maps.services.Status.OK) {
         placeListEl.innerHTML = "<p>🔍 장소를 찾을 수 없습니다.</p>";
@@ -138,9 +148,10 @@
     placeListEl.innerHTML = "";
 
     searchResults.forEach(function(place, idx) {
-      var pos = new kakao.maps.LatLng(place.y, place.x);
+      const pos = new kakao.maps.LatLng(place.y, place.x);
+      const isFav = favoriteNames.has(place.place_name);
 
-      var marker = new kakao.maps.Marker({
+      const marker = new kakao.maps.Marker({
         map: map,
         position: pos,
         title: place.place_name,
@@ -148,14 +159,14 @@
       });
       markers.push(marker);
 
-      var item = document.createElement("div");
+      const item = document.createElement("div");
       item.className = "place-item";
       item.id = "place-" + idx;
-              item.innerHTML =
-                      "<strong>" + place.place_name + "</strong><br>" +
-                      (place.road_address_name || place.address_name) + "<br>" +
-                      "📞 " + (place.phone || "없음") + "<br>" +
-                      "<button class='fav-btn' onclick='toggleFavorite(event, " + idx + ")'>❤️</button>";
+      item.innerHTML =
+              "<strong>" + place.place_name + "</strong><br>" +
+              (place.road_address_name || place.address_name) + "<br>" +
+              "📞 " + (place.phone || "없음") +
+              "<button class='fav-btn' onclick='toggleFavorite(event, " + idx + ")'>" + (isFav ? "💖" : "🤍") + "</button>";
 
       item.onclick = function () {
         focusPlace(idx);
@@ -170,118 +181,71 @@
         document.getElementById("place-" + idx).scrollIntoView({ behavior: "smooth", block: "center" });
       });
     });
+  }
 
-    updateFavoriteButtons();
+  function toggleFavorite(event, index) {
+    event.stopPropagation();
+    console.log("하트 클릭됨: " + index);
+    const place = searchResults[index];
+    const isFav = favoriteNames.has(place.place_name);
+    const btn = event.target;
+
+    const params =
+            "memberId=" + memberId +
+            "&type=" + encodeURIComponent(currentType) +
+            "&name=" + encodeURIComponent(place.place_name) +
+            "&address=" + encodeURIComponent(place.road_address_name || place.address_name) +
+            "&phone=" + encodeURIComponent(place.phone || "없음") +
+            "&mapUrl=" + encodeURIComponent(place.place_url);
+
+    fetch('/usr/pet/recommend/toggle', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: params
+    })
+            .then(function(res) { return res.text(); })
+            .then(function(result) {
+              if (result === "added") {
+                favoriteNames.add(place.place_name);
+                btn.textContent = "💖";
+              } else if (result === "removed") {
+                favoriteNames.delete(place.place_name);
+                btn.textContent = "🤍";
+              }
+            });
   }
 
   function focusPlace(index) {
-    var prev = document.querySelector(".place-item.selected");
-    if (prev) {
-      prev.classList.remove("selected");
-      if (document.getElementById("details-" + index)) {
-        document.getElementById("details-" + index).remove();
-      }
+    const item = document.getElementById("place-" + index);
+    const existingDetail = document.getElementById("details-" + index);
+
+    if (item.classList.contains("selected")) {
+      item.classList.remove("selected");
+      if (existingDetail) existingDetail.remove();
+      return;
     }
 
-    var place = searchResults[index];
-    var item = document.getElementById("place-" + index);
+    const prevSelected = document.querySelector(".place-item.selected");
+    if (prevSelected) {
+      prevSelected.classList.remove("selected");
+      const prevDetail = prevSelected.nextElementSibling;
+      if (prevDetail && prevDetail.classList.contains("place-details")) prevDetail.remove();
+    }
+
+    const place = searchResults[index];
     item.classList.add("selected");
 
-    var detail = document.createElement("div");
+    const detail = document.createElement("div");
     detail.className = "place-details";
     detail.id = "details-" + index;
     detail.innerHTML =
             "<strong>" + place.place_name + "</strong><br>" +
             "<p>🏠 " + (place.road_address_name || place.address_name) + "</p>" +
             "<p>📞 " + (place.phone || "없음") + "</p>" +
-            "<p><a href='" + place.place_url + "' target='_blank'>🔗 카카오에서 상세보기</a></p>";
+            "<p><a href='" + place.place_url + "' target='_blank'>🔗 카카오에서 보기</a></p>";
 
     item.insertAdjacentElement("afterend", detail);
   }
-
-  function toggleFavorite(event, index) {
-    event.stopPropagation();
-    var place = searchResults[index];
-    var favList = JSON.parse(localStorage.getItem("favorites") || "[]");
-    var exists = favList.find(function(p) { return p.id === place.id; });
-
-    if (exists) {
-      favList = favList.filter(function(p) { return p.id !== place.id; });
-      localStorage.setItem("favorites", JSON.stringify(favList));
-      removeFromDB(place.place_name);
-
-      if (isShowingFavorites) {
-        searchResults = searchResults.filter(function(p) { return p.id !== place.id; });
-        var itemEl = document.getElementById("place-" + index);
-        if (itemEl) itemEl.remove();
-
-        if (searchResults.length === 0) {
-          placeListEl.innerHTML = "<p style='padding: 20px; text-align: center; color: #999;'>즐겨찾기 장소가 없습니다.</p>";
-          clearMarkers();
-        }
-      }
-
-    } else {
-      place.type = currentType;
-      favList.push(place);
-      localStorage.setItem("favorites", JSON.stringify(favList));
-      saveToDB(place);
-    }
-
-    updateFavoriteButtons();
-  }
-
-  function removeFromDB(placeName) {
-    fetch('/usr/pet/recommend/delete', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: "memberId=" + memberId + "&name=" + encodeURIComponent(placeName)
-    }).then(res => res.text())
-            .then(msg => console.log(msg));
-  }
-
-  function updateFavoriteButtons() {
-    var favList = JSON.parse(localStorage.getItem("favorites") || "[]");
-    var favIds = favList.map(function(p) { return p.id; });
-
-    var btns = document.querySelectorAll(".fav-btn");
-    btns.forEach(function(btn, idx) {
-      var place = searchResults[idx];
-      if (favIds.includes(place.id)) {
-        btn.textContent = "💖";
-      } else {
-        btn.textContent = "❤️";
-      }
-    });
-  }
-
-  function saveToDB(place) {
-    fetch('/usr/pet/recommend', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: "memberId=" + memberId +
-              "&type=" + encodeURIComponent(currentType) +
-              "&name=" + encodeURIComponent(place.place_name) +
-              "&address=" + encodeURIComponent(place.road_address_name || place.address_name) +
-              "&phone=" + encodeURIComponent(place.phone || "없음") +
-              "&mapUrl=" + encodeURIComponent(place.place_url)
-    }).then(res => res.text())
-            .then(msg => console.log(msg));
-  }
-
-  function showFavorites() {
-    isShowingFavorites = true;
-
-    var favList = JSON.parse(localStorage.getItem("favorites") || "[]");
-    if (!favList.length) {
-      placeListEl.innerHTML = "<p style='padding: 20px; text-align: center; color: #999;'>즐겨찾기 장소가 없습니다.</p>";
-      clearMarkers();
-      return;
-    }
-    searchResults = favList;
-    renderPlaceList();
-  }
 </script>
-
 </body>
 </html>

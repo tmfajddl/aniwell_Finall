@@ -103,7 +103,7 @@
     <div class="result-item" data-emotion="${item.emotionResult}">
       <img src="${item.imagePath}" alt="Pet Image">
       <strong>${item.emotionResult}</strong>
-      <span class="label">신뢰도: ${item.confidence * 100}%</span>
+      <span class="label">신뢰도: ${item.confidence}%</span>
       <span class="label">날짜: ${item.analyzedAt}</span>
     </div>
   </c:forEach>

@@ -475,7 +475,7 @@
 
                 const probs = data.probabilities;
                 const labels = Object.keys(probs);
-                const values = Object.values(probs).map(v => parseFloat((v * 100).toFixed(2)));
+                const values = Object.values(probs).map(v => parseFloat((v s).toFixed(2)));
 
                 const labelMap = {
                   "happy": "😊 행복",
