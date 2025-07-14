@@ -168,7 +168,7 @@
     </div>
   </div>
 
-  <button onclick="location.href='/usr/pet/petPlace'">주변 장소 검색</button>
+  <button onclick="location.href='/usr/pet/petPlace?memberId=${member.id}'">주변 장소 검색</button>
   <!-- 갤러리 버튼 -->
   <button id="btn-open-gallery" data-pet-id="${pet.id}">감정 갤러리</button>
 

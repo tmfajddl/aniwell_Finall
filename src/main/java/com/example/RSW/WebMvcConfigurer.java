@@ -97,6 +97,7 @@ public class WebMvcConfigurer implements org.springframework.web.servlet.config.
         ir.addPathPatterns("/usr/pet/daily/domodify");
         ir.addPathPatterns("/usr/pet/daily/delete");
         ir.addPathPatterns("/usr/pet/daily/detail");
+        ir.addPathPatterns("/usr/pet/petPlace");
 
 
 
