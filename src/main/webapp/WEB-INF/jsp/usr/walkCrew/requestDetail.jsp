@@ -78,20 +78,20 @@ h2 {
 
 		<div class="field">
 			<div class="label">닉네임:</div>
-			<div>${applicant.membernickname}</div>
+			<div>${applicant.memberNickname}</div>
 		</div>
 
 		<div class="field">
 			<div class="label">주소:</div>
-			<div>${applicant.memberaddress}</div>
+			<div>${applicant.memberAddress}</div>
 		</div>
 
 		<div class="field">
 			<div class="label">권한:</div>
 			<div>
 				<c:choose>
-					<c:when test="${applicant.authlevel == 7}">관리자</c:when>
-					<c:when test="${applicant.authlevel == 3}">수의사</c:when>
+					<c:when test="${applicant.authLevel == 7}">관리자</c:when>
+					<c:when test="${applicant.authLevel == 3}">수의사</c:when>
 					<c:otherwise>일반</c:otherwise>
 				</c:choose>
 			</div>
@@ -99,26 +99,25 @@ h2 {
 
 		<div class="field">
 			<div class="label">신청일:</div>
-			<div>${fn:replace(fn:substring(applicant.joinedat, 0, 16), 'T', ' ')}</div>
+			<div>${fn:replace(fn:substring(applicant.joinedAt, 0, 16), 'T', ' ')}</div>
 		</div>
 
 		<!-- ✅ 수락 / 거절 버튼 -->
 		<div class="button-group">
 			<form action="/usr/walkCrew/approveApplicant" method="post">
-				<input type="hidden" name="crewId" value="${crewId}" /> <input
-					type="hidden" name="memberId" value="${applicant.memberId}" />
+				<input type="hidden" name="crewId" value="${crewId}" />
+				<input type="hidden" name="memberId" value="${applicant.memberId}" />
 				<button type="submit">✅ 수락</button>
 			</form>
 
 			<form action="/usr/walkCrew/rejectApplicant" method="post">
-				<input type="hidden" name="crewId" value="${crewId}" /> <input
-					type="hidden" name="memberId" value="${applicant.memberid}" />
+				<input type="hidden" name="crewId" value="${crewId}" />
+				<input type="hidden" name="memberId" value="${applicant.memberid}" />
 				<button type="submit" class="reject-btn">거절</button>
 			</form>
 		</div>
 
-		<a class="back-link" href="/usr/walkCrew/requestList?crewId=${crewId}">←
-			신청자 목록으로 돌아가기</a>
+		<a class="back-link" href="/usr/walkCrew/requestList?crewId=${crewId}">← 신청자 목록으로 돌아가기</a>
 	</div>
 
 </body>

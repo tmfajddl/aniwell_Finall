@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -212,8 +213,26 @@ public class UsrWalkCrewController {
 	@PostMapping("/approveApplicant")
 	@ResponseBody
 	public ResultData approveApplicant(@RequestParam int crewId, @RequestParam int memberId) {
-	    walkCrewService.approveMember(crewId, memberId);
-	    return ResultData.from("S-1", "참가 요청을 수락했습니다.");
+		walkCrewService.approveMember(crewId, memberId);
+		return ResultData.from("S-1", "참가 요청을 수락했습니다.");
+	}
+
+	// 메뉴용 공통 데이터
+	@ModelAttribute("crew")
+	public WalkCrew getCrewForMenu(HttpServletRequest req) {
+		Rq rq = (Rq) req.getAttribute("rq");
+
+		if (rq == null || !rq.isLogined())
+			return null;
+
+		int memberId = rq.getLoginedMemberId();
+
+		WalkCrew crew = walkCrewService.getCrewByLeaderId(memberId);
+		if (crew != null)
+			return crew;
+
+		// ✅ 참가자라도 승인된 경우 크루 정보 반환
+		return walkCrewService.getCrewByMemberId(memberId);
 	}
 
 }

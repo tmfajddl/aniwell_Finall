@@ -86,12 +86,19 @@ public class WalkCrewService {
 	}
 
 	public boolean isApprovedMember(int crewId, int memberId) {
-	    return walkCrewRepository.isApprovedMember(crewId, memberId) > 0;
+		return walkCrewRepository.isApprovedMember(crewId, memberId) > 0;
 	}
 
 	public void approveMember(int crewId, int memberId) {
-	    walkCrewRepository.updateMemberStatusToApproved(crewId, memberId);
+		walkCrewRepository.updateMemberStatusToApproved(crewId, memberId);
 	}
 
-	
+	public WalkCrew getCrewByLeaderId(int leaderId) {
+		return walkCrewRepository.findByLeaderId(leaderId);
+	}
+
+	public WalkCrew getCrewByMemberId(int memberId) {
+		return walkCrewRepository.getCrewByMemberId(memberId);
+	}
+
 }
