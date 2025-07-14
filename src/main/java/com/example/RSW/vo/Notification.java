@@ -25,6 +25,7 @@ public class Notification {
     private Integer senderId;   // 알림 발생 유저 ID
 
 
+
     public long getRegDateMs() {
         return regDate != null ? regDate.getTime() : 0L;
     }
