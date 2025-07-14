@@ -8,6 +8,7 @@ import com.example.RSW.vo.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -49,36 +50,23 @@ public class PetController {
     private Cloudinary cloudinary;
 
     // 즐겨 찾기 삭제 로직
-    @RequestMapping("/usr/pet/recommend/delete")
-    public String deleteFavorite(@RequestParam int memberId, @RequestParam String name) {
-        PetRecommendation rec = petRecommendationService.findByMemberAndName(memberId, name);
-        if (rec != null) {
-            petRecommendationService.deleteById(rec.getId());
-            return "S-1, 삭제 완료";
-        }
-        return "F-1, 해당 즐겨찾기가 존재하지 않음";
-    }
-
-    // 즐겨 찾기 등록 로직
-    @RequestMapping("/usr/pet/recommend")
+    @RequestMapping("/usr/pet/recommend/toggle")
     @ResponseBody
-    public String saveFavorite(@RequestParam int memberId,
-                               @RequestParam String type,
-                               @RequestParam String name,
-                               @RequestParam String address,
-                               @RequestParam String phone,
-                               @RequestParam String mapUrl) {
+    public String toggleFavorite(@RequestParam int memberId,
+                                 @RequestParam String name,
+                                 @RequestParam String type,
+                                 @RequestParam String address,
+                                 @RequestParam String phone,
+                                 @RequestParam String mapUrl) {
 
-        PetRecommendation rec = new PetRecommendation();
-        rec.setMemberId(memberId);
-        rec.setType(type);
-        rec.setName(name);
-        rec.setAddress(address);
-        rec.setPhone(phone);
-        rec.setMapUrl(mapUrl);
-
-        boolean saved = petRecommendationService.saveIfNotExists(rec);
-        return saved ? "S-1, 즐겨찾기 등록됨" : "F-1, 이미 등록된 즐겨찾기입니다";
+        boolean exists = petRecommendationService.isFavorited(memberId, name);
+        if (exists) {
+            petRecommendationService.removeFavorite(memberId, name);
+            return "removed";
+        } else {
+            petRecommendationService.saveFavorite(memberId, type, name, address, phone, mapUrl);
+            return "added";
+        }
     }
 
     //테스트용
@@ -90,10 +78,12 @@ public class PetController {
 
     //주변 펫 샵 조회
     @RequestMapping("/usr/pet/petPlace")
-    public String showTest(@RequestParam("memberId") int memberId) {
-        if(memberId != rq.getLoginedMemberId()){
-            return Ut.jsAlertBack("권한이 없습니다.");
-        }
+    public String showMap(Model model) {
+        int memberId = rq.getLoginedMemberId();
+
+        List<String> favoriteNames = petRecommendationService.getFavoriteNamesByMember(memberId);
+        model.addAttribute("favoriteNames", favoriteNames);
+        model.addAttribute("memberId", memberId);
         return "usr/pet/petPlace";
     }
 

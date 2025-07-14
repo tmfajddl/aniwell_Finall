@@ -13,24 +13,19 @@ public class PetRecommendationService {
     @Autowired
     private PetRecommendationRepository recommendationRepository;
 
-    public boolean saveIfNotExists(PetRecommendation rec) {
-        PetRecommendation existing = recommendationRepository.findByMemberAndName(rec.getMemberId(), rec.getName());
-        if (existing != null) return false;
-
-        recommendationRepository.insert(rec);
-        return true;
+    public List<String> getFavoriteNamesByMember(int memberId) {
+        return recommendationRepository.selectPlaceNamesByMemberId(memberId);
     }
 
-    public List<PetRecommendation> getFavorites(int memberId) {
-        return recommendationRepository.findByMember(memberId);
+    public boolean isFavorited(int memberId, String name) {
+        return recommendationRepository.countByMemberAndName(memberId, name) > 0;
     }
 
-    public void deleteById(int id) {
-        recommendationRepository.deleteById(id);
+    public void saveFavorite(int memberId, String type, String name, String address, String phone, String mapUrl) {
+        recommendationRepository.insert(memberId, type, name, address, phone, mapUrl);
     }
 
-    public PetRecommendation findByMemberAndName(int memberId, String name) {
-
-        return recommendationRepository.findByMemberAndName(memberId, name);
+    public void removeFavorite(int memberId, String name) {
+        recommendationRepository.deleteByMemberAndName(memberId, name);
     }
 }
