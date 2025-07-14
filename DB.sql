@@ -26,6 +26,7 @@ CREATE TABLE `member` (
   `nickname` CHAR(20) NOT NULL,
   `cellphone` CHAR(20) NOT NULL,
   `email` CHAR(20) NOT NULL,
+  `photo` VARCHAR(255),
   `delStatus` TINYINT(1) UNSIGNED NOT NULL DEFAULT 0,
   `authName` CHAR(30) NOT NULL,
   `delDate` DATETIME
@@ -123,6 +124,9 @@ CREATE TABLE `walk_crew_member` (
   `memberId` INT(10) NOT NULL,
   `joinedAt` DATETIME NOT NULL
 );
+
+ALTER TABLE `walk_crew_member`
+ADD COLUMN petId INT(10) AFTER memberId;
 
 -- ✅ 지역 정보
 CREATE TABLE `district` (
@@ -222,6 +226,18 @@ CREATE TABLE `reactionPoint` (
   `point` INT(10) NOT NULL
 );
 
+-- ✅ 산책 크루 채팅방
+CREATE TABLE `crew_chat_message` (
+  `id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `crewId` INT(10) UNSIGNED NOT NULL,  
+  `senderId` INT(10) UNSIGNED NOT NULL,
+  `nickname` VARCHAR(100) NOT NULL,
+  `content` TEXT NOT NULL,
+  `sentAt` DATETIME NOT NULL DEFAULT NOW(),
+  FOREIGN KEY (`crewId`) REFERENCES `walk_crew`(`id`) ON DELETE CASCADE,
+  FOREIGN KEY (`senderId`) REFERENCES `member`(`id`) ON DELETE CASCADE
+);
+
 
 ############# 🔑 외래 키 제약조건 ###################
 
@@ -240,7 +256,6 @@ ALTER TABLE `walk_crew` ADD CONSTRAINT `fk_walkcrew_district` FOREIGN KEY (`dist
 ALTER TABLE `walk_crew_member`
   ADD CONSTRAINT `fk_walkcrew_member_crew` FOREIGN KEY (`crewId`) REFERENCES `walk_crew` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `fk_walkcrew_member_member` FOREIGN KEY (`memberId`) REFERENCES `member` (`id`) ON DELETE CASCADE;
-
 
 ############# 🔑 외래 키 제약조건 ###################
 
@@ -279,6 +294,19 @@ INSERT INTO `district` (`city`, `district`, `dong`) VALUES
 ('대전광역시', '서구', '둔산동'),
 ('부산광역시', '해운대구', '우동');
 
+
+-- ✅ 크루
+INSERT INTO `walk_crew` (`title`, `description`, `district_id`, `leaderId`, `createdAt`) VALUES
+('댕모임', '댕댕이 모임', 1, 1, NOW()),
+('강아지사랑', '댕댕이 모임', 2, 2, NOW());
+
+
+-- ✅ 크루 멤버
+INSERT INTO `walk_crew_member` (`memberId`, `crewId`, `joinedAt`) VALUES
+(2, 2, NOW()),
+(2, 1, NOW()),
+(1, 1, NOW());
+
 -- ✅ 반려동물
 INSERT INTO `pet` (`memberId`, `name`, `species`, `breed`, `gender`, `birthDate`, `weight`) VALUES
 (1, '콩이', '강아지', '말티즈', '암컷', '2021-05-10', 3.5),
@@ -313,11 +341,34 @@ INSERT INTO `vaccine_schedule` (`vaccineName`, `intervalMonths`, `type`, `descri
 
 ############# 💣 트리거 ###################
 
--- ✅ 백신 자동 계산 트리거
+-- ✅ 백신 자동 계산 트리거(insert)
 DELIMITER $$
 
 CREATE TRIGGER `auto_set_next_due_date`
 BEFORE INSERT ON `pet_vaccination`
+FOR EACH ROW
+BEGIN
+  DECLARE v_interval INT;
+
+  SELECT `intervalMonths` INTO v_interval
+  FROM `vaccine_schedule`
+  WHERE `vaccineName` = NEW.`vaccineName`
+  LIMIT 1;
+
+  IF v_interval IS NOT NULL THEN
+    SET NEW.`nextDueDate` = DATE_ADD(NEW.`injectionDate`, INTERVAL v_interval MONTH);
+  ELSE
+    SET NEW.`nextDueDate` = NULL;
+  END IF;
+END$$
+
+DELIMITER ;
+
+-- ✅ 백신 자동 계산 트리거(update)
+DELIMITER $$
+
+CREATE TRIGGER `auto_set_next_due_date_before_update`
+BEFORE UPDATE ON `pet_vaccination`
 FOR EACH ROW
 BEGIN
   DECLARE v_interval INT;
@@ -368,3 +419,11 @@ DELIMITER ;
 
 
 ############# 💣 트리거 ###################
+
+
+select *
+from pet_vaccination;
+
+select *
+from crew_chat_message;
+
