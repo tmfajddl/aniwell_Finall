@@ -38,4 +38,6 @@ public interface MemberRepository {
 	String getNicknameById(int loginedMemberId);
 
     void updateVetCertInfo(int memberId, String fileName, int approved);
+
+	int countByAuthLevel(int level);
 }
