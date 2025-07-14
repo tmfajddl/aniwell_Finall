@@ -94,6 +94,16 @@
 
 <div id="sidebar">
   <h3>📍 내 주변 펫 장소</h3>
+  <div style="margin-bottom: 12px;">
+    <input type="text" id="customKeyword" placeholder="검색어 입력 (예: 코코펫카페)"
+           style="width: 70%; padding: 6px; border-radius: 6px; border: 1px solid #ccc;"
+           onkeypress="if(event.key === 'Enter') searchCustomKeyword()">
+    <button onclick="searchCustomKeyword()"
+            style="padding: 6px 10px; border-radius: 6px; background: #ffc2d2; font-weight: bold; border: none;">
+      🔍 검색
+    </button>
+  </div>
+
   <div id="filterBtns">
     <button onclick="searchPlaces('애견용품')">🐶 애견용품</button>
     <button onclick="searchPlaces('동물병원')">🏥 동물병원</button>
@@ -217,13 +227,16 @@
     const isFav = favoriteNames.has(place.place_name);
     const btn = event.target;
 
+    const typeInfo = "미정";
+
     const params =
             "memberId=" + memberId +
-            "&type=" + encodeURIComponent(currentType) +
+            "&type=" + encodeURIComponent(typeInfo) + // ✅ 여기에 '미정' 처리 포함됨
             "&name=" + encodeURIComponent(place.place_name) +
             "&address=" + encodeURIComponent(place.road_address_name || place.address_name) +
             "&phone=" + encodeURIComponent(place.phone || "없음") +
             "&mapUrl=" + encodeURIComponent(place.place_url);
+
 
     fetch('/usr/pet/recommend/toggle', {
       method: 'POST',
@@ -308,7 +321,7 @@
                             "<span class='type-label'>" + place.type + "</span><br>" +
                             place.address + "<br>" +
                             "📞 " + place.phone +
-                            "<button class='fav-btn' onclick='removeFavorite(event, \"" + place.name + "\")'>💖</button>";
+                            "<button class='fav-btn' onclick='removeFavorite(event, \"" + place.name + "\")'>❤️</button>";
 
                     item.onclick = function () {
                       toggleFavoriteDetail(item, place);
@@ -356,7 +369,14 @@
 
   function removeFavorite(event, name) {
     event.stopPropagation();
-    const params = "memberId=" + memberId + "&name=" + encodeURIComponent(name);
+
+    const place = favoritePlaces.find(p => p.name === name);
+    const type = place && place.type ? place.type : "미정"; // ✅ null 방지
+
+    const params = "memberId=" + memberId +
+            "&name=" + encodeURIComponent(name) +
+            "&type=" + encodeURIComponent(type);
+
     fetch('/usr/pet/recommend/toggle', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -365,11 +385,31 @@
             .then(res => res.text())
             .then(result => {
               if (result === "removed") {
-                alert("즐겨찾기에서 삭제했어요!");
-                location.reload(); // 새로고침으로 반영
+                location.reload();
               }
             });
   }
+
+
+
+  function searchCustomKeyword() {
+    const keyword = document.getElementById("customKeyword").value.trim();
+    if (!keyword) {
+      alert("검색어를 입력해주세요!");
+      return;
+    }
+    currentType = keyword; // 즐겨찾기 등록용 type에도 반영
+    const ps = new kakao.maps.services.Places();
+    ps.keywordSearch(keyword, function(data, status) {
+      if (status !== kakao.maps.services.Status.OK) {
+        placeListEl.innerHTML = "<p>❌ 검색 결과가 없습니다.</p>";
+        return;
+      }
+      searchResults = data;
+      renderPlaceList();
+    }, { location: currentLocation, radius: 5000 });
+  }
+
 
 
 </script>
