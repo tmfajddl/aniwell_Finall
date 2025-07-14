@@ -8,7 +8,6 @@ import com.example.RSW.vo.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -19,9 +18,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.*;
 
@@ -258,15 +254,15 @@ public class PetController {
 
         Map<String, Object> result = new HashMap<>();
         try {
-            // ✅ 1. Cloudinary 업로드
+            // 1. Cloudinary 업로드
             Map uploadResult = cloudinary.uploader().upload(imageFile.getBytes(), ObjectUtils.emptyMap());
             String imageUrl = (String) uploadResult.get("secure_url");
 
-            // ✅ 2. 임시 파일로 저장해서 파이썬에 전달
+            // 2. 임시 파일로 저장해서 파이썬에 전달
             File tempFile = File.createTempFile("emotion_", ".jpg");
             imageFile.transferTo(tempFile);
 
-            // ✅ 3. 종에 따라 파이썬 파일 선택
+            // 3. 종에 따라 파이썬 파일 선택
             String scriptPath;
             if ("강아지".equals(species)) {
                 scriptPath = "/Users/e-suul/Desktop/ESeul-main/dog_test.py";
@@ -274,7 +270,7 @@ public class PetController {
                 scriptPath = "/Users/e-suul/Desktop/ESeul-main/cat_test.py";
             }
 
-            // ✅ 4. 파이썬 실행
+            // 4. 파이썬 실행
             String command = "python3 " + scriptPath + " " + tempFile.getAbsolutePath();
             Process process = Runtime.getRuntime().exec(command);
 
@@ -294,24 +290,24 @@ public class PetController {
                 throw new RuntimeException("❌ 파이썬 실행 실패 또는 JSON 형식 아님");
             }
 
-            // ✅ 5. JSON 파싱
+            // 5. JSON 파싱
             ObjectMapper mapper = new ObjectMapper();
             JsonNode root = mapper.readTree(lastLine);
             String emotion = root.get("emotion").asText();
             double confidence = root.get("probabilities").get(emotion).asDouble();
 
-            // ✅ 6. DB 저장
+            // 6. DB 저장
             PetAnalysis analysis = new PetAnalysis();
             analysis.setPetId(petId);
-            analysis.setImagePath(imageUrl); // ✅ Cloudinary URL 저장
+            analysis.setImagePath(imageUrl); // Cloudinary URL 저장
             analysis.setEmotionResult(emotion);
             analysis.setConfidence(confidence);
             petAnalysisService.save(analysis);
 
-            // ✅ 7. 응답 반환
-            result.put("emotionResult", emotion);
-            result.put("confidence", String.format("%.2f", confidence));
-            result.put("imagePath", imageUrl);
+            // 7. 응답 반환
+            result.put("emotionResult", emotion); // 감정 결과
+            result.put("confidence", String.format("%.2f", confidence)); // 감정 %
+            result.put("imagePath", imageUrl); // 이미지
 
             Map<String, Double> probabilities = new HashMap<>();
             root.get("probabilities").fields().forEachRemaining(entry -> {
