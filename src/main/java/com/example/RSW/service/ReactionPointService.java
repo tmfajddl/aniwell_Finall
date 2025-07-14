@@ -63,17 +63,18 @@ public class ReactionPointService {
                 String type = "POST_LIKE";
 
                 notificationService.addNotification(
-                        article.getMemberId(),
-                        loginedMemberId,
-                        type,
-                        title,
-                        link
+                        article.getMemberId(),     // 수신자
+                        loginedMemberId,           // 보낸 사람
+                        type,                      // 알림 타입
+                        title,                     // 메시지
+                        link                       // 링크
                 );
             }
         }
 
         return ResultData.from("S-1", "좋아요!");
     }
+
 
     public ResultData addBadReactionPoint(int loginedMemberId, String relTypeCode, int relId) {
         int affectedRow = reactionPointRepository.addBadReactionPoint(loginedMemberId, relTypeCode, relId);

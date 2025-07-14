@@ -6,13 +6,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
 import java.util.List;
 
 @Service
-@Transactional
 public class NotificationService {
 
     private final NotificationRepository notificationRepository;
@@ -23,23 +23,22 @@ public class NotificationService {
     }
 
     public void addNotification(int memberId, int senderId, String type, String title, String link) {
-
         if (notificationRepository.existsByMemberIdAndTitleAndLink(memberId, title, link)) {
-            return; // 중복 저장 방지
+            return;
         }
 
         Notification notification = new Notification();
-        notification.setMemberId(memberId); // 받을 사람
-        notification.setSenderId(senderId); // 보낸 사람
+        notification.setMemberId(memberId);
+        notification.setSenderId(senderId);
         notification.setType(type);
         notification.setTitle(title);
         notification.setLink(link);
-        notification.setRegDate(new Date());
+        notification.setRegDate(Date.from(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant()));
         notification.setRead(false);
 
-
-        notificationRepository.insert(notification); // ✅ insert로 통일
+        notificationRepository.insert(notification);
     }
+
 
     public void addNotification(Notification notification) {
         notificationRepository.insert(notification); // ✅ insert로 통일
@@ -50,16 +49,15 @@ public class NotificationService {
     }
 
     public boolean markAsRead(int memberId, int notificationId) {
-        Notification noti = notificationRepository.findById(notificationId).orElse(null);
-        if (noti == null || !noti.getMemberId().equals(memberId)) {
+        Notification notification = notificationRepository.findById(notificationId).orElse(null);
+        if (notification == null || !notification.getMemberId().equals(memberId)) {
             return false;
         }
 
-        int rows = notificationRepository.updateRead(memberId, notificationId);
-        System.out.println(">>> updateRead returned rows = " + rows);
-        return rows > 0;
+        notification.setRead(true);
+        notificationRepository.insert(notification); // 또는 update()가 있다면 그걸로
+        return true;
     }
-
 
     public List<Notification> getRecentNotifications(int memberId) {
         return notificationRepository.findByMemberIdOrderByRegDateDesc(memberId);
@@ -67,7 +65,7 @@ public class NotificationService {
 
     public void notifyMember(int memberId, String message, String link) {
 
-        if (notificationRepository.existsByMemberIdAndTitleAndLink(memberId, message, link)) {
+        if(notificationRepository.existsByMemberIdAndTitleAndLink(memberId, message, link)) {
             return;
         }
 
@@ -93,12 +91,6 @@ public class NotificationService {
     public Notification findById(int id) {
 
         return notificationRepository.findById(id).orElse(null);
-    }
-
-
-    public boolean existByMemberIdAndLinkAndTitle(int memberId, String link, String title) {
-
-        return notificationRepository.existsByMemberIdAndTitleAndLink(memberId, link, title);
     }
 
     public boolean hasUnread(int memberId) {
