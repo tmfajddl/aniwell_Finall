@@ -41,8 +41,6 @@ public class UsrNotificationController {
 
         int memberId = rq.getLoginedMemberId();
         List<Notification> list = notificationService.getRecentNotifications(memberId);
-
-
         return ResponseEntity.ok(list);
     }
 
@@ -74,6 +72,7 @@ public class UsrNotificationController {
 
 
 //    개별 알림 읽음 처리
+
     @PostMapping("/markAsRead")
     @ResponseBody
     public ResultData markAsRead(@RequestParam int notificationId) {
@@ -149,8 +148,10 @@ public class UsrNotificationController {
         return ResultData.from("S-1", "알림이 삭제되었습니다.");
     }
 
-    /** 찜 해제 시, 동일 link+title 알림을 모두 삭제 */
-    @RequestMapping(value="/deleteByLink", method={RequestMethod.GET, RequestMethod.POST})
+    /**
+     * 찜 해제 시, 동일 link+title 알림을 모두 삭제
+     */
+    @RequestMapping(value = "/deleteByLink", method = {RequestMethod.GET, RequestMethod.POST})
     @ResponseBody
     public ResultData deleteByLink(@RequestParam String link, @RequestParam String title) {
         if (!rq.isLogined()) {
