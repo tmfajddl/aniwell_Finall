@@ -132,7 +132,11 @@
         ORDER BY m.id DESC
     </select>
 
-
+    <select id="getNicknameById" parameterType="int" resultType="String">
+        SELECT nickname
+        FROM member
+        WHERE id = #{loginedMemberId}
+    </select>
 
 
 </mapper>
