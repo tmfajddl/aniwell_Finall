@@ -4,10 +4,10 @@ import com.example.RSW.repository.NotificationRepository;
 import com.example.RSW.vo.Notification;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Duration;
 import java.time.LocalDateTime;
+
+
 import java.time.ZoneId;
 import java.util.Date;
 import java.util.List;
@@ -65,7 +65,7 @@ public class NotificationService {
 
     public void notifyMember(int memberId, String message, String link) {
 
-        if(notificationRepository.existsByMemberIdAndTitleAndLink(memberId, message, link)) {
+        if (notificationRepository.existsByMemberIdAndTitleAndLink(memberId, message, link)) {
             return;
         }
 
@@ -108,5 +108,21 @@ public class NotificationService {
     public boolean deleteByLinkAndTitle(int memberId, String link, String title) {
 
         return notificationRepository.deleteByLinkAndTitle(memberId, link, title) > 0;
+    }
+
+    public void send(int memberId, String title, String link) {
+        Notification notification = new Notification();
+        notification.setMemberId(memberId);
+        notification.setTitle(title);
+        notification.setLink(link);
+
+        // ✅ LocalDateTime → Date 변환
+        LocalDateTime now = LocalDateTime.now();
+        Date regDate = Date.from(now.atZone(ZoneId.systemDefault()).toInstant());
+
+        notification.setRegDate(regDate); // Date 타입에 맞게 세팅
+        notification.setRead(false);
+
+        notificationRepository.save(notification);
     }
 }

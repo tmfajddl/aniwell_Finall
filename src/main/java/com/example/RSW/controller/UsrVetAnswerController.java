@@ -1,5 +1,6 @@
 package com.example.RSW.controller;
 
+import com.example.RSW.service.NotificationService;
 import com.example.RSW.service.QnaService;
 import com.example.RSW.service.VetAnswerService;
 import com.example.RSW.util.Ut;
@@ -26,6 +27,9 @@ public class UsrVetAnswerController {
 
     @Autowired
     private Rq rq;
+
+    @Autowired
+    private NotificationService notificationService;
 
     // 답변 등록 처리
     @PostMapping("/doWrite")
@@ -56,6 +60,13 @@ public class UsrVetAnswerController {
 
         // 5. 질문 상태를 '답변 완료'로 변경
         qnaService.markAsAnswered(qnaId);
+
+        // ✅ 알림 전송 (질문자 본인에게만, 수의사 자신이 아닐 경우)
+        if (qna.getMemberId() != loginedMember.getId()) {
+            String title = "수의사로부터 답변이 등록되었습니다.";
+            String link = "/usr/qna/detail?id=" + qnaId;
+            notificationService.send(qna.getMemberId(), title, link);
+        }
 
         // 6. 성공 메시지 후 질문 상세로 이동
         return Ut.jsReplace("S-1", "답변이 등록되었습니다.", "/usr/qna/detail?id=" + qnaId);

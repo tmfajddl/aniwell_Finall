@@ -62,16 +62,18 @@ public class UsrQnaController {
         return "usr/qna/ask";
     }
 
-    // 질문 등록 처리 (Ajax or fetch 요청)
     @RequestMapping(value = "/usr/qna/doAsk", method = RequestMethod.POST)
     @ResponseBody
-    public ResultData doAsk(HttpServletRequest req,
-                            @RequestParam String title,
+    public ResultData doAsk(@RequestParam String title,
                             @RequestParam String body,
                             @RequestParam(required = false, defaultValue = "false") boolean isSecret) {
 
-        Rq rq = (Rq) req.getAttribute("rq");
         int loginedMemberId = rq.getLoginedMemberId();
+
+        // ✅ 로그인 여부 확인 (추가)
+        if (loginedMemberId == 0) {
+            return ResultData.from("F-L", "로그인 후 이용해주세요.");
+        }
 
         if (Ut.isEmptyOrNull(title)) return ResultData.from("F-1", "제목을 입력해주세요.");
         if (Ut.isEmptyOrNull(body)) return ResultData.from("F-2", "내용을 입력해주세요.");
@@ -80,6 +82,7 @@ public class UsrQnaController {
 
         return ResultData.from("S-1", "질문이 성공적으로 등록되었습니다.");
     }
+
 
     // 질문 삭제 처리
     @RequestMapping("/usr/qna/doDelete")
