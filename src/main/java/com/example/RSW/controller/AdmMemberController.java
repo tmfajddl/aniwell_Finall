@@ -69,17 +69,33 @@ public class AdmMemberController {
     @PostMapping("/changeAdminStatus")
     @ResponseBody
     public ResultData<?> changeAdminStatus(@RequestParam int memberId, @RequestParam boolean promote) {
+        // 1. 권한 변경 값 설정
         int newLevel = promote ? 7 : 1;
+
+        // 2. 관리자 최소 유지 조건: 해제할 때만 검사
+        if (!promote) {
+            int adminCount = memberService.countByAuthLevel(7); // 전체 관리자 수 조회
+            if (adminCount <= 1) {
+                return ResultData.from("F-1", "❗ 최소 1명의 관리자는 유지되어야 합니다.");
+            }
+        }
+        // 3. 본인이 관리자이면 해제 못하게 막기
+        if (!promote && rq.getLoginedMemberId() == memberId) {
+            return ResultData.from("F-2", "본인의 관리자 권한은 스스로 해제할 수 없습니다.");
+        }
+
+
+        // 4. 권한 업데이트
         memberService.updateAuthLevel(memberId, newLevel);
 
-        String msg = promote ? "✅ 관리자 권한이 부여되었습니다." : "❌ 관리자 권한이 해제되었습니다.";
-
-        // 세션 갱신 (본인일 경우)
+        // 5. 본인이면 세션 갱신
         if (rq.getLoginedMemberId() == memberId) {
             Member updated = memberService.getMemberById(memberId);
             rq.login(updated);
         }
 
+        // 6. 응답 메시지 전송
+        String msg = promote ? "✅ 관리자 권한이 부여되었습니다." : "❌ 관리자 권한이 해제되었습니다.";
         return ResultData.from("S-1", msg);
     }
 
