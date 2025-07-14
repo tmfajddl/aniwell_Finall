@@ -66,5 +66,22 @@ public class AdmMemberController {
         return ResultData.from("S-1", title);
     }
 
+    @PostMapping("/changeAdminStatus")
+    @ResponseBody
+    public ResultData<?> changeAdminStatus(@RequestParam int memberId, @RequestParam boolean promote) {
+        int newLevel = promote ? 7 : 1;
+        memberService.updateAuthLevel(memberId, newLevel);
+
+        String msg = promote ? "✅ 관리자 권한이 부여되었습니다." : "❌ 관리자 권한이 해제되었습니다.";
+
+        // 세션 갱신 (본인일 경우)
+        if (rq.getLoginedMemberId() == memberId) {
+            Member updated = memberService.getMemberById(memberId);
+            rq.login(updated);
+        }
+
+        return ResultData.from("S-1", msg);
+    }
+
 
 }
