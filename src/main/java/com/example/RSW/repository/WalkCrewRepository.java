@@ -39,4 +39,8 @@ public interface WalkCrewRepository {
 
 	void updateMemberStatusToApproved(@Param("crewId") int crewId, @Param("memberId") int memberId);
 
+	WalkCrew findByLeaderId(int leaderId);
+
+	WalkCrew getCrewByMemberId(int memberId);
+
 }
