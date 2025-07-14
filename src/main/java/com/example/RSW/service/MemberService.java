@@ -127,4 +127,8 @@ public class MemberService {
 		memberRepository.updateVetCertInfo(memberId, fileName, approved);
 	}
 
+	public int countByAuthLevel(int level) {
+		return memberRepository.countByAuthLevel(level);
+	}
+
 }

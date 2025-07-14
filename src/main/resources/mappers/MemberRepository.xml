@@ -151,5 +151,9 @@
         WHERE id = #{memberId}
     </update>
 
+    <select id="countByAuthLevel" resultType="int">
+        SELECT COUNT(*) FROM member
+        WHERE authLevel = #{authLevel}
+    </select>
 
 </mapper>
