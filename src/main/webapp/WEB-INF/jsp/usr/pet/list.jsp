@@ -183,7 +183,6 @@
         .crew-illustration {
             width: 180px;
             height: 180px;
-            background: url('/img/walk-image.png') no-repeat center/cover;
             border-radius: 14px;
             margin-left: 20px;
         }
@@ -298,8 +297,9 @@
     </div>
 
 
-    <form action="/usr/pet/join" method="get">
-        <!-- ✅ 등록 팝업 영역 추가 -->
+    <form action="/usr/pet/doJoin" method="post" enctype="multipart/form-data">
+
+    <!-- ✅ 등록 팝업 영역 추가 -->
         <div id="registerPopup" style="
   position: fixed;
   top: 5%;

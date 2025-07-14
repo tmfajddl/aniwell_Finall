@@ -1,12 +1,13 @@
 package com.example.RSW.controller;
 
+import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
 import com.example.RSW.service.*;
 import com.example.RSW.util.Ut;
 import com.example.RSW.vo.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -17,9 +18,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.*;
 
@@ -43,6 +41,10 @@ public class PetController {
 
     @Autowired
     private CalendarEventService calendarEventService;
+
+    @Autowired
+    private Cloudinary cloudinary;
+
 
 
     //테스트용
@@ -110,6 +112,9 @@ public class PetController {
         List<Pet> pets = petService.getPetsByMemberId(memberId);
         List<WalkCrew> crews = walkCrewService.getWalkCrews(memberId);
 
+        Member loginesMember = rq.getLoginedMember();
+
+        model.addAttribute("member", loginesMember); // 로그인 멤버
         model.addAttribute("pets", pets); // 해당 멤버가 등록한 펫ID
         model.addAttribute("crews", crews); // 해당 멤버가 가입한 크루목록
         return "usr/pet/list"; // JSP or Thymeleaf 페이지
@@ -122,6 +127,7 @@ public class PetController {
     }
 
     // 펫 등록 로직
+
     @RequestMapping("/usr/pet/doJoin")
     @ResponseBody
     public String doJoin(HttpServletRequest req,
@@ -133,7 +139,6 @@ public class PetController {
                          @RequestParam String birthDate,
                          @RequestParam double weight) {
 
-        // 유효성 검사
         if (Ut.isEmptyOrNull(name)) return Ut.jsHistoryBack("F-1", "이름을 입력하세요");
         if (Ut.isEmptyOrNull(species)) return Ut.jsHistoryBack("F-2", "종을 입력하세요");
         if (Ut.isEmptyOrNull(breed)) return Ut.jsHistoryBack("F-3", "품종을 입력하세요");
@@ -141,26 +146,17 @@ public class PetController {
         if (Ut.isEmptyOrNull(birthDate)) return Ut.jsHistoryBack("F-5", "생일을 입력하세요");
         if (Ut.isEmptyOrNull(String.valueOf(weight))) return Ut.jsHistoryBack("F-6", "몸무게를 입력하세요");
 
-        // 1. 파일 저장 처리
         String imagePath = null;
         if (!photo.isEmpty()) {
-            String uploadDir = "/Users/e-suul/Desktop/aniwell_uploads"; // 실제 저장 경로(변경 필요)
-            File uploadFolder = new File(uploadDir);
-            if (!uploadFolder.exists()) uploadFolder.mkdirs();
-
-            String fileName = System.currentTimeMillis() + "_" + photo.getOriginalFilename();
-            File dest = new File(uploadDir, fileName);
-
             try {
-                photo.transferTo(dest);
-                imagePath = "/uploads/" + fileName; // DB에 저장할 경로
+                Map uploadResult = cloudinary.uploader().upload(photo.getBytes(), ObjectUtils.emptyMap());
+                imagePath = (String) uploadResult.get("secure_url");
             } catch (IOException e) {
                 e.printStackTrace();
                 return Ut.jsHistoryBack("F-7", "사진 업로드 중 오류 발생");
             }
         }
 
-        // 2. 서비스로 전달
         ResultData joinRd = petService.insertPet(
                 rq.getLoginedMemberId(),
                 name, species, breed, gender, birthDate, weight, imagePath
@@ -169,6 +165,7 @@ public class PetController {
         int id = rq.getLoginedMemberId();
         return Ut.jsReplace(joinRd.getResultCode(), joinRd.getMsg(), "../pet/list?memberId=" + id);
     }
+
 
     //펫 정보 수정 페이지로 이동
 
@@ -191,57 +188,30 @@ public class PetController {
     @ResponseBody
     public String doModify(HttpServletRequest req, @RequestParam("petId") int petId, String name, String species, String breed,
                            String gender, String birthDate, double weight, MultipartFile photo) {
+
         int memberId = rq.getLoginedMemberId();
         Pet pet = petService.getPetsById(petId);
-        if(pet.getMemberId() != memberId){
+        if (pet.getMemberId() != memberId) {
             return Ut.jsHistoryBack("F-0", "권한이 없습니다.");
         }
 
-        if (Ut.isEmptyOrNull(name)) {
-            return Ut.jsHistoryBack("F-1", "이름을 입력하세요");
-        }
-        if (Ut.isEmptyOrNull(species)) {
-            return Ut.jsHistoryBack("F-2", "종을 입력하세요");
-
-        }
-        if (Ut.isEmptyOrNull(breed)) {
-            return Ut.jsHistoryBack("F-3", "품종을 입력하세요");
-
-        }
-        if (Ut.isEmptyOrNull(gender)) {
-            return Ut.jsHistoryBack("F-4", "성별을 입력하세요");
-
-        }
-        if (Ut.isEmptyOrNull(birthDate)) {
-            return Ut.jsHistoryBack("F-5", "생일을 입력하세요");
-
-        }
-        if (Ut.isEmptyOrNull(String.valueOf(weight))) {
-            return Ut.jsHistoryBack("F-6", "몸무게를 입력하세요");
-
-        }
+        if (Ut.isEmptyOrNull(name)) return Ut.jsHistoryBack("F-1", "이름을 입력하세요");
+        if (Ut.isEmptyOrNull(species)) return Ut.jsHistoryBack("F-2", "종을 입력하세요");
+        if (Ut.isEmptyOrNull(breed)) return Ut.jsHistoryBack("F-3", "품종을 입력하세요");
+        if (Ut.isEmptyOrNull(gender)) return Ut.jsHistoryBack("F-4", "성별을 입력하세요");
+        if (Ut.isEmptyOrNull(birthDate)) return Ut.jsHistoryBack("F-5", "생일을 입력하세요");
+        if (Ut.isEmptyOrNull(String.valueOf(weight))) return Ut.jsHistoryBack("F-6", "몸무게를 입력하세요");
 
         String photoPath = null;
-
         if (photo != null && !photo.isEmpty()) {
             try {
-                String uploadDir = "/Users/e-suul/Desktop/AniwellProject/src/main/resources/static/img/pet/"; // 사진 저장 경로
-                String newFilename = System.currentTimeMillis() + "_" + photo.getOriginalFilename();
-                Path filePath = Paths.get(uploadDir + newFilename);
-
-                Files.createDirectories(filePath.getParent()); // 폴더 없으면 생성
-                photo.transferTo(filePath.toFile());
-
-                photoPath = "/img/pet/" + newFilename; // DB에는 상대경로만 저장
-
-            } catch (Exception e) {
+                Map uploadResult = cloudinary.uploader().upload(photo.getBytes(), ObjectUtils.emptyMap());
+                photoPath = (String) uploadResult.get("secure_url");
+            } catch (IOException e) {
                 e.printStackTrace();
                 return Ut.jsHistoryBack("F-1", "사진 업로드 실패");
             }
         }
-
-
-        //사진이 있는 경우와 없는 결우 로직 나눔
 
         ResultData modifyRd;
         if (photoPath == null) {
@@ -253,6 +223,7 @@ public class PetController {
         int id = rq.getLoginedMemberId();
         return Ut.jsReplace(modifyRd.getResultCode(), modifyRd.getMsg(), "../pet/list?memberId=" + id);
     }
+
 
     // 감정 분석 페이지 이동
     @RequestMapping("/usr/pet/analysis")
@@ -286,13 +257,15 @@ public class PetController {
 
         Map<String, Object> result = new HashMap<>();
         try {
-            // 1. 이미지 저장
-            String saveDir = "/Users/e-suul/Desktop/aniwell_uploads/";
-            String fileName = UUID.randomUUID() + "_" + imageFile.getOriginalFilename();
-            File savedFile = new File(saveDir + fileName);
-            imageFile.transferTo(savedFile);
+            // 1. Cloudinary 업로드
+            Map uploadResult = cloudinary.uploader().upload(imageFile.getBytes(), ObjectUtils.emptyMap());
+            String imageUrl = (String) uploadResult.get("secure_url");
 
-            // 2. 종에 따라 파이썬 실행 파일 선택
+            // 2. 임시 파일로 저장해서 파이썬에 전달
+            File tempFile = File.createTempFile("emotion_", ".jpg");
+            imageFile.transferTo(tempFile);
+
+            // 3. 종에 따라 파이썬 파일 선택
             String scriptPath;
             if ("강아지".equals(species)) {
                 scriptPath = "/Users/e-suul/Desktop/ESeul-main/dog_test.py";
@@ -300,14 +273,13 @@ public class PetController {
                 scriptPath = "/Users/e-suul/Desktop/ESeul-main/cat_test.py";
             }
 
-            // 3. 파이썬 실행
-            String command = "python3 " + scriptPath + " " + savedFile.getAbsolutePath();
+            // 4. 파이썬 실행
+            String command = "python3 " + scriptPath + " " + tempFile.getAbsolutePath();
             Process process = Runtime.getRuntime().exec(command);
 
             BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), "UTF-8"));
             String line;
             String lastLine = null;
-
             while ((line = reader.readLine()) != null) {
                 System.out.println("🐍 Python output: " + line);
                 lastLine = line;
@@ -321,31 +293,33 @@ public class PetController {
                 throw new RuntimeException("❌ 파이썬 실행 실패 또는 JSON 형식 아님");
             }
 
-            // 4. JSON 파싱
+            // 5. JSON 파싱
             ObjectMapper mapper = new ObjectMapper();
             JsonNode root = mapper.readTree(lastLine);
             String emotion = root.get("emotion").asText();
             double confidence = root.get("probabilities").get(emotion).asDouble();
 
-            // 5. DB 저장
+            // 6. DB 저장
             PetAnalysis analysis = new PetAnalysis();
             analysis.setPetId(petId);
-            analysis.setImagePath("/uploads/" + fileName);
+            analysis.setImagePath(imageUrl); // Cloudinary URL 저장
             analysis.setEmotionResult(emotion);
             analysis.setConfidence(confidence);
             petAnalysisService.save(analysis);
 
-            // 6. 응답 반환
-            result.put("emotionResult", emotion); // 최종 감정
-            result.put("confidence", String.format("%.2f", confidence)); // 최종 감정의 정확도
-            result.put("imagePath", "/uploads/" + fileName); // 넣은 이미지
+            // 7. 응답 반환
+            result.put("emotionResult", emotion); // 감정 결과
+            result.put("confidence", String.format("%.2f", confidence)); // 감정 %
+            result.put("imagePath", imageUrl); // 이미지
 
-            // 감정별 확률 map 추가
             Map<String, Double> probabilities = new HashMap<>();
             root.get("probabilities").fields().forEachRemaining(entry -> {
                 probabilities.put(entry.getKey(), entry.getValue().asDouble());
             });
-            result.put("probabilities", probabilities); // 감정 분석 내용
+            result.put("probabilities", probabilities);
+
+            // 임시 파일 삭제
+            tempFile.delete();
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -356,6 +330,7 @@ public class PetController {
 
         return result;
     }
+
 
     // 펫 삭제 로직
     @ResponseBody

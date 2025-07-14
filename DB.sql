@@ -29,6 +29,7 @@ CREATE TABLE `member`
     nickname   CHAR(20)  NOT NULL,
     cellphone  CHAR(20)  NOT NULL,
     email      CHAR(20)  NOT NULL,
+    photo  VARCHAR(255),
     delStatus  TINYINT(1) UNSIGNED NOT NULL DEFAULT 0 COMMENT '탈퇴 여부 (0=탈퇴 전, 1=탈퇴 후)',
     authName   CHAR(30)  NOT NULL COMMENT '일반 또는 수의사',
     delDate    DATETIME COMMENT '탈퇴 날짜'
