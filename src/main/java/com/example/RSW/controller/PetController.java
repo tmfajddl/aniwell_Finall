@@ -61,10 +61,10 @@ public class PetController {
     @ResponseBody
     public String toggleFavorite(@RequestParam int memberId,
                                  @RequestParam String name,
-                                 @RequestParam String type,
-                                 @RequestParam String address,
-                                 @RequestParam String phone,
-                                 @RequestParam String mapUrl) {
+                                 @RequestParam(required = false) String type,
+                                 @RequestParam(required = false) String address,
+                                 @RequestParam(required = false) String phone,
+                                 @RequestParam(required = false) String mapUrl) {
 
         boolean exists = petRecommendationService.isFavorited(memberId, name);
         if (exists) {
