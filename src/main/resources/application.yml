@@ -14,8 +14,8 @@ spring:
             enable: true
   mvc:
     view:
-      prefix: /WEB-INF/jsp/
-      suffix: .jsp
+      prefix: classpath:/templates/
+      suffix: .html
 
   oauth2:
     google:
