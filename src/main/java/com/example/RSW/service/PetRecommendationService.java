@@ -13,7 +13,7 @@ public class PetRecommendationService {
     @Autowired
     private PetRecommendationRepository recommendationRepository;
 
-    public List<String> getFavoriteNamesByMember(int memberId) {
+    public List<PetRecommendation> getFavoriteNamesByMember(int memberId) {
         return recommendationRepository.selectPlaceNamesByMemberId(memberId);
     }
 
@@ -27,5 +27,9 @@ public class PetRecommendationService {
 
     public void removeFavorite(int memberId, String name) {
         recommendationRepository.deleteByMemberAndName(memberId, name);
+    }
+
+    public List<String> getFavoriteNamesOnly(int memberId) {
+        return recommendationRepository.getFavoriteNamesOnly(memberId);
     }
 }

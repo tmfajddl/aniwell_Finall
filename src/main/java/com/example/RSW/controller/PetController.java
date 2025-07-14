@@ -49,6 +49,13 @@ public class PetController {
     @Autowired
     private Cloudinary cloudinary;
 
+
+    @GetMapping("/usr/pet/recommend/list")
+    @ResponseBody
+    public List<PetRecommendation> getAllFavorites(@RequestParam int memberId) {
+        return petRecommendationService.getFavoriteNamesByMember(memberId);
+    }
+
     // 즐겨 찾기 삭제 로직
     @RequestMapping("/usr/pet/recommend/toggle")
     @ResponseBody
@@ -81,8 +88,12 @@ public class PetController {
     public String showMap(Model model) {
         int memberId = rq.getLoginedMemberId();
 
-        List<String> favoriteNames = petRecommendationService.getFavoriteNamesByMember(memberId);
+        List<String> favoriteNames = petRecommendationService.getFavoriteNamesOnly(memberId); // 이름만!
         model.addAttribute("favoriteNames", favoriteNames);
+
+
+        List<PetRecommendation> favoriteplaces = petRecommendationService.getFavoriteNamesByMember(memberId);
+        model.addAttribute("favoriteplaces", favoriteplaces);
         model.addAttribute("memberId", memberId);
         return "usr/pet/petPlace";
     }
