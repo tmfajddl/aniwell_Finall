@@ -138,6 +138,7 @@
         </c:otherwise>
       </c:choose>
 
+
       <label class="file-label" for="photoInput">📷 사진 변경하기</label>
       <input name="photoFile" type="file" id="photoInput" accept="image/*" onchange="previewProfilePhoto(this)" />
     </div>
