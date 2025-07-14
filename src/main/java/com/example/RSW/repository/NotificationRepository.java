@@ -3,9 +3,9 @@ package com.example.RSW.repository;
 import com.example.RSW.vo.Notification;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
-
 import java.util.List;
 import java.util.Optional;
+
 
 @Mapper
 public interface NotificationRepository {
@@ -18,17 +18,19 @@ public interface NotificationRepository {
 
     Optional<Notification> findById(int notificationId);
 
-    int countUnreadByMemberId(@Param("memberId") int memberId);
+    boolean existsByMemberIdAndRelTypeCodeAndRelId(int memberId, String relTypeCode, int relId);
 
-    void updateAllAsReadByMemberId(@Param("memberId") int memberId);
+    void delete(int memberId, String relTypeCode, int relId);
+
+    void insert(int memberId, String relTypeCode, int relId);
 
     void insert(Notification notification);
 
-    void deleteById(@Param("id") int id,  @Param("memberId") int memberId);
+    int countUnreadByMemberId(int loginedMemberId);
 
-    int updateRead(@Param("memberId") int memberId, @Param("notificationId") int notificationId);
+    void updateAllAsReadByMemberId(int loginedMemberId);
 
-    int deleteByLinkAndTitle(@Param("memberId") int memberId, @Param("link") String link, @Param("title") String title);
+    void deleteById(int id, int memberId);
 
-    boolean existsByMemberIdAndTypeAndLink(@Param("memberId") int memberId, @Param("type") String type, @Param("link") String link);
+    int deleteByLinkAndTitle(int memberId, String link, String title);
 }

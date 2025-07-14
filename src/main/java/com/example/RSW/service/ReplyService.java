@@ -95,7 +95,7 @@ public class ReplyService {
                 notificationService.addNotification(
                         post.getMemberId(),     // 수신자
                         loginedMemberId,        // 보낸 사람
-                        type,
+                        type,                   // 알림 타입
                         message,
                         link
                 );
@@ -104,5 +104,6 @@ public class ReplyService {
 
         return ResultData.from("S-1", Ut.f("%d번 댓글이 등록되었습니다.", id), "등록된 댓글의 id", id);
     }
+
 
 }
