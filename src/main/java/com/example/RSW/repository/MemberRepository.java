@@ -36,4 +36,6 @@ public interface MemberRepository {
 											@Param("searchKeyword") String searchKeyword);
 
 	String getNicknameById(int loginedMemberId);
+
+    void updateVetCertInfo(int memberId, String fileName, int approved);
 }

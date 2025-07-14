@@ -142,8 +142,23 @@ to {
 						document.getElementById('sample4_postcode').value = data.zonecode;
 						document.getElementById('sample4_roadAddress').value = roadAddr;
 						document.getElementById('sample4_jibunAddress').value = data.jibunAddress;
-						document.getElementById('sample4_extraAddress').value = extraRoadAddr;
 
+
+                        // ✅ address hidden 필드에 도로명주소 + 추가 주소 넣기
+                        setTimeout(() => {
+                            const fullAddress = roadAddr + (extraRoadAddr ? ' ' + extraRoadAddr : '');
+                            const addressInput = document.getElementById('address');
+
+                            if (addressInput) {
+                                addressInput.value = fullAddress;
+                            } else {
+                                console.warn("❗ 'address' input이 존재하지 않습니다.");
+                            }
+                        }, 150); // 지연으로 input 렌더링 보장
+
+
+
+                        // 가이드박스 처리 (필요하면 유지)
 						const guideTextBox = document.getElementById("guide");
 						if (data.autoRoadAddress) {
 							const expRoadAddr = data.autoRoadAddress
@@ -178,20 +193,25 @@ to {
 				: '/img/paw_inactive.png';
 	}
 
-	function updateAuthLevel() {
-		const auth = document.querySelector('[name="authName"]').value;
-		document.getElementById('authLevel').value = auth === '수의사' ? 1 : 1;
-	}
 
-	function validateForm() {
-		const phone = document.querySelector('[name="cellphone"]');
-		const phonePattern = /^\d{3}-\d{3,4}-\d{4}$/;
-		if (!phonePattern.test(phone.value)) {
-			alert("전화번호 형식이 올바르지 않습니다. 예: 000-0000-0000");
-			return false;
-		}
-		return true;
-	}
+    function validateForm() {
+        const phone = document.querySelector('[name="cellphone"]');
+        const phonePattern = /^\d{3}-\d{3,4}-\d{4}$/;
+        if (!phonePattern.test(phone.value)) {
+            alert("전화번호 형식이 올바르지 않습니다. 예: 000-0000-0000");
+            return false;
+        }
+
+        const addressInput = document.getElementById("address");
+        console.log("🚨 address.value:", addressInput?.value);
+
+        if (!addressInput || addressInput.value.trim() === "") {
+            alert("주소를 입력해주세요. 우편번호 찾기를 사용하세요.");
+            return false;
+        }
+        return true;
+    }
+
 </script>
 </head>
 <body>
@@ -204,7 +224,7 @@ to {
 
 		<!-- 오른쪽 패널 -->
 		<form class="form-panel" action="/usr/member/doJoin" method="post" onsubmit="return validateForm()">
-			<c:if test="${param.error != null}">
+            <c:if test="${param.error != null}">
 				<div class="error-message">${param.error}</div>
 			</c:if>
 
@@ -226,6 +246,7 @@ to {
 				<input type="email" name="email" placeholder="EMAIL" required>
 				<!-- 주소 -->
 				<div>
+                    <input type="hidden" name="address" id="address">
 					<label class="block text-sm font-medium mb-1">주소</label>
 					<div class="space-y-2">
 						<!-- 우편번호 + 버튼 -->
@@ -244,11 +265,10 @@ to {
 							placeholder="지번주소" readonly />
 					</div>
 				</div>
-				<select name="authName" onchange="updateAuthLevel()" required>
+				<select name="authName" required>
 					<option value="일반">일반</option>
 					<option value="수의사">수의사</option>
 				</select>
-				<input type="hidden" id="authLevel" name="authLevel" value="1">
 
 				<button type="button" class="prev-button" onclick="goToStep(1)">뒤로가기</button>
 				<button type="submit" class="submit-button">sign up</button>
