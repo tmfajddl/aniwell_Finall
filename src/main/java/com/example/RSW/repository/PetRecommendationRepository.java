@@ -8,11 +8,13 @@ import java.util.List;
 @Mapper
 public interface PetRecommendationRepository {
 
-    List<String> selectPlaceNamesByMemberId(int memberId);
+    List<PetRecommendation> selectPlaceNamesByMemberId(int memberId);
 
     int countByMemberAndName(int memberId, String name);
 
     void insert(int memberId, String type, String name, String address, String phone, String mapUrl);
 
     void deleteByMemberAndName(int memberId, String name);
+
+    List<String> getFavoriteNamesOnly(int memberId);
 }
