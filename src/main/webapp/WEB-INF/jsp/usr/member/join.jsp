@@ -180,7 +180,7 @@ to {
 
 	function updateAuthLevel() {
 		const auth = document.querySelector('[name="authName"]').value;
-		document.getElementById('authLevel').value = auth === '수의사' ? 9 : 1;
+		document.getElementById('authLevel').value = auth === '수의사' ? 1 : 1;
 	}
 
 	function validateForm() {
