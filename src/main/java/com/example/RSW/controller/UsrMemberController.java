@@ -166,8 +166,10 @@ public class UsrMemberController {
     }
 
 
-    @RequestMapping("/usr/member/myPage")
-    public String showmyPage(HttpServletRequest req, Model model) {
+    // 마이페이지
+    @RequestMapping({"/usr/member/myPage", "/usr/member/mypage"})
+    public String showMyPage(HttpServletRequest req, Model model) {
+
         Rq rq = (Rq) req.getAttribute("rq");
         Member loginedMember = rq.getLoginedMember();
 

@@ -54,7 +54,7 @@ public class AdmMemberController {
         // 알림 전송
         String title = (approved == 1) ? "수의사 인증이 승인되었습니다." : "수의사 인증이 거절되었습니다.";
         String type = (approved == 1) ? "VET_APPROVED" : "VET_REJECTED";
-        String link = "/usr/member/mypage";
+        String link = "/usr/member/myPage";
         int adminId = rq.getLoginedMemberId();
         notificationService.addNotification(memberId, adminId, type,  title, link);
 
