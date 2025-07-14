@@ -56,7 +56,7 @@ public class AdmMemberController {
         String type = (approved == 1) ? "VET_APPROVED" : "VET_REJECTED";
         String link = "/usr/member/mypage";
         int adminId = rq.getLoginedMemberId();
-        notificationService.addNotification(memberId, adminId, type, title, link);
+        notificationService.addNotification(memberId, adminId, type,  title, link);
 
         // 💡 변경: 리디렉트로 안전하게 이동
         return "redirect:/adm/member/list";
@@ -64,4 +64,3 @@ public class AdmMemberController {
 
 
 }
-
