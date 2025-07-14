@@ -16,7 +16,7 @@ public class CrewMemerService {
         return crewMemerRepository.isCrewMember(crewId, loginedMemberId);
     }
 
-    public WalkCrewMember getCrewMemberById(int memberId) {
-        return crewMemerRepository.getCrewMemberById(memberId);
+    public WalkCrewMember getCrewMemberById(int crewId, int memberId) {
+        return crewMemerRepository.getCrewMemberById(crewId, memberId);
     }
 }
