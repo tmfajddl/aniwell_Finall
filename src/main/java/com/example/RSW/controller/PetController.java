@@ -112,6 +112,9 @@ public class PetController {
         List<Pet> pets = petService.getPetsByMemberId(memberId);
         List<WalkCrew> crews = walkCrewService.getWalkCrews(memberId);
 
+        Member loginesMember = rq.getLoginedMember();
+
+        model.addAttribute("member", loginesMember); // 로그인 멤버
         model.addAttribute("pets", pets); // 해당 멤버가 등록한 펫ID
         model.addAttribute("crews", crews); // 해당 멤버가 가입한 크루목록
         return "usr/pet/list"; // JSP or Thymeleaf 페이지
