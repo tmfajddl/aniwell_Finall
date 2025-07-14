@@ -168,14 +168,19 @@ CREATE TABLE pet_ble_activity
 
 
 -- 게시글 테이블
-CREATE TABLE article
-(
-    id         INT(10) UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
-    regDate    DATETIME  NOT NULL DEFAULT NOW(),
-    updateDate DATETIME  NOT NULL DEFAULT NOW(),
-    title      CHAR(100) NOT NULL,
-    `body`     TEXT      NOT NULL
+CREATE TABLE `article` (
+  `id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY COMMENT '게시글 ID',
+  `regDate` DATETIME NOT NULL COMMENT '작성일',
+  `updateDate` DATETIME NOT NULL COMMENT '수정일', 
+  `crewId` INT(10) UNSIGNED DEFAULT NULL COMMENT '크루 ID (walk_crew 테이블 FK)', 
+  `title` VARCHAR(100) NOT NULL COMMENT '제목',
+  `body` TEXT NOT NULL COMMENT '내용', 
+  `delStatus` TINYINT(1) UNSIGNED NOT NULL DEFAULT 0 COMMENT '삭제 여부',
+  `delDate` DATETIME DEFAULT NULL COMMENT '삭제일',
+ 
+  CONSTRAINT `fk_article_crew` FOREIGN KEY (`crewId`) REFERENCES `walk_crew` (`id`) ON DELETE CASCADE
 );
+
 
 --  memberId 추가
 ALTER TABLE article
@@ -289,42 +294,6 @@ CREATE TABLE vaccine_schedule (
 );
 
 ALTER TABLE calendar_event ADD COLUMN title VARCHAR(100) NOT NULL AFTER petId;
-
--- crew_article
-CREATE TABLE crew_article (
-  id INT(10) UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
-  crewId INT(10) UNSIGNED NOT NULL,
-  memberId INT(10) UNSIGNED NOT NULL,
-  title VARCHAR(200) NOT NULL,
-  BODY TEXT NOT NULL,
-  TYPE VARCHAR(20) NOT NULL DEFAULT 'free',
-  regDate DATETIME DEFAULT CURRENT_TIMESTAMP,
-  updateDate DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  CONSTRAINT fk_crew_article_crew FOREIGN KEY (crewId) REFERENCES walk_crew(id),
-  CONSTRAINT fk_crew_article_member FOREIGN KEY (memberId) REFERENCES MEMBER(id)
-);
-
--- crew_photo
-CREATE TABLE crew_photo (
-  id INT(10) UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
-  crewId INT(10) UNSIGNED NOT NULL,
-  memberId INT(10) UNSIGNED NOT NULL,
-  imagePath VARCHAR(255) NOT NULL,
-  regDate DATETIME DEFAULT CURRENT_TIMESTAMP,
-  CONSTRAINT fk_crew_photo_crew FOREIGN KEY (crewId) REFERENCES walk_crew(id),
-  CONSTRAINT fk_crew_photo_member FOREIGN KEY (memberId) REFERENCES MEMBER(id)
-);
-
--- crew_schedule
-CREATE TABLE crew_schedule (
-  id INT(10) UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
-  crewId INT(10) UNSIGNED NOT NULL,
-  title VARCHAR(100) NOT NULL,
-  DESCRIPTION TEXT,
-  eventDate DATE NOT NULL,
-  regDate DATETIME DEFAULT CURRENT_TIMESTAMP,
-  CONSTRAINT fk_crew_schedule_crew FOREIGN KEY (crewId) REFERENCES walk_crew(id)
-);
 
 
 ALTER TABLE walk_crew_member
@@ -453,37 +422,3 @@ END$$
 DELIMITER ;
 
 ############# 💣 트리거 ###################
-
-
-SELECT leaderId
-FROM walk_crew
-WHERE leaderId NOT IN (SELECT id FROM MEMBER);
-
-SELECT id, title, district_id, leaderId, createdAt
-FROM walk_crew
-ORDER BY id DESC
-LIMIT 10;
-
-SELECT * FROM walk_crew_member ORDER BY joinedAt DESC;
-
-SELECT
-	m.id AS memberId,
-	m.name AS memberName,
-	wcm.joinedAt
-FROM walk_crew_member wcm
-INNER JOIN MEMBER m ON wcm.memberId = m.id
-WHERE wcm.crewId = 17;
-
-
-SELECT * FROM district WHERE city='대전광역시' AND district='중구' AND dong='용두동';
-
-
-SELECT * FROM district ORDER BY id DESC LIMIT 10;
-
-SELECT * FROM district WHERE id = 5 LIMIT 0, 1000;
-
-
-
-DESC district;
-
-SELECT * FROM walk_crew
