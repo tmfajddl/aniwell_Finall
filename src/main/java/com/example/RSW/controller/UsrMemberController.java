@@ -445,6 +445,7 @@ public class UsrMemberController {
     @ResponseBody
     public String deleteVetCert(HttpServletRequest req) {
         Rq rq = (Rq) req.getAttribute("rq");
+
         VetCertificate cert = vetCertificateService.getCertificateByMemberId(rq.getLoginedMemberId());
 
         if (cert == null) {
