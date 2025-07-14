@@ -3,7 +3,7 @@
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.example.demo.repository.NotificationRepository">
+<mapper namespace="com.example.RSW.repository.NotificationRepository">
 
     <select id="findByMemberIdOrderByRegDateDesc" resultType="com.example.RSW.vo.Notification" parameterType="int">
         SELECT *
@@ -42,12 +42,13 @@
     </select>
 
     <!-- 안 읽은 알림 개수 -->
-    <select id="countUnreadByMemberId" resultType="int">
+    <select id="countUnreadByMemberId" resultType="int" parameterType="int">
         SELECT COUNT(*)
         FROM notification
         WHERE memberId = #{memberId}
           AND isRead = FALSE
     </select>
+
 
     <!-- 전체 읽음 처리 -->
     <update id="updateAllAsReadByMemberId">
@@ -81,8 +82,8 @@
 
     <insert id="insert" parameterType="Notification">
         INSERT INTO notification
-            (memberId, title, link, regDate, isRead, type, sender_id)
+            (memberId, title, link, regDate, isRead, senderId)
         VALUES
-            (#{memberId}, #{title}, #{link}, #{regDate}, #{read}, #{type}, #{senderId})
+            (#{memberId}, #{title}, #{link}, #{regDate}, #{read}, #{senderId})
     </insert>
 </mapper>
