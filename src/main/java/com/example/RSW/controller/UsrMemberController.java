@@ -110,8 +110,8 @@ public class UsrMemberController {
     }
 
     // 마이페이지
-    @RequestMapping("/usr/member/myPage")
-    public String showmyPage(HttpServletRequest req, Model model) {
+    @RequestMapping({"/usr/member/myPage", "/usr/member/mypage"})
+    public String showMyPage(HttpServletRequest req, Model model) {
         Rq rq = (Rq) req.getAttribute("rq");
         model.addAttribute("member", rq.getLoginedMember());
         return "usr/member/myPage";
