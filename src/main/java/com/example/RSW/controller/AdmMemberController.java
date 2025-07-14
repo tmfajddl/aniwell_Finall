@@ -5,6 +5,7 @@ import com.example.RSW.service.NotificationService;
 import com.example.RSW.service.VetCertificateService;
 import com.example.RSW.util.Ut;
 import com.example.RSW.vo.Member;
+import com.example.RSW.vo.ResultData;
 import com.example.RSW.vo.Rq;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -40,26 +41,29 @@ public class AdmMemberController {
 
 
     @PostMapping("/changeVetCertStatus")
-    public String changeVetCertStatus(@RequestParam int memberId, @RequestParam int approved) {
-        // 인증 상태 변경
+    @ResponseBody
+    public ResultData<?> changeVetCertStatus(@RequestParam int memberId, @RequestParam int approved) {
         vetCertificateService.updateApprovalStatusByMemberId(memberId, approved);
 
-        // 권한 자동 설정
         if (approved == 1) {
-            memberService.updateAuthLevel(memberId, 3); // 수의사
+            memberService.updateAuthLevel(memberId, 3);
         } else if (approved == 2) {
-            memberService.updateAuthLevel(memberId, 1); // 일반
+            memberService.updateAuthLevel(memberId, 1);
         }
 
-        // 알림 전송
+        if (rq.getLoginedMemberId() == memberId) {
+            Member updatedMember = memberService.getMemberById(memberId);
+            rq.login(updatedMember);
+        }
+
         String title = (approved == 1) ? "수의사 인증이 승인되었습니다." : "수의사 인증이 거절되었습니다.";
         String type = (approved == 1) ? "VET_APPROVED" : "VET_REJECTED";
         String link = "/usr/member/myPage";
-        int adminId = rq.getLoginedMemberId();
-        notificationService.addNotification(memberId, adminId, type,  title, link);
 
-        // 💡 변경: 리디렉트로 안전하게 이동
-        return "redirect:/adm/member/list";
+        int adminId = rq.getLoginedMemberId();
+        notificationService.addNotification(memberId, adminId, type, title, link);
+
+        return ResultData.from("S-1", title);
     }
 
 
