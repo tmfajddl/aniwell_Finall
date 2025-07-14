@@ -123,4 +123,8 @@ public class MemberService {
 	}
 
 
+	public void updateVetCertInfo(int memberId, String fileName, int approved) {
+		memberRepository.updateVetCertInfo(memberId, fileName, approved);
+	}
+
 }
