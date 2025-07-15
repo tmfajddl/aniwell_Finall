@@ -156,4 +156,10 @@
         WHERE authLevel = #{authLevel}
     </select>
 
+    <select id="findByAuthLevel" resultType="com.example.RSW.vo.Member">
+        SELECT *
+        FROM member
+        WHERE authLevel = #{authLevel}
+    </select>
+
 </mapper>

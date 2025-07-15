@@ -131,4 +131,9 @@ public class MemberService {
 		return memberRepository.countByAuthLevel(level);
 	}
 
+	// 관리자 목록을 가져오는 메서드
+	public List<Member> getAdmins() {
+		return memberRepository.findByAuthLevel(7); // 관리자 권한이 7인 회원들
+	}
+
 }

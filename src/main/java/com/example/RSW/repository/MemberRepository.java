@@ -40,4 +40,6 @@ public interface MemberRepository {
     void updateVetCertInfo(int memberId, String fileName, int approved);
 
 	int countByAuthLevel(int level);
+
+	List<Member> findByAuthLevel(int i);
 }
