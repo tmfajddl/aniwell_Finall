@@ -175,6 +175,9 @@ public class UsrMemberController {
         Rq rq = (Rq) req.getAttribute("rq");
         Member loginedMember = rq.getLoginedMember();
 
+        VetCertificate cert = vetCertificateService.getCertificateByMemberId(loginedMember.getId());
+        model.addAttribute("cert", cert);
+
         model.addAttribute("member", loginedMember); // ✅ JSP에 전달
 
         return "usr/member/myPage";

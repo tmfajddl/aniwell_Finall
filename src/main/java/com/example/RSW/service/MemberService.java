@@ -136,4 +136,18 @@ public class MemberService {
 		return memberRepository.findByAuthLevel(7); // 관리자 권한이 7인 회원들
 	}
 
+	// 소셜 로그인 시, 기존 회원 조회 또는 신규 생성
+	public Member getOrCreateSocialMember(String provider, String socialId, String email, String name) {
+		Member member = memberRepository.getMemberBySocial(provider, socialId);
+
+		if (member == null) {
+			// 신규 회원 등록
+			memberRepository.doJoinBySocial(provider, socialId, name, email);
+			int id = memberRepository.getLastInsertId();
+			member = memberRepository.getMemberById(id);
+		}
+
+		return member;
+	}
+
 }
