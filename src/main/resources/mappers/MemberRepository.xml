@@ -144,5 +144,16 @@
         WHERE id = #{loginedMemberId}
     </select>
 
+    <update id="updateVetCertInfo">
+        UPDATE member
+        SET vetCertUrl = #{fileName},
+            vetCertApproved = #{approved}
+        WHERE id = #{memberId}
+    </update>
+
+    <select id="countByAuthLevel" resultType="int">
+        SELECT COUNT(*) FROM member
+        WHERE authLevel = #{authLevel}
+    </select>
 
 </mapper>
