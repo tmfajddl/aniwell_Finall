@@ -194,6 +194,7 @@ to {
 	}
 
 
+
     function validateForm() {
         const phone = document.querySelector('[name="cellphone"]');
         const phonePattern = /^\d{3}-\d{3,4}-\d{4}$/;
