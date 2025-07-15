@@ -238,6 +238,10 @@ public class UsrMemberController {
         Rq rq = (Rq) req.getAttribute("rq");
         Member loginedMember = rq.getLoginedMember();
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> c394fb0 (카드불러오기)
         return loginedMember;
     }
 
