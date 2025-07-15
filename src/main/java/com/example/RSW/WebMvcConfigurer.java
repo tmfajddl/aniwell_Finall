@@ -76,7 +76,7 @@ public class WebMvcConfigurer implements org.springframework.web.servlet.config.
 
 
 //      펫 관련
-        ir.addPathPatterns("/usr/walkCrew/crewChat");
+        ir.addPathPatterns("/usr/walkCrew/chat");
         ir.addPathPatterns("/usr/pet/petPage");
         ir.addPathPatterns("/usr/pet/list");
         ir.addPathPatterns("/usr/pet/join");
@@ -97,6 +97,7 @@ public class WebMvcConfigurer implements org.springframework.web.servlet.config.
         ir.addPathPatterns("/usr/pet/daily/domodify");
         ir.addPathPatterns("/usr/pet/daily/delete");
         ir.addPathPatterns("/usr/pet/daily/detail");
+        ir.addPathPatterns("/usr/pet/petPlace");
 
 
 
