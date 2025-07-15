@@ -3,14 +3,16 @@ package com.example.RSW.controller;
 import com.example.RSW.service.PetBleActivityService;
 import com.example.RSW.dto.PetBleActivityDto;
 import com.example.RSW.vo.PetBleActivity;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -19,22 +21,46 @@ public class BleActivityController {
     @Autowired
     private PetBleActivityService bleService;
 
-    public BleActivityController(PetBleActivityService bleService) {
-        this.bleService = bleService;
-    }
+    @Autowired
+    private SimpMessagingTemplate messagingTemplate;
 
-    @RequestMapping("/usr/pet/activity/save")
+
+    @PostMapping("/usr/pet/activity/save")
     @ResponseBody
     public ResponseEntity<String> saveActivity(@RequestBody PetBleActivityDto dto) {
         bleService.save(dto);
+
+        // 저장된 데이터 다시 조회 (id, enteredAt 등 포함)
+        PetBleActivity saved = bleService.findLatestByPetId(dto.getPetId());
+
+        // WebSocket 전송
+        messagingTemplate.convertAndSend("/topic/activity/" + dto.getPetId(), saved);
+
         return ResponseEntity.ok("BLE Activity Saved");
     }
 
-    @RequestMapping("/usr/pet/activity")
+
+    // ✅ BLE 활동 리스트 조회 (JSP용)
+    @GetMapping("/usr/pet/activity")
     public String showBleActivityList(@RequestParam("petId") int petId, Model model) {
         List<PetBleActivity> activities = bleService.getActivitiesByPetId(petId);
-        model.addAttribute("activities", activities);
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JavaTimeModule()); // ✅ LocalDateTime 지원 모듈
+        objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS); // ✅ ISO-8601 형식 유지
+
+        String activitiesJson = "[]"; // ✅ 기본값
+        try {
+            activitiesJson = objectMapper.writeValueAsString(activities);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace(); // JSON 직렬화 오류 확인
+        }
+
+        model.addAttribute("activities", activities);           // 테이블용
+        model.addAttribute("activitiesJson", activitiesJson);   // 차트용
         model.addAttribute("petId", petId);
-        return "usr/pet/activity"; // JSP 경로
+
+        return "usr/pet/activity";
     }
+
 }

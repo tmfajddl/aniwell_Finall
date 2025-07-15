@@ -11,4 +11,6 @@ public interface PetBleActivityRepository {
     void insertActivity(Map<String, Object> param);
 
     List<PetBleActivity> getActivitiesByPetId(int petId);
+
+    PetBleActivity findLatestByPetId(int petId);
 }
