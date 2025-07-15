@@ -118,8 +118,7 @@ public class UsrMemberController {
     @RequestMapping("/usr/member/doJoin")
     @ResponseBody
     public String doJoin(HttpServletRequest req, String loginId, String loginPw, String name, String nickname,
-                         String cellphone, String email, String address, String authName,
-                         @RequestParam(defaultValue = "1") int authLevel) {
+                         String cellphone, String email, String address, String authName) {
 
         // 필수 입력값 체크
         if (Ut.isEmptyOrNull(loginId)) {
@@ -135,7 +134,6 @@ public class UsrMemberController {
             return Ut.jsHistoryBack("F-4", "닉네임을 입력해");
         }
         if (Ut.isEmptyOrNull(cellphone)) {
-            System.out.println("전화번호가 비어있습니다: " + cellphone); // 로그 추가
             return Ut.jsHistoryBack("F-5", "전화번호를 입력해");
         }
         if (Ut.isEmptyOrNull(email)) {
@@ -148,20 +146,20 @@ public class UsrMemberController {
             return Ut.jsHistoryBack("F-8", "인증명을 입력해");
         }
 
-        // 비밀번호를 SHA-256으로 해시화
+        // 비밀번호 해시화
         String hashedLoginPw = Ut.sha256(loginPw);
 
-        // 회원가입 서비스 호출
-        ResultData joinRd = memberService.join(loginId, hashedLoginPw, name, nickname, cellphone, email, address, authName, authLevel);
+        // 무조건 일반회원으로 가입
+        int fixedAuthLevel = 1;
+
+        // 회원가입 처리
+        ResultData joinRd = memberService.join(loginId, hashedLoginPw, name, nickname, cellphone, email, address, authName, fixedAuthLevel);
 
         if (joinRd.isFail()) {
             return Ut.jsHistoryBack(joinRd.getResultCode(), joinRd.getMsg());
         }
 
-        // 성공적으로 가입된 회원 정보를 가져옴
-        Member member = memberService.getMemberById((int) joinRd.getData1());
-
-        // 회원가입 성공 메시지
+        // 성공 후 로그인 페이지로 리디렉션
         return Ut.jsReplace(joinRd.getResultCode(), joinRd.getMsg(), "../member/login");
     }
 
@@ -264,7 +262,6 @@ public class UsrMemberController {
     }
 
 
-
     @RequestMapping("/usr/member/getLoginIdDup")
     @ResponseBody
     public ResultData getLoginIdDup(String loginId) {
@@ -364,37 +361,75 @@ public class UsrMemberController {
         Rq rq = (Rq) req.getAttribute("rq");
 
         if (file.isEmpty()) {
-            return Ut.jsHistoryBack("F-1", "파일을 선택해주세요.");
+            return Ut.jsReplace("F-1", "❗ 파일을 선택해주세요.", "/usr/member/myPage");
         }
 
         try {
+            // 기존 인증서 삭제
+            VetCertificate existing = vetCertificateService.getCertificateByMemberId(rq.getLoginedMemberId());
+            if (existing != null) {
+                vetCertificateService.deleteCertificateWithFile(existing);
+            }
+
             String originalFilename = file.getOriginalFilename();
+            if (originalFilename == null || originalFilename.trim().isEmpty()) {
+                return Ut.jsReplace("F-2", "파일명이 유효하지 않습니다.", "/usr/member/myPage");
+            }
+
             String uuid = UUID.randomUUID().toString();
             String savedFileName = uuid + "_" + originalFilename;
             String uploadDir = "C:/upload/vet_certificates";
 
             File dir = new File(uploadDir);
-            if (!dir.exists()) {
-                dir.mkdirs();
-            }
+            if (!dir.exists()) dir.mkdirs();
 
-            file.transferTo(new File(uploadDir + "/" + savedFileName));
+            File savedFile = new File(uploadDir + "/" + savedFileName);
+            file.transferTo(savedFile);
 
             VetCertificate cert = new VetCertificate();
             cert.setMemberId(rq.getLoginedMemberId());
             cert.setFileName(originalFilename);
             cert.setFilePath(savedFileName);
             cert.setUploadedAt(LocalDateTime.now());
-            cert.setApproved(0); // 대기 상태
+            cert.setApproved(0);
+
+            System.out.println("📥 저장될 인증서: " + cert.toString());
 
             vetCertificateService.registerCertificate(cert);
+            memberService.updateVetCertInfo(rq.getLoginedMemberId(), savedFileName, 0);
 
-            return Ut.jsReplace("S-1", "수의사 인증서가 등록되었습니다. 관리자 승인을 기다려주세요.", "myCert");
+            return """
+                    <html>
+                    <head>
+                      <meta charset="UTF-8">
+                      <script>
+                        alert('✅ 수의사 인증서가 등록되었습니다. 관리자 승인을 기다려주세요.');
+                        location.replace('myCert');
+                      </script>
+                    </head>
+                    <body></body>
+                    </html>
+                    """;
 
         } catch (Exception e) {
-            return Ut.jsHistoryBack("F-2", "파일 업로드 중 오류가 발생했습니다.");
+            e.printStackTrace();
+            System.err.println("❌ 업로드 예외 발생: " + e.getMessage());
+
+            return """
+                    <html>
+                    <head>
+                      <meta charset="UTF-8">
+                      <script>
+                        alert('⚠ 업로드 중 오류가 발생했습니다. 다시 시도해주세요.');
+                        location.replace('/usr/member/myPage');
+                      </script>
+                    </head>
+                    <body></body>
+                    </html>
+                    """;
         }
     }
+
 
     @RequestMapping("/usr/member/myCert")
     public String showMyCertificate(HttpServletRequest req, Model model) {
@@ -410,6 +445,7 @@ public class UsrMemberController {
     @ResponseBody
     public String deleteVetCert(HttpServletRequest req) {
         Rq rq = (Rq) req.getAttribute("rq");
+
         VetCertificate cert = vetCertificateService.getCertificateByMemberId(rq.getLoginedMemberId());
 
         if (cert == null) {
@@ -418,9 +454,8 @@ public class UsrMemberController {
 
         vetCertificateService.deleteCertificateWithFile(cert);
 
-        return Ut.jsReplace("S-1", "인증서가 삭제되었습니다.", "/usr/member/vetCert");
+        return Ut.jsReplace("S-1", "인증서가 삭제되었습니다.", "/usr/member/myCert");
     }
-
 
 
 }
