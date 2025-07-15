@@ -2,6 +2,7 @@ package com.example.RSW.controller;
 
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
+import com.example.RSW.service.NotificationService;
 import com.example.RSW.service.VetCertificateService;
 import com.example.RSW.vo.VetCertificate;
 import jakarta.servlet.http.HttpServletResponse;
@@ -41,6 +42,9 @@ public class UsrMemberController {
 
     @Autowired
     private Cloudinary cloudinary;
+
+    @Autowired
+    private NotificationService notificationService;
 
 
     @RequestMapping("/usr/member/doLogout")
@@ -397,6 +401,10 @@ public class UsrMemberController {
 
             vetCertificateService.registerCertificate(cert);
             memberService.updateVetCertInfo(rq.getLoginedMemberId(), savedFileName, 0);
+
+            // 인증서 업로드 성공 후 관리자에게 알림 전송
+            notificationService.sendNotificationToAdmins(rq.getLoginedMemberId());
+
 
             return """
                     <html>
