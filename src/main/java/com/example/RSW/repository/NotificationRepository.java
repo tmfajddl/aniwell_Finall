@@ -33,4 +33,8 @@ public interface NotificationRepository {
     void deleteById(int id, int memberId);
 
     int deleteByLinkAndTitle(int memberId, String link, String title);
+
+    void deleteByIdOnlyId(int id);
+
+    void deleteByMemberId(int memberId);
 }
