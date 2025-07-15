@@ -76,13 +76,13 @@ public class MemberService {
 	}
 
 	public Member getMemberByNameAndEmail(String name, String email) {
-		
+
 		return memberRepository.getMemberByNameAndEmail(name, email);
 
 	}
 
 	public Member getMemberByLoginId(String loginId) {
-		
+
 		return memberRepository.getMemberByLoginId(loginId);
 	}
 
@@ -91,7 +91,7 @@ public class MemberService {
 	}
 
 	public ResultData modify(int loginedMemberId, String loginPw, String name, String nickname, String cellphone,
-			String email,String photo) {
+							 String email,String photo) {
 
 		loginPw = Ut.sha256(loginPw);
 
@@ -101,7 +101,7 @@ public class MemberService {
 	}
 
 	public ResultData modifyWithoutPw(int loginedMemberId, String name, String nickname, String cellphone,
-			String email, String photo) {
+									  String email, String photo) {
 		memberRepository.modifyWithoutPw(loginedMemberId, name, nickname, cellphone, email, photo);
 
 		return ResultData.from("S-1", "회원정보 수정 완료");
@@ -122,5 +122,13 @@ public class MemberService {
 		return memberRepository.getForPrintMembersWithCert(searchType, searchKeyword);
 	}
 
+
+	public void updateVetCertInfo(int memberId, String fileName, int approved) {
+		memberRepository.updateVetCertInfo(memberId, fileName, approved);
+	}
+
+	public int countByAuthLevel(int level) {
+		return memberRepository.countByAuthLevel(level);
+	}
 
 }
