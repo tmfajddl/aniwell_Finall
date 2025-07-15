@@ -19,5 +19,13 @@
         ORDER BY enteredAt DESC
     </select>
 
+    <select id="findLatestByPetId" resultType="PetBleActivity">
+        SELECT *
+        FROM pet_ble_activity
+        WHERE petId = #{petId}
+        ORDER BY enteredAt DESC
+            LIMIT 1
+    </select>
+
 
 </mapper>

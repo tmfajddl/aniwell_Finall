@@ -35,4 +35,8 @@ public class PetBleActivityService {
     public List<PetBleActivity> getActivitiesByPetId(int petId) {
         return bleRepo.getActivitiesByPetId(petId);
     }
+
+    public PetBleActivity findLatestByPetId(int petId) {
+        return bleRepo.findLatestByPetId(petId);
+    }
 }
