@@ -8,6 +8,7 @@ import com.example.RSW.vo.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -43,9 +44,37 @@ public class PetController {
     private CalendarEventService calendarEventService;
 
     @Autowired
+    private PetRecommendationService petRecommendationService;
+
+    @Autowired
     private Cloudinary cloudinary;
 
 
+    @GetMapping("/usr/pet/recommend/list")
+    @ResponseBody
+    public List<PetRecommendation> getAllFavorites(@RequestParam int memberId) {
+        return petRecommendationService.getFavoriteNamesByMember(memberId);
+    }
+
+    // 즐겨 찾기 삭제 로직
+    @RequestMapping("/usr/pet/recommend/toggle")
+    @ResponseBody
+    public String toggleFavorite(@RequestParam int memberId,
+                                 @RequestParam String name,
+                                 @RequestParam(required = false) String type,
+                                 @RequestParam(required = false) String address,
+                                 @RequestParam(required = false) String phone,
+                                 @RequestParam(required = false) String mapUrl) {
+
+        boolean exists = petRecommendationService.isFavorited(memberId, name);
+        if (exists) {
+            petRecommendationService.removeFavorite(memberId, name);
+            return "removed";
+        } else {
+            petRecommendationService.saveFavorite(memberId, type, name, address, phone, mapUrl);
+            return "added";
+        }
+    }
 
     //테스트용
     @RequestMapping("/usr/pet/test")
@@ -56,7 +85,16 @@ public class PetController {
 
     //주변 펫 샵 조회
     @RequestMapping("/usr/pet/petPlace")
-    public String showTest() {
+    public String showMap(Model model) {
+        int memberId = rq.getLoginedMemberId();
+
+        List<String> favoriteNames = petRecommendationService.getFavoriteNamesOnly(memberId); // 이름만!
+        model.addAttribute("favoriteNames", favoriteNames);
+
+
+        List<PetRecommendation> favoriteplaces = petRecommendationService.getFavoriteNamesByMember(memberId);
+        model.addAttribute("favoriteplaces", favoriteplaces);
+        model.addAttribute("memberId", memberId);
         return "usr/pet/petPlace";
     }
 
@@ -64,12 +102,14 @@ public class PetController {
     @RequestMapping("/usr/pet/petPage")
     public String showTest(@RequestParam("petId") int petId, Model model) throws Exception{
 
-        int memberId = rq.getLoginedMemberId();
+        Member loginesMember = rq.getLoginedMember();
         Pet pet = petService.getPetsById(petId);
-        if(pet.getMemberId() != memberId){
-            return Ut.jsHistoryBack("F-1", "권한이 없습니다.");
+        if(pet.getMemberId() != loginesMember.getId()){
+            return Ut.jsAlertBack("권한이 없습니다.");
         }
+        model.addAttribute("member", loginesMember);
         model.addAttribute("pet", pet);
+
 
         List<PetVaccination> list = petVaccinationService.getVaccinationsByPetId(petId);
 
@@ -107,7 +147,7 @@ public class PetController {
     public String showPetList(@RequestParam("memberId") int memberId, Model model) {
         int loginId = rq.getLoginedMemberId();
         if(loginId != memberId){
-            return Ut.jsHistoryBack("F-1", "권한이 없습니다.");
+            return Ut.jsAlertBack("권한이 없습니다.");
         }
         List<Pet> pets = petService.getPetsByMemberId(memberId);
         List<WalkCrew> crews = walkCrewService.getWalkCrews(memberId);
@@ -175,7 +215,7 @@ public class PetController {
         int memberId = rq.getLoginedMemberId();
         Pet pet = petService.getPetsById(petId);
         if(pet.getMemberId() != memberId){
-            return Ut.jsHistoryBack("F-1", "권한이 없습니다.");
+            return Ut.jsAlertBack("권한이 없습니다.");
         }
 
         model.addAttribute("pet", pet);
@@ -192,7 +232,7 @@ public class PetController {
         int memberId = rq.getLoginedMemberId();
         Pet pet = petService.getPetsById(petId);
         if (pet.getMemberId() != memberId) {
-            return Ut.jsHistoryBack("F-0", "권한이 없습니다.");
+            return Ut.jsAlertBack("권한이 없습니다.");
         }
 
         if (Ut.isEmptyOrNull(name)) return Ut.jsHistoryBack("F-1", "이름을 입력하세요");
@@ -238,7 +278,7 @@ public class PetController {
         int memberId = rq.getLoginedMemberId();
         Pet pet = petService.getPetsById(petId);
         if(pet.getMemberId() != memberId){
-            return Ut.jsHistoryBack("F-1", "권한이 없습니다.");
+            return Ut.jsAlertBack("권한이 없습니다.");
         }
         List<PetAnalysis> analysisList = petAnalysisService.getAnalysisByPetId(petId);
 
@@ -339,7 +379,7 @@ public class PetController {
         int memberId = rq.getLoginedMemberId();
         Pet pet = petService.getPetsById(petId);
         if(pet.getMemberId() != memberId){
-            return Ut.jsHistoryBack("F-1", "권한이 없습니다.");
+            return Ut.jsAlertBack("권한이 없습니다.");
         }
 
         ResultData deleteRd = petService.deletePet(petId);
@@ -353,7 +393,7 @@ public class PetController {
         int memberId = rq.getLoginedMemberId();
         Pet pet = petService.getPetsById(petId);
         if(pet.getMemberId() != memberId){
-            return Ut.jsHistoryBack("F-1", "권한이 없습니다.");
+            return Ut.jsAlertBack("권한이 없습니다.");
         }
         return "/usr/pet/vaccinationRegistration";
     }
@@ -395,7 +435,7 @@ public class PetController {
         int memberId = rq.getLoginedMemberId();
         Pet pet = petService.getPetsById(petId);
         if(pet.getMemberId() != memberId){
-            return Ut.jsHistoryBack("F-0", "권한이 없습니다.");
+            return Ut.jsAlertBack("권한이 없습니다.");
         }
         model.addAttribute("petVaccination", petVaccination); // 해당 id에 해당하는 백신
         return "usr/pet/vaccinationModify";
@@ -444,7 +484,7 @@ public class PetController {
         int memberId = rq.getLoginedMemberId();
         Pet pet = petService.getPetsById(petId);
         if(pet.getMemberId() != memberId){
-            return Ut.jsHistoryBack("F-0", "권한이 없습니다.");
+            return Ut.jsAlertBack("권한이 없습니다.");
         }
 
         model.addAttribute("petVaccination", petVaccination); // 해당 id에 해당하는 백신
@@ -461,7 +501,7 @@ public class PetController {
         int memberId = rq.getLoginedMemberId();
         Pet pet = petService.getPetsById(petId);
         if(pet.getMemberId() != memberId){
-            return Ut.jsHistoryBack("F-0", "권한이 없습니다.");
+            return Ut.jsAlertBack("권한이 없습니다.");
         }
         petVaccinationService.deletePetVaccination(vaccinationId);
         return "jsReplace('/usr/pet/vaccination?petId=" + petId + "', '삭제가 완료되었습니다.');";
@@ -474,7 +514,7 @@ public class PetController {
         int memberId = rq.getLoginedMemberId();
         Pet pet = petService.getPetsById(petId);
         if(pet.getMemberId() != memberId){
-            return Ut.jsHistoryBack("F-1", "권한이 없습니다.");
+            return Ut.jsAlertBack("권한이 없습니다.");
         }
         List<CalendarEvent> events = calendarEventService.getEventsByPetId(petId);
         model.addAttribute("events", events); // 감정일기에 등록된 이벤트들
