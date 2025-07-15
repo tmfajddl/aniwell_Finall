@@ -232,17 +232,13 @@ public class UsrMemberController {
 
     // 마이페이지
     @RequestMapping({"/usr/member/myPage", "/usr/member/mypage"})
-    public String showMyPage(HttpServletRequest req, Model model) {
+    @ResponseBody
+    public Member showMyPage(HttpServletRequest req) {
 
         Rq rq = (Rq) req.getAttribute("rq");
         Member loginedMember = rq.getLoginedMember();
 
-        VetCertificate cert = vetCertificateService.getCertificateByMemberId(loginedMember.getId());
-        model.addAttribute("cert", cert);
-
-        model.addAttribute("member", loginedMember);
-
-        return "usr/member/myPage";
+        return loginedMember;
     }
 
     @RequestMapping("/usr/member/checkPw")
