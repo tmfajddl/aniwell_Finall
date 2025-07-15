@@ -52,17 +52,30 @@
             <td class="border px-2 py-1">
                 <c:choose>
                     <c:when test="${member.authLevel == 7}">
-                        관리자
+                        <span class="text-red-600">관리자</span>
+                        <c:if test="${member.id ne rq.getLoginedMemberId()}">
+                            <button class="text-red-600 hover:underline change-admin-btn"
+                                    data-member-id="${member.id}" data-promote="false">
+                                권한 해제
+                            </button>
+                        </c:if>
                     </c:when>
-                    <c:when test="${member.vetCertApproved == 1}">
+                    <c:when test="${member.authLevel == 3}">
                         수의사
+                        <button class="text-blue-600 hover:underline change-admin-btn"
+                                data-member-id="${member.id}" data-promote="true">
+                            관리자 부여
+                        </button>
                     </c:when>
                     <c:otherwise>
                         일반
+                        <button class="text-blue-600 hover:underline change-admin-btn"
+                                data-member-id="${member.id}" data-promote="true">
+                            관리자 부여
+                        </button>
                     </c:otherwise>
                 </c:choose>
             </td>
-
             <td class="border px-2 py-1">
                 <c:choose>
                     <c:when test="${not empty member.vetCertUrl}">
@@ -83,15 +96,21 @@
                         <form action="/adm/member/changeVetCertStatus" method="post" style="display:inline;">
                             <input type="hidden" name="memberId" value="${member.id}"/>
                             <input type="hidden" name="approved" value="1"/>
-                            <button type="submit" class="text-green-600 hover:underline"
-                                    onclick="return confirm('인증 승인하시겠습니까?')">승인
+                            <button
+                                    class="text-green-600 hover:underline approve-btn"
+                                    data-member-id="${member.id}" data-approved="1">
+                                승인
                             </button>
                         </form>
-                        <form action="/adm/member/changeVetCertStatus" method="post" style="display:inline; margin-left:5px;">
+                        <form action="/adm/member/changeVetCertStatus" method="post"
+                              style="display:inline; margin-left:5px;">
                             <input type="hidden" name="memberId" value="${member.id}"/>
                             <input type="hidden" name="approved" value="2"/>
-                            <button type="submit" class="text-red-600 hover:underline"
-                                    onclick="return confirm('인증 거절하시겠습니까?')">거절
+                            <button
+                                    class="text-red-600 hover:underline reject-btn"
+                                    data-member-id="${member.id}" data-approved="2"
+                                    style="margin-left: 5px;">
+                                거절
                             </button>
                         </form>
                     </c:when>
@@ -104,6 +123,81 @@
     </c:forEach>
     </tbody>
 </table>
+<script>
+    <%--  수의사 권한 - 승인/거절  --%>
+    document.addEventListener('DOMContentLoaded', function () {
+        const buttons = document.querySelectorAll('.approve-btn, .reject-btn');
+
+        buttons.forEach(btn => {
+            btn.addEventListener('click', function (e) {
+                e.preventDefault();
+
+                const memberId = this.dataset.memberId;
+                const approved = this.dataset.approved;
+
+                const confirmMsg = approved === "1" ? "인증 승인하시겠습니까?" : "인증 거절하시겠습니까?";
+                if (!confirm(confirmMsg)) return;
+
+                fetch('/adm/member/changeVetCertStatus', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: new URLSearchParams({
+                        memberId: memberId,
+                        approved: approved
+                    })
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.resultCode === 'S-1') {
+                            alert(data.msg);
+                            location.reload(); // 또는 버튼 숨기기 등 원하는 후처리
+                        } else {
+                            alert("⚠ 처리에 실패했습니다: " + data.msg);
+                        }
+                    })
+                    .catch(error => {
+                        console.error("❌ 서버 오류:", error);
+                        alert("❌ 오류가 발생했습니다.");
+                    });
+            });
+        });
+    });
+</script>
+<script>
+    <%--  관리자 권한 부여  --%>
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.change-admin-btn').forEach(btn => {
+            btn.addEventListener('click', function () {
+                const memberId = this.dataset.memberId;
+                const promote = this.dataset.promote;
+
+                const msg = promote === "true" ? "이 회원에게 관리자 권한을 부여할까요?" : "이 회원의 관리자 권한을 해제할까요?";
+                if (!confirm(msg)) return;
+
+                fetch('/adm/member/changeAdminStatus', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    body: new URLSearchParams({
+                        memberId: memberId,
+                        promote: promote
+                    })
+                })
+                    .then(res => res.json())
+                    .then(data => {
+                        alert(data.msg);
+                        location.reload();
+                    })
+                    .catch(err => {
+                        alert("❌ 오류 발생");
+                        console.error(err);
+                    });
+            });
+        });
+    });
+</script>
+
 
 </body>
 </html>

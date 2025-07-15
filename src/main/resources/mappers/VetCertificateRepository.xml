@@ -21,11 +21,14 @@
     </select>
 
     <!-- 특정 회원의 인증서 조회 -->
-    <select id="findByMemberId" resultType="com.example.RSW.vo.VetCertificate">
+    <select id="findByMemberId" resultType="VetCertificate">
         SELECT *
         FROM vet_certificate
         WHERE memberId = #{memberId}
+        ORDER BY uploadedAt DESC
+            LIMIT 1
     </select>
+
 
     <!-- 인증서 승인 상태 변경 -->
     <update id="updateApprovalStatus">
