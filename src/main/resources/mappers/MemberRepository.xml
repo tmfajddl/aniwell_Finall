@@ -162,4 +162,10 @@
         WHERE authLevel = #{authLevel}
     </select>
 
+    <select id="getMemberBySocial" resultType="Member">
+        SELECT * FROM member
+        WHERE socialProvider = #{socialProvider}
+          AND socialId = #{socialId}
+    </select>
+
 </mapper>
