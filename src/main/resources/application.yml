@@ -12,10 +12,15 @@ spring:
           auth: true
           starttls:
             enable: true
-  mvc:
-    view:
-      prefix: classpath:/templates/
-      suffix: .html
+
+  thymeleaf:
+     prefix: classpath:/templates/        # HTML 파일의 기본 경로
+     suffix: .html                        # HTML 확장자
+     mode: HTML                           # HTML 모드 (HTML5 / LEGACYHTML5 / XHTML 등도 가능)
+     encoding: UTF-8                      # 인코딩
+     content-type: text/html              # MIME 타입
+     cache: false                         # 개발 중에는 false (템플릿 수정 시 자동 반영)
+     check-template-location: true
 
   oauth2:
     google:
