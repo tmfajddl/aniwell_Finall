@@ -83,25 +83,10 @@
 							<li>
 								<a href="/usr/walkCrew/create">크루 모집</a>
 							</li>
-
-							<!-- ✅ 누구나 크루 카페 입장 가능 -->
+							<!-- 크루 카페: 로그인한 사용자의 가입 크루 카페로 이동 -->
 							<li>
-								<c:if test="${not empty crew}">
-									<a href="/usr/crewCafe?crewId=${crew.id}">크루 카페</a>
-								</c:if>
+								<a href="/usr/walkCrewMember/myCrewCafe">크루 카페</a>
 
-							</li>
-
-							<!-- ✅ 크루장만 신청자 리스트 접근 가능 -->
-							<li>
-								<c:choose>
-									<c:when test="${not empty crew}">
-										<a href="/usr/walkCrew/requestList?crewId=${crew.id}">크루 신청자 리스트</a>
-									</c:when>
-									<c:otherwise>
-										<a href="#" onclick="alert('⚠ 크루를 먼저 생성해주세요.');">크루 신청자 리스트</a>
-									</c:otherwise>
-								</c:choose>
 							</li>
 						</ul>
 					</div>

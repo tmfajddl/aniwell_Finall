@@ -97,8 +97,5 @@ public class WalkCrewService {
 		return walkCrewRepository.findByLeaderId(leaderId);
 	}
 
-	public WalkCrew getCrewByMemberId(int memberId) {
-		return walkCrewRepository.getCrewByMemberId(memberId);
-	}
 
 }
