@@ -63,15 +63,58 @@ public class UsrMemberController {
 
 
     @RequestMapping("/usr/member/doLogout")
-    @ResponseBody
-    public String doLogin(HttpServletRequest req) {
+    public String doLogout(HttpServletRequest req) {
 
         Rq rq = (Rq) req.getAttribute("rq");
 
         rq.logout();
 
-        return Ut.jsReplace("S-1", "로그아웃 성공", "/");
+        return "redirect:/";
     }
+
+    @RequestMapping("/usr/member/logout-complete")
+    @ResponseBody
+    public String logoutComplete(HttpServletRequest req, HttpServletResponse resp) {
+        Rq rq = new Rq(req, resp, memberService);
+        rq.logout();
+        req.getSession().removeAttribute("kakaoAccessToken");  // 서버 세션, 토큰 삭제
+
+        return """
+                    <script>
+                        if(window.opener) {
+                            window.opener.postMessage("kakaoLogoutComplete", "*");
+                            window.close();
+                        } else {
+                            location.href = "/";
+                        }
+                    </script>
+                """;
+    }
+
+
+    @RequestMapping("/usr/member/service-logout-popup")
+    @ResponseBody
+    public String serviceLogoutPopup(HttpServletRequest req, HttpServletResponse resp) {
+        // 세션 종료 로직
+        Rq rq = new Rq(req, resp, memberService);
+        rq.logout();
+
+        // 디버깅용 로그 추가
+        System.out.println("DEBUG: service-logout-popup 컨트롤러 호출됨");
+
+        return """
+                    <script>
+                        if(window.opener) {
+                            console.log('DEBUG: serviceLogoutComplete 메시지 전송');
+                            window.opener.postMessage("serviceLogoutComplete", "*");
+                            window.close();
+                        } else {
+                            location.href = "/";
+                        }
+                    </script>
+                """;
+    }
+
 
     @RequestMapping("/usr/member/login")
     public String showLogin(HttpServletRequest req, Model model) {
@@ -197,7 +240,7 @@ public class UsrMemberController {
         VetCertificate cert = vetCertificateService.getCertificateByMemberId(loginedMember.getId());
         model.addAttribute("cert", cert);
 
-        model.addAttribute("member", loginedMember); // ✅ JSP에 전달
+        model.addAttribute("member", loginedMember);
 
         return "usr/member/myPage";
     }
@@ -211,13 +254,13 @@ public class UsrMemberController {
     public void doCheckPw(HttpServletRequest req, HttpServletResponse resp, String loginPw) throws IOException {
         Rq rq = (Rq) req.getAttribute("rq");
 
-        // ✅ 소셜 로그인 회원은 비밀번호 확인 없이 바로 이동
+        // 소셜 로그인 회원은 비밀번호 확인 없이 바로 이동
         if (rq.getLoginedMember().isSocialMember()) {
             resp.sendRedirect("modify");
             return;
         }
 
-        // ✅ 일반 로그인 회원은 비밀번호 확인
+        // 일반 로그인 회원은 비밀번호 확인
         if (Ut.isEmptyOrNull(loginPw)) {
             rq.printHistoryBack("비밀번호를 입력해 주세요.");
             return;
@@ -228,7 +271,7 @@ public class UsrMemberController {
             return;
         }
 
-        // ✅ 성공 시 수정 페이지로 리다이렉트
+        // 성공 시 수정 페이지로 리다이렉트
         resp.sendRedirect("modify");
     }
 
@@ -550,14 +593,18 @@ public class UsrMemberController {
         Rq rq = new Rq(req, resp, memberService);
         rq.login(member);
         req.getSession().setAttribute("rq", rq);
+        req.getSession().setAttribute("kakaoAccessToken", accessToken); // 자동 로그인용 저장
+
 
         // ✅ 팝업 닫고 부모 창 새로고침
         resp.setContentType("text/html; charset=UTF-8");
         PrintWriter out = resp.getWriter();
         out.println("<script>");
-        out.println("window.opener.location.href = '/';"); // 부모 창 새로고침
-        out.println("window.close();"); // 팝업 창 닫기
+        out.println("localStorage.setItem('kakaoAccessToken', '" + accessToken + "');"); // ✅ 자동 로그인용 토큰 저장
+        out.println("window.opener.location.href = '/';");
+        out.println("window.close();");
         out.println("</script>");
+
     }
 
 
@@ -582,10 +629,48 @@ public class UsrMemberController {
     }
 
     @RequestMapping("/usr/member/kakao-popup-login")
-    public void kakaoPopupRedirect(HttpServletResponse resp) throws IOException {
+    public void kakaoPopupRedirect(@RequestParam(value = "token", required = false) String accessTokenParam, HttpServletRequest req, HttpServletResponse resp) throws IOException {
+
+        String accessToken = accessTokenParam != null
+                ? accessTokenParam
+                : (String) req.getSession().getAttribute("kakaoAccessToken");
+
+        if (accessToken != null) {
+            RestTemplate restTemplate = new RestTemplate();
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("Authorization", "Bearer " + accessToken);
+            HttpEntity<?> entity = new HttpEntity<>(headers);
+
+            try {
+                ResponseEntity<Map> response = restTemplate.exchange(
+                        "https://kapi.kakao.com/v2/user/me",
+                        HttpMethod.GET,
+                        entity,
+                        Map.class
+                );
+
+                Map properties = (Map) response.getBody().get("properties");
+                String socialId = String.valueOf(response.getBody().get("id"));
+                String name = (String) properties.get("nickname");
+
+                Member member = memberService.getOrCreateSocialMember("kakao", socialId, "", name);
+
+                Rq rq = new Rq(req, resp, memberService);
+                rq.login(member);
+                req.getSession().setAttribute("rq", rq);
+
+                resp.setContentType("text/html; charset=UTF-8");
+                PrintWriter out = resp.getWriter();
+                out.println("<script>window.opener.location.href = '/'; window.close();</script>");
+                return;
+
+            } catch (Exception e) {
+                // access_token 만료됐을 때
+                req.getSession().removeAttribute("kakaoAccessToken");
+            }
+        }
         String clientId = "79f2a3a73883a82595a2202187f96cc5";
         String redirectUri = "http://localhost:8080/usr/member/kakao";
-
         String kakaoAuthUrl = "https://kauth.kakao.com/oauth/authorize" +
                 "?client_id=" + clientId +
                 "&redirect_uri=" + redirectUri +
@@ -594,5 +679,44 @@ public class UsrMemberController {
 
         resp.sendRedirect(kakaoAuthUrl);
     }
+
+    @PostMapping("/usr/member/kakao-popup-login")
+    @ResponseBody
+    public ResponseEntity<?> kakaoPopupLogin(@RequestBody Map<String, String> body,
+                                             HttpServletRequest req, HttpServletResponse resp) {
+        String token = body.get("token");
+        if (token == null || token.isBlank()) {
+            return ResponseEntity.badRequest().body("Missing token");
+        }
+
+        try {
+            RestTemplate restTemplate = new RestTemplate();
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("Authorization", "Bearer " + token);
+            HttpEntity<?> entity = new HttpEntity<>(headers);
+
+            ResponseEntity<Map> response = restTemplate.exchange(
+                    "https://kapi.kakao.com/v2/user/me",
+                    HttpMethod.GET,
+                    entity,
+                    Map.class
+            );
+
+            Map properties = (Map) response.getBody().get("properties");
+            String socialId = String.valueOf(response.getBody().get("id"));
+            String name = (String) properties.get("nickname");
+
+            Member member = memberService.getOrCreateSocialMember("kakao", socialId, "", name);
+
+            Rq rq = new Rq(req, resp, memberService);
+            rq.login(member);
+            req.getSession().setAttribute("rq", rq);
+
+            return ResponseEntity.ok("자동 로그인 성공");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 실패");
+        }
+    }
+
 
 }
