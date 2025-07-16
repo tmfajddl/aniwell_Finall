@@ -24,6 +24,7 @@ import com.example.RSW.config.AppConfig;
 import com.example.RSW.repository.DistrictRepository;
 import com.example.RSW.service.DistrictService;
 import com.example.RSW.service.MemberService;
+import com.example.RSW.service.WalkCrewMemberService;
 import com.example.RSW.service.WalkCrewService;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -38,10 +39,13 @@ import java.nio.charset.StandardCharsets;
 public class UsrWalkCrewController {
 
 	@Autowired
-	public DistrictService districtService;
+	private DistrictService districtService;
 
 	@Autowired
 	private DistrictRepository districtRepository;
+
+	@Autowired
+	private WalkCrewMemberService walkCrewMemberService;
 
 	private final WalkCrewService walkCrewService;
 
@@ -95,11 +99,10 @@ public class UsrWalkCrewController {
 	// 크루 상세보기 페이지
 
 	@GetMapping("/detail/{id}")
-	public String showDetail(@PathVariable int id, Model model) {
-		WalkCrew crew = walkCrewService.getCrewById(id);
+	public String showDetail(@PathVariable int id, Model model, HttpServletRequest req) {
+		Rq rq = (Rq) req.getAttribute("rq");
 
-		// ✅ 여기서 districtId 로그 확인
-		System.out.println("📌 crew.districtId = " + crew.getDistrictId());
+		WalkCrew crew = walkCrewService.getCrewById(id);
 
 		// ✅ createdAt → Date 변환
 		Date createdDate = Date.from(crew.getCreatedAt().atZone(ZoneId.systemDefault()).toInstant());
@@ -107,15 +110,21 @@ public class UsrWalkCrewController {
 		// ✅ 지역 이름 조회
 		String crewLocation = "";
 		if (crew.getDistrictId() != 0) {
-			District district = districtService.findById(crew.getDistrictId()); // 반드시 이 메서드가 있어야 함
+			District district = districtService.findById(crew.getDistrictId());
 			if (district != null) {
 				crewLocation = district.getSido() + " " + district.getSigungu() + " " + district.getDong();
 			}
 		}
 
+		// ✅ 크루 가입 여부 체크 후 JSP로 넘기기
+		if (rq.isLogined()) {
+			boolean isJoined = walkCrewMemberService.isJoinedCrew(rq.getLoginedMemberId(), crew.getId());
+			model.addAttribute("isJoined", isJoined);
+		}
+
 		model.addAttribute("crew", crew);
 		model.addAttribute("createdDate", createdDate);
-		model.addAttribute("crewLocation", crewLocation); // ✅ JSP로 넘김
+		model.addAttribute("crewLocation", crewLocation);
 
 		return "usr/walkCrew/detail";
 	}
@@ -143,7 +152,6 @@ public class UsrWalkCrewController {
 		}
 	}
 
-	
 	// ✅ 특정 시, 구에 해당하는 동 목록 반환 (Ajax)
 	@GetMapping("/getDongs")
 	@ResponseBody
@@ -166,7 +174,5 @@ public class UsrWalkCrewController {
 		walkCrewService.approveMember(crewId, memberId);
 		return ResultData.from("S-1", "참가 요청을 수락했습니다.");
 	}
-
-	
 
 }
