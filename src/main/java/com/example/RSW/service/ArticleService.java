@@ -162,6 +162,7 @@ public class ArticleService {
 		return articleRepository.getBadRP(relId);
 	}
 
+	// 크루전용 articleService
 	public List<Article> getArticlesByCrewId(int crewId) {
 		return articleRepository.findByCrewId(crewId);
 	}
@@ -172,6 +173,10 @@ public class ArticleService {
 		int id = articleRepository.getLastInsertId();
 
 		return ResultData.from("S-1", "작성 완료", "id", id);
+	}
+
+	public List<Article> getRecentArticlesByCrewAndType(int crewId, String type, int limit) {
+		return articleRepository.findRecentArticlesByCrewAndType(crewId, type, limit);
 	}
 
 }

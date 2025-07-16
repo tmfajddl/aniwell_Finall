@@ -49,7 +49,10 @@ public interface ArticleRepository {
 
 	public List<Article> findByCrewId(int crewId);
 
+	// 크루용 리포지터리
 	void insertCrewArticle(@Param("crewId") int crewId, @Param("memberId") int memberId, @Param("title") String title,
 			@Param("body") String body);
 
+	List<Article> findRecentArticlesByCrewAndType(@Param("crewId") int crewId, @Param("typeCode") String typeCode,
+			@Param("limit") int limit);
 }
