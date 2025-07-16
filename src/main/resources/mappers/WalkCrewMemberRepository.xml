@@ -14,25 +14,39 @@
 	</insert>
 
 	<select id="findMyCrewByMemberId" resultType="WalkCrew">
-		SELECT wc.* FROM walk_crew wc
+		SELECT wc.* FROM
+		walk_crew wc
 		JOIN walk_crew_member wcm ON wc.id = wcm.crewId
-		WHERE wcm.memberId = #{memberId}
+		WHERE
+		wcm.memberId = #{memberId}
 		LIMIT 1
 	</select>
 
 	<select id="findCrewsAppliedBy" resultType="WalkCrew">
-		SELECT wc.* FROM walk_crew wc
+		SELECT wc.* FROM
+		walk_crew wc
 		JOIN walk_crew_member wcm ON wc.id = wcm.crewId
-		WHERE wcm.memberId = #{memberId}
+		WHERE
+		wcm.memberId = #{memberId}
 	</select>
 
 	<select id="findRequestListByLeaderId" resultType="map">
-		SELECT wcm.*, m.nickname, wc.title
+		SELECT wcm.*,
+		m.nickname, wc.title
 		FROM walk_crew_member wcm
-		JOIN walk_crew wc ON wcm.crewId = wc.id
+		JOIN walk_crew wc ON
+		wcm.crewId = wc.id
 		JOIN member m ON wcm.memberId = m.id
-		WHERE wc.leaderId = #{leaderId}
+		WHERE
+		wc.leaderId = #{leaderId}
 	</select>
 
+	<!-- ✅ 크루 가입 여부 확인 -->
+	<select id="countByMemberIdAndCrewId" resultType="int">
+		SELECT COUNT(*)
+		FROM walk_crew_member
+		WHERE memberId = #{memberId}
+		AND crewId = #{crewId}
+	</select>
 
 </mapper>
