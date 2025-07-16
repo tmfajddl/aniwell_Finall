@@ -27,6 +27,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.UUID;
@@ -500,8 +501,9 @@ public class UsrMemberController {
     }
 
     // 카카오 로그인
-    @RequestMapping("/usr/member/login/kakao")
-    public String kakaoCallback(@RequestParam("code") String code, HttpServletRequest req, HttpServletResponse resp) {
+    @RequestMapping("/usr/member/kakao")
+    public void kakaoPopupCallback(@RequestParam("code") String code,
+                                   HttpServletRequest req, HttpServletResponse resp) throws IOException {
 
         String tokenUrl = "https://kauth.kakao.com/oauth/token";
 
@@ -512,22 +514,16 @@ public class UsrMemberController {
 
         MultiValueMap<String, String> tokenParams = new LinkedMultiValueMap<>();
         tokenParams.add("grant_type", "authorization_code");
-        tokenParams.add("client_id", kakaoRestApiKey);
-        tokenParams.add("redirect_uri", kakaoRedirectUri);
-        tokenParams.add("client_secret", kakaoClientSecret);
+        tokenParams.add("client_id", kakaoRestApiKey); // 카카오 REST API 키
+        tokenParams.add("redirect_uri", "http://localhost:8080/usr/member/kakao"); // 고정값
+        tokenParams.add("client_secret", kakaoClientSecret); // 카카오 클라이언트 시크릿
         tokenParams.add("code", code);
-
-        System.out.println("code: " + code);
-        System.out.println("redirect_uri: " + kakaoRedirectUri);
-        System.out.println("client_id: " + kakaoRestApiKey);
-        System.out.println("client_secret: " + kakaoClientSecret); // (등록 시만)
 
         HttpEntity<MultiValueMap<String, String>> tokenRequest = new HttpEntity<>(tokenParams, tokenHeaders);
         ResponseEntity<Map> tokenResponse = restTemplate.postForEntity(tokenUrl, tokenRequest, Map.class);
 
         String accessToken = (String) tokenResponse.getBody().get("access_token");
 
-        // ✅ 사용자 정보 요청
         HttpHeaders profileHeaders = new HttpHeaders();
         profileHeaders.set("Authorization", "Bearer " + accessToken);
         HttpEntity<?> profileRequest = new HttpEntity<>(profileHeaders);
@@ -544,18 +540,26 @@ public class UsrMemberController {
         String socialId = String.valueOf(profileResponse.getBody().get("id"));
         String name = (String) properties.get("nickname");
 
-        // 이메일 없이 로그인 처리
         String provider = "kakao";
-        String email = ""; // 비워둠 또는 null 허용
+        String email = ""; // 이메일은 비워둠
 
+        // 기존 사용자 조회 또는 새로 생성
         Member member = memberService.getOrCreateSocialMember(provider, socialId, email, name);
 
+        // 세션 등록
         Rq rq = new Rq(req, resp, memberService);
         rq.login(member);
         req.getSession().setAttribute("rq", rq);
 
-        return "redirect:/";
+        // ✅ 팝업 닫고 부모 창 새로고침
+        resp.setContentType("text/html; charset=UTF-8");
+        PrintWriter out = resp.getWriter();
+        out.println("<script>");
+        out.println("window.opener.location.href = '/';"); // 부모 창 새로고침
+        out.println("window.close();"); // 팝업 창 닫기
+        out.println("</script>");
     }
+
 
     // 카카오 팝업 로그인 처리용 REST API 컨트롤러 메서드
     @PostMapping("/usr/member/social-login")
@@ -576,4 +580,19 @@ public class UsrMemberController {
 
         return ResultData.from("S-1", "로그인 성공");
     }
+
+    @RequestMapping("/usr/member/kakao-popup-login")
+    public void kakaoPopupRedirect(HttpServletResponse resp) throws IOException {
+        String clientId = "79f2a3a73883a82595a2202187f96cc5";
+        String redirectUri = "http://localhost:8080/usr/member/kakao";
+
+        String kakaoAuthUrl = "https://kauth.kakao.com/oauth/authorize" +
+                "?client_id=" + clientId +
+                "&redirect_uri=" + redirectUri +
+                "&response_type=code" +
+                "&prompt=login";
+
+        resp.sendRedirect(kakaoAuthUrl);
+    }
+
 }
