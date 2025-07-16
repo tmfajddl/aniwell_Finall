@@ -13,10 +13,21 @@
       box-sizing: border-box;
     }
 
+    .main-container {
+      display: flex;
+      width: 90%;
+      background: white;  /* ✔ 흰색 박스 */
+      border-radius: 20px;
+      box-shadow: 0 0 30px rgba(0, 0, 0, 0.15);
+      overflow: hidden;
+
+    }
+
     body {
       margin: 0;
       font-family: 'SUIT', sans-serif;
       display: flex;
+      justify-content: flex-end;
       height: 100vh;
       background: #fef6d9; /* 밝은 베이지 */
     }
@@ -179,6 +190,8 @@
   </style>
 </head>
 <body>
+
+<div class="main-container">
 <div id="map"></div>
 
 <div id="sidebar">
@@ -223,7 +236,7 @@
       <button id="loadMoreBtn" onclick="loadMorePhotos()">더보기</button>
     </div>
   </div>
-
+</div>
 
 <script>
   const memberId = ${memberId};

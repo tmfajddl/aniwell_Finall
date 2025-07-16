@@ -8,10 +8,6 @@ import com.example.RSW.vo.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -99,15 +95,27 @@ public class PetController {
         }
     }
 
-    //테스트용
+    // 장소 디테일 불러오기
     @RequestMapping("/usr/pet/test")
     @ResponseBody
     public Map<String, Object> getPlaceDetail(@RequestParam String url) {
         return KakaoPlaceCrawler.crawlPlace(url);
     }
 
+    // 테스트
+    @RequestMapping("/usr/pet/test2")
+    public String test(@RequestParam("petId") int petId, Model model) {
 
-
+        int memberId = rq.getLoginedMemberId();
+        Pet pet = petService.getPetsById(petId);
+        if(pet.getMemberId() != memberId){
+            return Ut.jsAlertBack("권한이 없습니다.");
+        }
+        List<CalendarEvent> events = calendarEventService.getEventsByPetId(petId);
+        model.addAttribute("events", events); // 감정일기에 등록된 이벤트들
+        model.addAttribute("petId", petId); // 해당 펫의 ID
+        return "usr/pet/test";
+    }
     //주변 펫 샵 조회
     @RequestMapping("/usr/pet/petPlace")
     public String showMap(Model model) {
