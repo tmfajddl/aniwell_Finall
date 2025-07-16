@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import com.example.RSW.repository.BoardRepository;
 import com.example.RSW.repository.DistrictRepository;
 import com.example.RSW.repository.MemberRepository;
+import com.example.RSW.repository.WalkCrewMemberRepository;
 import com.example.RSW.repository.WalkCrewRepository;
 import com.example.RSW.util.Ut;
 import com.example.RSW.vo.District;
@@ -22,6 +23,9 @@ public class WalkCrewService {
 
 	@Autowired
 	private DistrictRepository districtRepository;
+
+	@Autowired
+	private WalkCrewMemberRepository walkCrewMemberRepository;
 
 	private final WalkCrewRepository walkCrewRepository;
 
@@ -86,7 +90,12 @@ public class WalkCrewService {
 	}
 
 	public boolean isApprovedMember(int crewId, int memberId) {
-		return walkCrewRepository.isApprovedMember(crewId, memberId) > 0;
+		WalkCrew crew = getCrewById(crewId);
+		if (crew != null && crew.getLeaderId() == memberId) {
+			return true; // ✅ 크루장은 무조건 승인
+		}
+
+		return walkCrewMemberRepository.countApprovedMember(crewId, memberId) > 0;
 	}
 
 	public void approveMember(int crewId, int memberId) {
@@ -96,6 +105,5 @@ public class WalkCrewService {
 	public WalkCrew getCrewByLeaderId(int leaderId) {
 		return walkCrewRepository.findByLeaderId(leaderId);
 	}
-
 
 }

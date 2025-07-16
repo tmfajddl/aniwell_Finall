@@ -39,10 +39,10 @@ import java.nio.charset.StandardCharsets;
 public class UsrCrewCafeController {
 
 	@Autowired
-	ArticleService articleService;
+	private ArticleService articleService;
 
 	@Autowired
-	WalkCrewService walkCrewService;
+	private WalkCrewService walkCrewService;
 
 	@GetMapping("")
 	public String showCafeMain(@RequestParam(required = false) Integer crewId, Model model) {
@@ -56,10 +56,14 @@ public class UsrCrewCafeController {
 		Rq rq = (Rq) req.getAttribute("rq");
 		WalkCrew crew = walkCrewService.getCrewById(crewId);
 
-		// 최신글 5개씩 각 타입별 가져오기
-		List<Article> noticeArticles = articleService.getRecentArticlesByCrewAndType(crewId, "notice", 5);
-		List<Article> freeArticles = articleService.getRecentArticlesByCrewAndType(crewId, "free", 5);
-		List<Article> galleryArticles = articleService.getRecentArticlesByCrewAndType(crewId, "gallery", 5);
+		// ✅ 게시판 ID 기준으로 불러오기
+		int noticeBoardId = 1; // 공지사항
+		int freeBoardId = 3; // 자유게시판
+		int galleryBoardId = 4; // 사진첩
+
+		List<Article> noticeArticles = articleService.getRecentArticlesByCrewAndBoardId(crewId, noticeBoardId, 5);
+		List<Article> freeArticles = articleService.getRecentArticlesByCrewAndBoardId(crewId, freeBoardId, 5);
+		List<Article> galleryArticles = articleService.getRecentArticlesByCrewAndBoardId(crewId, galleryBoardId, 5);
 
 		model.addAttribute("crew", crew);
 		model.addAttribute("noticeArticles", noticeArticles);
