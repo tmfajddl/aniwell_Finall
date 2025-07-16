@@ -100,9 +100,9 @@
         <input type="password" name="loginPw" placeholder="PW" required>
         <button class="sign-in-button" type="submit">sign in</button>
 
-        <!-- 카카오 로그인 버튼 (팝업용) -->
-        <button type="button" onclick="kakaoLoginPopup()" style="background: none; border: none; margin-top: 15px;">
-            <img src="/img/kakao_login_medium_narrow.png" alt="카카오 로그인 버튼"/>
+        <!-- 카카오 로그인 버튼 -->
+        <button type="button" onclick="openKakaoPopup()" style="background: none; border: none; margin-top: 15px;">
+            <img src="/img/kakao_login_medium_narrow.png" alt="카카오 로그인 버튼">
         </button>
 
 
@@ -117,49 +117,15 @@
 </div>
 <script src="https://developers.kakao.com/sdk/js/kakao.js"></script>
 <script>
-    Kakao.init('${kakaoRestApiKey}');
-    console.log('Kakao SDK 초기화됨:', Kakao.isInitialized());
-
-    function kakaoLoginPopup() {
-        Kakao.Auth.login({
-            scope: 'profile_nickname', // 필요하면 'profile_image,email' 추가
-            scope: 'profile_image',
-            redirectUri: 'http://localhost:8080/usr/member/login/kakao',
-            success: function (authObj) {
-                Kakao.API.request({
-                    url: '/v2/user/me',
-                    success: function (res) {
-                        console.log('사용자 정보:', res);
-
-                        fetch('/usr/member/social-login', {
-                            method: 'POST',
-                            headers: {'Content-Type': 'application/json'},
-                            body: JSON.stringify({
-                                provider: 'kakao',
-                                socialId: res.id,
-                                name: res.properties?.nickname || '비회원',
-                                email: res.kakao_account?.email || ''
-                            })
-                        }).then(r => r.json())
-                            .then(result => {
-                                if (result.resultCode === 'S-1') {
-                                    location.href = '/';
-                                } else {
-                                    alert(result.msg || '로그인 실패');
-                                }
-                            });
-                    },
-                    fail: function (error) {
-                        console.error('사용자 정보 요청 실패', error);
-                        alert('사용자 정보 요청 실패');
-                    }
-                });
-            },
-            fail: function (err) {
-                console.error('카카오 로그인 실패', err);
-                alert('카카오 로그인 실패');
-            }
-        });
+    function openKakaoPopup() {
+        const popup = window.open(
+            "/usr/member/kakao-popup-login",
+            "kakaoLoginPopup",
+            "width=500,height=600"
+        );
+        if (!popup || popup.closed || typeof popup.closed == 'undefined') {
+            alert("팝업이 차단되었습니다. 팝업 차단을 해제해주세요.");
+        }
     }
 </script>
 
