@@ -282,5 +282,5 @@
 
 <!-- 현재 페이지 제목 출력 -->
 <c:if test="${not empty pageTitle}">
-    <h1 class="text-xl font-bold p-4 mt-20">${pageTitle}</h1>
+<h1 class="text-xl font-bold p-4 mt-20">${pageTitle}</h1>
 </c:if>
