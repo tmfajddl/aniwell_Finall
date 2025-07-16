@@ -122,9 +122,9 @@
     .popup {
       position: fixed;
       top: 5%;
-      right: 31%;
+      right: 28%;
       width: 400px;
-      min-height: 90%;
+      height: 90%;
       overflow-y: auto;
       background-color: white;
       border: 2px solid #f9d368;
