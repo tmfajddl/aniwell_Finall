@@ -1,5 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+
 <html>
 <head>
     <title>감정일기</title>
@@ -301,7 +303,7 @@
         }
 
         /* 일기 입력창 */
-        textarea#diaryContent {
+        textarea#editDiaryContent,textarea#diaryContent {
             width: 100%;
             height: 100px;
             padding: 12px 14px;
@@ -381,7 +383,7 @@
             <p>감정:</p>
             <button class="emotion-btn" data-emotion="happy">😊 행복</button>
             <button class="emotion-btn" data-emotion="surprised">😮 놀람</button>
-            <button class="emotion-btn" data-emotion="sad">😿 슬프름</button>
+            <button class="emotion-btn" data-emotion="sad">🥲 슬픔</button>
             <button class="emotion-btn" data-emotion="relaxed">😌 평온</button>
         </div>
         <textarea id="diaryContent" placeholder="일기 내용을 입력해주세요..."></textarea>
@@ -418,7 +420,7 @@
             <button class="emotion-btn" data-emotion="sad">😿 슬픔</button>
             <button class="emotion-btn" data-emotion="relaxed">😌 평온</button>
         </div>
-        <textarea id="diaryContent" ></textarea>
+        <textarea id="editDiaryContent" ></textarea>
         <div class="modal-footer">
             <button onclick="updateDiary()">수정 완료</button>
             <button onclick="$('#editModal').hide();">닫기</button>
@@ -456,18 +458,49 @@
                     html: '<img src="/img/paw_active.png" class="calendar-event-icon" alt="고양이">'
                 };
             },
+            eventDrop: function(info) {
+                const event = info.event;
+                const id = event.id;
+                const newDate = event.startStr;
+
+                const content = event.extendedProps.content || '';
+                const emotion = event.title;
+
+                if (!content) {
+                    alert('내용이 없어 날짜를 옮길 수 없습니다.');
+                    info.revert(); // 원래 위치로 되돌림
+                    return;
+                }
+
+                $.post('/usr/pet/daily/domodify', {
+                    id: id,
+                    eventDate: newDate,
+                    title: emotion,
+                    content: content
+                }, function (res) {
+                    if (res.resultCode && res.resultCode.startsWith('S-')) {
+                        location.reload();
+                    } else {
+                        alert('날짜 변경 실패: ' + res.msg);
+                        info.revert();
+                    }
+                });
+            },
             events: [
                 <c:forEach var="e" items="${events}">
                 {
                     id: '${e.id}',
                     title: '${e.title}',
                     start: '${e.eventDate}',
-                    allDay: true
+                    allDay: true,
+                    extendedProps: {
+                        content: '${fn:escapeXml(e.content)}'
+                    }
                 },
                 </c:forEach>
             ],
+            editable: true,
             dateClick: function(info) {
-                // 해당 날짜에 이벤트가 있는지 확인
                 const dateStr = info.dateStr;
 
                 const eventsOnDate = calendar.getEvents().filter(function(event) {
@@ -475,13 +508,22 @@
                 });
 
                 if (eventsOnDate.length > 0) {
-                    // 첫 번째 이벤트 상세 보기
+                    // 👉 감정일기가 있는 날짜: 상세보기
                     openViewModal(eventsOnDate[0].id);
+                } else {
+                    // 👉 감정일기가 없는 날짜: 등록 모달 열기
+                    $('#diaryDate').val(dateStr); // 선택한 날짜 설정
+                    $('#diaryModal').show();
                 }
             },
+            datesSet: function () {
+                updateDiaryListForCurrentMonth();
+            }
+
 
         });
         calendar.render();
+        updateDiaryListForCurrentMonth();
     });
 
     function openModal() {
@@ -507,6 +549,12 @@
 
         if (!emotion || !date || !content) {
             alert('모든 항목을 입력하세요.');
+            return;
+        }
+
+        const alreadyExists = calendar.getEvents().some(event => event.startStr === date);
+        if (alreadyExists) {
+            alert('해당 날짜에 이미 감정일기가 존재합니다.');
             return;
         }
 
@@ -551,7 +599,7 @@
             if (data.resultCode && data.resultCode.startsWith('S-')) {
                 calendar.getEventById(id)?.remove();
                 $('#viewModal').hide();
-                alert('삭제 완료!');
+                location.reload();
             } else {
                 alert('삭제 실패: ' + data.msg);
             }
@@ -580,6 +628,12 @@
             return;
         }
 
+        const alreadyExists = calendar.getEvents().some(event => event.startStr === date);
+        if (alreadyExists) {
+            alert('해당 날짜에 이미 감정일기가 존재합니다.');
+            return;
+        }
+
         $.post('/usr/pet/daily/domodify', {
             id: id,
             eventDate: date,
@@ -593,6 +647,50 @@
             }
         });
     }
+
+    function updateDiaryListForCurrentMonth() {
+        const container = $('.diary-container');
+        container.empty(); // 기존 내용 제거
+
+        const events = calendar.getEvents();
+        const start = calendar.view.currentStart;
+        const end = calendar.view.currentEnd;
+
+        const filtered = events.filter(e =>
+            e.start >= start && e.start < end
+        );
+
+        if (filtered.length === 0) {
+            container.append('<div class="entry">이 달에는 감정일기가 없습니다.</div>');
+            return;
+        }
+
+        filtered.sort((a, b) => a.start - b.start).forEach(function (e) {
+            const emotion = emotionIcons[e.title] || '';
+            const content = e.extendedProps?.content || '';
+            const date = e.startStr;
+
+            const html =
+                '<div class="entry" data-id="' + e.id + '">' +
+                '<div class="entry-header">' +
+                '<span class="entry-title">' + emotion + ' <b>' + e.title + '</b></span>' +
+                '<span class="entry-date">' + date + '</span>' +
+                '</div>' +
+                '<div class="entry-content">' + content + '</div>' +
+                '</div>';
+
+            container.append(html);
+
+            $(document).on('click', '.entry', function () {
+                const id = $(this).data('id');
+                if (id) {
+                    openViewModal(id);
+                }
+            });
+        });
+    }
+
+
 </script>
 </body>
 </html>
