@@ -468,5 +468,28 @@ public class UsrMemberController {
         return Ut.jsReplace("S-1", "인증서가 삭제되었습니다.", "/usr/member/myCert");
     }
 
+    @RequestMapping("/usr/member/login/kakao")
+    public String kakaoCallback(@RequestParam("code") String code, HttpServletRequest req, HttpServletResponse resp) {
+        // ✅ 1. code를 이용해 access_token 요청
+        // ✅ 2. access_token으로 사용자 정보 요청
+        // ✅ 3. socialId, email, name 파싱
+
+        // 예시 값 (실제로는 API 호출 결과에서 가져옴)
+        String provider = "kakao";
+        String socialId = "1234567890";  // Kakao API로 받은 유저 ID
+        String email = "abc@kakao.com";  // Kakao 계정 이메일
+        String name = "홍길동";           // Kakao 닉네임
+
+        // ✅ 4. DB에 있으면 로그인, 없으면 가입 후 로그인
+        Member member = memberService.getOrCreateSocialMember(provider, socialId, email, name);
+
+        // ✅ 5. 로그인 처리
+        Rq rq = new Rq(req, resp, memberService);
+        rq.login(member);
+        req.getSession().setAttribute("rq", rq);
+
+        return "redirect:/";  // 홈 또는 원하는 페이지로 리디렉션
+    }
+
 
 }
