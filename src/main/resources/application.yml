@@ -35,7 +35,7 @@ kakao:
   rest-api-key: "79f2a3a73883a82595a2202187f96cc5"    # 로그인
   javascript-key: "dfd275f49b78960a0458d6f6294cbde2"
   client-secret: "61Ng1JnIKgkQRXgxaJOpY9wo4gffwvn2"
-  redirect-uri: "http://localhost:8080/usr/member/login/kakao"  #로그인 redirect URI
+  redirect-uri: "http://localhost:8080/usr/member/kakao"  #로그인 redirect URI
 
 cloudinary:
     cloud_name: dfiqktimk
