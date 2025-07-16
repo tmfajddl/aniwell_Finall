@@ -8,8 +8,10 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import com.example.RSW.service.ArticleService;
 import com.example.RSW.service.WalkCrewMemberService;
 import com.example.RSW.service.WalkCrewService;
+import com.example.RSW.vo.Article;
 import com.example.RSW.vo.Rq;
 import com.example.RSW.vo.WalkCrew;
 
@@ -18,6 +20,9 @@ import jakarta.servlet.http.HttpServletRequest;
 @Controller
 @RequestMapping("/usr/walkCrewMember")
 public class UsrWalkCrewMemberController {
+
+	@Autowired
+	ArticleService articleService;
 
 	private final WalkCrewService walkCrewService;
 	private final WalkCrewMemberService walkCrewMemberService;
@@ -32,19 +37,17 @@ public class UsrWalkCrewMemberController {
 	@ModelAttribute("crew")
 	public WalkCrew getCrewForMenu(HttpServletRequest req) {
 		Rq rq = (Rq) req.getAttribute("rq");
-
 		if (rq == null || !rq.isLogined())
 			return null;
 
 		int memberId = rq.getLoginedMemberId();
 
-		// 크루장
 		WalkCrew crew = walkCrewService.getCrewByLeaderId(memberId);
 		if (crew != null)
 			return crew;
 
-		// 참가 승인된 멤버
-		return walkCrewService.getCrewByMemberId(memberId);
+		// ✅ 이쪽으로 교체
+		return walkCrewMemberService.getMyCrew(memberId);
 	}
 
 	// ✅ 참가 요청 (예시)
@@ -67,6 +70,7 @@ public class UsrWalkCrewMemberController {
 	@GetMapping("/requestList")
 	public String showRequestList(@RequestParam int crewId, HttpServletRequest req, Model model) {
 		Rq rq = (Rq) req.getAttribute("rq");
+
 		if (!rq.isLogined()) {
 			return "redirect:/usr/member/login?msg=로그인 후 이용해주세요.";
 		}
@@ -78,12 +82,11 @@ public class UsrWalkCrewMemberController {
 			return "redirect:/usr/walkCrew/detail/" + crewId + "?msg=해당 페이지에 접근 권한이 없습니다.";
 		}
 
-		// 신청자 리스트 조회
 		List<Map<String, Object>> applicants = walkCrewService.getApplicantsByCrewId(crewId);
 		model.addAttribute("applicants", applicants);
 		model.addAttribute("crewId", crewId);
 
-		return "usr/walkCrewMember/requestList";
+		return "usr/walkCrew/requestList"; // ✅ 폴더명 수정됨
 	}
 
 	// ✅ 신청자 상세 정보 보기
@@ -111,7 +114,54 @@ public class UsrWalkCrewMemberController {
 		model.addAttribute("applicant", applicant);
 		model.addAttribute("crewId", crewId);
 
-		return "usr/walkCrewMember/requestDetail";
+		return "usr/walkCrew/requestDetail";
+	}
+
+	// ✅ 내가 가입한 크루의 카페로 이동
+	@GetMapping("/myCrewCafe")
+	public String goToMyCrewCafe(HttpServletRequest req, Model model) {
+		Rq rq = (Rq) req.getAttribute("rq");
+		int memberId = rq.getLoginedMemberId();
+
+		WalkCrew myCrew = walkCrewService.getCrewByLeaderId(memberId);
+		if (myCrew == null) {
+			myCrew = walkCrewMemberService.getMyCrew(memberId);
+		}
+
+		if (myCrew == null) {
+			return rq.historyBackOnView("가입된 크루가 없습니다.");
+		}
+
+		// ❌ 이거 때문에 리스트로 감
+		// return "redirect:/usr/article/list?crewId=" + myCrew.getId();
+
+		// ✅ 이렇게 수정!
+		model.addAttribute("crew", myCrew);
+		List<Article> articles = articleService.getArticlesByCrewId(myCrew.getId());
+		model.addAttribute("articles", articles);
+
+		return "usr/crewCafe/cafeHome"; // ✅ 진짜 카페 홈으로 이동
+	}
+
+	// ✅ 참가 신청 수락 처리
+	@PostMapping("/approve")
+	public String approveApplicant(@RequestParam int crewId, @RequestParam int memberId, HttpServletRequest req) {
+		Rq rq = (Rq) req.getAttribute("rq");
+
+		if (!rq.isLogined()) {
+			return "redirect:/usr/member/login?msg=로그인 후 이용해주세요.";
+		}
+
+		WalkCrew crew = walkCrewService.getCrewById(crewId);
+		if (crew.getLeaderId() != rq.getLoginedMemberId()) {
+			return rq.historyBack("해당 크루의 리더만 수락할 수 있습니다.");
+		}
+
+		// ✅ 수락 처리 (status 컬럼 필요)
+		walkCrewService.approveMember(crewId, memberId);
+
+		// ✅ 알림과 함께 크루 카페로 이동
+		return rq.redirectWithMsg("/usr/walkCrewMember/myCrewCafe", "참가 신청을 수락했습니다.");
 	}
 
 }

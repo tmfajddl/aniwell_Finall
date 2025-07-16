@@ -7,9 +7,32 @@
 
 	<insert id="requestToJoinCrew">
 		INSERT INTO walk_crew_member
-		(crew_id, member_id, status, request_date)
+		(crew_id, member_id,
+		status, request_date)
 		VALUES
 		(#{crewId}, #{memberId}, 'PENDING', NOW())
 	</insert>
+
+	<select id="findMyCrewByMemberId" resultType="WalkCrew">
+		SELECT wc.* FROM walk_crew wc
+		JOIN walk_crew_member wcm ON wc.id = wcm.crewId
+		WHERE wcm.memberId = #{memberId}
+		LIMIT 1
+	</select>
+
+	<select id="findCrewsAppliedBy" resultType="WalkCrew">
+		SELECT wc.* FROM walk_crew wc
+		JOIN walk_crew_member wcm ON wc.id = wcm.crewId
+		WHERE wcm.memberId = #{memberId}
+	</select>
+
+	<select id="findRequestListByLeaderId" resultType="map">
+		SELECT wcm.*, m.nickname, wc.title
+		FROM walk_crew_member wcm
+		JOIN walk_crew wc ON wcm.crewId = wc.id
+		JOIN member m ON wcm.memberId = m.id
+		WHERE wc.leaderId = #{leaderId}
+	</select>
+
 
 </mapper>
