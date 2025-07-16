@@ -1,5 +1,6 @@
 package com.example.RSW.controller;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -16,6 +17,7 @@ import com.example.RSW.vo.Rq;
 import com.example.RSW.vo.WalkCrew;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 @Controller
 @RequestMapping("/usr/walkCrewMember")
@@ -145,23 +147,26 @@ public class UsrWalkCrewMemberController {
 
 	// ✅ 참가 신청 수락 처리
 	@PostMapping("/approve")
-	public String approveApplicant(@RequestParam int crewId, @RequestParam int memberId, HttpServletRequest req) {
+	public void approveApplicant(@RequestParam int crewId, @RequestParam int memberId, HttpServletRequest req,
+			HttpServletResponse resp) throws IOException {
 		Rq rq = (Rq) req.getAttribute("rq");
 
 		if (!rq.isLogined()) {
-			return "redirect:/usr/member/login?msg=로그인 후 이용해주세요.";
+			resp.sendRedirect("/usr/member/login?msg=로그인 후 이용해주세요.");
+			return;
 		}
 
 		WalkCrew crew = walkCrewService.getCrewById(crewId);
 		if (crew.getLeaderId() != rq.getLoginedMemberId()) {
-			return rq.historyBack("해당 크루의 리더만 수락할 수 있습니다.");
+			rq.printHistoryBack("해당 크루의 리더만 수락할 수 있습니다.");
+			return;
 		}
 
-		// ✅ 수락 처리 (status 컬럼 필요)
+		// ✅ 수락 처리
 		walkCrewService.approveMember(crewId, memberId);
 
-		// ✅ 알림과 함께 크루 카페로 이동
-		return rq.redirectWithMsg("/usr/walkCrewMember/myCrewCafe", "참가 신청을 수락했습니다.");
+		// ✅ 알림과 함께 리다이렉트
+		rq.printReplace("S-1", "참가 신청을 수락했습니다.", "/usr/walkCrewMember/myCrewCafe");
 	}
 
 }

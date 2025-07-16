@@ -22,4 +22,7 @@ public interface WalkCrewMemberRepository {
 
 	// ✅ 내가 리더인 크루에 신청한 사람 목록
 	List<Map<String, Object>> findRequestListByLeaderId(@Param("leaderId") int leaderId);
+
+	// ✅ 이미 가입했는지 확인하는 쿼리
+	int countByMemberIdAndCrewId(@Param("memberId") int memberId, @Param("crewId") int crewId);
 }

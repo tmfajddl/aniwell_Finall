@@ -44,4 +44,9 @@ public class WalkCrewMemberService {
 		return walkCrewMemberRepository.findRequestListByLeaderId(leaderId);
 	}
 
+	// ✅ 크루에 이미 가입했는지 여부 확인
+	public boolean isJoinedCrew(int memberId, int crewId) {
+		return walkCrewMemberRepository.countByMemberIdAndCrewId(memberId, crewId) > 0;
+	}
+
 }

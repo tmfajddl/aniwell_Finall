@@ -38,10 +38,35 @@ import java.nio.charset.StandardCharsets;
 @Controller
 public class UsrCrewCafeController {
 
+	@Autowired
+	ArticleService articleService;
+
+	@Autowired
+	WalkCrewService walkCrewService;
+
 	@GetMapping("")
 	public String showCafeMain(@RequestParam(required = false) Integer crewId, Model model) {
 
 		return "usr/crewCafe/cafeHome"; // 이 JSP 경로가 존재해야 함
+	}
+
+	// 까페홈에 article 글 보이게 하기
+	@GetMapping("/cafeHome")
+	public String showCafeHome(@RequestParam int crewId, Model model, HttpServletRequest req) {
+		Rq rq = (Rq) req.getAttribute("rq");
+		WalkCrew crew = walkCrewService.getCrewById(crewId);
+
+		// 최신글 5개씩 각 타입별 가져오기
+		List<Article> noticeArticles = articleService.getRecentArticlesByCrewAndType(crewId, "notice", 5);
+		List<Article> freeArticles = articleService.getRecentArticlesByCrewAndType(crewId, "free", 5);
+		List<Article> galleryArticles = articleService.getRecentArticlesByCrewAndType(crewId, "gallery", 5);
+
+		model.addAttribute("crew", crew);
+		model.addAttribute("noticeArticles", noticeArticles);
+		model.addAttribute("freeArticles", freeArticles);
+		model.addAttribute("galleryArticles", galleryArticles);
+
+		return "usr/crewCafe/cafeHome";
 	}
 
 }
