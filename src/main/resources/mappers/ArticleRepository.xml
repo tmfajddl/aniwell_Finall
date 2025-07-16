@@ -215,5 +215,14 @@
 		updateDate = NOW()
 	</insert>
 
+	<select id="findByCrewId"
+		resultType="com.example.RSW.vo.Article">
+		SELECT *
+		FROM article
+		WHERE crewId = #{crewId}
+		AND delStatus = 0
+		ORDER BY regDate DESC
+	</select>
+
 
 </mapper>
