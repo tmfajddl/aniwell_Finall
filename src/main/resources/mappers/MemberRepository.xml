@@ -168,4 +168,18 @@
           AND socialId = #{socialId}
     </select>
 
+    <insert id="doJoinBySocial" parameterType="map">
+        INSERT INTO `member`
+        SET regDate = NOW(),
+        updateDate = NOW(),
+        socialProvider = #{socialProvider},
+            socialId = #{socialId},
+            name = #{name},
+            email = #{email},
+            authLevel = 1,
+            authName = '일반회원',
+            delStatus = 0
+    </insert>
+
+
 </mapper>
