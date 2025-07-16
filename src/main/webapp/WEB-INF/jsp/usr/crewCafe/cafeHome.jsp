@@ -3,7 +3,7 @@
 
 <html>
 <head>
-<title>${crew.title}-크루 전용 카페</title>
+<title>${crew.title}-크루전용카페</title>
 <style>
 .container {
 	width: 80%;
@@ -38,6 +38,7 @@
 </head>
 <body>
 
+
 	<div class="container">
 		<div class="header">
 			<h1>🏠 [${crew.title}] 전용 크루 공간</h1>
@@ -46,11 +47,17 @@
 
 
 		<div class="menu">
-			<a href="/usr/crewCafe?crewId=${crew.id}">🏠 홈</a> <a
-				href="/usr/crewCafe/articles?crewId=${crew.id}&type=notice">📢
-				공지사항</a> <a href="/usr/crewCafe/articles?crewId=${crew.id}&type=free">📝
-				자유게시판</a> <a href="/usr/crewCafe/gallery?crewId=${crew.id}">📸 사진첩</a> <a
-				href="/usr/crewCafe/schedule?crewId=${crew.id}">📅 일정</a>
+			<a href="/usr/article/cafeHome?crewId=${crew.id}">🏠 홈</a>
+			<a href="/usr/article/list?crewId=${crew.id}&type=notice">📢 공지사항</a>
+			<a href="/usr/article/list?crewId=${crew.id}&type=free">📝 자유게시판</a>
+			<a href="/usr/article/list?crewId=${crew.id}&type=gallery">📸 사진첩</a>
+			<a href="/usr/article/schedule?crewId=${crew.id}">📅 일정</a>
+			<!-- cafeHome.jsp 내부 -->
+			<c:if test="${crew != null and crew.leaderId == rq.loginedMemberId}">
+				<a href="/usr/walkCrewMember/requestList?crewId=${crew.id}">👥 크루 신청자 리스트</a>
+			</c:if>
+
+
 		</div>
 
 		<div class="content-box">

@@ -24,9 +24,24 @@ public class WalkCrewMemberService {
 	@Autowired
 	WalkCrewMemberRepository walkCrewMemberRepository;
 
+	// ✅ 크루 참가 요청
 	public void requestToJoinCrew(int crewId, int memberId) {
-		return WalkCrewMemberRepository.requestToJoinCrew(crewId, memberId);
+		walkCrewMemberRepository.requestToJoinCrew(crewId, memberId);
+	}
 
+	// ✅ 내가 가입한 크루 1개 가져오기 (크루 카페 진입용)
+	public WalkCrew getMyCrew(int memberId) {
+		return walkCrewMemberRepository.findMyCrewByMemberId(memberId);
+	}
+
+	// ✅ 내가 신청한 크루 리스트
+	public List<WalkCrew> getCrewsAppliedBy(int memberId) {
+		return walkCrewMemberRepository.findCrewsAppliedBy(memberId);
+	}
+
+	// ✅ 내가 리더인 크루에 대한 신청자 리스트
+	public List<Map<String, Object>> getRequestListForLeader(int leaderId) {
+		return walkCrewMemberRepository.findRequestListByLeaderId(leaderId);
 	}
 
 }
