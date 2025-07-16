@@ -28,6 +28,7 @@ public class Member {
 	private String authName;
 	private String photo;
 
+	private String address;
 	private String vetCertUrl;        // 인증서 경로
 	private Integer vetCertApproved;  // 승인 상태
 }
