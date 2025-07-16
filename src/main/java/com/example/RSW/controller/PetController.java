@@ -9,14 +9,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.BufferedReader;
@@ -79,22 +74,6 @@ public class PetController {
             return "added";
         }
     }
-
-    @GetMapping("/usr/pet/imageProxy")
-    @ResponseBody
-    public ResponseEntity<byte[]> imageProxy(@RequestParam String url) {
-        try {
-            RestTemplate restTemplate = new RestTemplate();
-            byte[] imageBytes = restTemplate.getForObject(url, byte[].class);
-
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.IMAGE_JPEG); // 또는 detect 방식 가능
-            return new ResponseEntity<>(imageBytes, headers, HttpStatus.OK);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
-    }
-
     // 장소 디테일 불러오기
     @RequestMapping("/usr/pet/test")
     @ResponseBody
