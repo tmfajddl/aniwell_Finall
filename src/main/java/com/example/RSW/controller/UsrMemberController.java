@@ -7,11 +7,13 @@ import com.example.RSW.service.VetCertificateService;
 import com.example.RSW.vo.VetCertificate;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.*;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.bind.annotation.*;
 
 import com.example.RSW.vo.Rq;
 import com.example.RSW.vo.Member;
@@ -20,6 +22,7 @@ import com.example.RSW.util.Ut;
 import com.example.RSW.service.MemberService;
 
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
@@ -30,6 +33,17 @@ import java.util.UUID;
 
 @Controller
 public class UsrMemberController {
+
+    // 카카오 REST API 키 주입
+    @Value("${kakao.rest-api-key}")
+    private String kakaoRestApiKey;
+
+    // 카카오 리디렉트 URI 주입
+    @Value("${kakao.redirect-uri}")
+    private String kakaoRedirectUri;
+
+    @Value("${kakao.client-secret}")
+    private String kakaoClientSecret;
 
     @Autowired
     private Rq rq;
@@ -59,7 +73,11 @@ public class UsrMemberController {
     }
 
     @RequestMapping("/usr/member/login")
-    public String showLogin(HttpServletRequest req) {
+    public String showLogin(HttpServletRequest req, Model model) {
+
+        model.addAttribute("kakaoRestApiKey", kakaoRestApiKey);
+        model.addAttribute("kakaoRedirectUri", kakaoRedirectUri);
+
         return "/usr/member/login";
     }
 
@@ -189,18 +207,30 @@ public class UsrMemberController {
     }
 
     @RequestMapping("/usr/member/doCheckPw")
-    @ResponseBody
-    public String doCheckPw(String loginPw) {
+    public void doCheckPw(HttpServletRequest req, HttpServletResponse resp, String loginPw) throws IOException {
+        Rq rq = (Rq) req.getAttribute("rq");
+
+        // ✅ 소셜 로그인 회원은 비밀번호 확인 없이 바로 이동
+        if (rq.getLoginedMember().isSocialMember()) {
+            resp.sendRedirect("modify");
+            return;
+        }
+
+        // ✅ 일반 로그인 회원은 비밀번호 확인
         if (Ut.isEmptyOrNull(loginPw)) {
-            return Ut.jsHistoryBack("F-1", "비번 써");
+            rq.printHistoryBack("비밀번호를 입력해 주세요.");
+            return;
         }
 
-        if (rq.getLoginedMember().getLoginPw().equals(Ut.sha256(loginPw)) == false) {
-            return Ut.jsHistoryBack("F-2", "비번 틀림");
+        if (!rq.getLoginedMember().getLoginPw().equals(Ut.sha256(loginPw))) {
+            rq.printHistoryBack("비밀번호가 일치하지 않습니다.");
+            return;
         }
 
-        return Ut.jsReplace("S-1", Ut.f("비밀번호 확인 성공"), "modify");
+        // ✅ 성공 시 수정 페이지로 리다이렉트
+        resp.sendRedirect("modify");
     }
+
 
     @RequestMapping("/usr/member/modify")
     public String showmyModify() {
@@ -215,7 +245,8 @@ public class UsrMemberController {
                            @RequestParam String nickname,
                            @RequestParam String cellphone,
                            @RequestParam String email,
-                           @RequestParam(required = false) MultipartFile photoFile) {
+                           @RequestParam(required = false) MultipartFile photoFile,
+                           @RequestParam String address) {
 
         Rq rq = (Rq) req.getAttribute("rq");
 
@@ -255,7 +286,7 @@ public class UsrMemberController {
 
         ResultData modifyRd;
         if (Ut.isEmptyOrNull(loginPw)) {
-            modifyRd = memberService.modifyWithoutPw(memberId, name, nickname, cellphone, email, photoUrl);
+            modifyRd = memberService.modifyWithoutPw(memberId, name, nickname, cellphone, email, photoUrl, address);
         } else {
             modifyRd = memberService.modify(memberId, loginPw, name, nickname, cellphone, email, photoUrl);
         }
@@ -468,28 +499,81 @@ public class UsrMemberController {
         return Ut.jsReplace("S-1", "인증서가 삭제되었습니다.", "/usr/member/myCert");
     }
 
+    // 카카오 로그인
     @RequestMapping("/usr/member/login/kakao")
     public String kakaoCallback(@RequestParam("code") String code, HttpServletRequest req, HttpServletResponse resp) {
-        // ✅ 1. code를 이용해 access_token 요청
-        // ✅ 2. access_token으로 사용자 정보 요청
-        // ✅ 3. socialId, email, name 파싱
 
-        // 예시 값 (실제로는 API 호출 결과에서 가져옴)
+        String tokenUrl = "https://kauth.kakao.com/oauth/token";
+
+        RestTemplate restTemplate = new RestTemplate();
+
+        HttpHeaders tokenHeaders = new HttpHeaders();
+        tokenHeaders.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+        MultiValueMap<String, String> tokenParams = new LinkedMultiValueMap<>();
+        tokenParams.add("grant_type", "authorization_code");
+        tokenParams.add("client_id", kakaoRestApiKey);
+        tokenParams.add("redirect_uri", kakaoRedirectUri);
+        tokenParams.add("client_secret", kakaoClientSecret);
+        tokenParams.add("code", code);
+
+        System.out.println("code: " + code);
+        System.out.println("redirect_uri: " + kakaoRedirectUri);
+        System.out.println("client_id: " + kakaoRestApiKey);
+        System.out.println("client_secret: " + kakaoClientSecret); // (등록 시만)
+
+        HttpEntity<MultiValueMap<String, String>> tokenRequest = new HttpEntity<>(tokenParams, tokenHeaders);
+        ResponseEntity<Map> tokenResponse = restTemplate.postForEntity(tokenUrl, tokenRequest, Map.class);
+
+        String accessToken = (String) tokenResponse.getBody().get("access_token");
+
+        // ✅ 사용자 정보 요청
+        HttpHeaders profileHeaders = new HttpHeaders();
+        profileHeaders.set("Authorization", "Bearer " + accessToken);
+        HttpEntity<?> profileRequest = new HttpEntity<>(profileHeaders);
+
+        ResponseEntity<Map> profileResponse = restTemplate.exchange(
+                "https://kapi.kakao.com/v2/user/me",
+                HttpMethod.GET,
+                profileRequest,
+                Map.class
+        );
+
+        Map properties = (Map) profileResponse.getBody().get("properties");
+
+        String socialId = String.valueOf(profileResponse.getBody().get("id"));
+        String name = (String) properties.get("nickname");
+
+        // 이메일 없이 로그인 처리
         String provider = "kakao";
-        String socialId = "1234567890";  // Kakao API로 받은 유저 ID
-        String email = "abc@kakao.com";  // Kakao 계정 이메일
-        String name = "홍길동";           // Kakao 닉네임
+        String email = ""; // 비워둠 또는 null 허용
 
-        // ✅ 4. DB에 있으면 로그인, 없으면 가입 후 로그인
         Member member = memberService.getOrCreateSocialMember(provider, socialId, email, name);
 
-        // ✅ 5. 로그인 처리
         Rq rq = new Rq(req, resp, memberService);
         rq.login(member);
         req.getSession().setAttribute("rq", rq);
 
-        return "redirect:/";  // 홈 또는 원하는 페이지로 리디렉션
+        return "redirect:/";
     }
 
+    // 카카오 팝업 로그인 처리용 REST API 컨트롤러 메서드
+    @PostMapping("/usr/member/social-login")
+    @ResponseBody
+    public ResultData<?> kakaoSocialLogin(@RequestBody Map<String, Object> payload,
+                                          HttpServletRequest req, HttpServletResponse resp) {
 
+        String provider = (String) payload.get("provider"); // "kakao"
+        String socialId = String.valueOf(payload.get("socialId"));
+        String name = (String) payload.get("name");
+        String email = (String) payload.get("email");
+
+        Member member = memberService.getOrCreateSocialMember(provider, socialId, email, name);
+
+        Rq rq = new Rq(req, resp, memberService);
+        rq.login(member);
+        req.getSession().setAttribute("rq", rq);
+
+        return ResultData.from("S-1", "로그인 성공");
+    }
 }
