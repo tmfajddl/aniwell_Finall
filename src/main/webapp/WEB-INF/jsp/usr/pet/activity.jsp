@@ -128,12 +128,30 @@
         // WebSocket 연결
         var socket = new SockJS("/ws");
         var stomp = Stomp.over(socket);
-        stomp.connect({}, function () {
-            stomp.subscribe("/topic/activity/" + petId, function (msg) {
-                var act = JSON.parse(msg.body);
-                addItem(act);
+        stomp.subscribe("/topic/activity/" + petId, function (msg) {
+            var act = JSON.parse(msg.body);
+            var start = new Date(act.enteredAt.replace('T', ' '));
+            var end = new Date(act.exitedAt.replace('T', ' '));
+            var id = Date.now() + Math.random();
+            var color = getColor(act.zoneName);
+
+            // ➕ 추가
+            items.add({
+                id: id,
+                content: getEmoji(),
+                start: start,
+                end: end,
+                group: act.zoneName,
+                title: act.zoneName + "에서 " + act.durationSec + "초 동안 머물렀어요 🐾",
+                style: "background-color: " + color + "; border-radius: 16px; font-size:16px; padding:4px;"
             });
+
+            // ⏩ 추가된 항목으로 이동
+            setTimeout(function () {
+                timeline.focus(id);
+            }, 300);
         });
+
     });
 </script>
 
