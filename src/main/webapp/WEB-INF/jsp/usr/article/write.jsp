@@ -31,7 +31,7 @@
 		</c:if>
 
 
-		
+
 		<!-- ✅ 크루 게시판용 hidden 값 -->
 		<c:if test="${not empty crewId}">
 			<input type="hidden" name="crewId" value="${crewId}" />

@@ -46,8 +46,10 @@ public class UsrCrewCafeController {
 
 	@GetMapping("")
 	public String showCafeMain(@RequestParam(required = false) Integer crewId, Model model) {
-
-		return "forward:/usr/crewCafe/cafeHome?crewId=" + crewId; // 이 JSP 경로가 존재해야 함
+		if (crewId == null) {
+			return "common/error/invalidCrew"; // 예외 페이지 유도
+		}
+		return "redirect:/usr/crewCafe/cafeHome?crewId=" + crewId;
 	}
 
 	// 까페홈에 article 글 보이게 하기

@@ -81,6 +81,7 @@ public class UsrArticleController {
 			System.out.println("📌 기본 boardId 할당됨 = " + boardId);
 		}
 
+		
 		model.addAttribute("boardId", boardId);
 		System.out.println("✅ 글쓰기 진입 성공 (일반)");
 		return "usr/article/write";
