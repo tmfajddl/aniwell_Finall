@@ -6,6 +6,7 @@ import com.example.RSW.vo.Member;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 @Mapper
 public interface MemberRepository {
@@ -55,5 +56,9 @@ public interface MemberRepository {
                        @Param("name") String name,
                        @Param("nickname") String nickname,
                        @Param("email") String email);
+
+    Member findBySocialProviderAndSocialId(@Param("socialProvider") String socialProvider,
+                                           @Param("socialId") String socialId);
+
 
 }
