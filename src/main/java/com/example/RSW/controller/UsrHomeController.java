@@ -16,6 +16,7 @@ public class UsrHomeController {
 	@Autowired
 	private ArticleService articleService;
 
+
 	@RequestMapping("/usr/home/main")
 	public String showMain(Model model) {
 		int noticeBoardId = 1; // 공지사항 게시판 ID
