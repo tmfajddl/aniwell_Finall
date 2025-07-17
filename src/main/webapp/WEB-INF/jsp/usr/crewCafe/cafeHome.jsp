@@ -1,6 +1,8 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt"%>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions"%>
+
 
 <html>
 <head>
@@ -84,7 +86,6 @@ ul.article-preview img {
 
 	<p>📌 현재 접속한 crewId: ${crew.id}</p>
 
-
 	<div class="container">
 		<div class="header">
 			<h1>🏠 [${crew.title}] 전용 크루 공간</h1>
@@ -92,7 +93,7 @@ ul.article-preview img {
 		</div>
 
 		<div class="menu">
-			<a href="/usr/article/cafeHome?crewId=${crew.id}">🏠 홈</a>
+			<a href="/usr/crewCafe/cafeHome?crewId=${crew.id}">🏠 홈</a>
 			<a href="/usr/article/list?crewId=${crew.id}&boardId=1">📢 공지사항</a>
 			<a href="/usr/article/list?crewId=${crew.id}&boardId=3">📝 자유게시판</a>
 			<a href="/usr/article/list?crewId=${crew.id}&boardId=4">📸 사진첩</a>
@@ -109,13 +110,10 @@ ul.article-preview img {
 				<a class="write-button" href="/usr/article/write?crewId=${crew.id}&boardId=1">✏️ 공지 작성</a>
 			</div>
 			<ul class="article-preview">
-				<c:forEach var="article" items="${noticeArticles}">
+				<c:forEach var="article" items="${noticeArticles}" begin="0" end="0">
 					<li>
-						<a href="/usr/article/detail?id=${article.id}&crewId=${crew.id}">
-							${article.title} (
-							<fmt:formatDate value="${article.regDate}" pattern="yyyy-MM-dd" />
-							)
-						</a>
+						<a href="/usr/article/detail?id=${article.id}&crewId=${crew.id}"> ${article.title} (
+							${fn:substring(article.regDate, 0, 10)} ) </a>
 					</li>
 				</c:forEach>
 				<c:if test="${empty noticeArticles}">
@@ -131,13 +129,10 @@ ul.article-preview img {
 				<a class="write-button" href="/usr/article/write?crewId=${crew.id}&boardId=3">✏️ 자유 글쓰기</a>
 			</div>
 			<ul class="article-preview">
-				<c:forEach var="article" items="${freeArticles}">
+				<c:forEach var="article" items="${freeArticles}" begin="0" end="0">
 					<li>
-						<a href="/usr/article/detail?id=${article.id}&crewId=${crew.id}">
-							${article.title} (
-							<fmt:formatDate value="${article.regDate}" pattern="yyyy-MM-dd" />
-							)
-						</a>
+						<a href="/usr/article/detail?id=${article.id}&crewId=${crew.id}"> ${article.title} (
+							${fn:substring(article.regDate, 0, 10)} ) </a>
 					</li>
 				</c:forEach>
 				<c:if test="${empty freeArticles}">
@@ -153,7 +148,7 @@ ul.article-preview img {
 				<a class="write-button" href="/usr/article/write?crewId=${crew.id}&boardId=4">📤 사진 업로드</a>
 			</div>
 			<ul class="article-preview">
-				<c:forEach var="article" items="${galleryArticles}">
+				<c:forEach var="article" items="${galleryArticles}" begin="0" end="0">
 					<li>
 						<a href="/usr/article/detail?id=${article.id}&crewId=${crew.id}">
 							<c:if test="${not empty article.imageUrl}">
