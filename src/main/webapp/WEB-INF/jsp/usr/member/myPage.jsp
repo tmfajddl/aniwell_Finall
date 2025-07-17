@@ -86,14 +86,12 @@
             </tbody>
         </table>
 
-        <c:set var="cert" value="${cert}"/> <!-- VetCertificate -->
-
-        <!-- ✅ 수의사 인증 영역 -->
-        <c:if test="${rq.loginedMember.authName == '수의사'}">
+        <!-- ✅ 관리자 제외한 모든 회원에게 수의사 인증 영역 제공 -->
+        <c:if test="${rq.loginedMember.authLevel != 7}">
             <div class="text-center mt-6">
 
-                <!-- 1. 인증 전 (소셜 로그인 + 수의사지만 아직 업로드 안 한 경우) -->
-                <c:if test="${rq.loginedMember.authLevel == 1 && empty cert}">
+                <!-- 1. 인증서 없음 → 업로드 -->
+                <c:if test="${empty cert}">
                     <form id="vetCertForm" action="doVetCertUpload" method="post" enctype="multipart/form-data"
                           style="display: none;">
                         <input type="file" id="vetCertFileInput" name="file" accept=".pdf,.jpg,.jpeg,.png"
@@ -105,7 +103,7 @@
                     </button>
                 </c:if>
 
-                <!-- 2. 인증서 업로드 완료, 승인 대기 중 -->
+                <!-- 2. 심사 중 -->
                 <c:if test="${not empty cert && cert.approved == 0}">
                     <p class="text-yellow-600 font-semibold mt-2">🕓 수의사 인증 심사 중입니다.</p>
                     <a href="myCert"
@@ -114,15 +112,14 @@
                     </a>
                 </c:if>
 
-                <!-- 3. 인증 승인 완료 -->
+                <!-- 3. 승인 완료 -->
                 <c:if test="${not empty cert && cert.approved == 1}">
                     <p class="text-green-600 font-bold mt-2">✅ 수의사 인증이 완료되었습니다.</p>
                 </c:if>
 
-                <!-- 4. 인증 거절됨 -->
+                <!-- 4. 거절됨 -->
                 <c:if test="${not empty cert && cert.approved == 2}">
                     <p class="text-red-600 font-semibold mt-2">❌ 수의사 인증이 거절되었습니다. 다시 업로드해주세요.</p>
-
                     <form id="vetCertForm" action="doVetCertUpload" method="post" enctype="multipart/form-data"
                           style="display: none;">
                         <input type="file" id="vetCertFileInput" name="file" accept=".pdf,.jpg,.jpeg,.png"
@@ -136,6 +133,7 @@
 
             </div>
         </c:if>
+
 
         <!-- ✅ 회원 정보 수정 / 탈퇴 / 뒤로가기 -->
         <div class="text-center mt-6">
