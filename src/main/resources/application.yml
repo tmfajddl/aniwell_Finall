@@ -4,7 +4,7 @@ spring:
   mail:
     host: smtp.gmail.com
     port: 587
-#   username: 구글 계정
+    #   username: 구글 계정
     #password: 구글 계정 앱 비밀번호
     properties:
       mail:
@@ -38,6 +38,6 @@ kakao:
   redirect-uri: "http://localhost:8080/usr/member/kakao"  #로그인 redirect URI
 
 cloudinary:
-    cloud_name: dfiqktimk
-    api_key: 145284189636895
-    api_secret: 4TS23PL5HMWPolljcIRqitpWwU0
+  cloud_name: dfiqktimk
+  api_key: 145284189636895
+  api_secret: 4TS23PL5HMWPolljcIRqitpWwU0

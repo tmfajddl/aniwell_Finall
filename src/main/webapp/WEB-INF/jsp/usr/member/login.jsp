@@ -104,7 +104,7 @@
         <button type="button" onclick="openKakaoPopup()" style="background: none; border: none; margin-top: 15px;">
             <img src="/img/kakao_login_medium_narrow.png" alt="카카오 로그인 버튼">
         </button>
-
+        
 
         <!-- 로고 이미지 -->
         <img class="logo-img" src="/img/logo.png" alt="Aniwell Logo">
