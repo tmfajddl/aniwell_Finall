@@ -294,9 +294,11 @@ public class PetController {
 		}
 		List<PetAnalysis> analysisList = petAnalysisService.getAnalysisByPetId(petId);
 
-		// 감정 분석 사진 목록 리스트
+		List<String> emotionList = List.of("happy", "relaxed", "sad", "scared");
+		model.addAttribute("emotionList", emotionList);
 		model.addAttribute("analysisList", analysisList);
-		return "usr/pet/gallery"; // 분석 요청 form (이미지 경로 선택)
+		return "usr/pet/gallery";
+// 분석 요청 form (이미지 경로 선택)
 	}
 
 	// 감정 분석 로직
