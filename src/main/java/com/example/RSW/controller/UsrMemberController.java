@@ -717,6 +717,4 @@ public class UsrMemberController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 실패");
         }
     }
-
-
 }
