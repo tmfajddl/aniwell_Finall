@@ -167,16 +167,19 @@ public class ArticleService {
 		return articleRepository.findByCrewId(crewId);
 	}
 
-	public ResultData writeCrewArticle(int crewId, int loginedMemberId, String title, String body) {
-		articleRepository.insertCrewArticle(crewId, loginedMemberId, title, body);
+	public ResultData writeCrewArticle(Integer boardId, int crewId, int loginedMemberId, String title, String body) {
+		articleRepository.insertCrewArticle(boardId, crewId, loginedMemberId, title, body);
 
 		int id = articleRepository.getLastInsertId();
-
 		return ResultData.from("S-1", "작성 완료", "id", id);
 	}
 
 	public List<Article> getRecentArticlesByCrewAndType(int crewId, String type, int limit) {
 		return articleRepository.findRecentArticlesByCrewAndType(crewId, type, limit);
+	}
+
+	public List<Article> getRecentArticlesByCrewAndBoardId(int crewId, int boardId, int limit) {
+		return articleRepository.getRecentArticlesByCrewAndBoardId(crewId, boardId, limit);
 	}
 
 }
