@@ -1,65 +1,380 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+
 <html>
 <head>
     <title>감정일기</title>
-    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
     <style>
         body {
+            margin: 0;
             font-family: 'SUIT', sans-serif;
-            background: #fffbea;
-            padding: 20px;
+            background: #b7b7b7;
+            display: flex;
+            justify-content: end;
+            align-items: center;
+            height: 100vh;
         }
-        h1 { text-align: center; }
+
+        .main-container {
+            display: flex;
+            background: white;
+            width: 90%;
+            height: 100%;
+            border-radius: 20px 0 0 20px;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.15);
+            overflow: hidden;
+        }
+
+        .content-area {
+            flex-grow: 1;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+            background: white;
+        }
+
+        /* 달력 전체 */
         #calendar {
-            max-width: 900px;
-            margin: 20px auto;
+            font-family: 'SUIT', sans-serif;
             background: white;
+            border-radius: 20px;
             padding: 10px;
-            border-radius: 12px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-        }
-        .btn-register {
-            display: block;
-            margin: 0 auto;
-            padding: 10px 20px;
-            background: #ffd6e0;
-            border-radius: 10px;
+            box-shadow: none;
+            width: 100%;
             border: none;
-            cursor: pointer;
         }
-        .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); }
-        .modal-content {
+
+        .fc .fc-daygrid-day-frame {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+        }
+
+        .fc .fc-button:focus {
+            outline: none !important;
+            box-shadow: none !important;
+            border: none !important;
+        }
+
+        /* 헤더: 2025년 7월 + 좌우 화살표 */
+        .fc-toolbar-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        .fc .fc-button {
+            background: transparent;
+            border: none;
+            color: #d3cfc2;
+            font-size: 20px;
+            transition: 0.2s ease;
+        }
+        .fc .fc-button:hover {
+            color: #b4ae9c;
+            background: transparent;
+        }
+
+
+        /* 요일 (일~토) */
+        .fc-col-header-cell {
+            font-weight: bold;
+            font-size: 15px;
+            color: #333;
+            padding: 10px 0;
+            border: none !important;
+            background: none !important;
+        }
+
+        .fc {
+            background: transparent !important;
+            box-shadow: none !important;
+            border: none !important;
+        }
+
+
+
+        /* 날짜 셀 - 테두리 제거 + 숫자 크게 */
+        .fc-daygrid-day {
+            border: none !important;
+            background: none;
+            text-align: center;
+            font-size: 20px;
+            color: #333;
+            height: 50px;
+            vertical-align: middle;
+            padding: 0;
+            position: relative;
+        }
+
+        /* 지난달/다음달 날짜 흐리게 */
+        .fc-day-other {
+            color: #ccc !important;
+        }
+
+        /* 오늘 날짜 하이라이트 (동그란 배경) */
+        .fc-day-today {
+            background: #e3e8b7 !important;
+            border-radius: 50% !important;
+            font-weight: bold;
+        }
+
+        /* 격자 테두리 완전히 제거 */
+        .fc-scrollgrid,
+        .fc-scrollgrid-section,
+        .fc-scrollgrid-sync-table,
+        .fc-col-header,
+        .fc-daygrid-body {
+            border: none !important;
+        }
+
+        .fc-theme-standard td,
+        .fc-theme-standard th {
+            border: none !important;
+        }
+
+        .calendar-event {
+            position: absolute;
+            top: -30px;
+            left: 4px;
+            font-size: 18px;
+        }
+
+        .calendar-event-icon {
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            width: 20px;
+            height: 20px;
+        }
+
+        .fc-daygrid-event {
+            background: transparent !important;
+            border: none !important;
+            padding: 0;
+        }
+
+        .diary-panel {
+            flex-grow: 1;
             background: white;
-            width: 400px;
-            margin: 5% auto;
-            padding: 20px;
             border-radius: 15px;
-            max-height: 500px;
+            padding: 20px;
             overflow-y: auto;
         }
+
+        .diary-container {
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: inset 0 0 5px rgba(232, 240, 193);
+            overflow-y: auto;
+            height: 80%;
+        }
+
+        .diary-panel h2 {
+            margin-top: 0;
+        }
+
+        .entry {
+            background: #e8f0c1;
+            padding: 15px 20px;
+            margin: 15px auto;
+            border-radius: 20px;
+            font-family: 'SUIT', sans-serif;
+            color: #333;
+            max-width: 80%;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        }
+
+        .entry-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .entry-title {
+            font-size: 16px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .entry-date {
+            font-size: 13px;
+            color: #555;
+            border-bottom: 1px solid #aaa;
+            padding-top: 3px;
+        }
+
+        .entry-content {
+            font-size: 14px;
+            white-space: pre-wrap;
+        }
+
+
+        .btn-register {
+            padding: 10px 15px;
+            background: #e8f0c1;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            margin: 30px auto 10px auto;
+            max-width: 80%;
+
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 100;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            font-family: 'SUIT', sans-serif;
+        }
+
+        /* 🌿 말랑한 모달 박스 */
+        .modal-content {
+            background: white;
+            width: 90%;
+            max-width: 460px;
+            margin: 15% auto;
+            padding: 30px;
+            border-radius: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            border: 4px double #e0f2c2;
+        }
+
+        /* 제목 */
+        .modal-content h3 {
+            text-align: center;
+            font-size: 22px;
+            color: #444;
+            margin-bottom: 25px;
+        }
+
+        /* 날짜 input */
+        .modal-content label {
+            font-size: 14px;
+            font-weight: bold;
+            color: #777;
+            display: block;
+            margin-bottom: 12px;
+        }
+
+        /* 감정 버튼 영역 */
+        .emotion-btn-group {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        /* 감정 버튼 - 연초록 테마 */
         .emotion-btn {
-            font-size: 20px; padding: 10px; margin: 5px;
-            border-radius: 50px; border: 2px solid #ffc0cb;
-            background: #fff8f8; cursor: pointer;
+            font-size: 16px;
+            padding: 10px 18px;
+            background: #f0f9e8;
+            border: 2px solid #c7e9b0;
+            border-radius: 40px;
+            cursor: pointer;
+            transition: 0.2s ease;
+            font-weight: 500;
+            box-shadow: 1px 1px 5px rgba(0,0,0,0.05);
         }
-        .emotion-btn.selected { background: #ffb3c1; }
-        textarea {
-            width: 100%; height: 100px; padding: 10px; border-radius: 10px;
-            font-family: 'SUIT';
+
+        .emotion-btn:hover {
+            background: #e3f6c9;
         }
-        .modal-footer { text-align: right; margin-top: 10px; }
+
+        .emotion-btn.selected {
+            background: #c5e6a6;
+            color: #2e2e2e;
+        }
+
+        /* 일기 입력창 */
+        textarea#editDiaryContent,textarea#diaryContent {
+            width: 100%;
+            height: 100px;
+            padding: 12px 14px;
+            font-size: 14px;
+            border: 1.5px solid #d0e4c1;
+            border-radius: 15px;
+            background: #fcfff9;
+            resize: vertical;
+            margin-top: 5px;
+        }
+
+        /* 하단 버튼 */
+        .modal-footer {
+            margin-top: 20px;
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .modal-footer button {
+            flex: 1;
+            padding: 10px 0;
+            border-radius: 15px;
+            border: none;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .modal-footer button:first-child {
+            background: #e0f3c5;
+            color: #333;
+        }
+
+        .modal-footer button:last-child {
+            background: #f1f1f1;
+            color: #333;
+        }
+
+        .modal-footer button:hover {
+            opacity: 0.9;
+        }
+
+
+
     </style>
 </head>
 <body>
+<div class="main-container">
+    <div class="content-area">
+        <button class="btn-register" onclick="openModal()">+ 등록</button>
+        <div id="calendar"></div>
+    </div>
+    <div class="diary-panel">
+        <h2>📓 감정일기</h2>
+        <div class="diary-container">
+            <c:forEach var="e" items="${events}">
+                <div class="entry">
+                    <div class="entry-header">
+                        <span class="entry-title"><b>${e.title}</b> 🐱</span>
+                        <span class="entry-date">${e.eventDate}</span>
+                    </div>
+                    <div class="entry-content">${e.content}</div>
+                </div>
 
-<h1>🐾 감정 일기</h1>
-<button class="btn-register" onclick="openModal()">+ 등록</button>
-<div id="calendar"></div>
+            </c:forEach>
+        </div>
+    </div>
+</div>
 
-<!-- 등록 형식 -->
 <div id="diaryModal" class="modal">
     <div class="modal-content">
         <h3>오늘의 감정 일기</h3>
@@ -68,7 +383,7 @@
             <p>감정:</p>
             <button class="emotion-btn" data-emotion="happy">😊 행복</button>
             <button class="emotion-btn" data-emotion="surprised">😮 놀람</button>
-            <button class="emotion-btn" data-emotion="sad">😿 슬프름</button>
+            <button class="emotion-btn" data-emotion="sad">🥲 슬픔</button>
             <button class="emotion-btn" data-emotion="relaxed">😌 평온</button>
         </div>
         <textarea id="diaryContent" placeholder="일기 내용을 입력해주세요..."></textarea>
@@ -92,7 +407,6 @@
     </div>
 </div>
 
-
 <!-- 수정 모달 -->
 <div id="editModal" class="modal">
     <div class="modal-content">
@@ -103,10 +417,10 @@
             <p>감정:</p>
             <button class="emotion-btn" data-emotion="happy">😊 행복</button>
             <button class="emotion-btn" data-emotion="surprised">😮 놀람</button>
-            <button class="emotion-btn" data-emotion="sad">😿 슬프름</button>
+            <button class="emotion-btn" data-emotion="sad">😿 슬픔</button>
             <button class="emotion-btn" data-emotion="relaxed">😌 평온</button>
         </div>
-        <textarea id="editDiaryContent"></textarea>
+        <textarea id="editDiaryContent" ></textarea>
         <div class="modal-footer">
             <button onclick="updateDiary()">수정 완료</button>
             <button onclick="$('#editModal').hide();">닫기</button>
@@ -115,6 +429,7 @@
 </div>
 
 <script>
+
     const petId = ${petId};
     const emotionIcons = { happy: '😊', surprised: '😮', sad: '😿', relaxed: '😌' };
     let currentDiaryData = null;
@@ -126,9 +441,50 @@
         calendar = new FullCalendar.Calendar(calendarEl, {
             initialView: 'dayGridMonth',
             locale: 'ko',
-            eventClick: function (info) {
-                const id = info.event.id;
-                openViewModal(id);
+            headerToolbar: {
+                left: 'prev',
+                center: 'title',
+                right: 'next'
+            },
+            titleFormat: { month: 'long' }, // "7월"
+            dayMaxEventRows: true,
+
+            // "1일" → "1"로 표시
+            dayCellContent: function (arg) {
+                return { html: '<div>' + arg.date.getDate() + '</div>' };
+            },
+            eventContent: function(arg) {
+                return {
+                    html: '<img src="/img/paw_active.png" class="calendar-event-icon" alt="고양이">'
+                };
+            },
+            eventDrop: function(info) {
+                const event = info.event;
+                const id = event.id;
+                const newDate = event.startStr;
+
+                const content = event.extendedProps.content || '';
+                const emotion = event.title;
+
+                if (!content) {
+                    alert('내용이 없어 날짜를 옮길 수 없습니다.');
+                    info.revert(); // 원래 위치로 되돌림
+                    return;
+                }
+
+                $.post('/usr/pet/daily/domodify', {
+                    id: id,
+                    eventDate: newDate,
+                    title: emotion,
+                    content: content
+                }, function (res) {
+                    if (res.resultCode && res.resultCode.startsWith('S-')) {
+                        location.reload();
+                    } else {
+                        alert('날짜 변경 실패: ' + res.msg);
+                        info.revert();
+                    }
+                });
             },
             events: [
                 <c:forEach var="e" items="${events}">
@@ -137,13 +493,37 @@
                     title: '${e.title}',
                     start: '${e.eventDate}',
                     allDay: true,
-                    display: 'auto'
+                    extendedProps: {
+                        content: '${fn:escapeXml(e.content)}'
+                    }
                 },
                 </c:forEach>
-            ]
-        });
+            ],
+            editable: true,
+            dateClick: function(info) {
+                const dateStr = info.dateStr;
 
+                const eventsOnDate = calendar.getEvents().filter(function(event) {
+                    return event.startStr === dateStr;
+                });
+
+                if (eventsOnDate.length > 0) {
+                    // 👉 감정일기가 있는 날짜: 상세보기
+                    openViewModal(eventsOnDate[0].id);
+                } else {
+                    // 👉 감정일기가 없는 날짜: 등록 모달 열기
+                    $('#diaryDate').val(dateStr); // 선택한 날짜 설정
+                    $('#diaryModal').show();
+                }
+            },
+            datesSet: function () {
+                updateDiaryListForCurrentMonth();
+            }
+
+
+        });
         calendar.render();
+        updateDiaryListForCurrentMonth();
     });
 
     function openModal() {
@@ -169,6 +549,12 @@
 
         if (!emotion || !date || !content) {
             alert('모든 항목을 입력하세요.');
+            return;
+        }
+
+        const alreadyExists = calendar.getEvents().some(event => event.startStr === date);
+        if (alreadyExists) {
+            alert('해당 날짜에 이미 감정일기가 존재합니다.');
             return;
         }
 
@@ -213,7 +599,7 @@
             if (data.resultCode && data.resultCode.startsWith('S-')) {
                 calendar.getEventById(id)?.remove();
                 $('#viewModal').hide();
-                alert('삭제 완료!');
+                location.reload();
             } else {
                 alert('삭제 실패: ' + data.msg);
             }
@@ -242,6 +628,12 @@
             return;
         }
 
+        const alreadyExists = calendar.getEvents().some(event => event.startStr === date);
+        if (alreadyExists) {
+            alert('해당 날짜에 이미 감정일기가 존재합니다.');
+            return;
+        }
+
         $.post('/usr/pet/daily/domodify', {
             id: id,
             eventDate: date,
@@ -255,8 +647,50 @@
             }
         });
     }
+
+    function updateDiaryListForCurrentMonth() {
+        const container = $('.diary-container');
+        container.empty(); // 기존 내용 제거
+
+        const events = calendar.getEvents();
+        const start = calendar.view.currentStart;
+        const end = calendar.view.currentEnd;
+
+        const filtered = events.filter(e =>
+            e.start >= start && e.start < end
+        );
+
+        if (filtered.length === 0) {
+            container.append('<div class="entry">이 달에는 감정일기가 없습니다.</div>');
+            return;
+        }
+
+        filtered.sort((a, b) => a.start - b.start).forEach(function (e) {
+            const emotion = emotionIcons[e.title] || '';
+            const content = e.extendedProps?.content || '';
+            const date = e.startStr;
+
+            const html =
+                '<div class="entry" data-id="' + e.id + '">' +
+                '<div class="entry-header">' +
+                '<span class="entry-title">' + emotion + ' <b>' + e.title + '</b></span>' +
+                '<span class="entry-date">' + date + '</span>' +
+                '</div>' +
+                '<div class="entry-content">' + content + '</div>' +
+                '</div>';
+
+            container.append(html);
+
+            $(document).on('click', '.entry', function () {
+                const id = $(this).data('id');
+                if (id) {
+                    openViewModal(id);
+                }
+            });
+        });
+    }
+
+
 </script>
-
-
 </body>
 </html>

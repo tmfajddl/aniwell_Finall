@@ -8,7 +8,6 @@ import com.example.RSW.vo.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -49,7 +48,7 @@ public class PetController {
     @Autowired
     private Cloudinary cloudinary;
 
-
+    //추천 장소 리스트 불러오기
     @GetMapping("/usr/pet/recommend/list")
     @ResponseBody
     public List<PetRecommendation> getAllFavorites(@RequestParam int memberId) {
@@ -75,26 +74,39 @@ public class PetController {
             return "added";
         }
     }
-
-    //테스트용
+    // 장소 디테일 불러오기
     @RequestMapping("/usr/pet/test")
-    public String test() {
-        return "usr/pet/test";
+    @ResponseBody
+    public Map<String, Object> getPlaceDetail(@RequestParam String url) {
+        return KakaoPlaceCrawler.crawlPlace(url);
     }
 
+    // 테스트
+    @RequestMapping("/usr/pet/test2")
+    public String test(@RequestParam("petId") int petId, Model model) {
 
+        int memberId = rq.getLoginedMemberId();
+        Pet pet = petService.getPetsById(petId);
+        if(pet.getMemberId() != memberId){
+            return Ut.jsAlertBack("권한이 없습니다.");
+        }
+        List<CalendarEvent> events = calendarEventService.getEventsByPetId(petId);
+        model.addAttribute("events", events); // 감정일기에 등록된 이벤트들
+        model.addAttribute("petId", petId); // 해당 펫의 ID
+        return "usr/pet/test";
+    }
     //주변 펫 샵 조회
     @RequestMapping("/usr/pet/petPlace")
     public String showMap(Model model) {
         int memberId = rq.getLoginedMemberId();
 
-        List<String> favoriteNames = petRecommendationService.getFavoriteNamesOnly(memberId); // 이름만!
-        model.addAttribute("favoriteNames", favoriteNames);
+        List<String> favoriteNames = petRecommendationService.getFavoriteNamesOnly(memberId);
+        model.addAttribute("favoriteNames", favoriteNames); // 분류 타입만 불러오기
 
 
         List<PetRecommendation> favoriteplaces = petRecommendationService.getFavoriteNamesByMember(memberId);
-        model.addAttribute("favoriteplaces", favoriteplaces);
-        model.addAttribute("memberId", memberId);
+        model.addAttribute("favoriteplaces", favoriteplaces); // 추천장소 객체
+        model.addAttribute("memberId", memberId); //로그인 아이디
         return "usr/pet/petPlace";
     }
 

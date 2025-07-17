@@ -86,6 +86,9 @@
             <if test="photo != null">
                 photo = #{photo},
             </if>
+            <if test="address != null">
+                address = #{address},
+            </if>
             updateDate = NOW()
         </set>
         WHERE id = #{loginedMemberId}
@@ -155,5 +158,30 @@
         SELECT COUNT(*) FROM member
         WHERE authLevel = #{authLevel}
     </select>
+
+    <select id="findByAuthLevel" resultType="com.example.RSW.vo.Member">
+        SELECT *
+        FROM member
+        WHERE authLevel = #{authLevel}
+    </select>
+
+    <select id="getMemberBySocial" resultType="Member">
+        SELECT * FROM member
+        WHERE socialProvider = #{socialProvider}
+          AND socialId = #{socialId}
+    </select>
+
+    <insert id="doJoinBySocial" parameterType="map">
+        INSERT INTO `member`
+        SET regDate = NOW(),
+        updateDate = NOW(),
+        loginId = #{loginId}, loginPw = #{loginPw}, socialProvider = #{socialProvider}, socialId = #{socialId}, `name` = #{name}, nickname = #{name}, -- 카카오 닉네임 그대로 사용
+            email = #{email}, cellphone = '',                                                                                                         -- 기본값 빈 문자열
+            address = '',                                                                                                                             -- 기본값 빈 문자열
+            photo = '',                                                                                                                               -- 기본값 빈 문자열
+            authLevel = 1, authName = '일반회원', delStatus = 0
+    </insert>
+
+
 
 </mapper>
