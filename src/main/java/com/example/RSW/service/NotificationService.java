@@ -1,6 +1,7 @@
 package com.example.RSW.service;
 
 import com.example.RSW.repository.NotificationRepository;
+import com.example.RSW.vo.Member;
 import com.example.RSW.vo.Notification;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -18,25 +19,50 @@ public class NotificationService {
     private final NotificationRepository notificationRepository;
 
     @Autowired
+    private MemberService memberService;
+
+    @Autowired
     public NotificationService(NotificationRepository notificationRepository) {
         this.notificationRepository = notificationRepository;
     }
 
+    // 알림 추가 메서드
     public void addNotification(int memberId, int senderId, String type, String title, String link) {
+        // 중복 알림 방지
         if (notificationRepository.existsByMemberIdAndTitleAndLink(memberId, title, link)) {
             return;
         }
 
+        // 알림 객체 생성
         Notification notification = new Notification();
-        notification.setMemberId(memberId);
-        notification.setSenderId(senderId);
-        notification.setType(type);
-        notification.setTitle(title);
-        notification.setLink(link);
-        notification.setRegDate(Date.from(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant()));
-        notification.setRead(false);
+        notification.setMemberId(memberId); // 알림을 받을 회원
+        notification.setSenderId(senderId); // 알림을 보낸 사람
+        notification.setType(type);         // 알림 타입
+        notification.setTitle(title);       // 알림 제목
+        notification.setLink(link);         // 알림 링크
+        notification.setRegDate(Date.from(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant())); // 알림 등록 시간
+        notification.setRead(false);        // 알림 상태 (읽지 않음)
 
+        // 알림 데이터베이스에 저장
         notificationRepository.insert(notification);
+    }
+
+    // 관리자에게 수의사 인증서 등록 알림 전송
+    public void sendNotificationToAdmins(int vetMemberId) {
+        // 수의사 이름 가져오기
+        Member vetMember = memberService.getMemberById(vetMemberId);
+        String vetName = vetMember.getNickname(); // 수의사 이름
+
+        // 관리자 목록 가져오기
+        List<Member> admins = memberService.getAdmins(); // 관리자 목록 가져오기
+
+        // 각 관리자에게 알림을 전송
+        for (Member admin : admins) {
+            String title = vetName + "님이 인증서를 등록하였습니다."; // 알림 제목
+            String link = "/adm/member/list?memberId=" + vetMemberId; // 인증서 상세 페이지 링크
+            // 알림 전송
+            addNotification(admin.getId(), vetMemberId, "VET_CERT_UPLOAD", title, link);
+        }
     }
 
 
@@ -125,4 +151,18 @@ public class NotificationService {
 
         notificationRepository.save(notification);
     }
+
+    public List<Notification> findByMemberId(int memberId) {
+        return notificationRepository.findByMemberIdOrderByRegDateDesc(memberId);
+    }
+
+    // 관리자 전용
+    public void deleteById(int id) {
+        notificationRepository.deleteByIdOnlyId(id);
+    }
+
+    public void deleteByMemberId(int memberId) {
+        notificationRepository.deleteByMemberId(memberId);
+    }
+
 }
