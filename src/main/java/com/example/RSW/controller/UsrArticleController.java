@@ -48,11 +48,18 @@ public class UsrArticleController {
 
 	@RequestMapping("/usr/article/write")
 	public String showWrite(HttpServletRequest req, @RequestParam(required = false) Integer boardId,
-			@RequestParam(required = false) Integer crewId, Model model) {
+			@RequestParam(required = false) Integer crewId, @RequestParam(required = false) String type, Model model) {
+
 		Rq rq = (Rq) req.getAttribute("rq");
 
+		System.out.println("🔥 /usr/article/write 진입");
+		System.out.println("📌 crewId = " + crewId);
+		System.out.println("📌 loginedMemberId = " + rq.getLoginedMemberId());
+
+		// ✅ crew 글쓰기 처리
 		if (crewId != null) {
 			WalkCrew crew = walkCrewService.getCrewById(crewId);
+
 			if (crew == null)
 				return "common/notFound";
 
@@ -62,15 +69,22 @@ public class UsrArticleController {
 
 			model.addAttribute("crew", crew);
 			model.addAttribute("crewId", crewId);
-			return "usr/article/crewWrite";
-		}
+			model.addAttribute("type", type);
 
-		if (boardId != null) {
-			model.addAttribute("boardId", boardId);
+			System.out.println("✅ 글쓰기 진입 성공 (크루)");
 			return "usr/article/write";
 		}
 
-		return "common/error";
+		// ✅ boardId가 없는 경우 기본값 설정 (예: 2번 게시판)
+		if (boardId == null) {
+			boardId = 2; // ← 원하는 기본 게시판 ID로 지정
+			System.out.println("📌 기본 boardId 할당됨 = " + boardId);
+		}
+
+		
+		model.addAttribute("boardId", boardId);
+		System.out.println("✅ 글쓰기 진입 성공 (일반)");
+		return "usr/article/write";
 	}
 
 	@RequestMapping("/usr/article/doWrite")
@@ -84,7 +98,7 @@ public class UsrArticleController {
 
 		ResultData rd;
 		if (crewId != null) {
-			rd = articleService.writeCrewArticle(crewId, loginedMemberId, title, body);
+			rd = articleService.writeCrewArticle(boardId, crewId, loginedMemberId, title, body);
 			return Ut.jsReplace(rd.getResultCode(), rd.getMsg(),
 					"../article/detail?id=" + rd.getData1() + "&crewId=" + crewId);
 		} else if (boardId != null) {
