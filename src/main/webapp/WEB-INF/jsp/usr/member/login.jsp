@@ -100,10 +100,15 @@
         <input type="password" name="loginPw" placeholder="PW" required>
         <button class="sign-in-button" type="submit">sign in</button>
 
-        <!-- 카카오 로그인 버튼 -->
-        <button type="button" onclick="openKakaoPopup()" style="background: none; border: none; margin-top: 15px;">
+        <!-- 카카오 로그인 버튼 (링크 형태 + hover 시 커서 변경) -->
+        <a href="javascript:openKakaoPopup()" style="display:inline-block; margin-top:15px; cursor: pointer;">
             <img src="/img/kakao_login_medium_narrow.png" alt="카카오 로그인 버튼">
-        </button>
+        </a>
+
+
+        <a href="https://accounts.google.com/o/oauth2/v2/auth?client_id=291458660034-978ksq36uneqg2hk830718s98turccbp.apps.googleusercontent.com&redirect_uri=http://localhost:8080/usr/member/google&response_type=code&scope=email%20profile&access_type=offline&prompt=select_account">
+            <img src="/img/web_light_sq_SI@3x.png" alt="Google 로그인 버튼" style="margin-top: 10px; height:40px;"/>
+        </a>
 
 
         <!-- 로고 이미지 -->

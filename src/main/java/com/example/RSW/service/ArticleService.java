@@ -169,9 +169,11 @@ public class ArticleService {
 		return articleRepository.findByCrewId(crewId);
 	}
 
+
 	public ResultData writeCrewArticle(Integer boardId, int crewId, int loginedMemberId, String title, String body,
 			String imageUrl) {
 		articleRepository.insertCrewArticle(boardId, crewId, loginedMemberId, title, body, imageUrl);
+
 
 		int id = articleRepository.getLastInsertId();
 		return ResultData.from("S-1", "작성 완료", "id", id);
@@ -215,5 +217,6 @@ public class ArticleService {
 	public List<Map<String, Object>> getSchedulesByCrewId(int crewId) {
 		return articleRepository.getSchedulesByCrewId(crewId);
 	}
+
 
 }
