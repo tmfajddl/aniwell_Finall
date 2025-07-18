@@ -717,6 +717,7 @@ public class UsrMemberController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 실패");
         }
     }
+<<<<<<< HEAD
 
 <<<<<<< HEAD
     @RequestMapping("/usr/member/google")
@@ -780,4 +781,6 @@ public class UsrMemberController {
 =======
 >>>>>>> upstream/develop
 
+=======
+>>>>>>> 860dba721d57510e4c5280d28b6ccf6c79cd63fd
 }
