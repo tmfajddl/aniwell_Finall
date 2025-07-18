@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 @Controller
 @RequestMapping("/adm/article") // 관리자용 게시글 관련 URL을 처리하는 컨트롤러
@@ -69,19 +70,25 @@ public class AdmArticleController {
     // 게시글 삭제 처리 (AJAX 호출 예상)
     @PostMapping("/doDelete")
     @ResponseBody
-    public String doDelete(HttpServletRequest req, int id) {
+    public Map<String, Object> doDelete(HttpServletRequest req, int id) {
         Rq rq = (Rq) req.getAttribute("rq"); // 로그인 정보 객체
 
-        Article article = articleService.getArticleById(id); // 삭제 대상 게시글 조회
+        Article article = articleService.getArticleById(id);
 
         if (article == null) {
-            // 게시글이 존재하지 않는 경우 히스토리 백 처리
-            return Ut.jsHistoryBack("F-1", Ut.f("%d번 게시글은 존재하지 않습니다.", id));
+            return Map.of(
+                    "resultCode", "F-1",
+                    "msg", id + "번 게시글은 존재하지 않습니다."
+            );
         }
 
-        articleService.deleteArticle(id); // 게시글 삭제
+        articleService.deleteArticle(id);
 
-        // 삭제 성공 후 리스트 페이지로 리다이렉트
-        return Ut.jsReplace("S-1", Ut.f("%d번 게시글을 삭제했습니다.", id), "/adm/article/list");
+        return Map.of(
+                "resultCode", "S-1",
+                "msg", id + "번 게시글이 삭제되었습니다.",
+                "redirectUrl", "/adm/article/list"
+        );
     }
+
 }
