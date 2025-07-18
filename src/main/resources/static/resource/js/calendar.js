@@ -44,6 +44,8 @@ function renderMiniCalendar(targetId, events, date = new Date()) {
 		renderMiniCalendar(targetId, events, newDate);
 	};
 
+
+
 	header.appendChild(prevBtn);
 	header.appendChild(title);
 	header.appendChild(nextBtn);

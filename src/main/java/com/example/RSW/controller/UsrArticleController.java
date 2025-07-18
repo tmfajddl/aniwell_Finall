@@ -7,6 +7,7 @@ import com.example.RSW.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -19,6 +20,7 @@ import com.example.RSW.vo.ResultData;
 import com.example.RSW.vo.Rq;
 
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 public class UsrArticleController {
@@ -147,26 +149,31 @@ public class UsrArticleController {
     }
 
     // 게시글 작성 처리
-    @RequestMapping("/usr/article/doWrite")
-    @ResponseBody
-    public String doWrite(HttpServletRequest req, String title, String body, String boardId, Model model) {
+    @PostMapping("/usr/article/doWrite")
+    public String doWrite(HttpServletRequest req, String title, String body, String boardId, Model model, RedirectAttributes ra) {
         Rq rq = (Rq) req.getAttribute("rq");
 
-        // 입력값 유효성 검사
-        if (Ut.isEmptyOrNull(title)) return Ut.jsHistoryBack("F-1", "제목을 입력하세요");
-        if (Ut.isEmptyOrNull(body)) return Ut.jsHistoryBack("F-2", "내용을 입력하세요");
-        if (Ut.isEmptyOrNull(boardId)) return Ut.jsHistoryBack("F-3", "게시판을 선택하세요");
+        // 유효성 검사
+        if (Ut.isEmptyOrNull(title)) {
+            ra.addFlashAttribute("errorMsg", "제목을 입력하세요");
+            return "redirect:/usr/article/write";
+        }
+        if (Ut.isEmptyOrNull(body)) {
+            ra.addFlashAttribute("errorMsg", "내용을 입력하세요");
+            return "redirect:/usr/article/write";
+        }
+        if (Ut.isEmptyOrNull(boardId)) {
+            ra.addFlashAttribute("errorMsg", "게시판을 선택하세요");
+            return "redirect:/usr/article/write";
+        }
 
-        // 게시글 저장
+        // 저장
         ResultData doWriteRd = articleService.writeArticle(rq.getLoginedMemberId(), title, body, boardId);
         int id = (int) doWriteRd.getData1();
 
-        // 게시판 목록 JSP에 전달 (선택 사항)
-        List<Board> boards = boardService.getBoards();
-        model.addAttribute("boards", boards);
-
-        return Ut.jsReplace(doWriteRd.getResultCode(), doWriteRd.getMsg(), "../article/detail?id=" + id + "&boardId=" + boardId);
+        return "redirect:/usr/article/detail?id=" + id + "&boardId=" + boardId;
     }
+
 
     // 게시글 리스트 페이지
     @RequestMapping("/usr/article/list")

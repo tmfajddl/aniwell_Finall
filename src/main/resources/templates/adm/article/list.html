@@ -180,10 +180,13 @@
             <p class="text-gray-800 whitespace-pre-wrap" id="post-detail-body"></p>
         </div>
         <div class="flex justify-end mt-4">
-            <form id="post-delete-form" method="post" action="#" onsubmit="return confirm('정말 삭제할까요?')">
-                <input type="hidden" name="id" id="post-delete-id"/>
-                <button type="submit" class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">게시글 삭제</button>
-            </form>
+            <div class="flex justify-end mt-4">
+                <input type="hidden" id="post-delete-id"/>
+                <button id="post-delete-btn" class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">
+                    게시글 삭제
+                </button>
+            </div>
+
         </div>
     </div>
 </div>
@@ -226,9 +229,70 @@
     </div>
 </div>
 
+        <!-- 게시글 등록 모달 -->
+        <div id="post-modal" class="fixed inset-0 bg-black bg-opacity-40 hidden items-center justify-center z-50">
+            <div class="bg-white p-6 rounded-xl shadow-lg w-full max-w-2xl relative">
+                <!-- 닫기 버튼 -->
+                <button class="absolute top-2 right-2 text-gray-400 hover:text-black text-2xl font-bold"
+                        onclick="hidePostModal()">&times;</button>
+
+                <h2 class="text-2xl font-bold mb-4">게시글 작성</h2>
+
+                <form method="POST" action="/usr/article/doWrite" class="space-y-4">
+
+                    <!-- 게시판 선택 -->
+                    <div>
+                        <label for="modal-boardId" class="block font-semibold mb-1">게시판 선택</label>
+                        <select id="modal-boardId" name="boardId" required class="select select-bordered w-full">
+                            <option value="">-- 게시판을 선택하세요 --</option>
+                            <c:if test="${rq.loginedMember.authLevel == 7}">
+                                <option value="1">공지사항</option>
+                            </c:if>
+                            <option value="2">크루모집</option>
+                        </select>
+                    </div>
+
+                    <!-- 제목 입력 -->
+                    <div>
+                        <label for="modal-title" class="block font-semibold mb-1">제목</label>
+                        <input type="text" id="modal-title" name="title" required class="input input-bordered w-full"
+                               placeholder="제목을 입력하세요"/>
+                    </div>
+
+                    <!-- 내용 입력 -->
+                    <div>
+                        <label for="modal-body" class="block font-semibold mb-1">내용</label>
+                        <textarea id="modal-body" name="body" rows="8" required class="textarea textarea-bordered w-full"
+                                  placeholder="내용을 입력하세요"></textarea>
+                    </div>
+
+                    <!-- 버튼 -->
+                    <div class="flex justify-end gap-4">
+                        <button type="submit" class="btn btn-primary">등록</button>
+                        <button type="button" class="btn btn-outline" onclick="hidePostModal()">취소</button>
+                    </div>
+
+                </form>
+            </div>
+        </div>
 
 
-<!-- ✅ JavaScript -->
+        <script>
+            function showPostModal() {
+                const modal = document.getElementById("post-modal");
+                modal.classList.remove("hidden");
+                modal.classList.add("flex");
+            }
+
+            function hidePostModal() {
+                const modal = document.getElementById("post-modal");
+                modal.classList.add("hidden");
+                modal.classList.remove("flex");
+            }
+        </script>
+
+
+        <!-- ✅ JavaScript -->
 <script>
     document.addEventListener("DOMContentLoaded", function () {
         // 검색 필터 기능
@@ -632,7 +696,7 @@
                 document.getElementById("post-detail-hit").textContent = item.dataset.hit;
                 document.getElementById("post-detail-body").textContent = item.dataset.body;
                 document.getElementById("post-delete-id").value = item.dataset.id;
-                document.getElementById("post-delete-form").action = "/adm/article/doDelete";
+
 
                 document.getElementById("post-detail-modal").classList.remove("hidden");
                 document.getElementById("post-detail-modal").classList.add("flex");
@@ -644,7 +708,42 @@
         document.getElementById("post-detail-modal").classList.add("hidden");
         document.getElementById("post-detail-modal").classList.remove("flex");
     }
+
+    document.addEventListener("DOMContentLoaded", () => {
+        const deleteBtn = document.getElementById("post-delete-btn");
+
+        deleteBtn.addEventListener("click", () => {
+            const postId = document.getElementById("post-delete-id").value;
+
+            fetch("/adm/article/doDelete", {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: new URLSearchParams({ id: postId })
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.resultCode === "S-1") {
+                        // 🔥 삭제된 게시글 항목 DOM에서 제거
+                        const postItem = document.querySelector(`.post-item[data-id='${postId}']`);
+                        if (postItem) postItem.remove();
+
+                        // ✅ 모달 닫기
+                        hidePostDetail();
+                    } else {
+                        alert(data.msg || "삭제 실패");
+                    }
+                })
+                .catch(() => alert("❌ 삭제 중 오류 발생"));
+        });
+    });
+
 </script>
+
+        <button
+                class="fixed bottom-6 right-6 w-14 h-14 bg-blue-500 hover:bg-green-600 text-white rounded-full shadow-lg text-3xl flex items-center justify-center z-50"
+                onclick="showPostModal()">
+            +
+        </button>
     </main>
 </div>
 </body>
