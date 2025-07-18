@@ -52,19 +52,14 @@ public interface ArticleRepository {
 
 	// 크루용 리포지터리
 	void insertCrewArticle(@Param("boardId") Integer boardId, @Param("crewId") Integer crewId,
-<<<<<<< HEAD
-			@Param("memberId") int memberId, @Param("title") String title, @Param("body") String body);
-=======
 			@Param("memberId") int memberId, @Param("title") String title, @Param("body") String body,
 			@Param("imageUrl") String imageUrl);
->>>>>>> upstream/develop
 
 	List<Article> findRecentArticlesByCrewAndType(@Param("crewId") int crewId, @Param("typeCode") String typeCode,
 			@Param("limit") int limit);
 
 	public List<Article> getRecentArticlesByCrewAndBoardId(int crewId, int boardId, int limit);
-<<<<<<< HEAD
-=======
+
 
 	public List<Article> getArticlesByCrewIdAndBoardId(Integer crewId, Integer boardId);
 
@@ -83,5 +78,4 @@ public interface ArticleRepository {
 
 	public List<Map<String, Object>> getSchedulesByCrewId(int crewId);
 
->>>>>>> upstream/develop
 }

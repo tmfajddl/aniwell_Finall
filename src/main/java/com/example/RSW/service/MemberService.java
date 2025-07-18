@@ -149,8 +149,6 @@ public class MemberService {
             // nickname은 name과 동일하게 사용
             String nickname = name;
             String loginPw = "SOCIAL_LOGIN";
-<<<<<<< HEAD
-=======
 
             // ✅ MyBatis XML에 맞게 파라미터 6개 전달
             memberRepository.doJoinBySocial(loginId, loginPw, provider, socialId, name, nickname, email);
@@ -161,17 +159,8 @@ public class MemberService {
 
         return member;
     }
->>>>>>> upstream/develop
 
-            // ✅ MyBatis XML에 맞게 파라미터 6개 전달
-            memberRepository.doJoinBySocial(loginId, loginPw, provider, socialId, name, nickname, email);
 
-            int id = memberRepository.getLastInsertId();
-            member = memberRepository.getMemberById(id);
-        }
-
-        return member;
-    }
 
     public Member getOrCreateByEmail(String email, String name) {
         Member member = memberRepository.findByEmail(email);
