@@ -25,4 +25,6 @@ public interface WalkCrewMemberRepository {
 
 	// ✅ 이미 가입했는지 확인하는 쿼리
 	int countByMemberIdAndCrewId(@Param("memberId") int memberId, @Param("crewId") int crewId);
+
+	int countApprovedMember(int crewId, int memberId);
 }
