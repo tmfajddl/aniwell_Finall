@@ -182,6 +182,7 @@
             authLevel = 1, authName = '일반회원', delStatus = 0
     </insert>
 
+<<<<<<< HEAD
     <select id="findByEmail" parameterType="string" resultType="Member">
         SELECT * FROM member WHERE email = #{email}
     </select>
@@ -193,6 +194,8 @@
             (#{regDate}, #{updateDate}, #{loginId}, #{loginPw}, #{name}, #{email}, #{authLevel}, #{delStatus}, #{socialProvider}, #{socialId})
     </insert>
 
+=======
+>>>>>>> upstream/develop
 
 
 </mapper>

@@ -718,6 +718,7 @@ public class UsrMemberController {
         }
     }
 
+<<<<<<< HEAD
     @RequestMapping("/usr/member/google")
     public String googleCallback(@RequestParam("code") String code, HttpServletRequest req, HttpServletResponse resp) {
 
@@ -776,5 +777,7 @@ public class UsrMemberController {
             return "redirect:/usr/member/login?error=google";
         }
     }
+=======
+>>>>>>> upstream/develop
 
 }
