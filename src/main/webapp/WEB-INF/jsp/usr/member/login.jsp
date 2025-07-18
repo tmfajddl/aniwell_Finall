@@ -100,6 +100,7 @@
         <input type="password" name="loginPw" placeholder="PW" required>
         <button class="sign-in-button" type="submit">sign in</button>
 
+<<<<<<< HEAD
         <!-- 카카오 로그인 버튼 (링크 형태 + hover 시 커서 변경) -->
         <a href="javascript:openKakaoPopup()" style="display:inline-block; margin-top:15px; cursor: pointer;">
             <img src="/img/kakao_login_medium_narrow.png" alt="카카오 로그인 버튼">
@@ -111,6 +112,14 @@
         </a>
 
 
+=======
+        <!-- 카카오 로그인 버튼 -->
+        <button type="button" onclick="openKakaoPopup()" style="background: none; border: none; margin-top: 15px;">
+            <img src="/img/kakao_login_medium_narrow.png" alt="카카오 로그인 버튼">
+        </button>
+
+
+>>>>>>> upstream/develop
         <!-- 로고 이미지 -->
         <img class="logo-img" src="/img/logo.png" alt="Aniwell Logo">
     </form>

@@ -72,6 +72,7 @@
                 </div>
             </li>
 
+<<<<<<< HEAD
             <!-- 산책 크루 -->
             <li>
                 <div class="dropdown dropdown-hover">
@@ -83,6 +84,24 @@
                         <li>
                             <a href="/usr/walkCrew/create">크루 모집</a>
                         </li>
+=======
+
+				<!-- 산책 크루 -->
+				<li>
+					<div class="dropdown dropdown-hover">
+						<div tabindex="0" role="button">산책 크루</div>
+						<ul class="dropdown-content menu bg-base-100 rounded-box w-52 p-2 shadow">
+							<li>
+								<a href="/usr/walkCrew/list">크루 목록</a>
+							</li>
+							<li>
+								<a href="/usr/walkCrew/create">크루 모집</a>
+							</li>
+							<!-- 크루 카페: 로그인한 사용자의 가입 크루 카페로 이동 -->
+							<li>
+
+								<a href="/usr/crewCafe/myCrewCafe">크루 카페</a>
+>>>>>>> upstream/develop
 
                         <!-- ✅ 누구나 크루 카페 입장 가능 -->
                         <li>
@@ -143,6 +162,7 @@
                 </li>
             </c:if>
 
+<<<<<<< HEAD
             <!-- 로그인 상태 -->
             <c:if test="${rq.logined}">
                 <li>
@@ -167,6 +187,141 @@
             </c:if>
         </ul>
     </div>
+=======
+				<!-- 로그인 상태 -->
+				<c:if test="${rq.logined}">
+					<li>
+						<a class="hover:underline" href="/usr/article/write">WRITE</a>
+					</li>
+					<li>
+						<a class="hover:underline" href="/usr/member/myPage">MYPAGE</a>
+					</li>
+					<li>
+						<c:choose>
+							<c:when test="${rq.loginedMember != null && rq.loginedMember.socialProvider == 'kakao'}">
+								<button onclick="openLogoutChoicePopup()" class="hover:underline">LOGOUT</button>
+							</c:when>
+							<c:otherwise>
+								<a onclick="return confirm('로그아웃 하시겠습니까?')" class="hover:underline" href="/usr/member/doLogout"> LOGOUT </a>
+							</c:otherwise>
+						</c:choose>
+					</li>
+				</c:if>
+			</ul>
+		</div>
+
+		<script src="https://developers.kakao.com/sdk/js/kakao.js"></script>
+		<script>
+        Kakao.init("79f2a3a73883a82595a2202187f96cc5");
+
+        // 자동 로그인 (한 세션에서 한 번만)
+        (function () {
+            const token = localStorage.getItem("kakaoAccessToken");
+            if (token && !sessionStorage.getItem("alreadyLoggedIn")) {
+                fetch("/usr/member/kakao-popup-login", {
+                    method: "POST",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify({token})
+                }).then(res => {
+                    if (res.ok) {
+                        sessionStorage.setItem("alreadyLoggedIn", "true");
+                        console.log("✅ 자동 로그인 성공");
+                    }
+                });
+            }
+        })();
+
+
+        function openLogoutChoicePopup() {
+            const choice = confirm("로그아웃 방식을 선택하세요.\n\n확인: 이 서비스에서만 로그아웃\n취소: 카카오 계정과 함께 로그아웃");
+
+            if (choice) {
+                // 이 서비스에서만 로그아웃
+                openServiceLogoutPopup();
+            } else {
+                // 카카오 계정과 함께 로그아웃
+                openKakaoLogoutPopup();
+            }
+        }
+
+        function openServiceLogoutPopup() {
+            const popup = window.open("/usr/member/service-logout-popup", "serviceLogoutPopup", "width=400,height=300");
+            if (!popup) alert("팝업 차단을 해제해주세요.");
+        }
+
+        function openKakaoLogoutPopup() {
+            const logoutRedirectUri = encodeURIComponent("http://localhost:8080/usr/member/logout-complete");
+            const kakaoLogoutUrl = "https://kauth.kakao.com/oauth/logout" +
+                "?client_id=79f2a3a73883a82595a2202187f96cc5" +
+                "&logout_redirect_uri=" + logoutRedirectUri;
+
+            const popup = window.open(kakaoLogoutUrl, "logoutPopup", "width=500,height=600");
+            if (!popup) alert("팝업 차단을 해제해주세요.");
+        }
+
+
+        // 팝업창이 보낸 로그아웃 완료 메시지 수신
+        window.addEventListener("message", function (event) {
+            console.log("📩 로그아웃 메시지 수신:", event.data);
+
+
+            if (event.data === "kakaoLogoutComplete") {
+                console.log("DEBUG: 전체 로그아웃 처리, 토큰 삭제");
+                localStorage.removeItem("kakaoAccessToken");
+                sessionStorage.removeItem("alreadyLoggedIn");
+                location.href = "/";
+            }
+            if (event.data === "serviceLogoutComplete") {
+                console.log("DEBUG: 서비스 로그아웃 처리, 토큰 유지");
+                sessionStorage.removeItem("alreadyLoggedIn");
+                (function () {
+                    const token = localStorage.getItem("kakaoAccessToken");
+                    const justLoggedOut = sessionStorage.getItem("logoutJustNow");
+
+                    if (token && !sessionStorage.getItem("alreadyLoggedIn") && !justLoggedOut) {
+                        fetch("/usr/member/kakao-popup-login", {
+                            method: "POST",
+                            headers: {"Content-Type": "application/json"},
+                            body: JSON.stringify({token})
+                        }).then(res => {
+                            if (res.ok) {
+                                sessionStorage.setItem("alreadyLoggedIn", "true");
+                                console.log("✅ 자동 로그인 성공");
+                            }
+                            sessionStorage.removeItem("logoutJustNow"); // 로그인 성공 후 플래그 제거
+                        });
+                    } else if (justLoggedOut) {
+                        // 로그아웃 직후 자동 로그인 차단용 플래그는
+                        // 일정 시간 후 또는 페이지 리로드 시 제거 가능
+                        setTimeout(() => sessionStorage.removeItem("logoutJustNow"), 5000);
+                    }
+                })();
+
+                localStorage.removeItem("kakaoAccessToken");
+                location.href = "/";
+            } else {
+                console.log("DEBUG: 알 수 없는 메시지 수신", event.data);
+            }
+
+        });
+
+    </script>
+
+		<script>
+        (function () {
+            const token = localStorage.getItem("kakaoAccessToken");
+            if (token) {
+                fetch("/usr/member/kakao-popup-login?token=" + token)
+                    .then(res => {
+                        console.log("자동 로그인 응답 상태:", res.status);
+                    });
+            }
+        })();
+    </script>
+
+
+	</header>
+>>>>>>> upstream/develop
 
     <script src="https://developers.kakao.com/sdk/js/kakao.js"></script>
     <script>

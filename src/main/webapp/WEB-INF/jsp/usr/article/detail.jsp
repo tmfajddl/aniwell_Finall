@@ -271,6 +271,16 @@ function doModifyReply(replyId) {
 					<th style="text-align: center;">Body</th>
 					<td style="text-align: center;">${article.body }</td>
 				</tr>
+
+				<c:if test="${not empty article.imageUrl}">
+					<tr>
+						<th style="text-align: center;">Image</th>
+						<td style="text-align: center;">
+							<img src="${article.imageUrl}" alt="업로드 이미지" style="max-width: 500px; border-radius: 8px;" />
+						</td>
+					</tr>
+				</c:if>
+
 			</tbody>
 		</table>
 		<div class="btns">
@@ -279,8 +289,9 @@ function doModifyReply(replyId) {
 				<a class="btn btn-ghost" href="../article/modify?id=${article.id}">수정</a>
 			</c:if>
 			<c:if test="${article.userCanDelete }">
-				<a class="btn btn-ghost" href="../article/doDelete?id=${article.id}">삭제</a>
+				<a class="btn btn-ghost" href="../article/doDelete?id=${article.id}&crewId=${param.crewId}">삭제</a>
 			</c:if>
+
 		</div>
 
 	</div>
@@ -373,8 +384,10 @@ function doModifyReply(replyId) {
 						<td style="text-align: center;">
 							<c:if test="${reply.userCanDelete }">
 								<a class="btn btn-outline btn-xs btn-error" onclick="if(confirm('정말 삭제?') == false) return false;"
-									href="/usr/reply/doDelete?id=${reply.id}&relTypeCode=article&relId=${article.id}&boardId=${article.boardId}"">삭제</a>
+									href="/usr/reply/doDelete?id=${reply.id}&relTypeCode=article&relId=${article.id}&boardId=${article.boardId}">
+									삭제 </a>
 							</c:if>
+
 						</td>
 					</tr>
 				</c:forEach>
