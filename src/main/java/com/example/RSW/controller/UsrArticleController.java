@@ -62,43 +62,45 @@ public class UsrArticleController {
     // 게시글 수정 처리
     @RequestMapping("/usr/article/doModify")
     @ResponseBody
-    public String doModify(HttpServletRequest req, int id, String title, String body) {
+    public ResultData doModify(HttpServletRequest req, int id, String title, String body) {
         Rq rq = (Rq) req.getAttribute("rq");
         Article article = articleService.getArticleById(id);
 
         if (article == null) {
-            return Ut.jsReplace("F-1", Ut.f("%d번 게시글은 없습니다", id), "../article/list");
+            return ResultData.from("F-1", id + "번 게시글이 존재하지 않습니다.");
         }
 
-        // 수정 권한 확인
         ResultData userCanModifyRd = articleService.userCanModify(rq.getLoginedMemberId(), article);
         if (userCanModifyRd.isFail()) {
-            return Ut.jsHistoryBack(userCanModifyRd.getResultCode(), userCanModifyRd.getMsg());
+            return userCanModifyRd;
         }
 
         articleService.modifyArticle(id, title, body);
-        return Ut.jsReplace(userCanModifyRd.getResultCode(), userCanModifyRd.getMsg(), "../article/detail?id=" + id);
+        Article updatedArticle = articleService.getArticleById(id);
+
+        return ResultData.from("S-1", "게시글이 수정되었습니다.", "article", articleService.getArticleById(id));
+
     }
+
 
     // 게시글 삭제 처리
     @RequestMapping("/usr/article/doDelete")
     @ResponseBody
-    public String doDelete(HttpServletRequest req, int id) {
+    public ResultData doDelete(HttpServletRequest req, int id) {
         Rq rq = (Rq) req.getAttribute("rq");
         Article article = articleService.getArticleById(id);
 
         if (article == null) {
-            return Ut.jsHistoryBack("F-1", Ut.f("%d번 게시글은 없습니다", id));
+            return ResultData.from("F-1", id + "번 게시글은 존재하지 않습니다.");
         }
 
-        // 삭제 권한 확인
         ResultData userCanDeleteRd = articleService.userCanDelete(rq.getLoginedMemberId(), article);
         if (userCanDeleteRd.isFail()) {
-            return Ut.jsHistoryBack(userCanDeleteRd.getResultCode(), userCanDeleteRd.getMsg());
+            return userCanDeleteRd;
         }
 
         articleService.deleteArticle(id);
-        return Ut.jsReplace(userCanDeleteRd.getResultCode(), userCanDeleteRd.getMsg(), "../article/list");
+        return ResultData.from("S-1", "게시물이 삭제되었습니다.");
     }
 
     // 게시글 상세 보기

@@ -5,6 +5,8 @@
     <title>관리자 대시보드</title>
     <link rel="stylesheet"
           href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css"/>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" th:href="@{/resource/css/common.css}">
     <style>
         .scroll-box {
             max-height: 400px;
@@ -12,11 +14,18 @@
         }
     </style>
 </head>
-<body class="bg-gray-50 p-6">
+<body class="bg-gradient-to-b from-[#e4f0b9] to-[#fcdca9] font-sans">
+<div class="flex h-screen" >
+    <!-- Sidebar -->
+    <div th:replace="common :: siteHeader"></div>
+
+    <!-- Main content -->
+    <main class="main_page min-h-screen flex-1 p-6 grid grid-rows-12 gap-4">
+
 <h1 class="text-3xl font-bold mb-6">관리자 대시보드</h1>
 
 <!-- 탭 버튼 -->
-<div class="flex space-x-2 mb-6">
+<div class="flex space-x-2 mb-6" style="height: 40px;">
     <button class="tab-button bg-blue-500 text-white px-4 py-2 rounded" data-target="qna-section">QnA</button>
     <button class="tab-button bg-gray-200 text-black px-4 py-2 rounded" data-target="member-section">멤버</button>
     <button class="tab-button bg-gray-200 text-black px-4 py-2 rounded" data-target="post-section">게시글</button>
@@ -24,7 +33,7 @@
 
 <!-- ✅ QnA 섹션 -->
 <div id="qna-section">
-    <div class="bg-white p-4 rounded shadow mb-8">
+    <div class="bg-white p-4 rounded mb-8">
         <h2 class="text-xl font-semibold mb-4">QnA 목록</h2>
 
         <!-- 검색창 + 필터 드롭다운 -->
@@ -124,7 +133,7 @@
 <!-- ✅ 게시글 섹션 -->
 <!-- ✅ 게시글 섹션 -->
 <div id="post-section" class="hidden">
-    <div class="bg-white p-4 rounded shadow mb-8">
+    <div class="bg-white p-4 rounded mb-8">
         <h2 class="text-xl font-semibold mb-4">게시글 목록</h2>
 
         <!-- 🔍 검색 필터 -->
@@ -587,35 +596,25 @@
 
 <script>
     document.addEventListener("DOMContentLoaded", function () {
+        // 게시글 필터
         const postSearchInput = document.getElementById("post-search");
         const postFilterSelect = document.getElementById("post-filter");
         const postItems = document.querySelectorAll(".post-item");
 
         function filterPosts() {
             const keyword = postSearchInput.value.trim().toLowerCase();
-            const filter = postFilterSelect.value;
+            const mode = postFilterSelect.value;
 
             postItems.forEach(item => {
-                const title = (item.dataset.title || "").toLowerCase();
-                const body = (item.dataset.body || "").toLowerCase();
-                const writer = (item.dataset.writer || "").toLowerCase();
+                const title = item.dataset.title.toLowerCase();
+                const body = item.dataset.body.toLowerCase();
+                const writer = item.dataset.writer.toLowerCase();
 
                 let match = false;
-
-                switch (filter) {
-                    case "title":
-                        match = title.includes(keyword);
-                        break;
-                    case "body":
-                        match = body.includes(keyword);
-                        break;
-                    case "both":
-                        match = title.includes(keyword) || body.includes(keyword);
-                        break;
-                    case "writer":
-                        match = writer.includes(keyword);
-                        break;
-                }
+                if (mode === "title") match = title.includes(keyword);
+                else if (mode === "body") match = body.includes(keyword);
+                else if (mode === "both") match = title.includes(keyword) || body.includes(keyword);
+                else if (mode === "writer") match = writer.includes(keyword);
 
                 item.style.display = match ? "block" : "none";
             });
@@ -623,15 +622,30 @@
 
         postSearchInput.addEventListener("input", filterPosts);
         postFilterSelect.addEventListener("change", filterPosts);
-    });
 
+        // 게시글 상세 보기
+        document.querySelectorAll(".post-item").forEach(item => {
+            item.addEventListener("click", function () {
+                document.getElementById("post-detail-title").textContent = item.dataset.title;
+                document.getElementById("post-detail-writer").textContent = item.dataset.writer;
+                document.getElementById("post-detail-date").textContent = item.dataset.date;
+                document.getElementById("post-detail-hit").textContent = item.dataset.hit;
+                document.getElementById("post-detail-body").textContent = item.dataset.body;
+                document.getElementById("post-delete-id").value = item.dataset.id;
+                document.getElementById("post-delete-form").action = "/adm/article/doDelete";
+
+                document.getElementById("post-detail-modal").classList.remove("hidden");
+                document.getElementById("post-detail-modal").classList.add("flex");
+            });
+        });
+    });
 
     function hidePostDetail() {
         document.getElementById("post-detail-modal").classList.add("hidden");
         document.getElementById("post-detail-modal").classList.remove("flex");
     }
 </script>
-
-
+    </main>
+</div>
 </body>
 </html>
