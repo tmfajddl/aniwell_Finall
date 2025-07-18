@@ -64,18 +64,10 @@ public class UsrArticleController {
 		System.out.println("📌 crewId = " + crewId);
 		System.out.println("📌 loginedMemberId = " + rq.getLoginedMemberId());
 
-<<<<<<< HEAD
-		// ✅ crew 글쓰기 처리
-		if (crewId != null) {
-			WalkCrew crew = walkCrewService.getCrewById(crewId);
 
-			if (crew == null)
-				return "common/notFound";
-=======
 		// ✅ 크루 글쓰기 처리일 경우
 		if (crewId != null) {
 			WalkCrew crew = walkCrewService.getCrewById(crewId);
->>>>>>> upstream/develop
 
 			// ❌ 존재하지 않는 크루인 경우
 			if (crew == null) {
@@ -107,23 +99,7 @@ public class UsrArticleController {
 			model.addAttribute("crew", crew);
 			model.addAttribute("crewId", crewId);
 			model.addAttribute("type", type);
-<<<<<<< HEAD
 
-			System.out.println("✅ 글쓰기 진입 성공 (크루)");
-			return "usr/article/write";
-		}
-
-		// ✅ boardId가 없는 경우 기본값 설정 (예: 2번 게시판)
-		if (boardId == null) {
-			boardId = 2; // ← 원하는 기본 게시판 ID로 지정
-			System.out.println("📌 기본 boardId 할당됨 = " + boardId);
-		}
-
-		
-		model.addAttribute("boardId", boardId);
-		System.out.println("✅ 글쓰기 진입 성공 (일반)");
-		return "usr/article/write";
-=======
 			model.addAttribute("boardId", boardId);
 
 			System.out.println("✅ 글쓰기 진입 성공 (크루)");
@@ -138,7 +114,7 @@ public class UsrArticleController {
 
 		System.out.println("✅ 글쓰기 진입 성공 (일반)");
 		return "usr/article/write"; // 일반 글쓰기 JSP로 이동
->>>>>>> upstream/develop
+
 	}
 
 	@PostMapping("/usr/article/doWrite")
@@ -166,11 +142,9 @@ public class UsrArticleController {
 		// ✅ 크루 글과 일반 글 구분 처리
 		ResultData rd;
 		if (crewId != null) {
-<<<<<<< HEAD
-			rd = articleService.writeCrewArticle(boardId, crewId, loginedMemberId, title, body);
-=======
+
 			rd = articleService.writeCrewArticle(boardId, crewId, loginedMemberId, title, body, imageUrl);
->>>>>>> upstream/develop
+
 			return Ut.jsReplace(rd.getResultCode(), rd.getMsg(),
 					"../article/detail?id=" + rd.getData1() + "&crewId=" + crewId);
 		} else {

@@ -72,19 +72,7 @@
                 </div>
             </li>
 
-<<<<<<< HEAD
-            <!-- 산책 크루 -->
-            <li>
-                <div class="dropdown dropdown-hover">
-                    <div tabindex="0" role="button">산책 크루</div>
-                    <ul class="dropdown-content menu bg-base-100 rounded-box w-52 p-2 shadow">
-                        <li>
-                            <a href="/usr/walkCrew/list">크루 목록</a>
-                        </li>
-                        <li>
-                            <a href="/usr/walkCrew/create">크루 모집</a>
-                        </li>
-=======
+
 
 				<!-- 산책 크루 -->
 				<li>
@@ -101,7 +89,7 @@
 							<li>
 
 								<a href="/usr/crewCafe/myCrewCafe">크루 카페</a>
->>>>>>> upstream/develop
+
 
                         <!-- ✅ 누구나 크루 카페 입장 가능 -->
                         <li>
@@ -162,32 +150,6 @@
                 </li>
             </c:if>
 
-<<<<<<< HEAD
-            <!-- 로그인 상태 -->
-            <c:if test="${rq.logined}">
-                <li>
-                    <a class="hover:underline" href="/usr/article/write">WRITE</a>
-                </li>
-                <li>
-                    <a class="hover:underline" href="/usr/member/myPage">MYPAGE</a>
-                </li>
-                <li>
-                    <c:choose>
-                        <c:when test="${rq.loginedMember != null && rq.loginedMember.socialProvider == 'kakao'}">
-                            <button onclick="openLogoutChoicePopup()" class="hover:underline">LOGOUT</button>
-                        </c:when>
-                        <c:otherwise>
-                            <a onclick="return confirm('로그아웃 하시겠습니까?')" class="hover:underline"
-                               href="/usr/member/doLogout">
-                                LOGOUT
-                            </a>
-                        </c:otherwise>
-                    </c:choose>
-                </li>
-            </c:if>
-        </ul>
-    </div>
-=======
 				<!-- 로그인 상태 -->
 				<c:if test="${rq.logined}">
 					<li>

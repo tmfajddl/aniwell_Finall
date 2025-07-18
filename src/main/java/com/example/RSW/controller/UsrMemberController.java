@@ -717,9 +717,7 @@ public class UsrMemberController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 실패");
         }
     }
-<<<<<<< HEAD
 
-<<<<<<< HEAD
     @RequestMapping("/usr/member/google")
     public String googleCallback(@RequestParam("code") String code, HttpServletRequest req, HttpServletResponse resp) {
 
@@ -778,9 +776,7 @@ public class UsrMemberController {
             return "redirect:/usr/member/login?error=google";
         }
     }
-=======
->>>>>>> upstream/develop
 
-=======
->>>>>>> 860dba721d57510e4c5280d28b6ccf6c79cd63fd
+
+
 }
