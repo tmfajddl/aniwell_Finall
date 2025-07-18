@@ -206,9 +206,19 @@
 
 				<!-- 주변 펫살 보기 -->
 				<div class="grid grid-row-3 gap-2 h-full">
-					<div class="bg-gray-300 rounded-xl p-2 text-sm">주변 펫살 알아보기</div>
-					<div class="bg-gray-200 rounded-xl p-2 text-sm">123</div>
-					<div class="bg-gray-200 rounded-xl p-2 text-sm">123</div>
+					<a th:href="@{/usr/pet/petPlace}" class="block bg-gray-300 rounded-xl p-3 text-sm text-center font-semibold transition">
+						주변 펫샵 알아보기
+					</a>
+					<a th:href="@{/usr/pet/gallery(petId=${pet.id})}"
+					   class="block bg-gray-300 rounded-xl p-3 text-sm text-center font-semibold transition">
+						감정 일기
+					</a>
+
+					<a th:href="@{/usr/pet/daily(petId=${pet.id})}"
+					   class="block bg-gray-300 rounded-xl p-3 text-sm text-center font-semibold transition">
+						감정 일기
+					</a>
+
 				</div>
 			</aside>
 
