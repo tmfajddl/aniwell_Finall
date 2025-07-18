@@ -2,15 +2,18 @@ package com.example.RSW.controller;
 
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
+import com.example.RSW.service.NotificationService;
 import com.example.RSW.service.VetCertificateService;
 import com.example.RSW.vo.VetCertificate;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.*;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.bind.annotation.*;
 
 import com.example.RSW.vo.Rq;
 import com.example.RSW.vo.Member;
@@ -19,16 +22,29 @@ import com.example.RSW.util.Ut;
 import com.example.RSW.service.MemberService;
 
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.UUID;
 
 @Controller
 public class UsrMemberController {
+
+    // 카카오 REST API 키 주입
+    @Value("${kakao.rest-api-key}")
+    private String kakaoRestApiKey;
+
+    // 카카오 리디렉트 URI 주입
+    @Value("${kakao.redirect-uri}")
+    private String kakaoRedirectUri;
+
+    @Value("${kakao.client-secret}")
+    private String kakaoClientSecret;
 
     @Autowired
     private Rq rq;
@@ -42,20 +58,70 @@ public class UsrMemberController {
     @Autowired
     private Cloudinary cloudinary;
 
+    @Autowired
+    private NotificationService notificationService;
+
 
     @RequestMapping("/usr/member/doLogout")
-    @ResponseBody
-    public String doLogin(HttpServletRequest req) {
+    public String doLogout(HttpServletRequest req) {
 
         Rq rq = (Rq) req.getAttribute("rq");
 
         rq.logout();
 
-        return Ut.jsReplace("S-1", "로그아웃 성공", "/");
+        return "redirect:/";
     }
 
+    @RequestMapping("/usr/member/logout-complete")
+    @ResponseBody
+    public String logoutComplete(HttpServletRequest req, HttpServletResponse resp) {
+        Rq rq = new Rq(req, resp, memberService);
+        rq.logout();
+        req.getSession().removeAttribute("kakaoAccessToken");  // 서버 세션, 토큰 삭제
+
+        return """
+                    <script>
+                        if(window.opener) {
+                            window.opener.postMessage("kakaoLogoutComplete", "*");
+                            window.close();
+                        } else {
+                            location.href = "/";
+                        }
+                    </script>
+                """;
+    }
+
+
+    @RequestMapping("/usr/member/service-logout-popup")
+    @ResponseBody
+    public String serviceLogoutPopup(HttpServletRequest req, HttpServletResponse resp) {
+        // 세션 종료 로직
+        Rq rq = new Rq(req, resp, memberService);
+        rq.logout();
+
+        // 디버깅용 로그 추가
+        System.out.println("DEBUG: service-logout-popup 컨트롤러 호출됨");
+
+        return """
+                    <script>
+                        if(window.opener) {
+                            console.log('DEBUG: serviceLogoutComplete 메시지 전송');
+                            window.opener.postMessage("serviceLogoutComplete", "*");
+                            window.close();
+                        } else {
+                            location.href = "/";
+                        }
+                    </script>
+                """;
+    }
+
+
     @RequestMapping("/usr/member/login")
-    public String showLogin(HttpServletRequest req) {
+    public String showLogin(HttpServletRequest req, Model model) {
+
+        model.addAttribute("kakaoRestApiKey", kakaoRestApiKey);
+        model.addAttribute("kakaoRedirectUri", kakaoRedirectUri);
+
         return "/usr/member/login";
     }
 
@@ -118,8 +184,7 @@ public class UsrMemberController {
     @RequestMapping("/usr/member/doJoin")
     @ResponseBody
     public String doJoin(HttpServletRequest req, String loginId, String loginPw, String name, String nickname,
-                         String cellphone, String email, String address, String authName,
-                         @RequestParam(defaultValue = "1") int authLevel) {
+                         String cellphone, String email, String address, String authName) {
 
         // 필수 입력값 체크
         if (Ut.isEmptyOrNull(loginId)) {
@@ -135,7 +200,6 @@ public class UsrMemberController {
             return Ut.jsHistoryBack("F-4", "닉네임을 입력해");
         }
         if (Ut.isEmptyOrNull(cellphone)) {
-            System.out.println("전화번호가 비어있습니다: " + cellphone); // 로그 추가
             return Ut.jsHistoryBack("F-5", "전화번호를 입력해");
         }
         if (Ut.isEmptyOrNull(email)) {
@@ -148,33 +212,37 @@ public class UsrMemberController {
             return Ut.jsHistoryBack("F-8", "인증명을 입력해");
         }
 
-        // 비밀번호를 SHA-256으로 해시화
+        // 비밀번호 해시화
         String hashedLoginPw = Ut.sha256(loginPw);
 
-        // 회원가입 서비스 호출
-        ResultData joinRd = memberService.join(loginId, hashedLoginPw, name, nickname, cellphone, email, address, authName, authLevel);
+        // 무조건 일반회원으로 가입
+        int fixedAuthLevel = 1;
+
+        // 회원가입 처리
+        ResultData joinRd = memberService.join(loginId, hashedLoginPw, name, nickname, cellphone, email, address, authName, fixedAuthLevel);
 
         if (joinRd.isFail()) {
             return Ut.jsHistoryBack(joinRd.getResultCode(), joinRd.getMsg());
         }
 
-        // 성공적으로 가입된 회원 정보를 가져옴
-        Member member = memberService.getMemberById((int) joinRd.getData1());
-
-        // 회원가입 성공 메시지
+        // 성공 후 로그인 페이지로 리디렉션
         return Ut.jsReplace(joinRd.getResultCode(), joinRd.getMsg(), "../member/login");
     }
 
 
     // 마이페이지
     @RequestMapping({"/usr/member/myPage", "/usr/member/mypage"})
-    @ResponseBody
-    public Member showMyPage(HttpServletRequest req) {
+    public String showMyPage(HttpServletRequest req, Model model) {
 
         Rq rq = (Rq) req.getAttribute("rq");
         Member loginedMember = rq.getLoginedMember();
 
-        return loginedMember;
+        VetCertificate cert = vetCertificateService.getCertificateByMemberId(loginedMember.getId());
+        model.addAttribute("cert", cert);
+
+        model.addAttribute("member", loginedMember);
+
+        return "usr/member/myPage";
     }
 
     @RequestMapping("/usr/member/checkPw")
@@ -183,18 +251,30 @@ public class UsrMemberController {
     }
 
     @RequestMapping("/usr/member/doCheckPw")
-    @ResponseBody
-    public String doCheckPw(String loginPw) {
+    public void doCheckPw(HttpServletRequest req, HttpServletResponse resp, String loginPw) throws IOException {
+        Rq rq = (Rq) req.getAttribute("rq");
+
+        // 소셜 로그인 회원은 비밀번호 확인 없이 바로 이동
+        if (rq.getLoginedMember().isSocialMember()) {
+            resp.sendRedirect("modify");
+            return;
+        }
+
+        // 일반 로그인 회원은 비밀번호 확인
         if (Ut.isEmptyOrNull(loginPw)) {
-            return Ut.jsHistoryBack("F-1", "비번 써");
+            rq.printHistoryBack("비밀번호를 입력해 주세요.");
+            return;
         }
 
-        if (rq.getLoginedMember().getLoginPw().equals(Ut.sha256(loginPw)) == false) {
-            return Ut.jsHistoryBack("F-2", "비번 틀림");
+        if (!rq.getLoginedMember().getLoginPw().equals(Ut.sha256(loginPw))) {
+            rq.printHistoryBack("비밀번호가 일치하지 않습니다.");
+            return;
         }
 
-        return Ut.jsReplace("S-1", Ut.f("비밀번호 확인 성공"), "modify");
+        // 성공 시 수정 페이지로 리다이렉트
+        resp.sendRedirect("modify");
     }
+
 
     @RequestMapping("/usr/member/modify")
     public String showmyModify() {
@@ -209,7 +289,8 @@ public class UsrMemberController {
                            @RequestParam String nickname,
                            @RequestParam String cellphone,
                            @RequestParam String email,
-                           @RequestParam(required = false) MultipartFile photoFile) {
+                           @RequestParam(required = false) MultipartFile photoFile,
+                           @RequestParam String address) {
 
         Rq rq = (Rq) req.getAttribute("rq");
 
@@ -249,7 +330,7 @@ public class UsrMemberController {
 
         ResultData modifyRd;
         if (Ut.isEmptyOrNull(loginPw)) {
-            modifyRd = memberService.modifyWithoutPw(memberId, name, nickname, cellphone, email, photoUrl);
+            modifyRd = memberService.modifyWithoutPw(memberId, name, nickname, cellphone, email, photoUrl, address);
         } else {
             modifyRd = memberService.modify(memberId, loginPw, name, nickname, cellphone, email, photoUrl);
         }
@@ -261,7 +342,6 @@ public class UsrMemberController {
 
         return Ut.jsReplace(modifyRd.getResultCode(), modifyRd.getMsg(), "../member/myPage");
     }
-
 
 
     @RequestMapping("/usr/member/getLoginIdDup")
@@ -363,37 +443,79 @@ public class UsrMemberController {
         Rq rq = (Rq) req.getAttribute("rq");
 
         if (file.isEmpty()) {
-            return Ut.jsHistoryBack("F-1", "파일을 선택해주세요.");
+            return Ut.jsReplace("F-1", "❗ 파일을 선택해주세요.", "/usr/member/myPage");
         }
 
         try {
+            // 기존 인증서 삭제
+            VetCertificate existing = vetCertificateService.getCertificateByMemberId(rq.getLoginedMemberId());
+            if (existing != null) {
+                vetCertificateService.deleteCertificateWithFile(existing);
+            }
+
             String originalFilename = file.getOriginalFilename();
+            if (originalFilename == null || originalFilename.trim().isEmpty()) {
+                return Ut.jsReplace("F-2", "파일명이 유효하지 않습니다.", "/usr/member/myPage");
+            }
+
             String uuid = UUID.randomUUID().toString();
             String savedFileName = uuid + "_" + originalFilename;
             String uploadDir = "C:/upload/vet_certificates";
 
             File dir = new File(uploadDir);
-            if (!dir.exists()) {
-                dir.mkdirs();
-            }
+            if (!dir.exists()) dir.mkdirs();
 
-            file.transferTo(new File(uploadDir + "/" + savedFileName));
+            File savedFile = new File(uploadDir + "/" + savedFileName);
+            file.transferTo(savedFile);
 
             VetCertificate cert = new VetCertificate();
             cert.setMemberId(rq.getLoginedMemberId());
             cert.setFileName(originalFilename);
             cert.setFilePath(savedFileName);
             cert.setUploadedAt(LocalDateTime.now());
-            cert.setApproved(0); // 대기 상태
+            cert.setApproved(0);
+
+            System.out.println("📥 저장될 인증서: " + cert.toString());
 
             vetCertificateService.registerCertificate(cert);
+            memberService.updateVetCertInfo(rq.getLoginedMemberId(), savedFileName, 0);
 
-            return Ut.jsReplace("S-1", "수의사 인증서가 등록되었습니다. 관리자 승인을 기다려주세요.", "myCert");
+            // 인증서 업로드 성공 후 관리자에게 알림 전송
+            notificationService.sendNotificationToAdmins(rq.getLoginedMemberId());
+
+
+            return """
+                    <html>
+                    <head>
+                      <meta charset="UTF-8">
+                      <script>
+                        alert('✅ 수의사 인증서가 등록되었습니다. 관리자 승인을 기다려주세요.');
+                        location.replace('myCert');
+                      </script>
+                    </head>
+                    <body></body>
+                    </html>
+                    """;
 
         } catch (Exception e) {
-            return Ut.jsHistoryBack("F-2", "파일 업로드 중 오류가 발생했습니다.");
+            e.printStackTrace();
+            System.err.println("❌ 업로드 예외 발생: " + e.getMessage());
+
+            return """
+                    <html>
+                    <head>
+                      <meta charset="UTF-8">
+                      <script>
+                        alert('⚠ 업로드 중 오류가 발생했습니다. 다시 시도해주세요.');
+                        location.replace('/usr/member/myPage');
+                      </script>
+                    </head>
+                    <body></body>
+                    </html>
+                    """;
         }
     }
+
 
     @RequestMapping("/usr/member/myCert")
     public String showMyCertificate(HttpServletRequest req, Model model) {
@@ -409,6 +531,7 @@ public class UsrMemberController {
     @ResponseBody
     public String deleteVetCert(HttpServletRequest req) {
         Rq rq = (Rq) req.getAttribute("rq");
+
         VetCertificate cert = vetCertificateService.getCertificateByMemberId(rq.getLoginedMemberId());
 
         if (cert == null) {
@@ -417,9 +540,183 @@ public class UsrMemberController {
 
         vetCertificateService.deleteCertificateWithFile(cert);
 
-        return Ut.jsReplace("S-1", "인증서가 삭제되었습니다.", "/usr/member/vetCert");
+        return Ut.jsReplace("S-1", "인증서가 삭제되었습니다.", "/usr/member/myCert");
     }
 
+    // 카카오 로그인
+    @RequestMapping("/usr/member/kakao")
+    public void kakaoPopupCallback(@RequestParam("code") String code,
+                                   HttpServletRequest req, HttpServletResponse resp) throws IOException {
+
+        String tokenUrl = "https://kauth.kakao.com/oauth/token";
+
+        RestTemplate restTemplate = new RestTemplate();
+
+        HttpHeaders tokenHeaders = new HttpHeaders();
+        tokenHeaders.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+        MultiValueMap<String, String> tokenParams = new LinkedMultiValueMap<>();
+        tokenParams.add("grant_type", "authorization_code");
+        tokenParams.add("client_id", kakaoRestApiKey); // 카카오 REST API 키
+        tokenParams.add("redirect_uri", "http://localhost:8080/usr/member/kakao"); // 고정값
+        tokenParams.add("client_secret", kakaoClientSecret); // 카카오 클라이언트 시크릿
+        tokenParams.add("code", code);
+
+        HttpEntity<MultiValueMap<String, String>> tokenRequest = new HttpEntity<>(tokenParams, tokenHeaders);
+        ResponseEntity<Map> tokenResponse = restTemplate.postForEntity(tokenUrl, tokenRequest, Map.class);
+
+        String accessToken = (String) tokenResponse.getBody().get("access_token");
+
+        HttpHeaders profileHeaders = new HttpHeaders();
+        profileHeaders.set("Authorization", "Bearer " + accessToken);
+        HttpEntity<?> profileRequest = new HttpEntity<>(profileHeaders);
+
+        ResponseEntity<Map> profileResponse = restTemplate.exchange(
+                "https://kapi.kakao.com/v2/user/me",
+                HttpMethod.GET,
+                profileRequest,
+                Map.class
+        );
+
+        Map properties = (Map) profileResponse.getBody().get("properties");
+
+        String socialId = String.valueOf(profileResponse.getBody().get("id"));
+        String name = (String) properties.get("nickname");
+
+        String provider = "kakao";
+        String email = ""; // 이메일은 비워둠
+
+        // 기존 사용자 조회 또는 새로 생성
+        Member member = memberService.getOrCreateSocialMember(provider, socialId, email, name);
+
+        // 세션 등록
+        Rq rq = new Rq(req, resp, memberService);
+        rq.login(member);
+        req.getSession().setAttribute("rq", rq);
+        req.getSession().setAttribute("kakaoAccessToken", accessToken); // 자동 로그인용 저장
+
+
+        // ✅ 팝업 닫고 부모 창 새로고침
+        resp.setContentType("text/html; charset=UTF-8");
+        PrintWriter out = resp.getWriter();
+        out.println("<script>");
+        out.println("localStorage.setItem('kakaoAccessToken', '" + accessToken + "');"); // ✅ 자동 로그인용 토큰 저장
+        out.println("window.opener.location.href = '/';");
+        out.println("window.close();");
+        out.println("</script>");
+
+    }
+
+
+    // 카카오 팝업 로그인 처리용 REST API 컨트롤러 메서드
+    @PostMapping("/usr/member/social-login")
+    @ResponseBody
+    public ResultData<?> kakaoSocialLogin(@RequestBody Map<String, Object> payload,
+                                          HttpServletRequest req, HttpServletResponse resp) {
+
+        String provider = (String) payload.get("provider"); // "kakao"
+        String socialId = String.valueOf(payload.get("socialId"));
+        String name = (String) payload.get("name");
+        String email = (String) payload.get("email");
+
+        Member member = memberService.getOrCreateSocialMember(provider, socialId, email, name);
+
+        Rq rq = new Rq(req, resp, memberService);
+        rq.login(member);
+        req.getSession().setAttribute("rq", rq);
+
+        return ResultData.from("S-1", "로그인 성공");
+    }
+
+    @RequestMapping("/usr/member/kakao-popup-login")
+    public void kakaoPopupRedirect(@RequestParam(value = "token", required = false) String accessTokenParam, HttpServletRequest req, HttpServletResponse resp) throws IOException {
+
+        String accessToken = accessTokenParam != null
+                ? accessTokenParam
+                : (String) req.getSession().getAttribute("kakaoAccessToken");
+
+        if (accessToken != null) {
+            RestTemplate restTemplate = new RestTemplate();
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("Authorization", "Bearer " + accessToken);
+            HttpEntity<?> entity = new HttpEntity<>(headers);
+
+            try {
+                ResponseEntity<Map> response = restTemplate.exchange(
+                        "https://kapi.kakao.com/v2/user/me",
+                        HttpMethod.GET,
+                        entity,
+                        Map.class
+                );
+
+                Map properties = (Map) response.getBody().get("properties");
+                String socialId = String.valueOf(response.getBody().get("id"));
+                String name = (String) properties.get("nickname");
+
+                Member member = memberService.getOrCreateSocialMember("kakao", socialId, "", name);
+
+                Rq rq = new Rq(req, resp, memberService);
+                rq.login(member);
+                req.getSession().setAttribute("rq", rq);
+
+                resp.setContentType("text/html; charset=UTF-8");
+                PrintWriter out = resp.getWriter();
+                out.println("<script>window.opener.location.href = '/'; window.close();</script>");
+                return;
+
+            } catch (Exception e) {
+                // access_token 만료됐을 때
+                req.getSession().removeAttribute("kakaoAccessToken");
+            }
+        }
+        String clientId = "79f2a3a73883a82595a2202187f96cc5";
+        String redirectUri = "http://localhost:8080/usr/member/kakao";
+        String kakaoAuthUrl = "https://kauth.kakao.com/oauth/authorize" +
+                "?client_id=" + clientId +
+                "&redirect_uri=" + redirectUri +
+                "&response_type=code" +
+                "&prompt=login";
+
+        resp.sendRedirect(kakaoAuthUrl);
+    }
+
+    @PostMapping("/usr/member/kakao-popup-login")
+    @ResponseBody
+    public ResponseEntity<?> kakaoPopupLogin(@RequestBody Map<String, String> body,
+                                             HttpServletRequest req, HttpServletResponse resp) {
+        String token = body.get("token");
+        if (token == null || token.isBlank()) {
+            return ResponseEntity.badRequest().body("Missing token");
+        }
+
+        try {
+            RestTemplate restTemplate = new RestTemplate();
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("Authorization", "Bearer " + token);
+            HttpEntity<?> entity = new HttpEntity<>(headers);
+
+            ResponseEntity<Map> response = restTemplate.exchange(
+                    "https://kapi.kakao.com/v2/user/me",
+                    HttpMethod.GET,
+                    entity,
+                    Map.class
+            );
+
+            Map properties = (Map) response.getBody().get("properties");
+            String socialId = String.valueOf(response.getBody().get("id"));
+            String name = (String) properties.get("nickname");
+
+            Member member = memberService.getOrCreateSocialMember("kakao", socialId, "", name);
+
+            Rq rq = new Rq(req, resp, memberService);
+            rq.login(member);
+            req.getSession().setAttribute("rq", rq);
+
+            return ResponseEntity.ok("자동 로그인 성공");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 실패");
+        }
+    }
 
 
 }

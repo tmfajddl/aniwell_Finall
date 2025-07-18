@@ -5,7 +5,6 @@ import java.io.IOException;
 import org.springframework.context.annotation.Scope;
 import org.springframework.context.annotation.ScopedProxyMode;
 import org.springframework.stereotype.Component;
-import org.springframework.web.bind.annotation.ModelAttribute;
 
 import com.example.RSW.service.MemberService;
 import com.example.RSW.util.Ut;
@@ -99,7 +98,7 @@ public class Rq {
 
 		return currentUri;
 	}
-	
+
 	public void printReplace(String resultCode, String msg, String replaceUri) throws IOException {
 		resp.setContentType("text/html; charset=UTF-8");
 		print(Ut.jsReplace(resultCode, msg, replaceUri));
@@ -108,7 +107,7 @@ public class Rq {
 	public String getEncodedCurrentUri() {
 		return Ut.getEncodedCurrentUri(getCurrentUri());
 	}
-	
+
 	public String getLoginUri() {
 		return "../member/login?afterLoginUri=" + getAfterLoginUri();
 	}
@@ -116,7 +115,7 @@ public class Rq {
 	private String getAfterLoginUri() {
 		return getEncodedCurrentUri();
 	}
-	
+
 	public String getFindLoginIdUri() {
 		return "../member/findLoginId?afterFindLoginIdUri=" + getAfterFindLoginIdUri();
 	}
@@ -136,5 +135,4 @@ public class Rq {
 	public boolean isAdmin() {
 		return getLoginedMember() != null && getLoginedMember().getAuthLevel() == 7;
 	}
-	
 }
