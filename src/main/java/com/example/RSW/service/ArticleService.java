@@ -1,6 +1,7 @@
 package com.example.RSW.service;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -9,6 +10,7 @@ import com.example.RSW.repository.ArticleRepository;
 import com.example.RSW.util.Ut;
 import com.example.RSW.vo.Article;
 import com.example.RSW.vo.ResultData;
+import com.example.RSW.vo.WalkCrew;
 
 @Service
 public class ArticleService {
@@ -20,8 +22,8 @@ public class ArticleService {
 		this.articleRepository = articleRepository;
 	}
 
-	public ResultData writeArticle(int memberId, String title, String body, String boardId) {
-		articleRepository.writeArticle(memberId, title, body, boardId);
+	public ResultData writeArticle(int memberId, String title, String body, String imageUrl, String boardId) {
+		articleRepository.writeArticle(memberId, title, body, imageUrl, boardId);
 
 		int id = articleRepository.getLastInsertId();
 
@@ -167,8 +169,9 @@ public class ArticleService {
 		return articleRepository.findByCrewId(crewId);
 	}
 
-	public ResultData writeCrewArticle(Integer boardId, int crewId, int loginedMemberId, String title, String body) {
-		articleRepository.insertCrewArticle(boardId, crewId, loginedMemberId, title, body);
+	public ResultData writeCrewArticle(Integer boardId, int crewId, int loginedMemberId, String title, String body,
+			String imageUrl) {
+		articleRepository.insertCrewArticle(boardId, crewId, loginedMemberId, title, body, imageUrl);
 
 		int id = articleRepository.getLastInsertId();
 		return ResultData.from("S-1", "작성 완료", "id", id);
@@ -180,6 +183,37 @@ public class ArticleService {
 
 	public List<Article> getRecentArticlesByCrewAndBoardId(int crewId, int boardId, int limit) {
 		return articleRepository.getRecentArticlesByCrewAndBoardId(crewId, boardId, limit);
+	}
+
+	public List<Article> getArticlesByCrewIdAndBoardId(Integer crewId, Integer boardId) {
+		return articleRepository.getArticlesByCrewIdAndBoardId(crewId, boardId);
+	}
+
+	// 메인홈 / 까페 공지사항 구분하기
+	public List<Article> getNoticeArticlesByBoardId(int boardId, int limit) {
+		return articleRepository.getNoticeArticlesByBoardId(boardId, limit);
+	}
+
+	// 일정등록하기
+	public void writeSchedule(int crewId, int loginedMemberId, String scheduleDate, String scheduleTitle,
+			String scheduleBody) {
+		articleRepository.writeSchedule(crewId, loginedMemberId, scheduleDate, scheduleTitle, scheduleBody);
+	}
+
+	// 공지사항 구분하기 (일반 공지사항 / 크루까페 공지사항)
+	public int getAdminOnlyArticleCount(Integer boardId, String searchKeywordTypeCode, String searchKeyword) {
+		return articleRepository.getAdminOnlyArticleCount(boardId, searchKeywordTypeCode, searchKeyword);
+	}
+
+	public List<Article> getAdminOnlyArticles(Integer boardId, int limitStart, int itemsInAPage,
+			String searchKeywordTypeCode, String searchKeyword) {
+		return articleRepository.getAdminOnlyArticles(boardId, limitStart, itemsInAPage, searchKeywordTypeCode,
+				searchKeyword);
+	}
+
+	// 모임일정리스트불러오기
+	public List<Map<String, Object>> getSchedulesByCrewId(int crewId) {
+		return articleRepository.getSchedulesByCrewId(crewId);
 	}
 
 }
