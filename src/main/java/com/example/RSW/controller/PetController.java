@@ -8,6 +8,7 @@ import com.example.RSW.vo.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -112,12 +113,14 @@ public class PetController {
 
     //펫 상세페이지
     @RequestMapping("/usr/pet/petPage")
-    public String showTest(@RequestParam("petId") int petId, Model model) throws Exception{
+    public String showTest(@RequestParam("petId") int petId, Model model, HttpServletResponse resp) throws IOException{
 
         Member loginesMember = rq.getLoginedMember();
         Pet pet = petService.getPetsById(petId);
         if(pet.getMemberId() != loginesMember.getId()){
-            return Ut.jsAlertBack("권한이 없습니다.");
+            resp.setContentType("text/html; charset=UTF-8");
+            resp.getWriter().write( Ut.jsAlertBack("권한이 없습니다."));
+            return null;
         }
         model.addAttribute("member", loginesMember);
         model.addAttribute("pet", pet);
@@ -156,10 +159,12 @@ public class PetController {
 
     // 등록한 펫 목록 / 가입한 크루 목록
     @RequestMapping("/usr/pet/list")
-    public String showPetList(@RequestParam("memberId") int memberId, Model model) {
+    public String showPetList(@RequestParam("memberId") int memberId, Model model, HttpServletResponse resp) throws IOException{
         int loginId = rq.getLoginedMemberId();
         if(loginId != memberId){
-            return Ut.jsAlertBack("권한이 없습니다.");
+            resp.setContentType("text/html; charset=UTF-8");
+            resp.getWriter().write( Ut.jsAlertBack("권한이 없습니다."));
+            return null;
         }
         List<Pet> pets = petService.getPetsByMemberId(memberId);
         List<WalkCrew> crews = walkCrewService.getWalkCrews(memberId);
@@ -222,12 +227,14 @@ public class PetController {
     //펫 정보 수정 페이지로 이동
 
     @RequestMapping("/usr/pet/modify")
-    public String showModify(@RequestParam("petId") int petId, Model model) {
+    public String showModify(@RequestParam("petId") int petId, Model model, HttpServletResponse resp) throws IOException{
 
         int memberId = rq.getLoginedMemberId();
         Pet pet = petService.getPetsById(petId);
         if(pet.getMemberId() != memberId){
-            return Ut.jsAlertBack("권한이 없습니다.");
+            resp.setContentType("text/html; charset=UTF-8");
+            resp.getWriter().write(Ut.jsAlertBack("권한이 없습니다."));
+            return null;
         }
 
         model.addAttribute("pet", pet);
@@ -285,12 +292,14 @@ public class PetController {
 
     // 감정 갤러리 이동
     @RequestMapping("/usr/pet/gallery")
-    public String showGallery(@RequestParam("petId") int petId, Model model) {
+    public String showGallery(@RequestParam("petId") int petId, Model model, HttpServletResponse resp) throws IOException {
 
         int memberId = rq.getLoginedMemberId();
         Pet pet = petService.getPetsById(petId);
         if(pet.getMemberId() != memberId){
-            return Ut.jsAlertBack("권한이 없습니다.");
+            resp.setContentType("text/html; charset=UTF-8");
+            resp.getWriter().write(Ut.jsAlertBack("권한이 없습니다."));
+            return null;
         }
         List<PetAnalysis> analysisList = petAnalysisService.getAnalysisByPetId(petId);
 
@@ -401,11 +410,13 @@ public class PetController {
 
     // 백신 등록 페이지 이동
     @RequestMapping("/usr/pet/vaccination/registration")
-    public String showRegistration(HttpServletRequest req,@RequestParam("petId") int petId) {
+    public String showRegistration(HttpServletRequest req,@RequestParam("petId") int petId, HttpServletResponse resp) throws IOException {
         int memberId = rq.getLoginedMemberId();
         Pet pet = petService.getPetsById(petId);
         if(pet.getMemberId() != memberId){
-            return Ut.jsAlertBack("권한이 없습니다.");
+            resp.setContentType("text/html; charset=UTF-8");
+            resp.getWriter().write(Ut.jsAlertBack("권한이 없습니다."));
+            return null;
         }
         return "/usr/pet/vaccinationRegistration";
     }
@@ -441,13 +452,15 @@ public class PetController {
 
     //백신 수정 페이지 이동
     @RequestMapping("/usr/pet/vaccination/modify")
-    public String showVaccinationModify(@RequestParam("vaccinationId") int vaccinationId, Model model) {
+    public String showVaccinationModify(@RequestParam("vaccinationId") int vaccinationId, Model model, HttpServletResponse resp) throws IOException {
         PetVaccination petVaccination = petVaccinationService.getVaccinationsById(vaccinationId);
         int petId = petVaccination.getPetId();
         int memberId = rq.getLoginedMemberId();
         Pet pet = petService.getPetsById(petId);
         if(pet.getMemberId() != memberId){
-            return Ut.jsAlertBack("권한이 없습니다.");
+            resp.setContentType("text/html; charset=UTF-8");
+            resp.getWriter().write(Ut.jsAlertBack("권한이 없습니다."));
+            return null;
         }
         model.addAttribute("petVaccination", petVaccination); // 해당 id에 해당하는 백신
         return "usr/pet/vaccinationModify";
@@ -490,13 +503,15 @@ public class PetController {
 
     //백신 정보 상세보기
     @RequestMapping("/usr/pet/vaccination/detail")
-    public String showVaccinationDetail(@RequestParam("vaccinationId") int vaccinationId, Model model) {
+    public String showVaccinationDetail(@RequestParam("vaccinationId") int vaccinationId, Model model, HttpServletResponse resp) throws IOException{
         PetVaccination petVaccination = petVaccinationService.getVaccinationsById(vaccinationId);
         int petId = petVaccination.getPetId();
         int memberId = rq.getLoginedMemberId();
         Pet pet = petService.getPetsById(petId);
         if(pet.getMemberId() != memberId){
-            return Ut.jsAlertBack("권한이 없습니다.");
+            resp.setContentType("text/html; charset=UTF-8");
+            resp.getWriter().write(Ut.jsAlertBack("권한이 없습니다."));
+            return null;
         }
 
         model.addAttribute("petVaccination", petVaccination); // 해당 id에 해당하는 백신
@@ -521,12 +536,14 @@ public class PetController {
 
     //펫 감정일기 페이지 이동
     @RequestMapping("/usr/pet/daily")
-    public String showDaily(@RequestParam("petId") int petId, Model model) {
+    public String showDaily(@RequestParam("petId") int petId, Model model, HttpServletResponse resp) throws IOException {
 
         int memberId = rq.getLoginedMemberId();
         Pet pet = petService.getPetsById(petId);
         if(pet.getMemberId() != memberId){
-            return Ut.jsAlertBack("권한이 없습니다.");
+            resp.setContentType("text/html; charset=UTF-8");
+            resp.getWriter().write(Ut.jsAlertBack("권한이 없습니다."));
+            return null;
         }
         List<CalendarEvent> events = calendarEventService.getEventsByPetId(petId);
         model.addAttribute("events", events); // 감정일기에 등록된 이벤트들
