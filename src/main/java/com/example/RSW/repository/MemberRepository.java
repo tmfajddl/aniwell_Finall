@@ -61,10 +61,8 @@ public interface MemberRepository {
                                            @Param("socialId") String socialId);
 
 
-<<<<<<< HEAD
     Member findByEmail(String email);
 
     void insert(Member member);
-=======
->>>>>>> 860dba721d57510e4c5280d28b6ccf6c79cd63fd
+
 }
