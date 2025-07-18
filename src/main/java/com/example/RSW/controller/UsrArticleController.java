@@ -64,6 +64,7 @@ public class UsrArticleController {
 		System.out.println("📌 crewId = " + crewId);
 		System.out.println("📌 loginedMemberId = " + rq.getLoginedMemberId());
 
+
 		// ✅ 크루 글쓰기 처리일 경우
 		if (crewId != null) {
 			WalkCrew crew = walkCrewService.getCrewById(crewId);
@@ -98,6 +99,7 @@ public class UsrArticleController {
 			model.addAttribute("crew", crew);
 			model.addAttribute("crewId", crewId);
 			model.addAttribute("type", type);
+
 			model.addAttribute("boardId", boardId);
 
 			System.out.println("✅ 글쓰기 진입 성공 (크루)");
@@ -112,6 +114,7 @@ public class UsrArticleController {
 
 		System.out.println("✅ 글쓰기 진입 성공 (일반)");
 		return "usr/article/write"; // 일반 글쓰기 JSP로 이동
+
 	}
 
 	@PostMapping("/usr/article/doWrite")
@@ -139,7 +142,9 @@ public class UsrArticleController {
 		// ✅ 크루 글과 일반 글 구분 처리
 		ResultData rd;
 		if (crewId != null) {
+
 			rd = articleService.writeCrewArticle(boardId, crewId, loginedMemberId, title, body, imageUrl);
+
 			return Ut.jsReplace(rd.getResultCode(), rd.getMsg(),
 					"../article/detail?id=" + rd.getData1() + "&crewId=" + crewId);
 		} else {

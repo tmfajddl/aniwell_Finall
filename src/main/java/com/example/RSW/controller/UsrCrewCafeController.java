@@ -50,11 +50,13 @@ public class UsrCrewCafeController {
 	@Autowired
 	private WalkCrewService walkCrewService;
 
+
 	@Autowired
 	private WalkCrewMemberService walkCrewMemberService;
 
 	@Autowired
 	private Cloudinary cloudinary;
+
 
 	@GetMapping("")
 	public String showCafeMain(@RequestParam(required = false) Integer crewId, Model model) {
@@ -74,6 +76,7 @@ public class UsrCrewCafeController {
 		int noticeBoardId = 1; // 공지사항
 		int freeBoardId = 3; // 자유게시판
 		int galleryBoardId = 4; // 사진첩
+
 		int scheduleBoardId = 5; // 일정 게시판
 
 		// 로그용
@@ -85,10 +88,12 @@ public class UsrCrewCafeController {
 
 		// ✅ 자유글 5개
 		List<Article> freeArticles = articleService.getRecentArticlesByCrewAndBoardId(crewId, freeBoardId, 5);
+
 		System.out.println("✅ freeArticles.size = " + freeArticles.size());
 		for (Article a : freeArticles) {
 			System.out.println("📝 자유글: id=" + a.getId() + ", title=" + a.getTitle());
 		}
+
 
 		// ✅ 사진용 게시글: 자유게시판(boardId=3) 중 imageUrl이 있는 글만 최대 20개
 		List<Article> galleryArticles = articleService
