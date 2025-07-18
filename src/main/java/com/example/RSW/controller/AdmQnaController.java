@@ -101,6 +101,6 @@ public class AdmQnaController {
     public String doWrite(@RequestParam String title, @RequestParam String body) {
         int memberId = rq.getLoginedMemberId(); // 로그인한 관리자 ID
         qnaService.writeFaq(memberId, title, body); // FAQ로 저장 (isFaq = 1)
-        return "redirect:/adm/qna/list"; // 목록으로 이동
+        return "redirect:/adm/article/list"; // 목록으로 이동
     }
 }

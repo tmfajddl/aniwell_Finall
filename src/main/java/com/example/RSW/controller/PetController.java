@@ -8,6 +8,7 @@ import com.example.RSW.vo.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -83,7 +84,7 @@ public class PetController {
 	}
 	//주변 펫 샵 조회
 	@RequestMapping("/usr/pet/petPlace")
-	public String showMap(Model model) {
+	public String showMap(Model model, HttpServletResponse resp) throws IOException{
 		int memberId = rq.getLoginedMemberId();
 
 		List<String> favoriteNames = petRecommendationService.getFavoriteNamesOnly(memberId);
@@ -98,12 +99,14 @@ public class PetController {
 
 	// 펫 상세페이지
 	@RequestMapping("/usr/pet/petPage")
-	public String showTest(@RequestParam("petId") int petId, Model model) throws Exception {
+	public String showTest(@RequestParam("petId") int petId, Model model, HttpServletResponse resp) throws IOException {
 
 		int memberId = rq.getLoginedMemberId();
 		Pet pet = petService.getPetsById(petId);
 		if (pet.getMemberId() != memberId) {
-			return Ut.jsHistoryBack("F-1", "권한이 없습니다.");
+			resp.setContentType("text/html; charset=UTF-8");
+			resp.getWriter().write(Ut.jsHistoryBack("F-1", "권한이 없습니다."));
+			return null;
 		}
 		model.addAttribute("pet", pet);
 
@@ -139,10 +142,12 @@ public class PetController {
 
 	// 등록한 펫 목록 / 가입한 크루 목록
 	@RequestMapping("/usr/pet/list")
-	public String showPetList(@RequestParam("memberId") int memberId, Model model) {
+	public String showPetList(@RequestParam("memberId") int memberId, Model model, HttpServletResponse resp) throws IOException {
 		int loginId = rq.getLoginedMemberId();
 		if (loginId != memberId) {
-			return Ut.jsHistoryBack("F-1", "권한이 없습니다.");
+			resp.setContentType("text/html; charset=UTF-8");
+			resp.getWriter().write(Ut.jsHistoryBack("F-1", "권한이 없습니다."));
+			return null; // 페이지 이동 막기
 		}
 		List<Pet> pets = petService.getPetsByMemberId(memberId);
 		List<WalkCrew> crews = walkCrewService.getWalkCrews(memberId);
@@ -172,7 +177,7 @@ public class PetController {
 
 	// 펫등록 페이지 이동
 	@RequestMapping("/usr/pet/join")
-	public String showJoin(HttpServletRequest req) {
+	public String showJoin(){
 		return "/usr/pet/join";
 	}
 
@@ -218,12 +223,14 @@ public class PetController {
 	// 펫 정보 수정 페이지로 이동
 
 	@RequestMapping("/usr/pet/modify")
-	public String showModify(@RequestParam("petId") int petId, Model model) {
+	public String showModify(@RequestParam("petId") int petId, Model model, HttpServletResponse resp) throws IOException {
 
 		int memberId = rq.getLoginedMemberId();
 		Pet pet = petService.getPetsById(petId);
 		if (pet.getMemberId() != memberId) {
-			return Ut.jsHistoryBack("F-1", "권한이 없습니다.");
+			resp.setContentType("text/html; charset=UTF-8");
+			resp.getWriter().write(Ut.jsHistoryBack("F-1", "권한이 없습니다."));
+			return null;
 		}
 
 		model.addAttribute("pet", pet);
@@ -277,20 +284,16 @@ public class PetController {
 		return Ut.jsReplace(modifyRd.getResultCode(), modifyRd.getMsg(), "../pet/list?memberId=" + id);
 	}
 
-	// 감정 분석 페이지 이동
-	@RequestMapping("/usr/pet/analysis")
-	public String showAnalysisForm() {
-		return "usr/pet/emotion"; // 분석 요청 form (이미지 경로 선택)
-	}
-
 	// 감정 갤러리 이동
 	@RequestMapping("/usr/pet/gallery")
-	public String showGallery(@RequestParam("petId") int petId, Model model) {
+	public String showGallery(@RequestParam("petId") int petId, Model model, HttpServletResponse resp) throws IOException{
 
 		int memberId = rq.getLoginedMemberId();
 		Pet pet = petService.getPetsById(petId);
 		if (pet.getMemberId() != memberId) {
-			return Ut.jsHistoryBack("F-1", "권한이 없습니다.");
+			resp.setContentType("text/html; charset=UTF-8");
+			resp.getWriter().write(Ut.jsHistoryBack("F-1", "권한이 없습니다."));
+			return null;
 		}
 		List<PetAnalysis> analysisList = petAnalysisService.getAnalysisByPetId(petId);
 
@@ -521,7 +524,7 @@ public class PetController {
 
 	// 펫 감정일기 페이지 이동
 	@RequestMapping("/usr/pet/daily")
-	public String showDaily(@RequestParam("petId") int petId, Model model) {
+	public String showDaily(@RequestParam("petId") int petId, Model model, HttpServletResponse resp) throws IOException{
 
 		int memberId = rq.getLoginedMemberId();
 		Pet pet = petService.getPetsById(petId);

@@ -1,8 +1,11 @@
 package com.example.RSW.controller;
 
 import com.example.RSW.service.ArticleService;
+import com.example.RSW.service.MemberService;
+import com.example.RSW.service.QnaService;
 import com.example.RSW.util.Ut;
 import com.example.RSW.vo.Article;
+import com.example.RSW.vo.Member;
 import com.example.RSW.vo.ResultData;
 import com.example.RSW.vo.Rq;
 
@@ -21,14 +24,21 @@ import java.util.List;
 public class AdmArticleController {
 
     @Autowired
-    private ArticleService articleService; // 게시글 관련 서비스 의존성 주입
+    private ArticleService articleService;// 게시글 관련 서비스 의존성 주입
+
+    @Autowired
+    private QnaService qnaService;
+
+    @Autowired
+    private MemberService memberService;
 
     // 게시글 리스트 페이지 요청 처리
     @RequestMapping("/list")
     public String showList(HttpServletRequest req, Model model,
                            @RequestParam(defaultValue = "1") int page, // 현재 페이지 번호 (기본값 1)
                            @RequestParam(defaultValue = "title") String searchKeywordTypeCode, // 검색 타입 (기본값: 제목)
-                           @RequestParam(defaultValue = "") String searchKeyword) throws IOException { // 검색 키워드 (기본값: 없음)
+                           @RequestParam(defaultValue = "") String searchKeyword,
+                           @RequestParam(defaultValue = "") String searchType) throws IOException { // 검색 키워드 (기본값: 없음)
 
         Rq rq = (Rq) req.getAttribute("rq"); // 로그인 정보 등 사용자 정보 객체 획득
 
@@ -42,6 +52,8 @@ public class AdmArticleController {
         List<Article> articles = articleService.getForPrintArticles(0, itemsInAPage, page, searchKeywordTypeCode, searchKeyword);
         // 해당 조건에 맞는 게시글 리스트 조회
 
+        List<Member> members = memberService.getForPrintMembers(searchType, searchKeyword);
+        model.addAttribute("members", members);
         // 모델에 데이터 전달
         model.addAttribute("pagesCount", pagesCount);
         model.addAttribute("articlesCount", articlesCount);
@@ -49,6 +61,7 @@ public class AdmArticleController {
         model.addAttribute("searchKeyword", searchKeyword);
         model.addAttribute("articles", articles);
         model.addAttribute("page", page);
+        model.addAttribute("qnaList", qnaService.findAll()); // 모든 QnA 조회
 
         return "adm/article/list"; // JSP 뷰 경로 반환
     }

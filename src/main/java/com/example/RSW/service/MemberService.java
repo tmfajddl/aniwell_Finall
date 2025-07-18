@@ -76,13 +76,13 @@ public class MemberService {
 	}
 
 	public Member getMemberByNameAndEmail(String name, String email) {
-		
+
 		return memberRepository.getMemberByNameAndEmail(name, email);
 
 	}
 
 	public Member getMemberByLoginId(String loginId) {
-		
+
 		return memberRepository.getMemberByLoginId(loginId);
 	}
 
@@ -91,18 +91,18 @@ public class MemberService {
 	}
 
 	public ResultData modify(int loginedMemberId, String loginPw, String name, String nickname, String cellphone,
-			String email,String photo) {
+							 String email, String photo) {
 
 		loginPw = Ut.sha256(loginPw);
 
-		memberRepository.modify(loginedMemberId, loginPw, name, nickname, cellphone, email,photo);
+		memberRepository.modify(loginedMemberId, loginPw, name, nickname, cellphone, email, photo);
 
 		return ResultData.from("S-1", "회원정보 수정 완료");
 	}
 
 	public ResultData modifyWithoutPw(int loginedMemberId, String name, String nickname, String cellphone,
-			String email, String photo) {
-		memberRepository.modifyWithoutPw(loginedMemberId, name, nickname, cellphone, email, photo);
+									  String email, String photo, String address) {
+		memberRepository.modifyWithoutPw(loginedMemberId, name, nickname, cellphone, email, photo, address);
 
 		return ResultData.from("S-1", "회원정보 수정 완료");
 	}
@@ -113,7 +113,6 @@ public class MemberService {
 	}
 
 
-
 	public void updateAuthLevel(int memberId, int authLevel) {
 		memberRepository.updateAuthLevel(memberId, authLevel);
 	}
@@ -122,5 +121,40 @@ public class MemberService {
 		return memberRepository.getForPrintMembersWithCert(searchType, searchKeyword);
 	}
 
+
+	public void updateVetCertInfo(int memberId, String fileName, int approved) {
+		memberRepository.updateVetCertInfo(memberId, fileName, approved);
+	}
+
+	public int countByAuthLevel(int level) {
+		return memberRepository.countByAuthLevel(level);
+	}
+
+	// 관리자 목록을 가져오는 메서드
+	public List<Member> getAdmins() {
+		return memberRepository.findByAuthLevel(7); // 관리자 권한이 7인 회원들
+	}
+
+	// 소셜 로그인 시, 기존 회원 조회 또는 신규 생성
+	public Member getOrCreateSocialMember(String provider, String socialId, String email, String name) {
+		Member member = memberRepository.getMemberBySocial(provider, socialId);
+
+		if (member == null) {
+			// loginId 생성 (예: kakao_1234567890)
+			String loginId = provider + "_" + socialId;
+
+			// nickname은 name과 동일하게 사용
+			String nickname = name;
+			String loginPw = "SOCIAL_LOGIN";
+
+			// ✅ MyBatis XML에 맞게 파라미터 6개 전달
+			memberRepository.doJoinBySocial(loginId, loginPw, provider, socialId, name, nickname, email);
+
+			int id = memberRepository.getLastInsertId();
+			member = memberRepository.getMemberById(id);
+		}
+
+		return member;
+	}
 
 }

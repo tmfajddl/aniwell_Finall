@@ -5,7 +5,7 @@
 
 <mapper namespace="com.example.RSW.repository.NotificationRepository">
 
-    <select id="findByMemberIdOrderByRegDateDesc" resultType="com.example.RSW.vo.Notification" parameterType="int">
+    <select id="findByMemberIdOrderByRegDateDesc" resultType="com.example.RSW.vo.PetRecommendation" parameterType="int">
         SELECT *
         FROM notification
         WHERE memberId = #{memberId}
@@ -86,4 +86,15 @@
         VALUES
             (#{memberId}, #{title}, #{link}, #{regDate}, #{read}, #{senderId})
     </insert>
+
+    <delete id="deleteByIdOnlyId" parameterType="int">
+        DELETE FROM notification
+        WHERE id = #{id}
+    </delete>
+
+    <delete id="deleteByMemberId" parameterType="int">
+        DELETE FROM notification
+        WHERE memberId = #{memberId}
+    </delete>
+
 </mapper>
