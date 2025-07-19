@@ -1,19 +1,21 @@
 package com.example.RSW.controller;
 
+import com.example.RSW.service.NotificationService;
 import com.example.RSW.service.QnaService;
 import com.example.RSW.service.VetAnswerService;
+import com.example.RSW.vo.Member;
 import com.example.RSW.vo.Qna;
+import com.example.RSW.vo.ResultData;
 import com.example.RSW.vo.Rq;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Controller
 @RequestMapping("/adm/qna") // 관리자용 QnA 관리 컨트롤러
@@ -28,6 +30,9 @@ public class AdmQnaController {
     @Autowired
     private VetAnswerService vetAnswerService; // 수의사 답변 관련 서비스
 
+    @Autowired
+    private NotificationService notificationService;
+
     // QnA 목록 페이지
     @GetMapping("/list")
     public String showQnaList(Model model) {
@@ -36,35 +41,37 @@ public class AdmQnaController {
     }
 
     // QnA 상세 페이지
-    @GetMapping("/detail")
-    public String showQnaDetail(@RequestParam int id, Model model) {
-        model.addAttribute("qna", qnaService.findById(id)); // QnA 본문
-        model.addAttribute("answer", vetAnswerService.findByQnaId(id)); // 수의사 답변
-        return "adm/qna/detail"; // 상세 페이지 JSP
+    @GetMapping("/detailData")
+    @ResponseBody
+    public Map<String, Object> getQnaDetailData(@RequestParam int id) {
+        Map<String, Object> result = new HashMap<>();
+        result.put("qna", qnaService.findById(id));
+        result.put("answer", vetAnswerService.findByQnaId(id));
+        return result;
     }
 
-    // 수의사 답변 등록
-    @PostMapping("/doAnswer")
-    public String doAnswer(@RequestParam int qnaId, @RequestParam String answer) {
-        String vetName = rq.getLoginedMember().getNickname(); // 로그인한 수의사의 닉네임
-        vetAnswerService.write(qnaId, answer, vetName); // 답변 저장
-        return "redirect:/adm/qna/detail?id=" + qnaId; // 상세 페이지로 리다이렉트
-    }
 
-    // 수의사 답변 수정
+
     @PostMapping("/doUpdateAnswer")
-    public String doUpdateAnswer(@RequestParam int id, @RequestParam String answer) {
-        vetAnswerService.update(id, answer); // 답변 수정
-        return "redirect:/adm/qna/detail?id=" + vetAnswerService.getQnaIdByAnswerId(id); // 해당 QnA 상세로 이동
+    @ResponseBody
+    public Map<String, Object> doUpdateAnswer(@RequestParam int id, @RequestParam String answer) {
+        vetAnswerService.update(id, answer);
+        return Map.of("resultCode", "S-1", "msg", "답변이 수정되었습니다.");
     }
 
-    // 수의사 답변 삭제
+
     @PostMapping("/doDeleteAnswer")
-    public String doDeleteAnswer(@RequestParam int id) {
-        long qnaId = vetAnswerService.getQnaIdByAnswerId(id); // 해당 QnA ID 조회
-        vetAnswerService.delete(id); // 답변 삭제
-        return "redirect:/adm/qna/detail?id=" + qnaId; // QnA 상세로 리다이렉트
+    @ResponseBody
+    public Map<String, Object> doDeleteAnswer(@RequestParam int id) {
+        long qnaId = vetAnswerService.getQnaIdByAnswerId(id);
+        vetAnswerService.delete(id);
+        return Map.of(
+                "resultCode", "S-1",
+                "msg", "답변이 삭제되었습니다.",
+                "qnaId", qnaId
+        );
     }
+
 
     // QnA 수정 폼
     @GetMapping("/edit")
@@ -84,11 +91,22 @@ public class AdmQnaController {
 
     // QnA 삭제 처리
     @PostMapping("/doDelete")
-    public String doDelete(@RequestParam int id) {
-        System.out.println("삭제 요청 id: " + id); // 디버깅용 로그
-        qnaService.delete(id); // 삭제
-        return "redirect:/adm/qna/list"; // 목록으로 이동
+    @ResponseBody
+    public Map<String, Object> doDelete(@RequestParam int id) {
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            qnaService.delete(id);
+            response.put("resultCode", "S-1");
+            response.put("msg", "질문이 성공적으로 삭제되었습니다.");
+        } catch (Exception e) {
+            response.put("resultCode", "F-1");
+            response.put("msg", "삭제 중 오류가 발생했습니다.");
+        }
+
+        return response;
     }
+
 
     // FAQ 등록 폼
     @GetMapping("/write")
@@ -98,9 +116,10 @@ public class AdmQnaController {
 
     // FAQ 등록 처리
     @PostMapping("/doWrite")
-    public String doWrite(@RequestParam String title, @RequestParam String body) {
-        int memberId = rq.getLoginedMemberId(); // 로그인한 관리자 ID
-        qnaService.writeFaq(memberId, title, body); // FAQ로 저장 (isFaq = 1)
-        return "redirect:/adm/article/list"; // 목록으로 이동
+    @ResponseBody
+    public ResultData doWrite(@RequestParam String title, @RequestParam String body) {
+        int memberId = rq.getLoginedMemberId();
+        qnaService.writeFaq(memberId, title, body); // 내부에서 isFaq = true 저장
+        return ResultData.from("S-1", "FAQ 등록 성공");
     }
 }

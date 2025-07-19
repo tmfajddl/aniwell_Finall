@@ -64,7 +64,7 @@ public class UsrVetAnswerController {
         // ✅ 알림 전송 (질문자 본인에게만, 수의사 자신이 아닐 경우)
         if (qna.getMemberId() != loginedMember.getId()) {
             String title = "수의사로부터 답변이 등록되었습니다.";
-            String link = "/usr/qna/detail?id=" + qnaId;
+            String link = "/usr/qna/list";
             notificationService.send(qna.getMemberId(), title, link);
         }
 

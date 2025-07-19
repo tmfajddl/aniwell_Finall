@@ -95,4 +95,7 @@ public class QnaService {
         qnaRepository.insert(memberId, title, body, false, true); // isSecret = false, isFaq = true
     }
 
+    public List<Qna> getSelectedQna() {
+        return qnaRepository.getSelectedQna();
+    }
 }

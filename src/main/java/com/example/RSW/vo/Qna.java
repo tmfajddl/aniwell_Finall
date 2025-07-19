@@ -27,6 +27,8 @@ public class Qna {
 
     private int isFaq;
 
+    private String answer;
+
     public boolean isSecret() {
         return secret;
     }
