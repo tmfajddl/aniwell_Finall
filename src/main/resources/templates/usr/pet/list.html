@@ -141,12 +141,12 @@
 
 				React.useEffect(() => {
 					if (loginedMember && loginedMember.id) {
-						fetch(`/api/pets?memberId=${loginedMember.id}`)
+						fetch(`/api/pet/list?memberId=${loginedMember.id}`)
 							.then(res => res.json())
 							.then((data) => {
 								console.log(data);
-								console.log("petlist: ", data.data2);
-								setPets(data.data2 || []);
+								console.log("petlist: ", data.pets);
+								setPets(data.pets || []);
 							});
 					}
 				}, [loginedMember]);

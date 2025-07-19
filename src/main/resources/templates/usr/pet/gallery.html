@@ -1,33 +1,47 @@
-<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
-<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
-<html>
+<!DOCTYPE html>
+<html lang="ko">
 <head>
-  <title>감정 결과 분석</title>
+  <link rel="stylesheet" th:href="@{/resource/css/common.css}">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <title>감정 결과 갤러리</title>
   <style>
     body {
-      font-family: 'SUIT', sans-serif;
-      background-color: #f9f9f9;
       margin: 0;
+      font-family: 'SUIT', sans-serif;
+      background: #b7b7b7;
+      display: flex;
+      justify-content: end;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .main-container {
+      display: flex;
+      flex-direction: column;
+      background: white;
+      width: 100%;
+      height: 95%;
+      overflow: hidden;
       padding: 30px;
     }
 
     h2 {
       text-align: center;
-      color: #555;
-      margin-bottom: 30px;
+      color: #444;
+      margin-bottom: 20px;
     }
 
-    #emotionButtons {
+    .tabs {
       text-align: center;
-      margin-bottom: 30px;
+      margin-bottom: 20px;
     }
 
-    .emotion-btn {
-      padding: 10px 18px;
+    .tabs button {
+      padding: 10px 20px;
       margin: 6px;
       border: none;
-      background-color: #f0f0f0;
-      border-radius: 20px;
+      background-color: #ffe28a;
+      border-radius: 30px;
       font-size: 14px;
       font-weight: bold;
       cursor: pointer;
@@ -35,37 +49,40 @@
       box-shadow: 1px 1px 4px rgba(0,0,0,0.1);
     }
 
-    .emotion-btn:hover {
-      background-color: #ffe28a;
-    }
-
-    .emotion-btn.active {
-      background-color: #ffda5a;
+    .tabs button.active {
+      background-color: #ffcd29;
       color: white;
     }
 
-    #results {
+    .gallery-section {
+      display: none;
+      overflow: hidden;
+      position: relative;
+      flex-grow: 1;
+    }
+
+    .gallery-section.active {
+      display: block;
+    }
+
+    .gallery-track {
       display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
       gap: 20px;
+      transition: transform 0.2s linear;
+      will-change: transform;
     }
 
-    .result-item {
+    .gallery-item {
       width: 220px;
-      background-color: #ffffff;
+      background-color: #fff;
       border-radius: 16px;
-      padding: 15px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      padding: 12px;
       text-align: center;
-      transition: transform 0.2s;
+      flex-shrink: 0;
     }
 
-    .result-item:hover {
-      transform: translateY(-4px);
-    }
-
-    .result-item img {
+    .gallery-item img {
       width: 100%;
       height: 160px;
       object-fit: cover;
@@ -73,60 +90,80 @@
       margin-bottom: 10px;
     }
 
-    .result-item span.label {
+    .label {
       display: block;
-      margin-top: 4px;
       font-size: 14px;
       color: #777;
     }
-
-    .hidden {
-      display: none;
-    }
   </style>
 </head>
-<body>
+<body class="bg-gradient-to-b from-[#e4f0b9] to-[#fcdca9] font-sans">
+<div th:replace="common :: siteHeader"></div>
 
-<h2>🐾 감정 결과 갤러리</h2>
+<!-- Main content -->
+<main class="main_page min-h-screen flex-1 p-6 grid grid-cols-12 gap-4">
+<div class="main-container col-span-12">
+  <h2>🐾 감정 결과 갤러리</h2>
 
-<!-- 감정 필터 버튼 -->
-<div id="emotionButtons">
-  <button class="emotion-btn" onclick="filterByEmotion('happy')">😊 Happy</button>
-  <button class="emotion-btn" onclick="filterByEmotion('relaxed')">😌 Relaxed</button>
-  <button class="emotion-btn" onclick="filterByEmotion('sad')">😿 Sad</button>
-  <button class="emotion-btn" onclick="filterByEmotion('scared')">😨 Scared</button>
-</div>
+  <div class="tabs">
+    <button class="emotion-btn active" onclick="showGallery('happy')">😊 Happy</button>
+    <button class="emotion-btn" onclick="showGallery('relaxed')">😌 Relaxed</button>
+    <button class="emotion-btn" onclick="showGallery('sad')">🥲 Sad</button>
+    <button class="emotion-btn" onclick="showGallery('scared')">😨 Scared</button>
+  </div>
 
-<!-- 감정 결과 카드 -->
-<div id="results">
-  <c:forEach var="item" items="${analysisList}">
-    <div class="result-item" data-emotion="${item.emotionResult}">
-      <img src="${item.imagePath}" alt="Pet Image">
-      <strong>${item.emotionResult}</strong>
-      <span class="label">신뢰도: ${item.confidence * 100}%</span>
-      <span class="label">날짜: ${item.analyzedAt}</span>
+  <div th:each="emotion : ${emotionList}"
+       th:class="'gallery-section ' + (emotion == 'happy' ? 'active' : '')"
+       th:id="'section-' + ${emotion}">
+    <div th:id="'track-' + ${emotion}" class="gallery-track">
+      <div th:each="item : ${analysisList}"
+           th:if="${item.emotionResult == emotion}"
+           class="gallery-item">
+        <img th:src="${item.imagePath}" alt="Pet Image">
+        <strong th:text="${item.emotionResult}"></strong>
+        <span class="label" th:text="'신뢰도: ' + ${item.confidence} + '%'"></span>
+        <span class="label" th:text="'날짜: ' + ${item.analyzedAt}"></span>
+      </div>
     </div>
-  </c:forEach>
-</div>
+  </div>
 
-<script>
-  function filterByEmotion(emotion) {
-    const buttons = document.querySelectorAll('.emotion-btn');
-    buttons.forEach(btn => btn.classList.remove('active'));
 
-    const selectedBtn = [...buttons].find(btn => btn.textContent.toLowerCase().includes(emotion));
-    if (selectedBtn) selectedBtn.classList.add('active');
+  <script>
+  let currentEmotion = 'happy';
+  const galleryScrolls = {};
 
-    const items = document.querySelectorAll('.result-item');
-    items.forEach(item => {
-      if (item.dataset.emotion === emotion) {
-        item.classList.remove('hidden');
-      } else {
-        item.classList.add('hidden');
-      }
+  function showGallery(emotion) {
+    document.querySelectorAll('.emotion-btn').forEach(btn => {
+      btn.classList.remove('active');
+      if (btn.textContent.toLowerCase().includes(emotion)) btn.classList.add('active');
     });
-  }
-</script>
 
+    document.querySelectorAll('.gallery-section').forEach(sec => sec.classList.remove('active'));
+    document.getElementById('section-' + emotion).classList.add('active');
+
+    currentEmotion = emotion;
+  }
+
+  function loopGalleryScroll(emotion) {
+    const track = document.getElementById('track-' + emotion);
+    let scrollX = 0;
+
+    function animate() {
+      if (currentEmotion !== emotion) return requestAnimationFrame(animate); // 현재 탭 아니면 패스
+      scrollX += 0.5;
+      if (track.scrollWidth - scrollX <= track.clientWidth) scrollX = 0;
+      track.style.transform = 'translateX(-' + scrollX + 'px)';
+      requestAnimationFrame(animate);
+    }
+
+    requestAnimationFrame(animate);
+  }
+
+  ['happy', 'relaxed', 'sad', 'scared'].forEach(emotion => {
+    loopGalleryScroll(emotion);
+  });
+</script>
+</div>
+</main>
 </body>
 </html>

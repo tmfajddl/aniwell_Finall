@@ -32,9 +32,73 @@
 
 				<!-- 감정분석 카드 -->
 				<div class="grid grid-cols-2 gap-4 h-3/5">
-					<div class="bg-[#e0eadf] rounded-xl p-4 text-center font-semibold">
+					<!-- 분석 버튼 -->
+					<div class="bg-[#e0eadf] rounded-xl p-4 text-center font-semibold cursor-pointer"
+						 onclick="openEmotionPanel()">
 						우리아이 감정분석하기
 					</div>
+
+					<!-- 슬라이드 감정 분석 패널 -->
+					<div id="emotionPanel"
+						 class="fixed top-0 right-0 w-[94%] h-full bg-[white] shadow-xl z-50 transform translate-x-full transition-transform duration-300 rounded-l-[40px] flex flex-col p-6">
+
+						<!-- 닫기 버튼 -->
+						<button onclick="closeEmotionPanel()"
+								class="absolute top-4 left-4 text-3xl text-gray-500 hover:text-black font-bold">×</button>
+
+						<!-- 제목 -->
+						<h2 class="text-xl font-bold text-gray-700 text-center mb-4 mt-10">감정 분석하기</h2>
+
+						<button id="retryButton"
+								onclick="resetEmotionPanel()"
+								class="hidden mt-6 mx-auto px-6 py-2 rounded-full bg-gray-300 text-gray-700 font-semibold hover:bg-gray-400 transition">
+							🔁 다시 분석하기
+						</button>
+
+						<!-- 🐶 동물 종 선택 -->
+						<div class="flex justify-center gap-4 mb-4">
+							<button onclick="selectSpecies('강아지')"
+									class="species-btn px-4 py-2 rounded-full border border-yellow-400 text-yellow-600 font-semibold bg-white hover:bg-yellow-100">🐶 강아지</button>
+							<button onclick="selectSpecies('고양이')"
+									class="species-btn px-4 py-2 rounded-full border border-yellow-400 text-yellow-600 font-semibold bg-white hover:bg-yellow-100">🐱 고양이</button>
+						</div>
+
+						<!-- 이미지 미리보기 -->
+						<div id="imageContainer" class="w-[100%] h-[80%] mx-auto rounded-xl overflow-hidden bg-gray-100 flex items-center justify-center">
+							<img id="emotionPreview" class="w-full h-full object-cover">
+						</div>
+
+						<!-- 파일 업로드 -->
+						<label class="upload-label mt-4 mx-auto text-sm text-gray-600 cursor-pointer hover:text-black">
+							⬆️ 사진 업로드
+							<input type="file" accept="image/*" onchange="previewImage(event)" class="hidden">
+						</label>
+
+						<!-- 감정 분석 버튼 -->
+						<button
+								class="analyze-btn mt-6 mx-auto px-6 py-2 rounded-full bg-yellow-300 text-white font-semibold hover:bg-yellow-400 transition"
+								onclick="analyzeEmotion()">
+							감정 분석하기
+						</button>
+
+						<!-- 분석 결과 -->
+						<!-- 🐾 결과 표시 영역 (처음에는 hidden) -->
+						<div id="resultArea" class="hidden flex mt-6 w-full gap-6 justify-center items-center">
+							<!-- 📸 왼쪽: 이미지 -->
+							<div class="w-1/2 max-w-[300px]">
+								<img id="resultImage" class="w-full rounded-xl shadow-lg border-4 border-yellow-100">
+							</div>
+
+							<!-- 📊 오른쪽: 텍스트 + 차트 -->
+							<div class="w-1/2 max-w-[300px] text-center">
+								<div id="resultText" class="font-semibold text-gray-800 mb-2 text-lg"></div>
+								<canvas id="emotionChart" width="200" height="200" class="mx-auto mt-2"></canvas>
+							</div>
+						</div>
+
+					</div>
+
+
 					<div class="bg-[#e0eadf] rounded-xl p-4 text-sm text-center">
 						어제보다 오늘 물을 <span class="font-bold">3ml</span> 더 먹었어요!<br>
 						<button class="text-blue-600 mt-2 underline">행동분석보기 &gt;</button>
@@ -48,15 +112,27 @@
 					<div class="flex flex-col gap-4 w-[300px] relative">
 						<!-- 상단 + 버튼 포함한 헤더 -->
 						<div class="flex justify-between items-center absoiute">
-							<span class="text-sm font-bold">JULY 5</span>
+							<span id="current-month-label" class="text-sm font-bold">JULY 5</span>
 							<button
-								class="w-6 h-6 rounded-full bg-[#fdf6c2] shadow flex items-center justify-center text-lg font-bold">+</button>
+									class="w-6 h-6 rounded-full bg-[#fdf6c2] shadow flex items-center justify-center text-lg font-bold"
+									onclick="openTodayVaccineModal()">+</button>
+
 						</div>
 
 						<!-- 일정 목록 -->
 						<div class="bg-[#fdf6c2] rounded-xl shadow text-sm h-full py-3">
-							<div class="bg-[#efefef]">떡걸룩이 예방접종한 날</div>
+							<!-- 🐾 리스트 헤더 -->
+							<div class="px-4 py-2 font-bold text-gray-700">
+								예방접종 리스트
+							</div>
+							<!-- ✅ 실제 리스트가 여기에 동적으로 들어감 -->
+							<div id="monthly-vaccine-list"
+								 class="px-4 pt-2 space-y-2 overflow-y-auto"
+								 style="height: 200px;">
+								<!-- 자바스크립트에서 appendChild로 추가됨 -->
+							</div>
 						</div>
+
 					</div>
 
 					<!-- 오른쪽: 캘린더 -->
@@ -130,30 +206,510 @@
 
 				<!-- 주변 펫살 보기 -->
 				<div class="grid grid-row-3 gap-2 h-full">
-					<div class="bg-gray-300 rounded-xl p-2 text-sm">주변 펫살 알아보기</div>
-					<div class="bg-gray-200 rounded-xl p-2 text-sm">123</div>
-					<div class="bg-gray-200 rounded-xl p-2 text-sm">123</div>
+					<a th:href="@{/usr/pet/petPlace}" class="block bg-gray-300 rounded-xl p-3 text-sm text-center font-semibold transition">
+						주변 펫샵 알아보기
+					</a>
+					<a th:href="@{/usr/pet/gallery(petId=${pet.id})}"
+					   class="block bg-gray-300 rounded-xl p-3 text-sm text-center font-semibold transition">
+						감정 갤러리
+					</a>
+
+					<a th:href="@{/usr/pet/daily(petId=${pet.id})}"
+					   class="block bg-gray-300 rounded-xl p-3 text-sm text-center font-semibold transition">
+						감정 일기
+					</a>
+
 				</div>
 			</aside>
 
 
 		</main>
 
+
+		<!-- 백신 등록 모달 -->
+		<div id="vaccineModal" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center hidden z-50">
+			<div class="bg-white rounded-2xl p-6 w-[400px] relative shadow-lg">
+				<!-- 닫기 버튼 -->
+				<button onclick="closeVaccineModal()" class="absolute top-3 right-3 text-gray-500 hover:text-red-500 text-xl">×</button>
+
+				<h2 class="text-xl font-bold mb-4 text-yellow-700 text-center">🐾 백신 등록</h2>
+
+				<form id="vaccineForm">
+					<input type="hidden" name="petId" th:value="${petId}" />
+
+					<div class="mb-4">
+						<label class="block font-semibold text-sm mb-1">백신 이름</label>
+						<select name="vaccineName" required class="w-full border px-3 py-2 rounded">
+							<option value="">선택하세요</option>
+							<option value="Rabies">Rabies</option>
+							<option value="Parvovirus">Parvovirus</option>
+							<option value="Distemper">Distemper</option>
+							<option value="Feline Distemper">Feline Distemper</option>
+							<option value="Feline Leukemia">Feline Leukemia</option>
+							<option value="Leptospirosis">Leptospirosis</option>
+							<option value="Bordetella">Bordetella</option>
+							<option value="Feline Panleukopenia">Feline Panleukopenia</option>
+							<option value="FIP">FIP</option>
+						</select>
+					</div>
+
+					<div class="mb-4">
+						<label class="block font-semibold text-sm mb-1">접종 날짜</label>
+						<input type="date" name="injectionDate" id="injectionDateInput" required class="w-full border px-3 py-2 rounded" />
+					</div>
+
+					<div class="mb-4">
+						<label class="block font-semibold text-sm mb-1">비고</label>
+						<textarea name="notes" rows="3" class="w-full border px-3 py-2 rounded"></textarea>
+					</div>
+
+					<div class="flex justify-between mt-6">
+						<button type="submit" class="bg-yellow-400 hover:bg-yellow-500 text-white font-bold py-2 px-4 rounded">💾 등록</button>
+						<button type="button" onclick="closeVaccineModal()" class="bg-gray-300 hover:bg-gray-400 text-black font-bold py-2 px-4 rounded">❌ 취소</button>
+					</div>
+				</form>
+			</div>
+		</div>
+
+		<!-- ✅ 백신 상세/수정 모달 -->
+		<div id="vaccineDetailModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center">
+			<div class="bg-white p-6 rounded-2xl w-[400px] relative">
+				<button onclick="closeVaccineDetailModal()" class="absolute top-3 right-3 text-gray-500 hover:text-red-500">×</button>
+
+				<div id="vaccineDetailView">
+					<h2 class="text-lg font-bold text-center mb-4">💉 백신 상세정보</h2>
+					<p><b>이름:</b> <span id="detailName"></span></p>
+					<p><b>접종일:</b> <span id="detailDate"></span></p>
+					<p><b>비고:</b> <span id="detailNotes"></span></p>
+
+					<div class="flex justify-between mt-4">
+						<button onclick="enterEditMode()" class="bg-yellow-400 px-3 py-2 rounded text-white">✏ 수정</button>
+						<button onclick="deleteVaccination()" class="bg-red-400 px-3 py-2 rounded text-white">🗑 삭제</button>
+					</div>
+				</div>
+
+				<form id="vaccineEditForm" class="hidden mt-4">
+					<input type="hidden" name="vaccinationId" />
+					<label class="block mt-2">이름</label>
+					<input type="text" name="vaccineName" class="border w-full px-2 py-1 rounded" required />
+
+					<label class="block mt-2">접종일</label>
+					<input type="date" name="injectionDate" class="border w-full px-2 py-1 rounded" required />
+
+					<label class="block mt-2">비고</label>
+					<textarea name="notes" rows="3" class="border w-full px-2 py-1 rounded"></textarea>
+
+					<div class="flex justify-between mt-4">
+						<button type="submit" class="bg-green-500 text-white px-4 py-2 rounded">💾 저장</button>
+						<button type="button" onclick="cancelEdit()" class="bg-gray-400 text-white px-4 py-2 rounded">취소</button>
+					</div>
+				</form>
+			</div>
+		</div>
+
+
+		<div id="multiEventModal" class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center hidden">
+			<div class="bg-white rounded-lg p-4 w-80">
+				<h2 class="font-bold text-lg mb-2">💉 백신 접종 리스트</h2>
+				<div class="event-list space-y-2"></div>
+				<div class="text-right mt-4">
+					<button onclick="document.getElementById('multiEventModal').classList.add('hidden')" class="text-sm text-gray-500 hover:underline">닫기</button>
+				</div>
+			</div>
+		</div>
+
+
+
 	</div>
 
 
+	<script th:inline="javascript">
+		/*<![CDATA[*/
+		var events = [[${eventsJson}]];
+		/*]]>*/
+	</script>
 
 
 	<script>
-		renderMiniCalendar('calendar-container');
-		
-		const urlParams = new URLSearchParams(window.location.search);
-		const petId = urlParams.get("petId");
+		var urlParams = new URLSearchParams(window.location.search);
+		var petId = urlParams.get("petId");
+	</script>
 
-		if (petId) {
-			console.log("선택된 펫 ID:", petId);
+	<script>
+		document.addEventListener("DOMContentLoaded", function () {
+			fetch('/usr/pet/vaccination/events?petId=' + petId)
+					.then(res => res.json())
+					.then(freshEvents => {
+						renderMiniCalendar('calendar-container', freshEvents, new Date());
+					});
+		});
+
+	</script>
+
+	<script>
+		function openVaccineModal(petId, dateStr) {
+			document.getElementById('injectionDateInput').value = dateStr;
+
+			// 👉 여기가 중요!
+			const petInput = document.querySelector('#vaccineForm input[name="petId"]');
+			if (petInput) {
+				petInput.value = petId;
+			}
+
+			document.getElementById('vaccineModal').classList.remove('hidden');
+		}
+
+		function closeVaccineModal() {
+			document.getElementById('vaccineModal').classList.add('hidden');
+		}
+
+		function openVaccineDetailModal(data) {
+			document.getElementById('vaccineDetailModal').classList.remove('hidden');
+
+			document.getElementById('detailName').textContent = data.title;
+			document.getElementById('detailDate').textContent = data.start;
+			document.getElementById('detailNotes').textContent = data.notes || '없음';
+
+			// 수정용 hidden 값 세팅
+			const form = document.getElementById('vaccineEditForm');
+			form.vaccinationId.value = data.id;
+			form.vaccineName.value = data.title.replace(' 접종', '');
+			form.injectionDate.value = data.start;
+			form.notes.value = data.notes || '';
+		}
+
+		function closeVaccineDetailModal() {
+			document.getElementById('vaccineDetailModal').classList.add('hidden');
+			cancelEdit();
+		}
+
+		function enterEditMode() {
+			document.getElementById('vaccineDetailView').classList.add('hidden');
+			document.getElementById('vaccineEditForm').classList.remove('hidden');
+		}
+
+		function cancelEdit() {
+			document.getElementById('vaccineEditForm').classList.add('hidden');
+			document.getElementById('vaccineDetailView').classList.remove('hidden');
+		}
+
+		document.getElementById('vaccineEditForm').addEventListener('submit', function(e) {
+			e.preventDefault();
+
+			const formData = new FormData(this);
+
+			fetch('/usr/pet/vaccination/doModify', {
+				method: 'POST',
+				body: formData
+			})
+					.then(res => res.json())
+					.then(result => {
+						if (result.success) {
+							closeVaccineDetailModal(); // 모달 닫기
+							refreshCalendar(); // ✅ 달력만 다시 그리기
+						} else {
+							alert(result.msg);
+						}
+					});
+		});
+
+		function deleteVaccination() {
+			const id = document.querySelector('#vaccineEditForm input[name="vaccinationId"]').value;
+			if (!confirm("정말 삭제하시겠습니까?")) return;
+
+			fetch('/usr/pet/vaccination/delete?vaccinationId=' + id)
+					.then(res => res.json())
+					.then(result => {
+						if (result.resultCode?.startsWith('S-')) {
+							closeVaccineDetailModal(); // 모달 닫기
+							refreshCalendar();         // 달력 새로 그리기
+						} else {
+							alert("⚠️ 삭제 실패: " + (result.msg || ''));
+						}
+					})
+					.catch(err => {
+						console.error("❌ 삭제 중 오류:", err);
+						alert("❌ 삭제 중 오류 발생: " + err.message);
+					});
+
+		}
+
+		function refreshCalendar() {
+			fetch('/usr/pet/vaccination/events?petId=' + petId)
+					.then(res => res.json())
+					.then(freshEvents => {
+						renderMiniCalendar('calendar-container', freshEvents); // 최신 데이터로 다시 그림
+					});
+		}
+
+		function openEventListModal(events) {
+			const modal = document.getElementById('multiEventModal');
+			const container = modal.querySelector('.event-list');
+			container.innerHTML = '';
+
+			events.forEach(e => {
+				const btn = document.createElement('button');
+				btn.textContent = `${e.title} (${e.start})`;
+				btn.className = 'block w-full text-left px-4 py-2 hover:bg-yellow-100';
+				btn.onclick = () => {
+					modal.classList.add('hidden');
+					openVaccineDetailModal(e);
+				};
+				container.appendChild(btn);
+			});
+
+			modal.classList.remove('hidden');
 		}
 	</script>
+
+	<script>
+		document.getElementById("vaccineForm").addEventListener("submit", function (e) {
+			e.preventDefault();
+
+			const form = e.target;
+			const formData = new FormData(form);
+
+			// FormData에 실제 데이터 찍어보기 (디버깅용)
+			console.log("🔍 전송 데이터:");
+			for (const [key, value] of formData.entries()) {
+				console.log(`${key}: ${value}`);
+			}
+
+			fetch("/usr/pet/vaccination/doRegistration", {
+				method: "POST",
+				body: formData
+			})
+					.then(res => {
+						if (!res.ok) throw new Error(`HTTP ${res.status}`);
+						return res.json();
+					})
+					.then(data => {
+						console.log("✅ 응답:", data);
+
+						if (data.resultCode?.startsWith("S-")) {
+							alert("💉 백신 등록 성공!");
+							closeVaccineModal(); // 모달 닫기
+							refreshCalendar(); // ✅ 달력만 다시 그리기
+							// ✅ 필요시 달력 리렌더 또는 리스트 갱신
+						} else {
+							alert("⚠️ 등록 실패: " + (data.msg || ""));
+						}
+					})
+					.catch(err => {
+						console.error("❌ 오류:", err);
+						alert("❌ 등록 중 오류 발생: " + err.message);
+					});
+		});
+
+		function updateVaccinationList(year, month) {
+			var monthStr = (month + 1 < 10 ? '0' : '') + (month + 1);
+			var target = document.getElementById('monthly-vaccine-list');
+			target.innerHTML = ''; // 초기화
+
+			var yearMonth = year + '-' + monthStr;
+
+			fetch('/usr/pet/vaccination/monthly?petId=' + petId + '&yearMonth=' + yearMonth)
+					.then(function(res) {
+						return res.json();
+					})
+					.then(function(data) {
+						if (data.length === 0) {
+							target.innerHTML = '<div class="text-gray-500">등록된 접종 기록이 없습니다.</div>';
+							return;
+						}
+
+						data.forEach(function(item) {
+							var div = document.createElement('div');
+							div.className = 'bg-white p-2 rounded shadow border-l-4 border-yellow-400 text-sm';
+							div.innerHTML =
+									'💉 <b>' + item.vaccineName + '</b> (' + item.injectionDate + ')<br>' +
+									'<span class="text-xs text-gray-500">다음 접종: ' + (item.nextDueDate || '미정') + '</span>';
+							div.onclick = function () {
+								openVaccineDetailModal({
+									id: item.id,
+									title: item.vaccineName + ' 접종',
+									start: item.injectionDate,
+									notes: item.notes
+								});
+							};
+							target.appendChild(div);
+						});
+					});
+		}
+
+		function openTodayVaccineModal() {
+			const today = new Date();
+
+			const year = today.getFullYear();
+			const month = today.getMonth() + 1;
+			const day = today.getDate();
+
+			const monthStr = month < 10 ? '0' + month : '' + month;
+			const dayStr = day < 10 ? '0' + day : '' + day;
+
+			const dateStr = `${year}-${monthStr}-${dayStr}`;
+
+			openVaccineModal(petId, dateStr); // 기존 함수 사용
+		}
+
+
+	</script>
+
+	<script>
+		let selectedSpecies = null;  // 강아지/고양이 선택
+		let uploadedFile = null;     // 업로드된 파일
+		let emotionChart = null;     // Chart.js 인스턴스
+
+		// 종 선택 버튼 클릭 시 호출
+		function selectSpecies(species) {
+			selectedSpecies = species;
+
+			document.querySelectorAll('.species-btn').forEach(btn => {
+				btn.classList.remove('bg-yellow-300', 'text-white');
+			});
+
+			const selectedBtn = Array.from(document.querySelectorAll('.species-btn'))
+					.find(btn => btn.textContent.includes(species));
+
+			if (selectedBtn) {
+				selectedBtn.classList.add('bg-yellow-300', 'text-white');
+			}
+		}
+
+		// 이미지 업로드 시 미리보기
+		function previewImage(event) {
+			const file = event.target.files[0];
+			if (!file) return;
+
+			uploadedFile = file;
+
+			const reader = new FileReader();
+			reader.onload = function (e) {
+				document.getElementById('emotionPreview').src = e.target.result;
+			};
+			reader.readAsDataURL(file);
+		}
+
+		// 감정 분석 요청
+		function analyzeEmotion() {
+			if (!selectedSpecies) {
+				alert("🐾 강아지 또는 고양이를 선택해주세요!");
+				return;
+			}
+
+			if (!uploadedFile) {
+				alert("📷 사진을 먼저 업로드해주세요!");
+				return;
+			}
+
+			const petId = new URLSearchParams(window.location.search).get('petId'); // URL에서 petId 추출
+			if (!petId) {
+				alert("❌ petId가 없습니다.");
+				return;
+			}
+
+			const formData = new FormData();
+			formData.append("petId", petId);
+			formData.append("species", selectedSpecies);
+			formData.append("imageFile", uploadedFile);
+
+			fetch("/usr/pet/analysis/do", {
+				method: "POST",
+				body: formData
+			})
+					.then(res => {
+						if (!res.ok) throw new Error("서버 오류 발생");
+						return res.json();
+					})
+					.then(data => {
+
+						// 분석 이미지 표시
+						document.getElementById('resultImage').src = data.imagePath;
+
+						document.querySelectorAll('.species-btn, .upload-label, .analyze-btn')
+								.forEach(el => el.classList.add('hidden'));
+
+						document.getElementById('imageContainer').classList.add('hidden');
+
+						document.getElementById('emotionPreview').classList.add('hidden');
+						document.getElementById('resultArea').classList.remove('hidden');
+						document.getElementById('retryButton').classList.remove('hidden');
+
+						// 텍스트 표시
+						const probs = data.probabilities;
+						const labels = Object.keys(probs);
+						const values = Object.values(probs).map(v => parseFloat((v).toFixed(2)));
+
+						const labelMap = {
+							"happy": "😊 행복",
+							"relaxed": "😌 평온",
+							"angry": "😠 화남",
+							"sad": "😿 슬픔",
+							"scared": "😨 두려움"
+						};
+
+						const maxIdx = values.indexOf(Math.max(...values));
+						const displayLabel = labelMap[labels[maxIdx]] || labels[maxIdx];
+						document.getElementById('resultText').textContent = `가장 높은 감정: ${displayLabel} (${values[maxIdx]}%)`;
+
+						// 차트 그리기
+						if (emotionChart) emotionChart.destroy();
+						const ctx = document.getElementById('emotionChart').getContext('2d');
+						emotionChart = new Chart(ctx, {
+							type: 'pie',
+							data: {
+								labels: labels.map(l => labelMap[l] || l),
+								datasets: [{
+									data: values,
+									backgroundColor: ['#f9c74f', '#90be6d', '#f8961e', '#43aa8b', '#577590']
+								}]
+							},
+							options: {
+								plugins: {
+									legend: { position: 'bottom' },
+									title: { display: true, text: '감정 비율 분석' }
+								}
+							}
+						});
+					})
+
+					.catch(err => {
+						console.error("❌ 분석 중 오류:", err);
+						alert("분석 요청 중 문제가 발생했습니다.");
+					});
+		}
+
+		function resetEmotionPanel() {
+			document.querySelectorAll('.species-btn, .upload-label, .analyze-btn')
+					.forEach(el => el.classList.remove('hidden'));
+
+			document.getElementById('imageContainer').classList.remove('hidden');
+
+			document.getElementById('resultArea').classList.add('hidden');
+			document.getElementById('retryButton').classList.add('hidden');
+
+			document.getElementById('emotionPreview').src = '';
+			document.getElementById('resultText').textContent = '';
+			if (emotionChart) {
+				emotionChart.destroy();
+				emotionChart = null;
+			}
+		}
+
+
+
+
+		// 슬라이드 닫기
+		function closeEmotionPanel() {
+			document.getElementById("emotionPanel").classList.add("translate-x-full");
+		}
+
+		// 슬라이드 열기 (필요한 경우)
+		function openEmotionPanel() {
+			document.getElementById("emotionPanel").classList.remove("translate-x-full");
+		}
+	</script>
+
 
 	<script>
 		const ctx = document.getElementById('myChart').getContext('2d');
