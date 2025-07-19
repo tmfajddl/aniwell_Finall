@@ -31,9 +31,10 @@
     <select id="getFaqList" resultMap="qnaResultMap">
         SELECT *
         FROM Qna
-        WHERE isFromUser = FALSE
-          AND isActive = TRUE
-        ORDER BY orderNo ASC
+        WHERE isActive = TRUE
+          AND isSecret = FALSE
+        AND  isFromUser = TRUE
+        ORDER BY regDate DESC
     </select>
 
     <select id="getUserQnaByMemberId" resultMap="qnaResultMap">
@@ -49,6 +50,14 @@
         SELECT *
         FROM Qna
         WHERE id = #{id}
+    </select>
+
+    <select id="getSelectedQna" resultMap="qnaResultMap">
+        SELECT *
+        FROM Qna
+        WHERE isFromUser = FALSE
+          AND isActive = TRUE
+        ORDER BY orderNo ASC
     </select>
 
 

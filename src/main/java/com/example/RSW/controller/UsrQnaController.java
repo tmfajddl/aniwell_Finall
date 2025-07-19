@@ -32,10 +32,23 @@ public class UsrQnaController {
         List<Qna> qnas = qnaService.getPublicFaqList(); // 공개 FAQ 목록
         List<Qna> myQnas = qnaService.getUserQnaByMemberId(rq.getLoginedMemberId()); // 내가 한 질문 목록
 
-        Qna selectedQna = null;
-        if (selectedId != null) {
-            selectedQna = qnaService.getQnaById(selectedId); // 선택된 질문
+        List<Qna> selectedQna  = qnaService.getSelectedQna(); // 선택된 질문
+
+        for (Qna q : qnas) {
+            VetAnswer a = vetAnswerService.findByQnaId(q.getId());
+            if (a != null) q.setAnswer(a.getAnswer());
         }
+
+        for (Qna q : myQnas) {
+            VetAnswer a = vetAnswerService.findByQnaId(q.getId());
+            System.out.println("qnaId: " + a.getQnaId());  // → 10이 나와야 정상
+            System.out.println("memberId: " + a.getMemberId()); // → 1이 나와야 정상
+            System.out.println("vetName: " + a.getVetName()); // → admin
+            if (a != null) q.setAnswer(a.getAnswer());
+            System.out.println(a);
+        }
+
+
 
         model.addAttribute("qnas", qnas);
         model.addAttribute("myQnas", myQnas);
@@ -99,4 +112,22 @@ public class UsrQnaController {
         model.addAttribute("myQnas", myQnas);
         return "usr/qna/list :: list"; // Thymeleaf fragment 응답
     }
+
+    @RequestMapping("/usr/qna/doDelete")
+    @ResponseBody
+    public ResultData doDelete(@RequestParam int id) {
+        Qna qna = qnaService.getQnaById(id);
+
+        if (qna == null || !qna.isActive()) {
+            return ResultData.from("F-1", "존재하지 않는 질문입니다.");
+        }
+
+        if (qna.getMemberId() != rq.getLoginedMemberId()) {
+            return ResultData.from("F-2", "권한이 없습니다.");
+        }
+
+        qnaService.deleteQna(id);
+        return ResultData.from("S-1", "질문이 삭제되었습니다.");
+    }
+
 }
