@@ -43,18 +43,6 @@ public class UsrQnaController {
         return "usr/qna/list"; // JSP 렌더링
     }
 
-    // 질문 상세 보기 (수의사 답변 포함)
-    @RequestMapping("/usr/qna/detail")
-    public String showQnaDetail(Model model, int id) {
-        Qna qna = qnaService.getQnaById(id);
-        model.addAttribute("qna", qna);
-
-        List<VetAnswer> vetAnswers = vetAnswerService.getByQnaId(id); // 수의사 답변 리스트
-        model.addAttribute("vetAnswers", vetAnswers);
-
-        model.addAttribute("rq", rq);
-        return "usr/qna/detail"; // JSP 경로
-    }
 
     // 질문 등록 폼
     @RequestMapping("/usr/qna/ask")
@@ -70,7 +58,6 @@ public class UsrQnaController {
 
         int loginedMemberId = rq.getLoginedMemberId();
 
-        // ✅ 로그인 여부 확인 (추가)
         if (loginedMemberId == 0) {
             return ResultData.from("F-L", "로그인 후 이용해주세요.");
         }
@@ -84,64 +71,32 @@ public class UsrQnaController {
     }
 
 
-    // 질문 삭제 처리
-    @RequestMapping("/usr/qna/doDelete")
+    @PostMapping("/usr/qna/doModify")
     @ResponseBody
-    public void doDelete(@RequestParam int id) throws IOException {
-        Qna qna = qnaService.getQnaById(id);
-
-        if (qna == null || !qna.isActive()) {
-            rq.printHistoryBack("존재하지 않는 질문입니다.");
-            return;
-        }
-
-        if (qna.getMemberId() != rq.getLoginedMemberId()) {
-            rq.printHistoryBack("권한이 없습니다.");
-            return;
-        }
-
-        qnaService.deleteQna(id);
-        rq.printReplace("S-1", "질문이 삭제되었습니다.", "/usr/qna/list");
-    }
-
-    // 질문 수정 폼
-    @RequestMapping("/usr/qna/modify")
-    public String showModifyForm(@RequestParam int id, Model model) {
-        Qna qna = qnaService.getQnaById(id);
-
-        if (qna == null || !qna.isActive()) {
-            return rq.historyBackOnView("존재하지 않는 질문입니다.");
-        }
-
-        if (qna.getMemberId() != rq.getLoginedMemberId()) {
-            return rq.historyBackOnView("권한이 없습니다.");
-        }
-
-        model.addAttribute("qna", qna);
-        return "usr/qna/modify"; // 수정 폼 JSP
-    }
-
-    // 질문 수정 처리
-    @RequestMapping(value = "/usr/qna/doModify", method = RequestMethod.POST)
-    @ResponseBody
-    public String doModify(@RequestParam int id,
-                           @RequestParam String title,
-                           @RequestParam String body,
-                           @RequestParam(defaultValue = "false") boolean isSecret) throws IOException {
+    public ResultData doModify(@RequestParam int id,
+                               @RequestParam String title,
+                               @RequestParam String body,
+                               @RequestParam(defaultValue = "false") boolean isSecret) {
 
         Qna qna = qnaService.getQnaById(id);
 
         if (qna == null || !qna.isActive()) {
-            return rq.historyBackOnView("존재하지 않는 질문입니다.");
+            return ResultData.from("F-1", "존재하지 않는 질문입니다.");
         }
 
         if (qna.getMemberId() != rq.getLoginedMemberId()) {
-            return rq.historyBackOnView("권한이 없습니다.");
+            return ResultData.from("F-2", "수정 권한이 없습니다.");
         }
 
         qnaService.modifyQna(id, title, body, isSecret);
 
-        rq.printReplace("S-1", "질문이 수정되었습니다.", "/usr/qna/detail?id=" + id);
-        return null; // 리턴하지 않음 (자바스크립트로 리다이렉트 처리)
+        return ResultData.from("S-1", "질문이 성공적으로 수정되었습니다.");
+    }
+
+    @RequestMapping("/usr/qna/myList")
+    public String getMyQnaList(Model model) {
+        List<Qna> myQnas = qnaService.getUserQnaByMemberId(rq.getLoginedMemberId());
+        model.addAttribute("myQnas", myQnas);
+        return "usr/qna/list :: list"; // Thymeleaf fragment 응답
     }
 }
