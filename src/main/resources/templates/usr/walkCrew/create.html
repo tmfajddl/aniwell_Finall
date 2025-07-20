@@ -10,57 +10,79 @@
 
 </head>
 
-<body class="w-screen">
-	<div class="h-full w-full flex justify-center items-start p-6">
-		<form class="w-full max-w-[600px] space-y-6" action="/usr/walkCrew/doCreate" method="post"
-			onsubmit="return validateForm()">
+<body class="min-h-screen h-auto">
+	<div class="h-[100%] w-full flex justify-center items-start p-6">
+		<form class="w-full h-[200%] space-y-6 flex py-4 justify-between gap-5" action="/usr/walkCrew/doCreate"
+			method="post" onsubmit="return validateForm()">
+			<div class="w-full h-[100%] max-w-[600px]">
+				<!-- 제목 -->
+				<div class="mb-3">
+					<label class="font-semibold block mb-4">크루 이름</label>
+					<input type="text" name="title" required
+						class="w-full rounded-md shadow-sm border border-yellow-100 p-2" />
+				</div>
 
-			<!-- 제목 -->
-			<div>
-				<label class="font-semibold block mb-2">크루 이름</label>
-				<input type="text" name="title" required
-					class="w-full rounded-md shadow-sm border border-yellow-100 p-2" />
+				<!-- 설명 -->
+				<div class="mb-3">
+					<label class="font-semibold block mb-4">소개</label>
+					<textarea name="description" rows="5" required
+						class="w-full rounded-md shadow-sm border border-yellow-100 p-2"></textarea>
+				</div>
+
+				<!-- 동 선택 -->
+				<div>
+					<label class="font-semibold block mb-2">지역</label>
+					<div class="mb-2 text-sm text-gray-600">
+						현재 위치: <span id="currentLocation">확인 중...</span>
+					</div>
+
+					<!-- 드롭다운 형태 -->
+					<!-- 동 선택 -->
+					<div>
+						<details class="relative w-[250px]" id="dongDropdown">
+							<summary class="px-4 py-2 border rounded cursor-pointer bg-white shadow"
+								id="dongDropdownLabel">
+								동 선택
+							</summary>
+							<ul id="dongListContainer"
+								class="h-[140px] absolute z-10 w-full bg-white border rounded shadow mt-2 max-h-48 overflow-y-auto hidden divide-y divide-gray-100 text-sm">
+								<!-- 동 목록이 여기에 동적으로 채워집니다 -->
+							</ul>
+						</details>
+
+						<input type="hidden" name="selectedDong" id="selectedDong" />
+						<input type="hidden" name="districtId" id="districtIdInput" />
+					</div>
+
+				</div>
+				<!-- 등록 버튼 -->
+				<div class="text-right">
+					<button type="submit"
+						class="px-6 py-2 bg-gradient-to-r from-green-200 to-yellow-200 rounded-xl shadow">완료</button>
+				</div>
+			</div>
+			<div class="flex h-[200%] flex-col">
+				<div class="w-[200px] h-[200px] bg-[#f6df85] rounded-xl overflow-hidden shadow-md">
+					<!-- 기본 이미지 -->
+					<div class="">사진미리보기</div>
+
+				</div>
+				<!-- 업로드 버튼 -->
+				<label for="imageUpload"
+					class="my-2 mr-1 bottom-2 right-2 flex items-center justify-center cursor-pointer">
+					<div class="px-4 py-1 bg-[#b4d6b4] rounded-full shadow">
+						업로드
+					</div>
+				</label>
+
+				<!-- 실제 파일 input -->
+				<input type="file" name="imageFile" id="imageUpload" accept="image/*" class="hidden"
+					onchange="previewImageFile(event)" />
+
 			</div>
 
-			<!-- 설명 -->
-			<div>
-				<label class="font-semibold block mb-2">소개</label>
-				<textarea name="description" rows="5" required
-					class="w-full rounded-md shadow-sm border border-yellow-100 p-2"></textarea>
-			</div>
-
-			<!-- 동 선택 -->
-			<div>
-			  <label class="font-semibold block mb-2">지역</label>
-			  <div class="mb-2 text-sm text-gray-600">
-			    현재 위치: <span id="currentLocation">확인 중...</span>
-			  </div>
-
-			  <!-- 드롭다운 형태 -->
-			  <!-- 동 선택 -->
-			  <div>
-			  	<details class="relative w-[250px]" id="dongDropdown">
-			  		<summary class="px-4 py-2 border rounded cursor-pointer bg-white shadow" id="dongDropdownLabel">
-			  			동 선택
-			  		</summary>
-			  		<ul id="dongListContainer"
-			  			class="absolute z-10 w-full bg-white border rounded shadow mt-2 max-h-48 overflow-y-auto hidden divide-y divide-gray-100 text-sm">
-			  			<!-- 동 목록이 여기에 동적으로 채워집니다 -->
-			  		</ul>
-			  	</details>
-
-			  	<input type="hidden" name="selectedDong" id="selectedDong" />
-			  	<input type="hidden" name="districtId" id="districtIdInput" />
-			  </div>
 
 
-
-
-			<!-- 등록 버튼 -->
-			<div class="text-right pt-6">
-				<button type="submit"
-					class="px-6 py-2 bg-gradient-to-r from-green-200 to-yellow-200 rounded-full shadow">완료</button>
-			</div>
 		</form>
 	</div>
 
@@ -190,17 +212,17 @@
 			}
 		});
 	</script>
-	
-	
+
+
 	<script>
-	  document.querySelector("details").addEventListener("toggle", function () {
-	    const list = this.querySelector("#dongListContainer");
-	    if (this.open) {
-	      list.classList.remove("hidden");
-	    } else {
-	      list.classList.add("hidden");
-	    }
-	  });
+		document.querySelector("details").addEventListener("toggle", function () {
+			const list = this.querySelector("#dongListContainer");
+			if (this.open) {
+				list.classList.remove("hidden");
+			} else {
+				list.classList.add("hidden");
+			}
+		});
 	</script>
 
 </body>
