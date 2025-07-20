@@ -23,7 +23,7 @@
 				<div class="row-span-3 ">
 					<a href="/usr/walkCrew/list" class="back-link">← 목록으로 돌아가기</a>
 					<div class="flex space-y-2 items-center gap-3">
-						<div class="w-12 h-12 bg-gray-300 rounded-full"></div>
+						<div class="w-14 h-14 bg-gray-300 "></div>
 						<div class="p-3">
 							<h2 class="text-xl font-semibold" th:text="${crew.title}">크루원들 모여라</h2>
 							<p class="text-sm text-gray-500">멤버 111</p>
@@ -41,6 +41,7 @@
 					</div>
 				</div>
 				<div class="shadow row-sapn-3 h-[40vh]">
+					<div class="mx-3 pb-3 pt-2 border-b border-1 border-black">공지사항</div>
 					<div th:each="article : ${noticeArticles}" class="p-4 border-b">
 						<div class="text-sm text-gray-500" th:text="'작성자 ID: ' + ${article.memberId}"></div>
 						<div class="text-lg font-bold text-gray-800" th:text="${article.title}">제목</div>
@@ -51,25 +52,49 @@
 			</aside>
 
 			<!-- 오른쪽: 콘텐츠 섹션 -->
-			<div class="flex-1 space-y-6 h-[100%] flex flex-col p-6 ">
+			<div class="flex-1 space-y-6 h-[100%] flex flex-col p-2 ">
 				<!-- 앨범 -->
-				<div class="py-2 flex-1">
-					<div class="flex justify-between items-center mb-2">
+				<div class="py-2 flex-1 shadow">
+					<div class="flex justify-between items-center mb-2 px-5">
 						<h3 class="font-bold text-lg">앨범</h3>
 						<button class="text-gray-600 hover:text-black">추가 ＋</button>
 					</div>
-					<div class="flex gap-4 overflow-x-auto">
-						<div class="w-24 h-24 bg-gray-300 rounded-lg"></div>
-						<div class="w-24 h-24 bg-gray-300 rounded-lg"></div>
-						<div class="w-24 h-24 bg-gray-300 rounded-lg"></div>
+					<div th:each="photo : ${photoList}" class="w-40 h-40 bg-gray-300 rounded-lg cursor-pointer"
+						th:onclick="|photoModal(${photo.id})|">
+						<img th:src="${photo.url}" alt="사진" class="object-cover w-full h-full rounded-lg" />
 					</div>
 				</div>
+				<!-- 게시글 -->
+				<div class="py-2 flex-1 shadow relative">
 
+					<div class="flex justify-between px-5 items-center mb-2">
+						<h3 class="font-bold" th:text="${freeArticles.size}">게시글</h3>
+						<button class="text-gray-600 hover:text-black">추가 ＋</button>
+					</div>
+					<div class="gap-4 px-4 h-[78%]">
+						<div onclick="articleModal()" class="bg-white rounded shadow p-2 h-[100%] w-1/5 flex flex-col">
+							<img src="https://via.placeholder.com/150" class="w-full flex-1 rounded" />
+							<div class="font-semibold mt-2 flex justify-between">
+								<div>게시글 제목</div>
+								<div class="text-sm">🤍️</div>
+							</div>
+							<p class="text-sm text-gray-500">게시글 내용</p>
+						</div>
+					</div>
+				</div>
 				<!-- 멤버 -->
-				<div class="py-2 flex-1">
-					<h3 class="font-bold text-lg mb-2">멤버 8</h3>
-					<div class="flex gap-4 overflow-x-auto">
-						<div class=" flex flex-col">
+				<div class="py-2 shadow">
+					<h3 class="font-bold text-lg mb-2 px-5">멤버 8</h3>
+					<div class="flex gap-4 overflow-x-auto px-5 items-center">
+						<div onclick="memberModal()" class=" flex flex-col ">
+							<div class="w-12 h-12 bg-gray-300 rounded-full"></div>
+							<div class="p-1">닉네임</div>
+						</div>
+						<div class=" flex flex-col ">
+							<div class="w-12 h-12 bg-gray-300 rounded-full"></div>
+							<div class="p-1">닉네임</div>
+						</div>
+						<div class=" flex flex-col ">
 							<div class="w-12 h-12 bg-gray-300 rounded-full"></div>
 							<div class="p-1">닉네임</div>
 						</div>
@@ -77,62 +102,47 @@
 				</div>
 
 				<!-- 일정 -->
-				<div class="py-2 flex-1">
-					<div class="flex justify-between items-center mb-2">
+				<div class="py-2 shadow">
+					<div class="flex justify-between items-center mb-2 px-5">
 						<h3 class="font-bold text-lg">일정 15</h3>
 						<button class="text-gray-600 hover:text-black">추가 ＋</button>
 					</div>
-					<div class="flex gap-4 overflow-x-auto">
-						<div class="text-center">
+					<div class="flex gap-4 overflow-x-auto px-4">
+						<div onclick="scModal()" class="text-center p-2">
 							<div class="text-sm font-bold">7월<br>07</div>
-							<div class="text-xs text-gray-500">크루 모임 날</div>
+							<div class="text-xs text-gray-500">모임</div>
 						</div>
-						<div class="text-center">
+						<div class="text-center p-2">
 							<div class="text-sm font-bold">7월<br>06</div>
-							<div class="text-xs text-gray-500">아침</div>
+							<div class="text-xs text-gray-500">모임</div>
 						</div>
-						<div class="text-center">
+						<div class="text-center p-2">
 							<div class="text-sm font-bold">7월<br>05</div>
-							<div class="text-xs text-gray-500">아침</div>
+							<div class="text-xs text-gray-500">모임</div>
 						</div>
 					</div>
 				</div>
 
-				<!-- 게시글 -->
-				<div class="py-2 flex-1">
-					<div class="flex justify-between items-center mb-2">
-						<h3 class="font-bold text-lg" th:text="${freeArticles.size}">게시글 13</h3>
-					</div>
-					<div class="grid grid-cols-3 gap-4">
-						<div class="bg-white rounded shadow p-2">
-							<img src="https://via.placeholder.com/150" class="w-full rounded" />
-							<h4 class="font-semibold mt-2">게시글 제목</h4>
-							<p class="text-sm text-gray-500">게시글 내용</p>
-							<div class="flex justify-between mt-2 text-gray-400 text-sm">
-								<span>❤️</span>
-								<span>💬</span>
-							</div>
-						</div>
-
-						<!-- 복사해서 반복 -->
-						<div class="bg-white rounded shadow p-2"> ... </div>
-						<div class="bg-white rounded shadow p-2"> ... </div>
-					</div>
-
-					<!-- 추가 버튼 -->
-					<div class="flex justify-end mt-4">
-						<button
-							class="w-10 h-10 bg-green-200 rounded-full text-xl font-bold shadow hover:bg-green-300">＋</button>
-					</div>
-				</div>
 			</div>
 		</main>
 	</div>
-
-	<script>
-
-
-	</script>
+	<!--기본팝업창-->
+	<div id="modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+		<div
+			class="relative w-[90%] max-w-[1000px] h-[700px] bg-transparent flex rounded-2xl overflow-hidden shadow-2xl">
+			<div class="w-full h-full flex bg-gradient-to-b from-[#FCE9A3] to-[#E0C878]">
+				<div class="w-[5%] text-center">
+					<button onclick="closeModal()"
+						class="text-3xl font-light text-gray-600 hover:text-black">&times;</button>
+				</div>
+				<div id="modalContent" class="relative flex-1 bg-white rounded-l-3xl">
+				</div>
+			</div>
+		</div>
+	</div>
+	<!--그냥팝업-->
+	<div id="comModal"></div>
+	<script th:src="@{/resource/js/crew.js}"></script>
 </body>
 
 </html>
