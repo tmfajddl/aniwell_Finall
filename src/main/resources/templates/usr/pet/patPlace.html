@@ -212,15 +212,16 @@
     <div id="placePopup" class="popup hidden">...</div>
   </main>
 
+  /*[[${eventsJson}]]*/ "";
 <script th:inline="javascript">
-  const memberId = [[${memberId}]];
+  const memberId = /*[[${memberId}]]*/"";
 
   // 즐겨찾기 이름 Set 구성
-  const favoriteNames = new Set(([[${favoriteNames}]] || []).map(name => name));
+  const favoriteNames = new Set((/*[[${favoriteNames}]]*/"" || []).map(name => name));
 
 
   // 즐겨찾기 장소 리스트 (객체 배열)
-  let favoritePlaces = [[${favoritePlacesJson}]];
+  let favoritePlaces = /*[[${favoritePlacesJson}]]*/"";
 
   let map, currentLocation, markers = [], searchResults = [], currentType = "";
 
