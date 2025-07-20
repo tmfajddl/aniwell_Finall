@@ -151,12 +151,12 @@ ul.article-preview img {
 				<a class="write-button" href="/usr/article/write?crewId=${crew.id}&boardId=3">✏️ 자유 글쓰기</a>
 			</div>
 			<ul class="article-preview">
-<<<<<<< HEAD
+
 				<c:forEach var="article" items="${freeArticles}" begin="0" end="0">
 					<li>
 						<a href="/usr/article/detail?id=${article.id}&crewId=${crew.id}"> ${article.title} (
 							${fn:substring(article.regDate, 0, 10)} ) </a>
-=======
+
 				<c:forEach var="article" items="${freeArticles}">
 					<li>
 						<a href="/usr/article/detail?id=${article.id}&crewId=${crew.id}"> ${article.title}
