@@ -303,9 +303,12 @@
 				}).then(res => res.text())
 						.then(js => {
 							form.body.value = "";
-							loadReplies();
+							setTimeout(() => {
+								loadReplies();  // 잠깐 기다렸다가 다시 불러오기
+							}, 300); // 300ms 딜레이
 						});
 			}
+
 
 			function loadReplies() {
 				fetch(`/usr/reply/list?relTypeCode=article&relId=${articleId}`)
@@ -330,10 +333,7 @@
 										'</div>' +
 										'<div class="mt-1 text-gray-800 reply-body" data-id="' + reply.id + '">' + reply.body + '</div>' +
 										'<div class="text-sm mt-2 flex justify-between">' +
-										'<div>' +
-										'👍 <button onclick="doGoodReplyReaction(' + reply.id + ')" class="text-green-600 underline">' + reply.goodReactionPoint + '</button>' +
-										' 👎 <button onclick="doBadReplyReaction(' + reply.id + ')" class="text-red-600 underline">' + reply.badReactionPoint + '</button>' +
-										'</div>' +
+										'<div>👍 ' + reply.goodReactionPoint + ' 👎 ' + reply.badReactionPoint + '</div>' +
 										'<div>' +
 										(reply.userCanModify ? '<button onclick="editReply(' + reply.id + ', \'' + reply.body + '\')" class="text-blue-600 underline">수정</button>' : '') +
 										(reply.userCanDelete ? ' <button onclick="deleteReply(' + reply.id + ')" class="text-red-600 underline">삭제</button>' : '') +
@@ -387,42 +387,17 @@
 			// 최초 로드 시 댓글 목록 불러오기
 			loadReplies();
 
-		</script>
-
-		<script>
 			function doGoodReplyReaction(replyId) {
-				fetch('/usr/reactionPoint/doGoodReaction', {
-					method: 'POST',
-					headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-					body: `relTypeCode=reply&relId=${replyId}`
-				})
+				fetch(`/usr/reactionPoint/doGoodReactionForReply?relId=${replyId}`, { method: 'POST' })
 						.then(res => res.json())
 						.then(data => {
-							if (data.resultCode.startsWith("S-")) {
-								loadReplies(); // 댓글 다시 로드
-							} else {
-								alert(data.msg);
-							}
+							if (data.resultCode.startsWith('S-')) loadReplies();
+							else alert(data.msg);
 						});
 			}
 
-			function doBadReplyReaction(replyId) {
-				fetch('/usr/reactionPoint/doBadReaction', {
-					method: 'POST',
-					headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-					body: `relTypeCode=reply&relId=${replyId}`
-				})
-						.then(res => res.json())
-						.then(data => {
-							if (data.resultCode.startsWith("S-")) {
-								loadReplies(); // 댓글 다시 로드
-							} else {
-								alert(data.msg);
-							}
-						});
-			}
+
 		</script>
-
 	</main>
 </div>
 </body>
