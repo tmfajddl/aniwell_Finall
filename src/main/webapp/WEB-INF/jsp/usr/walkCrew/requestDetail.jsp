@@ -73,8 +73,6 @@ h2 {
 </head>
 <body>
 
-	<h2>디버깅용 확인입니다.</h2>
-
 	<div class="container">
 		<h2>🙋 참가 신청자 상세정보</h2>
 

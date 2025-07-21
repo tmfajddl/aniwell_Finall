@@ -40,7 +40,7 @@
 
 					<!-- 슬라이드 감정 분석 패널 -->
 					<div id="emotionPanel"
-						 class="fixed top-0 right-0 w-[94%] h-full bg-[white] shadow-xl z-50 transform translate-x-full transition-transform duration-300 rounded-l-[40px] flex flex-col p-6">
+						 class="fixed top-0 right-0 w-[92%] h-full bg-[white] shadow-xl z-50 transform translate-x-full transition-transform duration-300 rounded-l-[40px] flex flex-col p-6">
 
 						<!-- 닫기 버튼 -->
 						<button onclick="closeEmotionPanel()"
@@ -324,7 +324,9 @@
 
 
 	<script th:inline="javascript">
-		var events = /*[[${eventsJson}]]*/ "";
+		/*<![CDATA[*/
+		var events = [[${eventsJson}]];
+		/*]]>*/
 	</script>
 
 

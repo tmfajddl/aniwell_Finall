@@ -82,4 +82,8 @@ public class PetVaccinationService {
 
         return ResultData.from("S-1", "접종 등록 완료");
     }
+
+    public List<PetVaccination> getVaccinationsByMonth(int petId, String yearMonth) {
+        return petVaccinationRepository.findByPetIdAndMonth(petId, yearMonth);
+    }
 }
