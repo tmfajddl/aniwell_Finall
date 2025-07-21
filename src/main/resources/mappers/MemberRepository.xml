@@ -171,27 +171,18 @@
           AND socialId = #{socialId}
     </select>
 
-<<<<<<< HEAD
-    <insert id="doJoinBySocial" parameterType="map">
-        INSERT INTO `member`
-        SET regDate = NOW(),
-        updateDate = NOW(),
-        loginId = #{loginId}, loginPw = #{loginPw}, socialProvider = #{socialProvider}, socialId = #{socialId}, `name` = #{name}, nickname = #{name}, -- 카카오 닉네임 그대로 사용
-=======
+
     <insert id="doJoinBySocial">
         INSERT INTO `member`
         SET regDate = NOW(),
         updateDate = NOW(),
         loginId = #{loginId}, loginPw = #{loginPw}, socialProvider = #{socialProvider}, socialId = #{socialId}, `name` = #{name}, nickname = #{nickname}, -- 카카오 닉네임 그대로 사용
->>>>>>> 72b89f2 (병합 후 구글, 네이버 로그인 연동 추가 / 네이버 로그인 버튼 클릭 시 오류 해결해야 함(1))
             email = #{email}, cellphone = '',                                                                                                         -- 기본값 빈 문자열
             address = '',                                                                                                                             -- 기본값 빈 문자열
             photo = '',                                                                                                                               -- 기본값 빈 문자열
             authLevel = 1, authName = '일반회원', delStatus = 0
     </insert>
 
-<<<<<<< HEAD
-=======
     <select id="getAllMemberIds" resultType="int">
         SELECT id FROM member WHERE delStatus = 0
     </select>
@@ -206,7 +197,8 @@
         VALUES
             (#{regDate}, #{updateDate}, #{loginId}, #{loginPw}, #{name}, #{email}, #{authLevel}, #{delStatus}, #{socialProvider}, #{socialId})
     </insert>
->>>>>>> 72b89f2 (병합 후 구글, 네이버 로그인 연동 추가 / 네이버 로그인 버튼 클릭 시 오류 해결해야 함(1))
 
-
+    <select id="getAllMemberIds" resultType="int">
+        SELECT id FROM member WHERE delStatus = 0
+    </select>
 </mapper>
