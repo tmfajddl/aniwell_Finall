@@ -16,6 +16,7 @@ public class MemberService {
 
 	@Value("${custom.siteMainUri}")
 	private String siteMainUri;
+
 	@Value("${custom.siteName}")
 	private String siteName;
 
