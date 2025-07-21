@@ -1,86 +1,158 @@
-<%@ page contentType="text/html;charset=UTF-8" language="java"%>
-<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt"%>
-<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
-
+<!DOCTYPE html>
 <html>
+
 <head>
-<title>크루 상세보기</title>
-<style>
-.container {
-	width: 60%;
-	margin: 30px auto;
-	border: 1px solid #ccc;
-	padding: 20px;
-	border-radius: 10px;
-}
-
-h2 {
-	margin-top: 0;
-}
-
-.field {
-	margin: 15px 0;
-}
-
-.label {
-	font-weight: bold;
-}
-
-.back-link {
-	margin-top: 20px;
-	display: block;
-}
-
-button[type="submit"] {
-	padding: 8px 16px;
-	background-color: #4CAF50;
-	color: white;
-	border: none;
-	border-radius: 5px;
-	cursor: pointer;
-	margin-top: 10px;
-}
-</style>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<script src="https://cdn.tailwindcss.com"></script>
+	<link rel="stylesheet" th:href="@{/resource/css/common.css}">
+	<title>크루 모집 목록</title>
 </head>
-<body>
 
-	<div class="container">
-		<h2>📌 크루 상세정보</h2>
+<body class="bg-gradient-to-b from-[#e4f0b9] to-[#fcdca9] font-sans ">
+	<div class="flex h-screen">
+		<!-- Sidebar -->
+		<div th:replace="common :: siteHeader"></div>
 
-		<div class="field">
-			<div class="label">제목:</div>
-			<div>${crew.title}</div>
-		</div>
-
-		<div class="field">
-			<div class="label">설명:</div>
-			<div>${crew.description}</div>
-		</div>
-
-		<div class="field">
-			<div class="label">지역:</div>
-			<div>${crewLocation}</div>
-			<!-- ✔️ 예: 서울특별시 종로구 청운동 -->
-		</div>
+		<!-- Main content -->
+		<main class="main_page min-h-screen flex-1 p-3 flex contect-around">
 
 
-		<div class="field">
-			<div class="label">작성일:</div>
-			<div>
-				<fmt:formatDate value="${createdDate}" pattern="yyyy-MM-dd HH:mm:ss" />
+			<!-- 왼쪽: 정보 섹션 -->
+			<aside class="w-1/4 space-y-1 p-6 grid grid-rows-12 h-[100%] ">
+				<div class="row-span-6 ">
+					<a href="/usr/walkCrew/list" class="back-link">← 목록으로 돌아가기</a>
+					<div class="flex space-y-2 items-center gap-3">
+						<div class="w-14 h-14 bg-gray-300 "></div>
+						<div class="p-3">
+							<h2 class="text-xl font-semibold" th:text="${crew.title}">크루원들 모여라</h2>
+							<p class="text-sm text-gray-500">멤버 111</p>
+						</div>
+					</div>
+
+					<div class="text-sm text-gray-700" th:text="${crew.description}">
+						Lorem ipsum dolor, sit amet consectetur adipisicing elit...
+					</div>
+
+					<div class="flex gap-5 text-sm text-gray-600 py-5">
+						<div class="bg-gray-200 rounded-full px-3 py-1" th:text="${crew.city}">시</div>
+						<div class="bg-gray-200 rounded-full px-3 py-1" th:text="${crew.district}">구</div>
+						<div class="bg-gray-200 rounded-full px-3 py-1" th:text="${crew.dong}">동</div>
+					</div>
+				</div>
+				<button class="bg-gray-200 w-full rounded-full justify-center flex h-10 p-1 py-1">크루신청</button>
+				<div class="shadow row-span-5">
+					<div class="mx-3 pb-3 pt-2 border-b border-1 border-black">공지사항</div>
+					<div th:each="article : ${noticeArticles}" class="p-4 border-b">
+						<div class="text-sm text-gray-500" th:text="'작성자 ID: ' + ${article.memberId}"></div>
+						<div class="text-lg font-bold text-gray-800" th:text="${article.title}">제목</div>
+						<div class="text-sm text-gray-700 mt-1" th:text="${article.body}">내용</div>
+					</div>
+				</div>
+				<div class="row-sapn-1 flex justify-around self-end">
+					<div>수정</div>
+					<div>삭제</div>
+				</div>
+			</aside>
+
+			<!-- 오른쪽: 콘텐츠 섹션 -->
+			<div class="flex-1 space-y-6 h-[100%] flex flex-col p-2 ">
+				<!-- 앨범 -->
+				<div class="py-2 flex-1 shadow">
+					<div class="flex justify-between items-center mb-2 px-5">
+						<h3 class="font-bold text-lg">앨범</h3>
+					</div>
+					<div onclick="photoModal()" th:if="${#lists.isEmpty(photoList)}"
+						class="text-center text-gray-500 px-5 py-10">
+						사진이 없습니다.
+					</div>
+
+					<div th:each="photo : ${photoList}" class="w-40 h-40 bg-gray-300 rounded-lg cursor-pointer"
+						th:onclick="|photoModal(${photo.id})|">
+						<img th:src="${photo.url}" alt="사진" class="object-cover w-full h-full rounded-lg" />
+					</div>
+				</div>
+				<!-- 게시글 -->
+				<div class="py-2 flex-1 shadow relative">
+
+					<div class="flex justify-between px-5 items-center mb-1">
+						<h3 class="font-bold" th:text="${freeArticles.size}">게시글</h3>
+						<button onclick="crewArtAdd()" class="p-1 shadow text-gray-600 hover:text-black">추가 ＋</button>
+					</div>
+					<div class="gap-3 px-4 h-[78%]">
+						<div onclick="articleModal()" class="bg-white rounded shadow p-2 h-[100%] w-1/5 flex flex-col">
+							<img src="https://via.placeholder.com/150" class="w-full flex-1 rounded" />
+							<div class="font-semibold mt-2 flex justify-between">
+								<div>게시글 제목</div>
+								<div class="text-sm">🤍️</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<!-- 멤버 -->
+				<div class="py-2 shadow">
+					<h3 class="font-bold text-lg mb-2 px-5">멤버 8</h3>
+					<div class="flex gap-4 overflow-x-auto px-5 items-center">
+						<div onclick="memberModal()" class=" flex flex-col px-3">
+							<div class="w-12 h-12 bg-gray-300 rounded-full"></div>
+							<div class="p-1">닉네임</div>
+						</div>
+						<div class=" flex flex-col px-3">
+							<div class="w-12 h-12 bg-gray-300 rounded-full"></div>
+							<div class="p-1">닉네임</div>
+						</div>
+						<div class=" flex flex-col px-3">
+							<div class="w-12 h-12 bg-gray-300 rounded-full"></div>
+							<div class="p-1">닉네임</div>
+						</div>
+					</div>
+				</div>
+
+				<!-- 일정 -->
+				<div class="py-3 shadow">
+					<div class="flex justify-between items-center mb-1 px-5">
+						<h3 class="font-bold text-lg">일정 15</h3>
+						<button onclick="scAdd()" class="p-1 shadow text-gray-600 hover:text-black">추가 ＋</button>
+					</div>
+					<div class="flex gap-5 overflow-x-auto px-4 pb-1">
+						<div onclick="scModal()" class="w-12 text-center p-1 px-3 shadow">
+							<div class="text-sm font-bold">7월<br>07</div>
+							<div class="text-xs text-gray-500">모임</div>
+						</div>
+					</div>
+				</div>
+
+			</div>
+			<div class="w-10">
+				<button class="hamburger" onclick="modal_btn()" aria-label="메뉴 열기">
+					<span class="bar"></span>
+					<span class="bar"></span>
+					<span class="bar"></span>
+				</button>
+			</div>
+		</main>
+	</div>
+	<!--기본팝업창-->
+	<div id="modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+		<div
+			class="relative w-[90%] max-w-[1000px] h-[700px] bg-transparent flex rounded-2xl overflow-hidden shadow-2xl">
+			<div class="w-full h-full flex bg-gradient-to-b from-[#FCE9A3] to-[#E0C878]">
+				<div class="w-[5%] text-center">
+					<button onclick="closeModal()"
+						class="text-3xl font-light text-gray-600 hover:text-black">&times;</button>
+				</div>
+				<div id="modalContent" class="relative flex-1 bg-white rounded-l-3xl">
+				</div>
 			</div>
 		</div>
-
-		<!-- 참가 버튼 -->
-		<c:if test="${not empty rq.loginedMemberId}">
-			<form method="post" action="/usr/walkCrew/join">
-				<input type="hidden" name="crewId" value="${crew.id}" />
-				<button type="submit">🙋 참가하기</button>
-			</form>
-		</c:if>
-
-		<a href="/usr/walkCrew/list" class="back-link">← 목록으로 돌아가기</a>
 	</div>
-
+	<!--그냥팝업-->
+	<div id="comModal"></div>
+	<!--사이드팝업창-->
+	<div id="sideModal" class="fixed top-0 right-0 h-full w-[400px] bg-white shadow-lg z-50 transform translate-x-full transition-transform duration-300 ease-in-out"></div>
+		
+	</div>
+	<script th:src="@{/resource/js/crew.js}"></script>
 </body>
+
 </html>
