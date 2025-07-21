@@ -78,4 +78,5 @@ public interface ArticleRepository {
 
 	public List<Map<String, Object>> getSchedulesByCrewId(int crewId);
 
+
 }
