@@ -38,7 +38,7 @@ import java.nio.charset.StandardCharsets;
 @Controller
 @RequestMapping("/usr/walkCrew")
 public class UsrWalkCrewController {
-	
+
 	@Autowired
 	private DistrictService districtService;
 
@@ -53,7 +53,7 @@ public class UsrWalkCrewController {
 	// ✅ AppConfig에서 Kakao Key 가져오기 위한 DI
 	@Autowired
 	private AppConfig appConfig; // @Value 주입된 클래스
-	
+
 	@Autowired
 	public UsrWalkCrewController(WalkCrewService walkCrewService) {
 		this.walkCrewService = walkCrewService;
@@ -70,14 +70,14 @@ public class UsrWalkCrewController {
 		model.addAttribute("kakaoJsKey", appConfig.getKakaoRestApiKey()); // 리스트에서 사용할 카카오apikey REST용 써야
 		return "usr/walkCrew/list";
 	}
-	
+
 	@GetMapping("/api/list")
 	@ResponseBody
 	public ResultData showCrewList(HttpServletRequest req) {
 		Rq rq = (Rq) req.getAttribute("rq"); // 필터 또는 인터셉터에서 세팅된 Rq
 
 		List<WalkCrew> crews = walkCrewService.getAllCrews();// 전체 크루 리스트 조회
-		
+
 		return ResultData.from("S-1", "crewlist", "crews", crews);
 	}
 

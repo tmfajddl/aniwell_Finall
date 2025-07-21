@@ -30,6 +30,9 @@ public class ArticleService {
 		return ResultData.from("S-1", Ut.f("%d번 글이 등록되었습니다", id), "등록 된 게시글 id", id);
 	}
 
+
+
+
 	public void deleteArticle(int id) {
 		articleRepository.deleteArticle(id);
 	}
@@ -85,7 +88,7 @@ public class ArticleService {
 	}
 
 	public List<Article> getForPrintArticles(int boardId, int itemsInAPage, int page, String searchKeywordTypeCode,
-			String searchKeyword) {
+											 String searchKeyword) {
 		// SELECT * FROM article WHERE boardId = 1 ORDER BY id DESC LIMIT 0, 10;
 		// --> 1page
 		// SELECT * FROM article WHERE boardId = 1 ORDER BY id DESC LIMIT 10, 10;
@@ -171,7 +174,7 @@ public class ArticleService {
 
 
 	public ResultData writeCrewArticle(Integer boardId, int crewId, int loginedMemberId, String title, String body,
-			String imageUrl) {
+									   String imageUrl) {
 		articleRepository.insertCrewArticle(boardId, crewId, loginedMemberId, title, body, imageUrl);
 
 
@@ -198,7 +201,7 @@ public class ArticleService {
 
 	// 일정등록하기
 	public void writeSchedule(int crewId, int loginedMemberId, String scheduleDate, String scheduleTitle,
-			String scheduleBody) {
+							  String scheduleBody) {
 		articleRepository.writeSchedule(crewId, loginedMemberId, scheduleDate, scheduleTitle, scheduleBody);
 	}
 
@@ -208,7 +211,7 @@ public class ArticleService {
 	}
 
 	public List<Article> getAdminOnlyArticles(Integer boardId, int limitStart, int itemsInAPage,
-			String searchKeywordTypeCode, String searchKeyword) {
+											  String searchKeywordTypeCode, String searchKeyword) {
 		return articleRepository.getAdminOnlyArticles(boardId, limitStart, itemsInAPage, searchKeywordTypeCode,
 				searchKeyword);
 	}

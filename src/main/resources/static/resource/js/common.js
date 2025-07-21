@@ -35,13 +35,13 @@ function App() {
 	}, []);
 
 	React.useEffect(() => {
-		fetch(`/api/pet/list?memberId=${loginedMember?.id}`)
+		fetch(`/api/pets?memberId=${loginedMember?.id}`)
 			.then(res => res.json())
 			.then((data) => {
 				console.log(data)
-				console.log("petlist: ", data.pets)
-				setPets(data.pets || []); // ← 정확히 'pets'를 받아야 함
-				setCrew(data.crews || []);
+				console.log("petlist: ", data.data2)
+				setPets(data.data2 || []); // ← 정확히 'pets'를 받아야 함
+				setCrew(data.data3 || []);
 			});
 	}, [loginedMember])
 	// sidebar.js
@@ -62,9 +62,7 @@ document.querySelectorAll('.menu-item').forEach((item) => {
 				url = `/usr/pet/list?memberId=${loginedMemberId}`
 				break
 			case 'crew':
-				url = `/usr/walkCrew/list`
-			case 'qna':
-				url = `/usr/qna/list`
+				url = `/crew`
 				break
 		}
 

@@ -13,25 +13,25 @@ import com.example.RSW.vo.Article;
 @Controller
 public class UsrHomeController {
 
-	@Autowired
-	private ArticleService articleService;
+    @Autowired
+    private ArticleService articleService;
 
 
-	@RequestMapping("/usr/home/main")
-	public String showMain(Model model) {
-		int noticeBoardId = 1; // 공지사항 게시판 ID
-		int limit = 5;
+    @RequestMapping("/usr/home/main")
+    public String showMain(Model model) {
+        int noticeBoardId = 1; // 공지사항 게시판 ID
+        int limit = 5;
 
-		// ✅ 일반 공지사항만 crewId IS NULL인 것만 조회
-		List<Article> noticeArticles = articleService.getNoticeArticlesByBoardId(noticeBoardId, limit);
-		model.addAttribute("noticeArticles", noticeArticles);
+        // ✅ 일반 공지사항만 crewId IS NULL인 것만 조회
+        List<Article> noticeArticles = articleService.getNoticeArticlesByBoardId(noticeBoardId, limit);
+        model.addAttribute("noticeArticles", noticeArticles);
 
-		return "/usr/home/main";
-	}
+        return "/usr/home/main";
+    }
 
-	@RequestMapping("/")
-	public String showMain2() {
-		return "redirect:/usr/home/main";
-	}
+    @RequestMapping("/")
+    public String showMain2() {
+        return "redirect:/usr/home/main";
+    }
 
 }

@@ -1,63 +1,151 @@
-<%@ page contentType="text/html; charset=UTF-8" %>
-<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>수의사 질문 리스트</title>
-  <style>
-    .answered { background-color: #d4edda; }   /* 답변된 질문 초록 */
-    .unanswered { background-color: #f8d7da; } /* 미답변 질문 빨강 */
-    table { width: 100%; border-collapse: collapse; }
-    th, td { padding: 8px; border: 1px solid #ccc; text-align: left; }
-    th { background-color: #f2f2f2; }
-    a { text-decoration: none; color: #007bff; }
-    a:hover { text-decoration: underline; }
-  </style>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" th:href="@{/resource/css/common.css}">
 </head>
-<body>
-<h1>수의사용 질문 리스트</h1>
+<body class="bg-gradient-to-b from-[#e4f0b9] to-[#fcdca9] font-sans">
+<div class="flex h-screen" >
+  <!-- Sidebar -->
+  <div th:replace="common :: siteHeader"></div>
 
-<table>
-  <thead>
-  <tr>
-    <th>번호</th>
-    <th>제목</th>
-    <th>작성자</th>
-    <th>등록일</th>
-    <th>답변상태</th>
-  </tr>
-  </thead>
-  <tbody>
-  <c:forEach var="qna" items="${questions}">
-    <c:choose>
-      <c:when test="${qna.answered}">
-        <tr class="answered">
-      </c:when>
-      <c:otherwise>
-        <tr class="unanswered">
-      </c:otherwise>
-    </c:choose>
-    <td>${qna.id}</td>
-    <td><a href="/usr/qna/detail?id=${qna.id}">${qna.title}</a></td>
-    <td>${qna.memberName}</td>
-    <td>${qna.regDate}</td>
-    <td>
-      <c:choose>
-        <c:when test="${qna.answered}">
-          답변 완료
-        </c:when>
-        <c:otherwise>
-          미답변
-        </c:otherwise>
-      </c:choose>
-    </td>
-    </tr>
-  </c:forEach>
-  <c:if test="${empty questions}">
-    <tr><td colspan="5">등록된 질문이 없습니다.</td></tr>
-  </c:if>
-  </tbody>
-</table>
+  <!-- Main content -->
+  <main class="main_page min-h-screen flex-1 p-6 grid grid-cols-12 gap-4">
+
+    <!-- ✅ 상단 제목 -->
+    <div class="col-span-12">
+      <h1 class="text-3xl font-bold text-lime-800">🩺 수의사용 질문 리스트</h1>
+    </div>
+
+    <div class="col-span-6 space-y-4 overflow-y-auto h-[600px]">
+      <h2 class="text-xl font-bold text-yellow-600 mb-2">📖 미답변 질문 목록</h2>
+      <div th:each="qna : ${questions}"
+           th:data-id="${qna.id}"
+           th:data-title="${qna.title}"
+           th:data-body="${qna.body}"
+           th:data-answer="${qna.answer}"
+           th:data-answered="${qna.answered}"
+           th:classappend="${qna.answered} ? 'bg-green-50' : 'bg-red-50'"
+           class="rounded-xl shadow-md p-4 flex items-center justify-between hover:shadow-lg transition qna-item cursor-pointer">
+
+      <div>
+          <h3 class="text-lg font-semibold text-gray-800" th:text="${qna.title}">질문 제목</h3>
+          <p class="text-sm text-gray-600" th:text="'작성자: ' + ${qna.memberName} + ' · ' + ${qna.regDate}">작성자/날짜</p>
+        </div>
+        <div>
+          <span th:if="${qna.answered}" class="text-xs bg-green-200 text-green-800 px-3 py-1 rounded-full font-bold">답변 완료</span>
+          <span th:unless="${qna.answered}" class="text-xs bg-red-200 text-red-800 px-3 py-1 rounded-full font-bold">미답변</span>
+        </div>
+      </div>
+      <div th:if="${#lists.isEmpty(questions)}" class="text-center text-gray-500 mt-4">
+        등록된 질문이 없습니다.
+      </div>
+    </div>
+
+
+    <!-- ✅ 우측: 내가 답변한 질문 -->
+    <div class="col-span-6 space-y-4 overflow-y-auto h-[600px]">
+      <h2 class="text-xl font-bold text-yellow-600 mb-2">🙋 내가 답변한 질문</h2>
+      <div th:each="qna : ${myAnsweredQnas}"
+           class="rounded-xl shadow-md p-4 flex items-center justify-between bg-green-50 hover:shadow-lg transition">
+        <div>
+          <h3 class="text-lg font-semibold text-gray-800" th:text="${qna.title}">질문 제목</h3>
+          <p class="text-sm text-gray-600" th:text="${qna.regDate}">날짜</p>
+        </div>
+        <div>
+          <span class="text-xs bg-green-200 text-green-800 px-3 py-1 rounded-full font-bold">답변 완료</span>
+        </div>
+      </div>
+      <div th:if="${#lists.isEmpty(myAnsweredQnas)}" class="text-center text-gray-500 mt-4">
+        답변한 질문이 없습니다.
+      </div>
+    </div>
+
+    <!-- ✅ QnA 상세 모달 -->
+    <div id="qna-detail-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+      <div class="bg-white w-full max-w-xl rounded-xl shadow-xl p-6 relative">
+        <button onclick="hideQnaModal()" class="absolute top-2 right-3 text-gray-500 hover:text-black text-2xl">&times;</button>
+
+        <h2 class="text-2xl font-bold mb-4">🙋 질문 상세</h2>
+
+        <label class="font-semibold">제목</label>
+        <input type="text" id="modal-qna-title" class="w-full p-2 rounded bg-gray-100 mb-3" readonly>
+
+        <label class="font-semibold">내용</label>
+        <textarea id="modal-qna-body" class="w-full p-2 rounded bg-gray-100 mb-3" rows="4" readonly></textarea>
+
+        <div id="vet-answer-area" class="mb-3 hidden">
+          <label class="font-semibold">💬 수의사 답변</label>
+          <textarea id="modal-qna-answer" class="w-full p-2 rounded bg-gray-100" readonly rows="2"></textarea>
+        </div>
+
+        <div class="flex items-center gap-2 mt-4">
+          <input type="checkbox" id="modal-qna-answered" disabled>
+          <label for="modal-qna-answered">답변 완료</label>
+        </div>
+
+        <div class="flex justify-end gap-2 mt-6">
+          <button id="modal-answer-create" class="bg-yellow-400 hover:bg-yellow-500 text-white font-bold py-2 px-4 rounded hidden">등록</button>
+          <button id="modal-answer-update" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded hidden">수정</button>
+          <button id="modal-answer-delete" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded">삭제</button>
+        </div>
+
+      </div>
+    </div>
+
+
+    <script>
+
+      document.querySelectorAll('.qna-item').forEach(item => {
+        item.addEventListener('click', () => {
+          const id = item.dataset.id;
+          const title = item.dataset.title;
+          const body = item.dataset.body;
+          const answer = item.dataset.answer;
+          const answered = item.dataset.answered === 'true';
+
+          showQnaDetailModal(id, title, body, answer, answered);
+        });
+      });
+      function showQnaDetailModal(id, title, body, answer, answered) {
+        document.getElementById('modal-qna-title').value = title;
+        document.getElementById('modal-qna-body').value = body;
+        document.getElementById('modal-qna-answered').checked = answered;
+
+        const answerArea = document.getElementById('vet-answer-area');
+        const createBtn = document.getElementById('modal-answer-create');
+        const updateBtn = document.getElementById('modal-answer-update');
+
+        if (answer && answer.trim() !== '') {
+          document.getElementById('modal-qna-answer').value = answer;
+          answerArea.classList.remove('hidden');
+
+          createBtn.classList.add('hidden');   // 등록 버튼 숨김
+          updateBtn.classList.remove('hidden'); // 수정 버튼 표시
+        } else {
+          document.getElementById('modal-qna-answer').value = '';
+          answerArea.classList.add('hidden');
+
+          createBtn.classList.remove('hidden'); // 등록 버튼 표시
+          updateBtn.classList.add('hidden');    // 수정 버튼 숨김
+        }
+
+        document.getElementById('qna-detail-modal').classList.remove('hidden');
+      }
+
+
+
+      function hideQnaModal() {
+        document.getElementById('qna-detail-modal').classList.add('hidden');
+      }
+    </script>
+
+
+  </main>
+
+</div>
 </body>
 </html>

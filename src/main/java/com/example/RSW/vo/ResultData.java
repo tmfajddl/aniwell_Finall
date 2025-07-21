@@ -17,8 +17,8 @@ public class ResultData<DT> {
 	private Object data2;
 	@Getter
 	private String data2Name;
-	
-	
+
+
 	@Getter
 	private Object data3;
 	@Getter
@@ -38,6 +38,11 @@ public class ResultData<DT> {
 		return rd;
 	}
 
+	public static <DT> ResultData<DT> from(String ResultCode, String msg, DT data) {
+		return from(ResultCode, msg, "data1", data); // "data1"은 기본 이름
+	}
+
+
 	public boolean isSuccess() {
 		return ResultCode.startsWith("S-");
 	}
@@ -51,7 +56,7 @@ public class ResultData<DT> {
 	}
 
 	public static <DT> ResultData<DT> from(String resultCode, String msg, String data1Name, DT data1, String data2Name,
-			DT data2) {
+										   DT data2) {
 		ResultData<DT> rd = new ResultData<DT>();
 		rd.ResultCode = resultCode;
 		rd.msg = msg;
@@ -62,9 +67,9 @@ public class ResultData<DT> {
 
 		return rd;
 	}
-	
+
 	public static <DT> ResultData<DT> from(String resultCode, String msg, String data1Name, DT data1, String data2Name,
-			DT data2, String data3Name, DT data3) {
+										   DT data2, String data3Name, DT data3) {
 		ResultData<DT> rd = new ResultData<DT>();
 		rd.ResultCode = resultCode;
 		rd.msg = msg;
@@ -77,6 +82,6 @@ public class ResultData<DT> {
 
 		return rd;
 	}
-	
-	
+
+
 }
