@@ -33,12 +33,6 @@ public class AdmQnaController {
     @Autowired
     private NotificationService notificationService;
 
-    // QnA 목록 페이지
-    @GetMapping("/list")
-    public String showQnaList(Model model) {
-        model.addAttribute("qnaList", qnaService.findAll()); // 모든 QnA 조회
-        return "adm/qna/list"; // 리스트 JSP 반환
-    }
 
     // QnA 상세 페이지
     @GetMapping("/detailData")
@@ -72,14 +66,6 @@ public class AdmQnaController {
         );
     }
 
-
-    // QnA 수정 폼
-    @GetMapping("/edit")
-    public String showEditForm(@RequestParam int id, Model model) {
-        model.addAttribute("qna", qnaService.findById(id)); // 수정할 QnA 로드
-        return "adm/qna/edit"; // 수정 JSP
-    }
-
     // QnA 본문 수정 처리
     @PostMapping("/doModify")
     public String doModify(@RequestParam int id,
@@ -105,13 +91,6 @@ public class AdmQnaController {
         }
 
         return response;
-    }
-
-
-    // FAQ 등록 폼
-    @GetMapping("/write")
-    public String showWriteForm() {
-        return "adm/qna/write"; // FAQ 작성 폼
     }
 
     // FAQ 등록 처리

@@ -31,30 +31,36 @@ public class UsrQnaController {
                               @RequestParam(value = "selectedId", required = false) Integer selectedId) {
         List<Qna> qnas = qnaService.getPublicFaqList(); // 공개 FAQ 목록
         List<Qna> myQnas = qnaService.getUserQnaByMemberId(rq.getLoginedMemberId()); // 내가 한 질문 목록
-
         List<Qna> selectedQna  = qnaService.getSelectedQna(); // 선택된 질문
 
+        // 공개 질문에 대한 수의사 답변 세팅
         for (Qna q : qnas) {
             VetAnswer a = vetAnswerService.findByQnaId(q.getId());
-            if (a != null) q.setAnswer(a.getAnswer());
+            if (a != null) {
+                q.setAnswer(a.getAnswer());
+            }
         }
 
+        // 내가 한 질문에 대한 수의사 답변 세팅
         for (Qna q : myQnas) {
             VetAnswer a = vetAnswerService.findByQnaId(q.getId());
-            System.out.println("qnaId: " + a.getQnaId());  // → 10이 나와야 정상
-            System.out.println("memberId: " + a.getMemberId()); // → 1이 나와야 정상
-            System.out.println("vetName: " + a.getVetName()); // → admin
-            if (a != null) q.setAnswer(a.getAnswer());
-            System.out.println(a);
+            if (a != null) {
+                System.out.println("qnaId: " + a.getQnaId());
+                System.out.println("memberId: " + a.getMemberId());
+                System.out.println("vetName: " + a.getVetName());
+                q.setAnswer(a.getAnswer());
+                System.out.println(a);
+            } else {
+                System.out.println("❗답변 없음 for qnaId = " + q.getId());
+            }
         }
-
-
 
         model.addAttribute("qnas", qnas);
         model.addAttribute("myQnas", myQnas);
         model.addAttribute("selectedQna", selectedQna);
-        return "usr/qna/list"; // JSP 렌더링
+        return "usr/qna/list"; // JSP or Thymeleaf 렌더링
     }
+
 
 
     // 질문 등록 폼
