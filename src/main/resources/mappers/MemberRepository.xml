@@ -183,5 +183,9 @@
     </insert>
 
 
+    <select id="getAllMemberIds" resultType="int">
+        SELECT id FROM member WHERE delStatus = 0
+    </select>
+
 
 </mapper>
