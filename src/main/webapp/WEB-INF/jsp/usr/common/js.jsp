@@ -3,13 +3,13 @@
 
 
 <script>
-	let historyBack = '${historyBack} == true';
+    let historyBack = '${historyBack} == true';
 
-	let msg = '${msg}'.trim();
+    let msg = '${msg}'.trim();
 
-	if (msg.length > 0) {
-		alert(msg);
-	}
+    if (msg.length > 0) {
+        alert(msg);
+    }
 
-	history.back();
+    history.back();
 </script>

@@ -93,11 +93,12 @@
 
   let stompClient = null;
   let groupBuffer = [];
-  let lastGroupKey = "";
   let lastDate = "";
+  let lastGroupKey = "";
   let flushTimeout = null;
-  let isComposing = false;
+  let isSending = false;
   let enterPressed = false;
+  let isComposing = false;
 
   function connect() {
     const socket = new SockJS("/ws");
@@ -112,6 +113,8 @@
   }
 
   function sendMessage() {
+    if (isSending) return;
+
     const input = document.getElementById("chatInput");
     const content = input.value.trim();
     if (!content) return;
@@ -126,10 +129,13 @@
 
     stompClient.send("/app/chat.send/" + crewId, {}, JSON.stringify(message));
     input.value = "";
+    isSending = true;
+    setTimeout(function () { isSending = false; }, 200);
   }
 
+  // 메세지 불러오기
   function renderMessage(msg) {
-    const timeKey = msg.sentAt.slice(0, 16); // yyyy-MM-ddTHH:mm
+    const timeKey = msg.sentAt.slice(0, 16); // 분 단위
     const groupKey = msg.senderId + "_" + timeKey;
 
     if (groupKey !== lastGroupKey && groupBuffer.length > 0) {
@@ -149,58 +155,54 @@
     }, 300);
   }
 
+
+
   function renderGroup(messages) {
     if (!messages.length) return;
 
-    const chatBox = document.getElementById("chatBox");
-    const groupId = messages[0].senderId + "_" + messages[0].sentAt.slice(0, 16);
-
-    // 그룹 내 시간만 제거
-    document.querySelectorAll('.msg[data-group-id="' + groupId + '"] .time').forEach(function(el) {
-      el.remove();
-    });
-
-    // ❌ 기존 말풍선 삭제는 하지 않음! (실시간 메시지 누적을 위해)
-    const isAlreadyRendered = document.querySelector('[data-group-id="' + groupId + '"]') !== null;
-    const isMe = messages[0].senderId === senderId;
-    const msgDate = formatDateOnly(messages[0].sentAt);
+    const lastMsg = messages[messages.length - 1];
+    const msgDate = formatDateOnly(lastMsg.sentAt);
 
     if (lastDate !== msgDate) {
       const divider = document.createElement("div");
       divider.className = "date-divider";
       divider.textContent = msgDate;
-      chatBox.appendChild(divider);
+      document.getElementById("chatBox").appendChild(divider);
       lastDate = msgDate;
     }
 
-    messages.forEach(function(msg, index) {
+    const currentTimeKey = formatTime(messages[0].sentAt);
+
+    const allTimeElements = document.querySelectorAll(".msg .time");
+    allTimeElements.forEach(function (el) {
+      if (el.textContent === currentTimeKey) {
+        el.remove();
+      }
+    });
+
+
+    const firstMsg = messages[0];
+    const isMe = firstMsg.senderId === senderId;
+    const chatBox = document.getElementById("chatBox");
+
+    messages.forEach(function (msg, index) {
       const isFirst = index === 0;
       const isLast = index === messages.length - 1;
-      const isFirstInGroup = isFirst && !isAlreadyRendered;
 
       const msgDiv = document.createElement("div");
       msgDiv.className = "msg" + (isMe ? " me" : "");
-      msgDiv.setAttribute("data-group-id", groupId);
 
-      // 👉 상대방 + 그룹 첫 메시지일 경우만 프로필/닉네임 출력
       if (!isMe) {
-        if (isFirstInGroup) {
-          const profile = document.createElement("img");
-          profile.className = "profile";
-          profile.src = msg.photo || "/img/default-pet.png";
-          msgDiv.appendChild(profile);
-        } else {
-          const placeholder = document.createElement("div");
-          placeholder.className = "profile-placeholder";
-          msgDiv.appendChild(placeholder);
-        }
+        const profileHtml = isFirst
+                ? "<img class='profile' src='" + (msg.photo || "/img/default-pet.png") + "' />"
+                : "<div class='profile-placeholder'></div>";
+        msgDiv.innerHTML += profileHtml;
       }
 
       const wrap = document.createElement("div");
       wrap.className = "bubble-wrap";
 
-      // 👉 닉네임도 첫 메시지에만
-      if (!isMe && isFirstInGroup) {
+      if (!isMe && isFirst) {
         const nick = document.createElement("div");
         nick.className = "nickname";
         nick.textContent = msg.nickname || "알 수 없음";
@@ -223,27 +225,12 @@
       chatBox.appendChild(msgDiv);
     });
 
-    scrollToBottom();
+    requestAnimationFrame(scrollToBottom);
   }
 
 
 
-  function loadPreviousMessages() {
-    fetch("/usr/walkCrew/chat/api/" + crewId + "/messages")
-            .then(res => res.json())
-            .then(data => {
-              groupBuffer = [];
-              lastGroupKey = "";
-              data.forEach(renderMessage);
 
-              if (groupBuffer.length > 0) {
-                renderGroup(groupBuffer);
-                groupBuffer = [];
-              }
-
-              scrollToBottom();
-            });
-  }
 
   function formatDateOnly(iso) {
     const d = new Date(iso);
@@ -260,17 +247,30 @@
     chatBox.scrollTop = chatBox.scrollHeight;
   }
 
+  function loadPreviousMessages() {
+    fetch("/usr/walkCrew/chat/api/" + crewId + "/messages")
+            .then(function (res) { return res.json(); })
+            .then(function (data) {
+              data.forEach(renderMessage);
+              renderGroup(groupBuffer);
+              groupBuffer = [];
+              scrollToBottom();
+            });
+  }
+
   document.addEventListener("DOMContentLoaded", function () {
     const input = document.getElementById("chatInput");
 
-    input.addEventListener("compositionstart", () => isComposing = true);
-    input.addEventListener("compositionend", () => isComposing = false);
+    input.addEventListener("compositionstart", function () { isComposing = true; });
+    input.addEventListener("compositionend", function () { isComposing = false; });
 
     input.addEventListener("keydown", function (e) {
-      if (e.key === "Enter" && !e.shiftKey && !isComposing && !enterPressed) {
+      if (e.key === "Enter" && !e.shiftKey && !isComposing) {
         e.preventDefault();
-        enterPressed = true;
-        sendMessage();
+        if (!enterPressed) {
+          enterPressed = true;
+          sendMessage();
+        }
       }
     });
 

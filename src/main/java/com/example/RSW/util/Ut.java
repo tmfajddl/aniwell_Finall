@@ -135,8 +135,4 @@ public class Ut {
 
 		return sb.toString();
 	}
-
-	public static String jsAlertBack(String msg) {
-		return "<script>alert('" + msg + "'); history.back();</script>";
-	}
 }

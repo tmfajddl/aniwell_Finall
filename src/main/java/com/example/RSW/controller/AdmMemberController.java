@@ -30,14 +30,6 @@ public class AdmMemberController {
     @Autowired
     private Rq rq;
 
-    @RequestMapping("/list")
-    public String showMemberList(@RequestParam(defaultValue = "") String searchType,
-                                 @RequestParam(defaultValue = "") String searchKeyword,
-                                 Model model) {
-        List<Member> members = memberService.getForPrintMembers(searchType, searchKeyword);
-        model.addAttribute("members", members);
-        return "adm/member/list";
-    }
 
 
     @PostMapping("/changeVetCertStatus")

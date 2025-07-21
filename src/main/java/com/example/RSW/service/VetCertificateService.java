@@ -1,7 +1,6 @@
 package com.example.RSW.service;
 
 import com.example.RSW.repository.VetCertificateRepository;
-import com.example.RSW.vo.Member;
 import com.example.RSW.vo.ResultData;
 import com.example.RSW.vo.VetCertificate;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,12 +14,6 @@ public class VetCertificateService {
 
     @Autowired
     private VetCertificateRepository vetCertificateRepository;
-
-    @Autowired
-    private MemberService memberService;
-
-    @Autowired
-    private NotificationService notificationService;
 
     // 인증서 등록
     public ResultData registerCertificate(VetCertificate vetCertificate) {
@@ -70,23 +63,6 @@ public class VetCertificateService {
         VetCertificate cert = vetCertificateRepository.findByMemberId(memberId);
         if (cert != null) {
             vetCertificateRepository.updateApprovalStatus(cert.getId(), approved);
-        }
-    }
-
-    // 관리자에게 알림을 보내는 메서드
-    private void sendNotificationToAdmins(int vetMemberId) {
-        // 수의사 이름 가져오기
-        Member vetMember = memberService.getMemberById(vetMemberId);
-        String vetName = vetMember.getName(); // 수의사 이름
-
-        // 관리자 목록 가져오기
-        List<Member> admins = memberService.getAdmins(); // 관리자 목록 가져오기
-
-        // 알림 전송
-        for (Member admin : admins) {
-            String title = vetName + "님이 인증서를 등록하였습니다."; // 알림 제목
-            String link = "/adm/member/list?memberId=" + vetMemberId; // 인증서 등록 상세 페이지 링크
-            notificationService.addNotification(admin.getId(), vetMemberId, "VET_CERT_UPLOAD", title, link);
         }
     }
 

@@ -25,4 +25,6 @@ public interface PetVaccinationRepository {
     void insertPetVaccinationWithNotes(int petId, String vaccineName, String injectionDate, String notes);
 
     void invalidateNextDueDates(int petId, String vaccineName);
+
+    List<PetVaccination> findByPetIdAndMonth(int petId, String yearMonth);
 }

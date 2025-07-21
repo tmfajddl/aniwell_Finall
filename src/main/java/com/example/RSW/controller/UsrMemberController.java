@@ -232,13 +232,17 @@ public class UsrMemberController {
 
     // 마이페이지
     @RequestMapping({"/usr/member/myPage", "/usr/member/mypage"})
-    @ResponseBody
-    public Member showMyPage(HttpServletRequest req) {
+    public String showMyPage(HttpServletRequest req, Model model) {
 
         Rq rq = (Rq) req.getAttribute("rq");
         Member loginedMember = rq.getLoginedMember();
 
-        return loginedMember;
+        VetCertificate cert = vetCertificateService.getCertificateByMemberId(loginedMember.getId());
+        model.addAttribute("cert", cert);
+
+        model.addAttribute("member", loginedMember);
+
+        return "usr/member/myPage";
     }
 
     @RequestMapping("/usr/member/checkPw")
@@ -713,66 +717,6 @@ public class UsrMemberController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 실패");
         }
     }
-
-    @RequestMapping("/usr/member/google")
-    public String googleCallback(@RequestParam("code") String code, HttpServletRequest req, HttpServletResponse resp) {
-
-        try {
-
-            RestTemplate restTemplate = new RestTemplate();
-
-            // 1. access token 요청
-            MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-            params.add("code", code);
-            params.add("client_id", "노션에서 가져오기");
-            params.add("client_secret", "노션에서 가져오기");
-            params.add("redirect_uri", "http://localhost:8080/usr/member/google");
-            params.add("grant_type", "authorization_code");
-
-            Map<String, Object> tokenResponse = restTemplate.postForObject(
-                    "https://oauth2.googleapis.com/token", params, Map.class
-            );
-
-            String accessToken = (String) tokenResponse.get("access_token");
-
-            // 2. 사용자 정보 요청
-            HttpHeaders headers = new HttpHeaders();
-            headers.setBearerAuth(accessToken);
-            HttpEntity<String> entity = new HttpEntity<>(headers);
-
-            ResponseEntity<Map> userInfoResponse = restTemplate.exchange(
-                    "https://www.googleapis.com/oauth2/v2/userinfo",
-                    HttpMethod.GET,
-                    entity,
-                    Map.class
-            );
-
-            Map<String, Object> userInfo = userInfoResponse.getBody();
-
-            String email = (String) userInfo.get("email");
-            String name = (String) userInfo.get("name");
-
-
-            // 3. DB 조회 또는 생성
-            Member member = memberService.getOrCreateByEmail(email, name);
-
-
-            // 4. 세션 저장
-            req.getSession().setAttribute("loginedMemberId", member.getId());
-            req.getSession().setAttribute("loginedMember", member);
-
-            // ✅ JSP에서도 rq.logined 동작하도록 강제 주입
-            req.setAttribute("rq", new Rq(req, resp, memberService));
-
-
-            return "redirect:/";
-        } catch (Exception e) {
-            System.out.println("❌ Google 로그인 중 오류 발생:");
-            e.printStackTrace();
-            return "redirect:/usr/member/login?error=google";
-        }
-    }
-
 
 
 }

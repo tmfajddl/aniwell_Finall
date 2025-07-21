@@ -20,6 +20,14 @@
         ORDER BY pv.injectionDate DESC
     </select>
 
+    <select id="findByPetIdAndMonth" resultType="PetVaccination">
+        SELECT *
+        FROM pet_vaccination
+        WHERE petId = #{petId}
+          AND DATE_FORMAT(injectionDate, '%Y-%m') = #{yearMonth}
+        ORDER BY injectionDate ASC
+    </select>
+
     <!-- 백신 삭제 -->
     <delete id="deletePetVaccination" parameterType="int">
         DELETE FROM pet_vaccination WHERE id = #{id}
