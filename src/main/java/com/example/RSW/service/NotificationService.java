@@ -1,5 +1,6 @@
 package com.example.RSW.service;
 
+import com.example.RSW.repository.MemberRepository;
 import com.example.RSW.repository.NotificationRepository;
 import com.example.RSW.vo.Member;
 import com.example.RSW.vo.Notification;
@@ -20,6 +21,9 @@ public class NotificationService {
 
     @Autowired
     private MemberService memberService;
+
+    @Autowired
+    private MemberRepository memberRepository;
 
     @Autowired
     public NotificationService(NotificationRepository notificationRepository) {
@@ -165,4 +169,10 @@ public class NotificationService {
         notificationRepository.deleteByMemberId(memberId);
     }
 
+    public void sendNotificationToAll(String title, String link, String type, Integer senderId) {
+        List<Integer> memberIds = memberRepository.getAllMemberIds();
+        for (Integer memberId : memberIds) {
+            notificationRepository.insert(new Notification(0, memberId, title, link, new Date(), false, null, type, senderId));
+        }
+    }
 }

@@ -50,6 +50,9 @@ public class UsrArticleController {
 	@Autowired
 	private Cloudinary cloudinary;
 
+	@Autowired
+	private NotificationService notificationService;
+
 	UsrArticleController(BeforeActionInterceptor beforeActionInterceptor) {
 		this.beforeActionInterceptor = beforeActionInterceptor;
 	}
@@ -130,6 +133,13 @@ public class UsrArticleController {
 		int articleId = (int) rd.getData1();
 		String redirectUrl = crewId != null ? "/usr/article/detail?id=" + articleId + "&crewId=" + crewId
 				: "/usr/article/detail?id=" + articleId + "&boardId=" + boardId;
+
+// ✅ 🔔 전체 알림 발송 (공지사항일 때만)
+		if (boardId != null && boardId == 1) {
+			String link = redirectUrl;
+			String notiTitle = "[공지사항] " + title;
+			notificationService.sendNotificationToAll(notiTitle, link, "NOTICE", loginedMemberId);
+		}
 
 		return ResultData.from("S-1", "게시글이 성공적으로 작성되었습니다.",
 				Map.of("articleId", articleId, "redirectUrl", redirectUrl));
