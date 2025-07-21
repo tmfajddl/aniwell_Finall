@@ -1,5 +1,7 @@
 package com.example.RSW.vo;
 
+import java.util.Date;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -21,6 +23,9 @@ public class Article {
     private int hitCount;
     private int goodReactionPoint;
     private int badReactionPoint;
+
+    private String imageUrl;
+    private Date scheduleDate;
 
     private String extra__writer;
 

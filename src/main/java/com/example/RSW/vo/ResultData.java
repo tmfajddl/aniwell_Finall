@@ -38,11 +38,6 @@ public class ResultData<DT> {
 		return rd;
 	}
 
-	public static <DT> ResultData<DT> from(String ResultCode, String msg, DT data) {
-		return from(ResultCode, msg, "data1", data); // "data1"은 기본 이름
-	}
-
-
 	public boolean isSuccess() {
 		return ResultCode.startsWith("S-");
 	}
