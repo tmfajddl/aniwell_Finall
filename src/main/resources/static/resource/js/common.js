@@ -1,4 +1,3 @@
-
 const paw = document.getElementById('cat-paw');
 const btn = document.getElementById('hamburger-btn');
 
@@ -35,13 +34,13 @@ function App() {
 	}, []);
 
 	React.useEffect(() => {
-		fetch(`/api/pets?memberId=${loginedMember?.id}`)
+		fetch(`/api/pet/list?memberId=${loginedMember?.id}`)
 			.then(res => res.json())
 			.then((data) => {
 				console.log(data)
-				console.log("petlist: ", data.data2)
-				setPets(data.data2 || []); // ← 정확히 'pets'를 받아야 함
-				setCrew(data.data3 || []);
+				console.log("petlist: ", data.pets)
+				setPets(data.pets || []); // ← 정확히 'pets'를 받아야 함
+				setCrew(data.crews || []);
 			});
 	}, [loginedMember])
 	// sidebar.js
@@ -62,13 +61,19 @@ document.querySelectorAll('.menu-item').forEach((item) => {
 				url = `/usr/pet/list?memberId=${loginedMemberId}`
 				break
 			case 'crew':
-				url = `/crew`
+				url = `/usr/walkCrew/list`
+				break
+			case 'qna':
+				url = `/usr/qna/list`
+				break
+			case 'admin':
+				url = `/adm/article/list`
+				break
+			case 'vet':
+				url = `/usr/vetAnswer/vetList`
 				break
 		}
 
 		window.parent.location.href = url
 	})
 })
-
-
-
