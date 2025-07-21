@@ -65,4 +65,7 @@ public interface MemberRepository {
 
     void insert(Member member);
 
+
+    List<Integer> getAllMemberIds();
+
 }

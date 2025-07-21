@@ -12,6 +12,14 @@ spring:
           auth: true
           starttls:
             enable: true
+<<<<<<< HEAD
+=======
+  oauth2:
+    google:
+      client-id: ""
+      client-secret: ""
+      redirect-uri: "http://localhost:8080/usr/member/google"
+>>>>>>> 72b89f2 (병합 후 구글, 네이버 로그인 연동 추가 / 네이버 로그인 버튼 클릭 시 오류 해결해야 함(1))
   thymeleaf:
    prefix: classpath:/templates/        # HTML 파일의 기본 경로
    suffix: .html                        # HTML 확장자
@@ -45,3 +53,11 @@ cloudinary:
     cloud_name: dfiqktimk
     api_key: 145284189636895
     api_secret: 4TS23PL5HMWPolljcIRqitpWwU0
+<<<<<<< HEAD
+=======
+
+naver:
+  client-id: "ZdyW5GGtNSgCCaduup7_"
+  client-secret: "pJh4IlGi2_"
+  redirect-uri: "http://localhost:8080/usr/member/naver"
+>>>>>>> 72b89f2 (병합 후 구글, 네이버 로그인 연동 추가 / 네이버 로그인 버튼 클릭 시 오류 해결해야 함(1))
