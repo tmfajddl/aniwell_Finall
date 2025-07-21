@@ -26,7 +26,6 @@ public class BeforeActionInterceptor implements HandlerInterceptor {
         req.setAttribute("loginedMemberId", rq.getLoginedMemberId());
         req.setAttribute("isLogined", rq.isLogined()); // ✅ 이 줄 꼭 추가!!
 
-        
         return HandlerInterceptor.super.preHandle(req, resp, handler);
     }
 }
