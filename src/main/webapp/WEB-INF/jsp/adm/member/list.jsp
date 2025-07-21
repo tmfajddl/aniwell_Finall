@@ -1,0 +1,203 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+
+<%@ include file="/WEB-INF/jsp/usr/common/head.jspf" %>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>회원 목록</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css"/>
+</head>
+<body class="p-8 bg-gray-50 min-h-screen">
+
+<h1 class="text-2xl font-bold mb-6">회원 관리</h1>
+
+<form action="/adm/member/list" method="get" class="mb-4 flex gap-2">
+    <select name="searchType" class="border p-2 rounded">
+        <option value="authLevel" <c:if test="${param.searchType == 'authLevel'}">selected</c:if>>사용자 권한</option>
+        <option value="loginId" <c:if test="${param.searchType == 'loginId'}">selected</c:if>>아이디</option>
+        <option value="name" <c:if test="${param.searchType == 'name'}">selected</c:if>>이름</option>
+        <option value="id" <c:if test="${param.searchType == 'id'}">selected</c:if>>번호</option>
+    </select>
+
+    <input type="text" name="searchKeyword"
+           value="${fn:escapeXml(param.searchKeyword)}"
+           placeholder="이름 또는 이메일을 입력하세요"
+           class="border p-2 rounded flex-grow"/>
+
+    <button class="bg-yellow-400 px-4 py-2 rounded text-white">검색</button>
+</form>
+
+
+<table class="table-auto w-full border-collapse border border-gray-300">
+    <thead class="bg-gray-200 text-gray-700">
+    <tr>
+        <th class="border px-4 py-2">번호</th>
+        <th class="border px-4 py-2">이름</th>
+        <th class="border px-4 py-2">이메일</th>
+        <th class="border px-4 py-2">아이디</th>
+        <th class="border px-4 py-2">권한 등급</th>
+        <th class="border px-4 py-2">증명서</th>
+        <th class="border px-4 py-2">인증 상태</th>
+    </tr>
+    </thead>
+    <tbody>
+    <c:forEach var="member" items="${members}">
+        <tr class="text-center bg-white">
+            <td class="border px-2 py-1">${member.id}</td>
+            <td class="border px-2 py-1">${member.name}</td>
+            <td class="border px-2 py-1">${member.email}</td>
+            <td class="border px-2 py-1">${member.loginId}</td>
+            <td class="border px-2 py-1">
+                <c:choose>
+                    <c:when test="${member.authLevel == 7}">
+                        <span class="text-red-600">관리자</span>
+                        <c:if test="${member.id ne rq.getLoginedMemberId()}">
+                            <button class="text-red-600 hover:underline change-admin-btn"
+                                    data-member-id="${member.id}" data-promote="false">
+                                권한 해제
+                            </button>
+                        </c:if>
+                    </c:when>
+                    <c:when test="${member.authLevel == 3}">
+                        수의사
+                        <button class="text-blue-600 hover:underline change-admin-btn"
+                                data-member-id="${member.id}" data-promote="true">
+                            관리자 부여
+                        </button>
+                    </c:when>
+                    <c:otherwise>
+                        일반
+                        <button class="text-blue-600 hover:underline change-admin-btn"
+                                data-member-id="${member.id}" data-promote="true">
+                            관리자 부여
+                        </button>
+                    </c:otherwise>
+                </c:choose>
+            </td>
+            <td class="border px-2 py-1">
+                <c:choose>
+                    <c:when test="${not empty member.vetCertUrl}">
+                        <a href="/gen/file/download?path=vet_certificates/${member.vetCertUrl}" target="_blank"
+                           class="text-blue-600 underline">보기</a>
+                    </c:when>
+                    <c:otherwise>
+                        없음
+                    </c:otherwise>
+                </c:choose>
+            </td>
+
+            <td class="border px-2 py-1">
+                <c:choose>
+                    <c:when test="${member.vetCertApproved == 1}">✅ 인증</c:when>
+                    <c:when test="${member.vetCertApproved == 2}">❌ 거절</c:when>
+                    <c:when test="${not empty member.vetCertUrl}">
+                        <form action="/adm/member/changeVetCertStatus" method="post" style="display:inline;">
+                            <input type="hidden" name="memberId" value="${member.id}"/>
+                            <input type="hidden" name="approved" value="1"/>
+                            <button
+                                    class="text-green-600 hover:underline approve-btn"
+                                    data-member-id="${member.id}" data-approved="1">
+                                승인
+                            </button>
+                        </form>
+                        <form action="/adm/member/changeVetCertStatus" method="post"
+                              style="display:inline; margin-left:5px;">
+                            <input type="hidden" name="memberId" value="${member.id}"/>
+                            <input type="hidden" name="approved" value="2"/>
+                            <button
+                                    class="text-red-600 hover:underline reject-btn"
+                                    data-member-id="${member.id}" data-approved="2"
+                                    style="margin-left: 5px;">
+                                거절
+                            </button>
+                        </form>
+                    </c:when>
+                    <c:otherwise>
+                        <span class="text-gray-400">⏳ 대기 중</span>
+                    </c:otherwise>
+                </c:choose>
+            </td>
+        </tr>
+    </c:forEach>
+    </tbody>
+</table>
+<script>
+    <%--  수의사 권한 - 승인/거절  --%>
+    document.addEventListener('DOMContentLoaded', function () {
+        const buttons = document.querySelectorAll('.approve-btn, .reject-btn');
+
+        buttons.forEach(btn => {
+            btn.addEventListener('click', function (e) {
+                e.preventDefault();
+
+                const memberId = this.dataset.memberId;
+                const approved = this.dataset.approved;
+
+                const confirmMsg = approved === "1" ? "인증 승인하시겠습니까?" : "인증 거절하시겠습니까?";
+                if (!confirm(confirmMsg)) return;
+
+                fetch('/adm/member/changeVetCertStatus', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: new URLSearchParams({
+                        memberId: memberId,
+                        approved: approved
+                    })
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.resultCode === 'S-1') {
+                            alert(data.msg);
+                            location.reload(); // 또는 버튼 숨기기 등 원하는 후처리
+                        } else {
+                            alert("⚠ 처리에 실패했습니다: " + data.msg);
+                        }
+                    })
+                    .catch(error => {
+                        console.error("❌ 서버 오류:", error);
+                        alert("❌ 오류가 발생했습니다.");
+                    });
+            });
+        });
+    });
+</script>
+<script>
+    <%--  관리자 권한 부여  --%>
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.change-admin-btn').forEach(btn => {
+            btn.addEventListener('click', function () {
+                const memberId = this.dataset.memberId;
+                const promote = this.dataset.promote;
+
+                const msg = promote === "true" ? "이 회원에게 관리자 권한을 부여할까요?" : "이 회원의 관리자 권한을 해제할까요?";
+                if (!confirm(msg)) return;
+
+                fetch('/adm/member/changeAdminStatus', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    body: new URLSearchParams({
+                        memberId: memberId,
+                        promote: promote
+                    })
+                })
+                    .then(res => res.json())
+                    .then(data => {
+                        alert(data.msg);
+                        location.reload();
+                    })
+                    .catch(err => {
+                        alert("❌ 오류 발생");
+                        console.error(err);
+                    });
+            });
+        });
+    });
+</script>
+
+
+</body>
+</html>
