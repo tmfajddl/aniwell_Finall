@@ -54,7 +54,7 @@ public class UsrArticleController {
 		this.beforeActionInterceptor = beforeActionInterceptor;
 	}
 
-	@ResponseBody
+
 	@GetMapping("/usr/article/write/check")
 	public ResultData checkWritePermission(HttpServletRequest req, @RequestParam(required = false) Integer boardId,
 			@RequestParam(required = false) Integer crewId, @RequestParam(required = false) String type) {
@@ -93,7 +93,6 @@ public class UsrArticleController {
 	}
 
 	@PostMapping("/usr/article/doWrite")
-	@ResponseBody
 	public ResultData doWrite(HttpServletRequest req, @RequestParam(required = false) Integer crewId,
 			@RequestParam(required = false) Integer boardId, @RequestParam String title, @RequestParam String body,
 			@RequestParam(required = false) MultipartFile imageFile) {
@@ -139,63 +138,29 @@ public class UsrArticleController {
 	// ✅ 게시글 수정 처리 (JSON 방식)
 	@PostMapping("/usr/article/doModify")
 	@ResponseBody
-	public ResultData doModify(HttpServletRequest req, @RequestBody Map<String, Object> param) {
-		Rq rq = (Rq) req.getAttribute("rq");
+	public ResultData doModify(@RequestParam int id,
+							   @RequestParam String title,
+							   @RequestParam String body) {
 
-		int id = (int) param.get("id");
-		String title = (String) param.get("title");
-		String body = (String) param.get("body");
-
-		// 게시글 조회
 		Article article = articleService.getArticleById(id);
 		if (article == null) {
 			return ResultData.from("F-1", id + "번 게시글은 존재하지 않습니다.");
 		}
 
-		// 수정 권한 확인
 		ResultData userCanModifyRd = articleService.userCanModify(rq.getLoginedMemberId(), article);
 		if (userCanModifyRd.isFail()) {
 			return ResultData.from(userCanModifyRd.getResultCode(), userCanModifyRd.getMsg());
 		}
 
-		// 게시글 수정 처리
 		articleService.modifyArticle(id, title, body);
 
-		// 성공 응답
-		return ResultData.from("S-1", "게시글 수정이 완료되었습니다.", Map.of("redirectUrl", "/usr/article/detail?id=" + id));
+		// 클라이언트에 최신 정보 반환
+		Article updated = articleService.getArticleById(id);
+		return ResultData.from("S-1", "게시글 수정 완료", "data1", updated);
 	}
 
-	// ✅ 게시글 수정 폼 데이터 조회 (JSON 방식)
-	@GetMapping("/usr/article/modify")
-	@ResponseBody
-	public ResultData showModify(HttpServletRequest req, @RequestParam int id) {
-		Rq rq = (Rq) req.getAttribute("rq");
-
-		// 로그인 여부 확인
-		if (rq == null || !rq.isLogined()) {
-			return ResultData.from("F-0", "로그인 후 이용해주세요.");
-		}
-
-		// 게시글 조회
-		Article article = articleService.getArticleById(id);
-		if (article == null) {
-			return ResultData.from("F-1", "존재하지 않는 게시물입니다.");
-		}
-
-		// 수정 권한 확인
-		ResultData userCanModifyRd = articleService.userCanModify(rq.getLoginedMemberId(), article);
-		if (userCanModifyRd.isFail()) {
-			return ResultData.from(userCanModifyRd.getResultCode(), userCanModifyRd.getMsg());
-		}
-
-		// JSON 형태로 수정 폼에 필요한 정보 제공
-		return ResultData.from("S-1", "게시글 수정 정보 조회 성공", Map.of("id", article.getId(), "title", article.getTitle(),
-				"body", article.getBody(), "boardId", article.getBoardId() // crewId 없이
-		));
-	}
 
 	@PostMapping("/usr/article/doDelete")
-	@ResponseBody
 	public ResultData doDelete(HttpServletRequest req, @RequestParam int id, @RequestParam int crewId) {
 		Rq rq = (Rq) req.getAttribute("rq");
 
@@ -220,55 +185,31 @@ public class UsrArticleController {
 				Map.of("redirectUrl", "/usr/crewCafe/cafeHome?crewId=" + crewId));
 	}
 
-	@GetMapping("/usr/article/detail")
-	@ResponseBody
-	public ResultData showDetail(HttpServletRequest req, @RequestParam int id,
-			@RequestParam(required = false) Integer crewId, @RequestParam(required = false) Integer boardId) {
+    @RequestMapping("/usr/article/detail")
+    public String showDetail(HttpServletRequest req, Model model, int id) {
+        Rq rq = (Rq) req.getAttribute("rq");
+        Article article = articleService.getForPrintArticle(rq.getLoginedMemberId(), id);
 
-		Rq rq = (Rq) req.getAttribute("rq");
-		int loginedMemberId = rq != null ? rq.getLoginedMemberId() : 0;
+        // 사용자 리액션 상태 확인 (좋아요/싫어요)
+        ResultData usersReactionRd = reactionPointService.usersReaction(rq.getLoginedMemberId(), "article", id);
+        if (usersReactionRd.isSuccess()) {
+            model.addAttribute("userCanMakeReaction", true);
+        }
 
-		// ✅ 게시글 정보
-		Article article = articleService.getForPrintArticle(loginedMemberId, id);
-		if (article == null) {
-			return ResultData.from("F-1", "해당 게시글이 존재하지 않습니다.");
-		}
+        // 댓글 조회
+        List<Reply> replies = replyService.getForPrintReplies(rq.getLoginedMemberId(), "article", id);
+        model.addAttribute("replies", replies);
+        model.addAttribute("repliesCount", replies.size());
 
-		// ✅ 리액션 여부
-		ResultData usersReactionRd = reactionPointService.usersReaction(loginedMemberId, "article", id);
-		boolean userCanMakeReaction = usersReactionRd.isSuccess();
+        model.addAttribute("article", article);
+        model.addAttribute("usersReaction", usersReactionRd.getData1());
+        model.addAttribute("isAlreadyAddGoodRp", reactionPointService.isAlreadyAddGoodRp(rq.getLoginedMemberId(), id, "article"));
+        model.addAttribute("isAlreadyAddBadRp", reactionPointService.isAlreadyAddBadRp(rq.getLoginedMemberId(), id, "article"));
 
-		// ✅ 좋아요 / 싫어요 여부
-		boolean isAlreadyAddGoodRp = reactionPointService.isAlreadyAddGoodRp(loginedMemberId, id, "article");
-		boolean isAlreadyAddBadRp = reactionPointService.isAlreadyAddBadRp(loginedMemberId, id, "article");
-
-		// ✅ 댓글 목록
-		List<Reply> replies = replyService.getForPrintReplies(loginedMemberId, "article", id);
-
-		// ✅ 크루 또는 게시판 정보
-		Map<String, Object> extra = new java.util.HashMap<>();
-		if (crewId != null) {
-			WalkCrew crew = walkCrewService.getCrewById(crewId);
-			if (crew != null) {
-				extra.put("crew", crew);
-			}
-		} else if (boardId != null) {
-			Board board = boardService.getBoardById(boardId);
-			if (board != null) {
-				extra.put("board", board);
-			}
-		}
-
-		// ✅ 응답 데이터 구성
-		Map<String, Object> data = Map.of("article", article, "replies", replies, "repliesCount", replies.size(),
-				"userCanMakeReaction", userCanMakeReaction, "isAlreadyAddGoodRp", isAlreadyAddGoodRp,
-				"isAlreadyAddBadRp", isAlreadyAddBadRp, "usersReaction", usersReactionRd.getData1(), "extra", extra);
-
-		return ResultData.from("S-1", "게시글 상세 정보 조회 성공", data);
-	}
+        return "usr/article/detail";
+    }
 
 	@GetMapping("/usr/article/list")
-	@ResponseBody
 	public ResultData showList(HttpServletRequest req, @RequestParam(required = false) Integer boardId,
 			@RequestParam(required = false) Integer crewId, @RequestParam(defaultValue = "1") int page,
 			@RequestParam(defaultValue = "title") String searchKeywordTypeCode,
@@ -337,7 +278,6 @@ public class UsrArticleController {
 	}
 
 	@RequestMapping("/usr/article/doIncreaseHitCountRd")
-	@ResponseBody
 	public ResultData doIncreaseHitCount(int id) {
 		ResultData increaseHitCountRd = articleService.increaseHitCount(id);
 		if (increaseHitCountRd.isFail()) {
@@ -349,7 +289,6 @@ public class UsrArticleController {
 
 	// ✅ 모임일정 등록 (JSON 응답)
 	@PostMapping("/usr/article/doWriteSchedule")
-	@ResponseBody
 	public ResultData doWriteSchedule(@RequestParam int crewId, @RequestParam String scheduleDate,
 			@RequestParam String scheduleTitle, @RequestParam(required = false) String scheduleBody,
 			HttpServletRequest req) {
@@ -371,7 +310,7 @@ public class UsrArticleController {
 
 	// ✅ JSON 응답 방식으로 변경
 	@GetMapping("/usr/article/schedule")
-	@ResponseBody
+
 	public ResultData showSchedule(@RequestParam int crewId) {
 		List<Map<String, Object>> scheduleList = articleService.getSchedulesByCrewId(crewId);
 
