@@ -1,6 +1,5 @@
 package com.example.RSW;
 
-
 import com.example.RSW.interceptor.BeforeActionInterceptor;
 import com.example.RSW.interceptor.NeedLoginInterceptor;
 import com.example.RSW.interceptor.NeedLogoutInterceptor;
@@ -10,7 +9,6 @@ import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistration;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
-
 
 @Configuration
 public class WebMvcConfigurer implements org.springframework.web.servlet.config.annotation.WebMvcConfigurer {
@@ -26,7 +24,6 @@ public class WebMvcConfigurer implements org.springframework.web.servlet.config.
     // NeedLogoutInterceptor 불러오기(연결)
     @Autowired
     NeedLogoutInterceptor needLogoutInterceptor;
-
 
     // ✅ CORS 설정 추가
     @Override
@@ -61,33 +58,10 @@ public class WebMvcConfigurer implements org.springframework.web.servlet.config.
         ir.excludePathPatterns("/resource/**");
         ir.excludePathPatterns("/error");
 
-////		로그인 필요
-//        ir = registry.addInterceptor(needLoginInterceptor);
-////		글 관련
-//        ir.addPathPatterns("/usr/article/write");
-//        ir.addPathPatterns("/usr/article/doWrite");
-//        ir.addPathPatterns("/usr/article/modify");
-//        ir.addPathPatterns("/usr/article/doModify");
-//        ir.addPathPatterns("/usr/article/doDelete");
-//
-////		회원관련
-//        ir.addPathPatterns("/usr/member/myPage");
-//        ir.addPathPatterns("/usr/member/checkPw");
-//        ir.addPathPatterns("/usr/member/doCheckPw");
 //        ir.addPathPatterns("/usr/member/doLogout");
-//        ir.addPathPatterns("/usr/member/modify");
-//        ir.addPathPatterns("/usr/member/doModify");
-//
-////		댓글 관련
-//        ir.addPathPatterns("/usr/reply/doWrite");
-//
-////		좋아요 싫어요
-//        ir.addPathPatterns("/usr/reactionPoint/doGoodReaction");
-//        ir.addPathPatterns("/usr/reactionPoint/doBadReaction");
 
 
 //      펫 관련
-        ir.addPathPatterns("/usr/walkCrew/crewChat");
         ir.addPathPatterns("/usr/pet/petPage");
         ir.addPathPatterns("/usr/pet/list");
         ir.addPathPatterns("/usr/pet/join");
@@ -122,7 +96,6 @@ public class WebMvcConfigurer implements org.springframework.web.servlet.config.
         ir.addPathPatterns("/usr/member/findLoginPw");
         ir.addPathPatterns("/usr/member/doFindLoginPw");
 
-
     }
 
     @Override
@@ -131,4 +104,3 @@ public class WebMvcConfigurer implements org.springframework.web.servlet.config.
                 .addResourceLocations("file:/Users/e-suul/Desktop/aniwell_uploads/"); // 실제 로컬 폴더
     }
     }
-

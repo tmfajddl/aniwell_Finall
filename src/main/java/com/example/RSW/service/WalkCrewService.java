@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import com.example.RSW.repository.BoardRepository;
 import com.example.RSW.repository.DistrictRepository;
 import com.example.RSW.repository.MemberRepository;
+import com.example.RSW.repository.WalkCrewMemberRepository;
 import com.example.RSW.repository.WalkCrewRepository;
 import com.example.RSW.util.Ut;
 import com.example.RSW.vo.District;
@@ -22,6 +23,9 @@ public class WalkCrewService {
 
 	@Autowired
 	private DistrictRepository districtRepository;
+
+	@Autowired
+	private WalkCrewMemberRepository walkCrewMemberRepository;
 
 	private final WalkCrewRepository walkCrewRepository;
 
@@ -86,7 +90,12 @@ public class WalkCrewService {
 	}
 
 	public boolean isApprovedMember(int crewId, int memberId) {
-		return walkCrewRepository.isApprovedMember(crewId, memberId) > 0;
+		WalkCrew crew = getCrewById(crewId);
+		if (crew != null && crew.getLeaderId() == memberId) {
+			return true; // ✅ 크루장은 무조건 승인
+		}
+
+		return walkCrewMemberRepository.countApprovedMember(crewId, memberId) > 0;
 	}
 
 	public void approveMember(int crewId, int memberId) {
@@ -97,8 +106,15 @@ public class WalkCrewService {
 		return walkCrewRepository.findByLeaderId(leaderId);
 	}
 
-	public WalkCrew getCrewByMemberId(int memberId) {
-		return walkCrewRepository.getCrewByMemberId(memberId);
+
+	// 크루장만 공지사항쓸수 있다.
+	public boolean isCrewLeader(int crewId, int memberId) {
+		WalkCrew crew = getCrewById(crewId);
+		if (crew == null)
+			return false;
+
+		// ✅ 이 로직은 VO가 아니라 서비스 내부에 위치해야 합니다
+		return crew.getLeaderId() == memberId;
 	}
 
 }

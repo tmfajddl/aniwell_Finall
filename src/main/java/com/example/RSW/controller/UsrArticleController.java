@@ -2,7 +2,10 @@ package com.example.RSW.controller;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
+import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
 import com.example.RSW.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -20,6 +23,7 @@ import com.example.RSW.vo.ResultData;
 import com.example.RSW.vo.Rq;
 
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
@@ -41,6 +45,9 @@ public class UsrArticleController {
 
     @Autowired
     private ReplyService replyService;
+
+    @Autowired
+    private Cloudinary cloudinary;
 
     // 생성자 주입 (BeforeActionInterceptor)
     UsrArticleController(BeforeActionInterceptor beforeActionInterceptor) {
@@ -150,29 +157,42 @@ public class UsrArticleController {
 
     // 게시글 작성 처리
     @PostMapping("/usr/article/doWrite")
-    public String doWrite(HttpServletRequest req, String title, String body, String boardId, Model model, RedirectAttributes ra) {
+    @ResponseBody
+    public String doWrite(HttpServletRequest req, @RequestParam(required = false) Integer crewId,
+                          @RequestParam(required = false) Integer boardId, @RequestParam String title, @RequestParam String body,
+                          @RequestParam(required = false) MultipartFile imageFile) {
+
         Rq rq = (Rq) req.getAttribute("rq");
+        int loginedMemberId = rq.getLoginedMemberId();
 
-        // 유효성 검사
-        if (Ut.isEmptyOrNull(title)) {
-            ra.addFlashAttribute("errorMsg", "제목을 입력하세요");
-            return "redirect:/usr/article/write";
-        }
-        if (Ut.isEmptyOrNull(body)) {
-            ra.addFlashAttribute("errorMsg", "내용을 입력하세요");
-            return "redirect:/usr/article/write";
-        }
-        if (Ut.isEmptyOrNull(boardId)) {
-            ra.addFlashAttribute("errorMsg", "게시판을 선택하세요");
-            return "redirect:/usr/article/write";
+        String imageUrl = null;
+
+        // ✅ 이미지 파일이 있다면 Cloudinary 업로드 시도
+        if (imageFile != null && !imageFile.isEmpty()) {
+            try {
+                Map uploadResult = cloudinary.uploader().upload(imageFile.getBytes(), ObjectUtils.emptyMap());
+                imageUrl = (String) uploadResult.get("secure_url");
+                System.out.println("✅ 업로드 성공: " + imageUrl);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
 
-        // 저장
-        ResultData doWriteRd = articleService.writeArticle(rq.getLoginedMemberId(), title, body, boardId);
-        int id = (int) doWriteRd.getData1();
+        // ✅ 크루 글과 일반 글 구분 처리
+        ResultData rd;
+        if (crewId != null) {
 
-        return "redirect:/usr/article/detail?id=" + id + "&boardId=" + boardId;
+            rd = articleService.writeCrewArticle(boardId, crewId, loginedMemberId, title, body, imageUrl);
+
+            return Ut.jsReplace(rd.getResultCode(), rd.getMsg(),
+                    "../article/detail?id=" + rd.getData1() + "&crewId=" + crewId);
+        } else {
+            rd = articleService.writeArticle(loginedMemberId, title, body, String.valueOf(boardId), imageUrl);
+            return Ut.jsReplace(rd.getResultCode(), rd.getMsg(),
+                    "../article/detail?id=" + rd.getData1() + "&boardId=" + boardId);
+        }
     }
+
 
 
     // 게시글 리스트 페이지

@@ -4,24 +4,15 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
+
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
+
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import com.example.RSW.vo.Rq;
-import com.example.RSW.vo.WalkCrew;
-import com.example.RSW.vo.Member;
-import com.example.RSW.vo.ResultData;
-import com.example.RSW.util.Ut;
 import com.example.RSW.service.ApiService;
-import com.example.RSW.service.MemberService;
-import com.example.RSW.service.WalkCrewService;
 
-import jakarta.servlet.http.HttpServletRequest;
 
 @Controller
 @RequestMapping("/usr/api")

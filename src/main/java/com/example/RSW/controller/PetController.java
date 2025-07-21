@@ -186,8 +186,8 @@ public class PetController {
 	@RequestMapping("/usr/pet/doJoin")
 	@ResponseBody
 	public String doJoin(HttpServletRequest req, @RequestParam("photo") MultipartFile photo, @RequestParam String name,
-			@RequestParam String species, @RequestParam String breed, @RequestParam String gender,
-			@RequestParam String birthDate, @RequestParam double weight) {
+						 @RequestParam String species, @RequestParam String breed, @RequestParam String gender,
+						 @RequestParam String birthDate, @RequestParam double weight) {
 
 		if (Ut.isEmptyOrNull(name))
 			return Ut.jsHistoryBack("F-1", "이름을 입력하세요");
@@ -241,7 +241,7 @@ public class PetController {
 	@RequestMapping("/usr/pet/doModify")
 	@ResponseBody
 	public String doModify(HttpServletRequest req, @RequestParam("petId") int petId, String name, String species,
-			String breed, String gender, String birthDate, double weight, MultipartFile photo) {
+						   String breed, String gender, String birthDate, double weight, MultipartFile photo) {
 
 		int memberId = rq.getLoginedMemberId();
 		Pet pet = petService.getPetsById(petId);
@@ -308,7 +308,7 @@ public class PetController {
 	@PostMapping("/usr/pet/analysis/do")
 	@ResponseBody
 	public Map<String, Object> doAnalysis(@RequestParam("petId") int petId, @RequestParam("species") String species,
-			@RequestParam("imageFile") MultipartFile imageFile) {
+										  @RequestParam("imageFile") MultipartFile imageFile) {
 
 		Map<String, Object> result = new HashMap<>();
 		try {
@@ -406,7 +406,7 @@ public class PetController {
 	@RequestMapping("/usr/pet/vaccination/doRegistration")
 	@ResponseBody
 	public ResultData doRegistration(HttpServletRequest req, @RequestParam("petId") int petId, String vaccineName,
-			String injectionDate, String notes) {
+									 String injectionDate, String notes) {
 
 		int memberId = rq.getLoginedMemberId();
 		Pet pet = petService.getPetsById(petId);
@@ -433,8 +433,8 @@ public class PetController {
 	@RequestMapping("/usr/pet/vaccination/doModify")
 	@ResponseBody
 	public ResultData doVaccinationModify(@RequestParam("vaccinationId") int vaccinationId,
-			@RequestParam String vaccineName, @RequestParam String injectionDate,
-			@RequestParam(required = false) String notes) {
+										  @RequestParam String vaccineName, @RequestParam String injectionDate,
+										  @RequestParam(required = false) String notes) {
 
 		PetVaccination petVaccination = petVaccinationService.getVaccinationsById(vaccinationId);
 		int petId = petVaccination.getPetId();
@@ -562,8 +562,8 @@ public class PetController {
 	@RequestMapping("/usr/pet/daily/write")
 	@ResponseBody
 	public Map<String, Object> addEvent(@RequestParam("petId") int petId,
-			@RequestParam("eventDate") String eventDateStr, @RequestParam("title") String title,
-			@RequestParam("content") String content, HttpServletRequest req) {
+										@RequestParam("eventDate") String eventDateStr, @RequestParam("title") String title,
+										@RequestParam("content") String content, HttpServletRequest req) {
 
 		Map<String, Object> result = new HashMap<>();
 
@@ -619,7 +619,7 @@ public class PetController {
 	@RequestMapping("/usr/pet/daily/domodify")
 	@ResponseBody
 	public Map<String, Object> updateEvent(@RequestParam("id") int id, @RequestParam("eventDate") String eventDateStr,
-			@RequestParam("title") String title, @RequestParam("content") String content) {
+										   @RequestParam("title") String title, @RequestParam("content") String content) {
 
 		Map<String, Object> result = new HashMap<>();
 
