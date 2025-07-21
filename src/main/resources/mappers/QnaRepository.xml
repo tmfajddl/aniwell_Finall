@@ -8,9 +8,9 @@
 
     <resultMap id="qnaResultMap" type="com.example.RSW.vo.Qna">
         <result property="id" column="id"/>
-        <result property="memberId" column="memberId"/>
         <result property="title" column="title"/>
         <result property="body" column="body"/>
+        <result property="memberId" column="memberId"/>
         <result property="secret" column="isSecret"/>
         <result property="isFromUser" column="isFromUser"/>
         <result property="isAnswered" column="isAnswered"/>
@@ -19,6 +19,12 @@
         <result property="updateDate" column="updateDate"/>
         <result property="isActive" column="isActive"/>
         <result property="isFaq" column="isFaq"/>
+        <result property="memberName" column="memberName"/>
+
+        <!-- ✅ 수의사 답변 필드 매핑 -->
+        <result property="answer" column="answer"/>
+        <result property="answererId" column="answererId"/>
+        <result property="vetName" column="vetName"/>
     </resultMap>
 
     <insert id="saveUserQna" parameterType="com.example.RSW.vo.Qna">
@@ -37,14 +43,35 @@
         ORDER BY regDate DESC
     </select>
 
-    <select id="getUserQnaByMemberId" resultMap="qnaResultMap">
-        SELECT *
-        FROM Qna
-        WHERE isFromUser = TRUE
-          AND isActive = TRUE
-          AND memberId = #{memberId}
-        ORDER BY regDate DESC
+    <select id="getUserQnaByMemberId" resultMap="qnaResultMap" parameterType="int">
+        SELECT
+            q.*,                         -- Qna 전체
+            va.answer     AS answer,
+            va.memberId   AS answererId,
+            va.vetName    AS vetName
+        FROM Qna q
+                 LEFT JOIN vet_answer va ON va.qna_id = q.id
+        WHERE q.isFromUser = TRUE
+          AND q.isActive = TRUE
+          AND q.memberId = #{memberId}
+        ORDER BY q.regDate DESC
     </select>
+
+    <select id="getMyAnsweredQna" resultMap="qnaResultMap" parameterType="int">
+        SELECT
+            q.*,
+            va.answer     AS answer,
+            va.memberId   AS answererId,
+            va.vetName    AS vetName
+        FROM Qna q
+                 JOIN vet_answer va ON va.qna_id = q.id
+        WHERE q.isFromUser = TRUE
+          AND q.isActive = TRUE
+          AND va.memberId = #{vetMemberId}
+        ORDER BY q.regDate DESC
+    </select>
+
+
 
     <select id="getQnaById" parameterType="int" resultMap="qnaResultMap">
         SELECT *
@@ -86,6 +113,28 @@
 
     <select id="findAll" resultMap="qnaResultMap">
         SELECT q.id,
+        q.title,
+        q.body,
+        q.memberId,
+        q.isSecret,
+        q.isFromUser,
+        q.isAnswered,
+        q.orderNo,
+        q.regDate,
+        q.updateDate,
+        q.isActive,
+        q.isFaq,
+        m.name                                                     AS memberName,
+        EXISTS(SELECT 1 FROM vet_answer va WHERE va.qna_id = q.id) AS hasAnswer
+        FROM Qna q
+        JOIN member m ON q.memberId = m.id
+        WHERE q.isActive = 1
+        AND q.isFromUser = 1
+        ORDER BY q.regDate DESC
+    </select>
+
+    <select id="findWithoutAnswer" resultMap="qnaResultMap">
+        SELECT q.id,
                q.title,
                q.body,
                q.memberId,
@@ -102,8 +151,11 @@
         FROM Qna q
                  JOIN member m ON q.memberId = m.id
         WHERE q.isActive = 1
+          AND q.isFromUser = 1
+        AND q.isAnswered = 0
         ORDER BY q.regDate DESC
     </select>
+
 
 
     <select id="findById" parameterType="int" resultMap="qnaResultMap">

@@ -72,24 +72,6 @@ public class UsrVetAnswerController {
         return Ut.jsReplace("S-1", "답변이 등록되었습니다.", "/usr/qna/detail?id=" + qnaId);
     }
 
-    // 답변 수정 폼
-    @GetMapping("/modify")
-    public String showModifyForm(@RequestParam int id, Model model) {
-        VetAnswer vetAnswer = vetAnswerService.getById(id);
-        Member loginedMember = rq.getLoginedMember();
-
-        if (vetAnswer == null) {
-            return rq.historyBackOnView("존재하지 않는 답변입니다.");
-        }
-
-        // 본인만 수정 가능
-        if (loginedMember == null || loginedMember.getId() != vetAnswer.getMemberId()) {
-            return rq.historyBackOnView("권한이 없습니다.");
-        }
-
-        model.addAttribute("vetAnswer", vetAnswer);
-        return "usr/vetAnswer/modify";
-    }
 
     // 답변 수정 처리
     @PostMapping("/doModify")
@@ -141,11 +123,13 @@ public class UsrVetAnswerController {
     public String showVetQnaList(Model model) {
         Member loginedMember = rq.getLoginedMember();
 
-        if (loginedMember == null || loginedMember.getAuthLevel() != 3) {
+        if (loginedMember == null || loginedMember.getAuthLevel() != 3 && loginedMember.getAuthLevel() != 7) {
             return "redirect:/usr/member/login"; // 비로그인 또는 수의사 아님
         }
 
-        List<Qna> questions = qnaService.getAllQuestions();
+        List<Qna> questions = qnaService.findWithoutAnswer();
+        List<Qna> myAnsweredQnas = qnaService.getMyAnsweredQna(rq.getLoginedMemberId());
+        model.addAttribute("myAnsweredQnas", myAnsweredQnas);
         model.addAttribute("questions", questions);
         model.addAttribute("rq", rq);
 

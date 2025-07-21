@@ -98,4 +98,12 @@ public class QnaService {
     public List<Qna> getSelectedQna() {
         return qnaRepository.getSelectedQna();
     }
+
+    public List<Qna> getMyAnsweredQna(int loginedMemberId) {
+        return qnaRepository.getMyAnsweredQna(loginedMemberId);
+    }
+
+    public List<Qna> findWithoutAnswer() {
+        return qnaRepository.findWithoutAnswer();
+    }
 }
