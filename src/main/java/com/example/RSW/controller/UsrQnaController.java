@@ -136,4 +136,10 @@ public class UsrQnaController {
         return ResultData.from("S-1", "질문이 삭제되었습니다.");
     }
 
+    @GetMapping("/adm/qna/faqList")
+    @ResponseBody
+    public List<Qna> getFaqList() {
+        return qnaService.getSelectedQna(); // 선택된 질문
+    }
+
 }
