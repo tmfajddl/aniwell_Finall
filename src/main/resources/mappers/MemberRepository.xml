@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.RSW.repository.MemberRepository">
+
+
+    <insert id="doJoin" parameterType="map">
+        INSERT INTO `member`
+        SET regDate = NOW(),
+		updateDate = NOW(),
+		loginId = #{loginId}, loginPw = #{loginPw}, `name` = #{name}, nickname = #{nickname}, cellphone = #{cellphone}, email = #{email}, address = #{address}, authName = #{authName}, authLevel = #{authLevel}
+    </insert>
+
+
+    <select id="getLastInsertId" parameterType="int">
+        SELECT LAST_INSERT_ID()
+    </select>
+
+    <select id="getMemberByNameAndEmail" parameterType="string"
+            resultType="com.example.RSW.vo.Member">
+        SELECT *
+        FROM `member`
+        WHERE `name` = #{name}
+          AND email = #{email}
+    </select>
+
+    <select id="getMemberByLoginId" parameterType="string"
+            resultType="com.example.RSW.vo.Member">
+        SELECT *
+        FROM `member`
+        WHERE loginId = #{loginId}
+    </select>
+
+
+    <select id="getMemberById" parameterType="int"
+            resultType="com.example.RSW.vo.Member">
+        SELECT *
+        FROM `member`
+        WHERE id = #{id}
+    </select>
+
+
+    <update id="modify">
+        UPDATE `member`
+        <set>
+            <if test="loginPw != null">
+                loginPw = #{loginPw},
+            </if>
+            <if test="name != null">
+                name = #{name},
+            </if>
+            <if test="nickname != null">
+                nickname = #{nickname},
+            </if>
+            <if test="cellphone != null">
+                cellphone = #{cellphone},
+            </if>
+            <if test="email != null">
+                email = #{email},
+            </if>
+            <if test="photo != null">
+                photo = #{photo},
+            </if>
+            updateDate = NOW()
+        </set>
+        WHERE id = #{loginedMemberId}
+    </update>
+
+    <update id="modifyWithoutPw">
+        UPDATE `member`
+        <set>
+            <if test="name != null">
+                name = #{name},
+            </if>
+            <if test="nickname != null">
+                nickname = #{nickname},
+            </if>
+            <if test="cellphone != null">
+                cellphone = #{cellphone},
+            </if>
+            <if test="email != null">
+                email = #{email},
+            </if>
+            <if test="photo != null">
+                photo = #{photo},
+            </if>
+            <if test="address != null">
+                address = #{address},
+            </if>
+            updateDate = NOW()
+        </set>
+        WHERE id = #{loginedMemberId}
+    </update>
+
+    <delete id="withdraw">
+        DELETE
+        FROM member
+        WHERE id = #{id}
+    </delete>
+
+    <select id="findAll" resultType="com.example.RSW.vo.Member">
+        SELECT *
+        FROM member
+        WHERE delStatus = 0
+        ORDER BY regDate DESC
+    </select>
+
+    <update id="updateAuthLevel">
+        UPDATE member
+        SET authLevel = #{authLevel}
+        WHERE id = #{memberId}
+    </update>
+
+    <select id="getForPrintMembersWithCert"
+            resultType="com.example.RSW.vo.Member">
+        SELECT m.*,
+        v.filePath AS vetCertUrl,
+        v.approved AS vetCertApproved
+        FROM member m
+        LEFT JOIN vet_certificate v ON m.id = v.memberId
+        <where>
+            <if test="searchType != null and searchKeyword != null and searchKeyword != ''">
+                <choose>
+                    <when test="searchType == 'authLevel'">
+                        m.authLevel = #{searchKeyword}
+                    </when>
+                    <when test="searchType == 'loginId'">
+                        m.loginId LIKE CONCAT('%', #{searchKeyword}, '%')
+                    </when>
+                    <when test="searchType == 'name'">
+                        m.name LIKE CONCAT('%', #{searchKeyword}, '%')
+                    </when>
+                    <when test="searchType == 'id'">
+                        m.id = #{searchKeyword}
+                    </when>
+                </choose>
+            </if>
+        </where>
+        ORDER BY m.id DESC
+    </select>
+
+    <select id="getNicknameById" parameterType="int" resultType="String">
+        SELECT nickname
+        FROM member
+        WHERE id = #{loginedMemberId}
+    </select>
+
+    <update id="updateVetCertInfo">
+        UPDATE member
+        SET vetCertUrl = #{fileName},
+            vetCertApproved = #{approved}
+        WHERE id = #{memberId}
+    </update>
+
+    <select id="countByAuthLevel" resultType="int">
+        SELECT COUNT(*) FROM member
+        WHERE authLevel = #{authLevel}
+    </select>
+
+    <select id="findByAuthLevel" resultType="com.example.RSW.vo.Member">
+        SELECT *
+        FROM member
+        WHERE authLevel = #{authLevel}
+    </select>
+
+    <select id="getMemberBySocial" resultType="Member">
+        SELECT * FROM member
+        WHERE socialProvider = #{socialProvider}
+          AND socialId = #{socialId}
+    </select>
+
+    <insert id="doJoinBySocial" parameterType="map">
+        INSERT INTO `member`
+        SET regDate = NOW(),
+        updateDate = NOW(),
+        loginId = #{loginId}, loginPw = #{loginPw}, socialProvider = #{socialProvider}, socialId = #{socialId}, `name` = #{name}, nickname = #{name}, -- 카카오 닉네임 그대로 사용
+            email = #{email}, cellphone = '',                                                                                                         -- 기본값 빈 문자열
+            address = '',                                                                                                                             -- 기본값 빈 문자열
+            photo = '',                                                                                                                               -- 기본값 빈 문자열
+            authLevel = 1, authName = '일반회원', delStatus = 0
+    </insert>
+
+
+
+</mapper>

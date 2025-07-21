@@ -1,0 +1,36 @@
+server:
+  port: 8080
+spring:
+  mail:
+    host: smtp.gmail.com
+    port: 587
+#   username: 구글 계정
+    #password: 구글 계정 앱 비밀번호
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+  mvc:
+    view:
+      prefix: /WEB-INF/jsp/
+      suffix: .jsp
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://127.0.0.1:3306/aniwell?useUnicode=true&characterEncoding=utf8&autoReconnect=true&serverTimezone=Asia/Seoul
+    username: root
+    password: 
+mybatis:
+  type-aliases-package: com.example.RSW.vo
+  mapper-locations: classpath:/mappers/**/*.xml
+
+custom:
+  siteName: aniwell
+  siteMainUri: http://localhost:8080
+  emailFrom: no-reply@localhost
+  emailFromName: aniwell
+
+kakao:
+  rest-api-key: "4ee9fc0d14943aa9c3cbdc16c6bcb982"
+  javascript-key: "e168f5867f0ad1b66e9692a214050110"
