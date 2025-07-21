@@ -1,9 +1,6 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt"%>
-<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions"%>
-
-
 
 <html>
 <head>
@@ -55,7 +52,8 @@ a.button, button.button {
 
 	<!-- ✅ 로그인 여부에 따라 동작 달라지는 버튼 -->
 	<div style="text-align: center; margin-bottom: 20px;">
-		<button class="button" onclick="goToCreate(${rq != null && rq.logined})">크루 등록</button>
+		<button class="button"
+			onclick="goToCreate(${rq != null && rq.logined})">크루 등록</button>
 	</div>
 
 	<table>
@@ -73,24 +71,16 @@ a.button, button.button {
 			<c:forEach var="crew" items="${crews}">
 				<tr>
 					<td>${crew.id}</td>
-					<td>
-						<a href="/usr/crewCafe/cafeHome?crewId=${crew.id}" style="color: blue; text-decoration: underline;">
-							${crew.title} </a>
-					</td>
-					<td>
-						<c:choose>
+					<td>${crew.title}</td>
+					<td><c:choose>
 							<c:when test="${not empty crew.city}">
 								${crew.city} ${crew.district} ${crew.dong}
 							</c:when>
 							<c:otherwise>-</c:otherwise>
-						</c:choose>
-					</td>
-					<td>
-						<c:out value="${crew.nickname}" default="알 수 없음" />
-					</td>
-					<td>${fn:substring(crew.createdAt, 0, 10)}</td>
-					<td>
-						<a href="/usr/walkCrew/detail/${crew.id}" class="button">보기</a>
+						</c:choose></td>
+					<td><c:out value="${crew.nickname}" default="알 수 없음" /></td>
+					<td>${crew.createdAt.toLocalDate()}</td>
+					<td><a href="/usr/walkCrew/detail/${crew.id}" class="button">보기</a>
 					</td>
 				</tr>
 			</c:forEach>

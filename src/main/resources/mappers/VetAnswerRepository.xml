@@ -52,9 +52,10 @@
         WHERE id = #{answerId}
     </select>
 
-    <select id="findByQnaId" resultType="com.example.RSW.vo.VetAnswer">
+    <select id="findByQnaId" resultMap="VetAnswerResultMap">
         SELECT * FROM vet_answer WHERE qna_id = #{qnaId}
     </select>
+
 
     <insert id="insert" parameterType="map">
         INSERT INTO vet_answer (qna_id, memberId, vetName, answer, answerAt)

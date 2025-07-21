@@ -1,4 +1,3 @@
-
 <%@ page contentType="text/html;charset=UTF-8" language="java"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt"%>
@@ -39,10 +38,10 @@ a.btn {
 
 	<!-- ✅ 디버깅용: applicant 값 확인 -->
 	<pre>
-		<c:forEach var="applicant" items="${applicants}">
-		  ${applicant}
-		</c:forEach>
-		</pre>
+	<c:forEach var="applicant" items="${applicants}">
+	  ${applicant}
+	</c:forEach>
+	</pre>
 
 	<table>
 		<thead>
@@ -59,8 +58,8 @@ a.btn {
 					<td>${applicant.memberId}</td>
 					<td>${applicant.memberName}</td>
 					<td>${fn:replace(fn:substring(applicant.joinedAt, 0, 16), 'T', ' ')}</td>
-					<td>
-						<a class="btn" href="/usr/walkCrewMember/requestDetail?crewId=${crewId}&memberId=${applicant.memberId}">상세보기</a>
+					<td><a class="btn"
+						href="/usr/walkCrew/requestDetail?crewId=${crewId}&memberId=${applicant.memberId}">상세보기</a>
 					</td>
 				</tr>
 			</c:forEach>
@@ -68,7 +67,7 @@ a.btn {
 	</table>
 
 	<div style="text-align: center;">
-		<a href="/usr/walkCrewMember/myCrewCafe">← 크루 까페로 돌아가기</a>
+		<a href="/usr/walkCrew/detail/${crewId}">← 크루 상세보기로 돌아가기</a>
 	</div>
 
 </body>
