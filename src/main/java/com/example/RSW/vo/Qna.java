@@ -27,6 +27,10 @@ public class Qna {
 
     private int isFaq;
 
+    private String answer;       // 수의사 답변 내용
+    private int answererId;      // 수의사 memberId (원하는 경우)
+    private String vetName;      // 수의사 이름
+
     public boolean isSecret() {
         return secret;
     }

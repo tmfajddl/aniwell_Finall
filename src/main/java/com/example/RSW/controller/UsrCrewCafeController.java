@@ -138,49 +138,49 @@ public class UsrCrewCafeController {
 
 		return "redirect:/usr/crewCafe/cafeHome?crewId=" + myCrew.getId(); // ✅ 요거만 바꾸면 됨
 	}
-	
+
 	// ✅ 내가 가입한 크루의 카페로 이동
-		@GetMapping("/apiMyCrewCafe")
-		public ResultData apiGoToMyCrewCafe(HttpServletRequest req) {
-			Rq rq = (Rq) req.getAttribute("rq");
-			int memberId = rq.getLoginedMemberId();
+	@GetMapping("/apiMyCrewCafe")
+	public ResultData apiGoToMyCrewCafe(HttpServletRequest req) {
+		Rq rq = (Rq) req.getAttribute("rq");
+		int memberId = rq.getLoginedMemberId();
 
-			WalkCrew myCrew = walkCrewService.getCrewByLeaderId(memberId);
-			if (myCrew == null) {
-				myCrew = walkCrewMemberService.getMyCrew(memberId);
-			}
-
-			if (myCrew == null) {
-				return ResultData.from("F-1", "크루를 신청해 봅시다!");
-			}
-
-			// ✅ 이렇게 수정!
-			
-			List<Article> articles = articleService.getArticlesByCrewId(myCrew.getId());
-
-			return ResultData.from("S-1", "크루가져오기", "myCrew", myCrew, "articles", articles);
+		WalkCrew myCrew = walkCrewService.getCrewByLeaderId(memberId);
+		if (myCrew == null) {
+			myCrew = walkCrewMemberService.getMyCrew(memberId);
 		}
+
+		if (myCrew == null) {
+			return ResultData.from("F-1", "크루를 신청해 봅시다!");
+		}
+
+		// ✅ 이렇게 수정!
+
+		List<Article> articles = articleService.getArticlesByCrewId(myCrew.getId());
+
+		return ResultData.from("S-1", "크루가져오기", "myCrew", myCrew, "articles", articles);
+	}
 
 	/*
 	 * @PostMapping("/uploadImage")
-	 * 
+	 *
 	 * @ResponseBody public ResultData uploadImage(@RequestParam("imageFile")
 	 * MultipartFile imageFile) { try { // 1. 파일 확인
 	 * System.out.println("📂 전달받은 파일 이름: " + imageFile.getOriginalFilename());
 	 * System.out.println("📂 파일 크기: " + imageFile.getSize() + " bytes");
-	 * 
+	 *
 	 * // 2. Cloudinary 주입 여부 확인 if (cloudinary == null) {
 	 * System.out.println("❌ Cloudinary 객체가 null입니다!"); return
 	 * ResultData.from("F-2", "Cloudinary 설정이 누락되었습니다."); } else {
 	 * System.out.println("✅ Cloudinary 객체가 정상적으로 주입되었습니다."); }
-	 * 
+	 *
 	 * // 3. Cloudinary 업로드 시도 Map uploadResult =
 	 * cloudinary.uploader().upload(imageFile.getBytes(), ObjectUtils.emptyMap());
 	 * String imageUrl = (String) uploadResult.get("secure_url");
-	 * 
+	 *
 	 * System.out.println("✅ 업로드 성공! 이미지 URL: " + imageUrl); return
 	 * ResultData.from("S-1", "업로드 성공", "imageUrl", imageUrl);
-	 * 
+	 *
 	 * } catch (Exception e) { System.out.println("❌ 예외 발생: 이미지 업로드 실패");
 	 * e.printStackTrace(); return ResultData.from("F-1", "이미지 업로드 중 오류 발생"); } }
 	 */

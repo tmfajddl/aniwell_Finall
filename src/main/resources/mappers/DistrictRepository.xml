@@ -80,7 +80,6 @@
 		WHERE city = #{city}
 		AND district = #{district}
 		AND dong = #{dong}
-		LIMIT 1
 	</select>
 
 

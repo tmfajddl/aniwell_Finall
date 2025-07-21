@@ -37,4 +37,9 @@ public interface QnaRepository {
 
     void insert(int memberId, String title, String body, boolean isSecret, boolean isFaq);
 
+    List<Qna> getSelectedQna();
+
+    List<Qna> getMyAnsweredQna(int loginedMemberId);
+
+    List<Qna> findWithoutAnswer();
 }
