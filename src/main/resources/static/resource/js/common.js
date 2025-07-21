@@ -1,9 +1,6 @@
-
 const paw = document.getElementById('cat-paw');
 const btn = document.getElementById('hamburger-btn');
-
 let isVisible = false;
-
 btn.addEventListener('click', () => {
 	isVisible = !isVisible;
 	if (isVisible) {
@@ -14,16 +11,11 @@ btn.addEventListener('click', () => {
 		paw.classList.add('left-[-100%]');
 	}
 });
-
-
-
 function App() {
 	const [pets, setPets] = React.useState([null])
 	const [loginedMember, setLoginedMember] = React.useState(null)
 	const [crew, setCrew] = React.useState(null)
-
 	window.localStorage.setItem("loginedMemberId", loginedMember?.id);
-
 	React.useEffect(() => {
 		fetch(`/usr/member/myPage`)
 			.then(res => res.json())
@@ -33,21 +25,18 @@ function App() {
 				window.localStorage.setItem("loginedMemberId", memberData.id);
 			});
 	}, []);
-
 	React.useEffect(() => {
-		fetch(`/api/pets?memberId=${loginedMember?.id}`)
+		fetch(`/api/pet/list?memberId=${loginedMember?.id}`)
 			.then(res => res.json())
 			.then((data) => {
 				console.log(data)
-				console.log("petlist: ", data.data2)
-				setPets(data.data2 || []); // ← 정확히 'pets'를 받아야 함
-				setCrew(data.data3 || []);
+				console.log("petlist: ", data.pets)
+				setPets(data.pets || []); // ← 정확히 'pets'를 받아야 함
+				setCrew(data.crews || []);
 			});
 	}, [loginedMember])
 	// sidebar.js
-
 };
-
 document.querySelectorAll('.menu-item').forEach((item) => {
 	item.addEventListener('click', () => {
 		const page = item.dataset.page
@@ -62,13 +51,12 @@ document.querySelectorAll('.menu-item').forEach((item) => {
 				url = `/usr/pet/list?memberId=${loginedMemberId}`
 				break
 			case 'crew':
-				url = `/crew`
+				url = `/usr/walkCrew/list`
+				break
+			case 'qna':
+				url = `/usr/qna/list`
 				break
 		}
-
 		window.parent.location.href = url
 	})
 })
-
-
-
