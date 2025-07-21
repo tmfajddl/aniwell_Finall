@@ -1,0 +1,403 @@
+<%@ page contentType="text/html; charset=UTF-8" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>${pageTitle}</title>
+
+    <!-- 공통 CSS -->
+    <link rel="stylesheet" href="/resource/common.css"/>
+    <!-- 공통 JS -->
+    <script src="/resource/common.js" defer></script>
+    <!-- jQuery -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <!-- Tailwind CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.1.4/tailwind.min.css">
+    <!-- Daisy UI -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/daisyui/4.12.23/full.css"/>
+</head>
+
+<body>
+<header class="fixed top-0 left-0 w-full bg-white shadow z-50">
+    <div class="max-w-7xl mx-auto p-4 flex items-center">
+        <a href="/" class="text-xl font-bold">LOGO</a>
+        <div class="flex-grow"></div>
+
+        <ul class="flex gap-4 items-center">
+
+            <!-- 기본 메뉴 -->
+            <li>
+                <a class="hover:underline" href="/">HOME</a>
+            </li>
+            <li>
+                <a class="hover:underline" href="/usr/article/list?boardId=1">공지사항</a>
+            </li>
+
+            <!-- 반려동물 메뉴 -->
+            <li>
+                <div class="dropdown dropdown-hover">
+                    <div tabindex="0" role="button">반려동물</div>
+                    <ul class="dropdown-content menu bg-base-100 rounded-box w-52 p-2 shadow">
+                        <li>
+                            <a href="/usr/pet/list?memberId=${rq.loginedMember.id}">반려동물 목록</a>
+                        </li>
+                        <li>
+                            <a href="/usr/pet/join">반려동물 등록</a>
+                        </li>
+                    </ul>
+                </div>
+            </li>
+
+            <!-- Q&A 메뉴 -->
+            <li>
+                <div class="dropdown dropdown-hover">
+                    <div tabindex="0" role="button">Q&A</div>
+                    <ul class="dropdown-content menu bg-base-100 rounded-box w-52 p-2 shadow">
+                        <li>
+                            <a href="/usr/qna/list">질문 목록</a>
+                        </li>
+                        <li>
+                            <a href="/usr/qna/ask">질문 등록</a>
+                        </li>
+                        <c:if test="${rq.loginedMember != null && rq.loginedMember.authLevel == 3}">
+                            <li>
+                                <a href="/usr/vetAnswer/vetList">수의사 질문 리스트</a>
+                            </li>
+                        </c:if>
+                    </ul>
+                </div>
+            </li>
+
+
+
+				<!-- 산책 크루 -->
+				<li>
+					<div class="dropdown dropdown-hover">
+						<div tabindex="0" role="button">산책 크루</div>
+						<ul class="dropdown-content menu bg-base-100 rounded-box w-52 p-2 shadow">
+							<li>
+								<a href="/usr/walkCrew/list">크루 목록</a>
+							</li>
+							<li>
+								<a href="/usr/walkCrew/create">크루 모집</a>
+							</li>
+							<!-- 크루 카페: 로그인한 사용자의 가입 크루 카페로 이동 -->
+							<li>
+
+								<a href="/usr/crewCafe/myCrewCafe">크루 카페</a>
+
+
+                        <!-- ✅ 누구나 크루 카페 입장 가능 -->
+                        <li>
+                            <c:if test="${not empty crew}">
+                                <a href="/usr/crewCafe?crewId=${crew.id}">크루 카페</a>
+                            </c:if>
+
+                        </li>
+
+                        <!-- ✅ 크루장만 신청자 리스트 접근 가능 -->
+                        <li>
+                            <c:choose>
+                                <c:when test="${not empty crew}">
+                                    <a href="/usr/walkCrew/requestList?crewId=${crew.id}">크루 신청자 리스트</a>
+                                </c:when>
+                                <c:otherwise>
+                                    <a href="#" onclick="alert('⚠ 크루를 먼저 생성해주세요.');">크루 신청자 리스트</a>
+                                </c:otherwise>
+                            </c:choose>
+                        </li>
+                    </ul>
+                </div>
+            </li>
+
+
+            <!-- ✅ 관리자 메뉴 -->
+            <c:if test="${rq.loginedMember != null && rq.loginedMember.authLevel == 7}">
+                <li>
+                    <div class="dropdown dropdown-hover">
+                        <div tabindex="0" role="button" class="text-red-600 font-bold">관리자</div>
+                        <ul class="dropdown-content menu bg-base-100 rounded-box w-52 p-2 shadow">
+                            <li>
+                                <a href="/adm/home/main">관리자 마이페이지</a>
+                            </li>
+                            <li>
+                                <a href="/adm/qna/list">QnA 관리</a>
+                            </li>
+                            <li>
+                                <a href="/adm/member/list">회원 관리</a>
+                            </li>
+                            <li>
+                                <a href="/adm/article/list">게시글 관리</a>
+                            </li>
+                        </ul>
+
+                    </div>
+                </li>
+            </c:if>
+
+
+            <!-- 로그인/회원가입 -->
+            <c:if test="${!rq.logined}">
+                <li>
+                    <a class="hover:underline" href="/usr/member/login">LOGIN</a>
+                </li>
+                <li>
+                    <a class="hover:underline" href="/usr/member/join">JOIN</a>
+                </li>
+            </c:if>
+
+				<!-- 로그인 상태 -->
+				<c:if test="${rq.logined}">
+					<li>
+						<a class="hover:underline" href="/usr/article/write">WRITE</a>
+					</li>
+					<li>
+						<a class="hover:underline" href="/usr/member/myPage">MYPAGE</a>
+					</li>
+					<li>
+						<c:choose>
+							<c:when test="${rq.loginedMember != null && rq.loginedMember.socialProvider == 'kakao'}">
+								<button onclick="openLogoutChoicePopup()" class="hover:underline">LOGOUT</button>
+							</c:when>
+							<c:otherwise>
+								<a onclick="return confirm('로그아웃 하시겠습니까?')" class="hover:underline" href="/usr/member/doLogout"> LOGOUT </a>
+							</c:otherwise>
+						</c:choose>
+					</li>
+				</c:if>
+			</ul>
+		</div>
+
+		<script src="https://developers.kakao.com/sdk/js/kakao.js"></script>
+		<script>
+        Kakao.init("79f2a3a73883a82595a2202187f96cc5");
+
+        // 자동 로그인 (한 세션에서 한 번만)
+        (function () {
+            const token = localStorage.getItem("kakaoAccessToken");
+            if (token && !sessionStorage.getItem("alreadyLoggedIn")) {
+                fetch("/usr/member/kakao-popup-login", {
+                    method: "POST",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify({token})
+                }).then(res => {
+                    if (res.ok) {
+                        sessionStorage.setItem("alreadyLoggedIn", "true");
+                        console.log("✅ 자동 로그인 성공");
+                    }
+                });
+            }
+        })();
+
+
+        function openLogoutChoicePopup() {
+            const choice = confirm("로그아웃 방식을 선택하세요.\n\n확인: 이 서비스에서만 로그아웃\n취소: 카카오 계정과 함께 로그아웃");
+
+            if (choice) {
+                // 이 서비스에서만 로그아웃
+                openServiceLogoutPopup();
+            } else {
+                // 카카오 계정과 함께 로그아웃
+                openKakaoLogoutPopup();
+            }
+        }
+
+        function openServiceLogoutPopup() {
+            const popup = window.open("/usr/member/service-logout-popup", "serviceLogoutPopup", "width=400,height=300");
+            if (!popup) alert("팝업 차단을 해제해주세요.");
+        }
+
+        function openKakaoLogoutPopup() {
+            const logoutRedirectUri = encodeURIComponent("http://localhost:8080/usr/member/logout-complete");
+            const kakaoLogoutUrl = "https://kauth.kakao.com/oauth/logout" +
+                "?client_id=79f2a3a73883a82595a2202187f96cc5" +
+                "&logout_redirect_uri=" + logoutRedirectUri;
+
+            const popup = window.open(kakaoLogoutUrl, "logoutPopup", "width=500,height=600");
+            if (!popup) alert("팝업 차단을 해제해주세요.");
+        }
+
+
+        // 팝업창이 보낸 로그아웃 완료 메시지 수신
+        window.addEventListener("message", function (event) {
+            console.log("📩 로그아웃 메시지 수신:", event.data);
+
+
+            if (event.data === "kakaoLogoutComplete") {
+                console.log("DEBUG: 전체 로그아웃 처리, 토큰 삭제");
+                localStorage.removeItem("kakaoAccessToken");
+                sessionStorage.removeItem("alreadyLoggedIn");
+                location.href = "/";
+            }
+            if (event.data === "serviceLogoutComplete") {
+                console.log("DEBUG: 서비스 로그아웃 처리, 토큰 유지");
+                sessionStorage.removeItem("alreadyLoggedIn");
+                (function () {
+                    const token = localStorage.getItem("kakaoAccessToken");
+                    const justLoggedOut = sessionStorage.getItem("logoutJustNow");
+
+                    if (token && !sessionStorage.getItem("alreadyLoggedIn") && !justLoggedOut) {
+                        fetch("/usr/member/kakao-popup-login", {
+                            method: "POST",
+                            headers: {"Content-Type": "application/json"},
+                            body: JSON.stringify({token})
+                        }).then(res => {
+                            if (res.ok) {
+                                sessionStorage.setItem("alreadyLoggedIn", "true");
+                                console.log("✅ 자동 로그인 성공");
+                            }
+                            sessionStorage.removeItem("logoutJustNow"); // 로그인 성공 후 플래그 제거
+                        });
+                    } else if (justLoggedOut) {
+                        // 로그아웃 직후 자동 로그인 차단용 플래그는
+                        // 일정 시간 후 또는 페이지 리로드 시 제거 가능
+                        setTimeout(() => sessionStorage.removeItem("logoutJustNow"), 5000);
+                    }
+                })();
+
+                localStorage.removeItem("kakaoAccessToken");
+                location.href = "/";
+            } else {
+                console.log("DEBUG: 알 수 없는 메시지 수신", event.data);
+            }
+
+        });
+
+    </script>
+
+		<script>
+        (function () {
+            const token = localStorage.getItem("kakaoAccessToken");
+            if (token) {
+                fetch("/usr/member/kakao-popup-login?token=" + token)
+                    .then(res => {
+                        console.log("자동 로그인 응답 상태:", res.status);
+                    });
+            }
+        })();
+    </script>
+
+
+	</header>
+>>>>>>> upstream/develop
+
+    <script src="https://developers.kakao.com/sdk/js/kakao.js"></script>
+    <script>
+        Kakao.init("79f2a3a73883a82595a2202187f96cc5");
+
+        // 자동 로그인 (한 세션에서 한 번만)
+        (function () {
+            const token = localStorage.getItem("kakaoAccessToken");
+            if (token && !sessionStorage.getItem("alreadyLoggedIn")) {
+                fetch("/usr/member/kakao-popup-login", {
+                    method: "POST",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify({token})
+                }).then(res => {
+                    if (res.ok) {
+                        sessionStorage.setItem("alreadyLoggedIn", "true");
+                        console.log("✅ 자동 로그인 성공");
+                    }
+                });
+            }
+        })();
+
+
+        function openLogoutChoicePopup() {
+            const choice = confirm("로그아웃 방식을 선택하세요.\n\n확인: 이 서비스에서만 로그아웃\n취소: 카카오 계정과 함께 로그아웃");
+
+            if (choice) {
+                // 이 서비스에서만 로그아웃
+                openServiceLogoutPopup();
+            } else {
+                // 카카오 계정과 함께 로그아웃
+                openKakaoLogoutPopup();
+            }
+        }
+
+        function openServiceLogoutPopup() {
+            const popup = window.open("/usr/member/service-logout-popup", "serviceLogoutPopup", "width=400,height=300");
+            if (!popup) alert("팝업 차단을 해제해주세요.");
+        }
+
+        function openKakaoLogoutPopup() {
+            const logoutRedirectUri = encodeURIComponent("http://localhost:8080/usr/member/logout-complete");
+            const kakaoLogoutUrl = "https://kauth.kakao.com/oauth/logout" +
+                "?client_id=79f2a3a73883a82595a2202187f96cc5" +
+                "&logout_redirect_uri=" + logoutRedirectUri;
+
+            const popup = window.open(kakaoLogoutUrl, "logoutPopup", "width=500,height=600");
+            if (!popup) alert("팝업 차단을 해제해주세요.");
+        }
+
+
+        // 팝업창이 보낸 로그아웃 완료 메시지 수신
+        window.addEventListener("message", function (event) {
+            console.log("📩 로그아웃 메시지 수신:", event.data);
+
+
+            if (event.data === "kakaoLogoutComplete") {
+                console.log("DEBUG: 전체 로그아웃 처리, 토큰 삭제");
+                localStorage.removeItem("kakaoAccessToken");
+                sessionStorage.removeItem("alreadyLoggedIn");
+                location.href = "/";
+            }
+            if (event.data === "serviceLogoutComplete") {
+                console.log("DEBUG: 서비스 로그아웃 처리, 토큰 유지");
+                sessionStorage.removeItem("alreadyLoggedIn");
+                (function () {
+                    const token = localStorage.getItem("kakaoAccessToken");
+                    const justLoggedOut = sessionStorage.getItem("logoutJustNow");
+
+                    if (token && !sessionStorage.getItem("alreadyLoggedIn") && !justLoggedOut) {
+                        fetch("/usr/member/kakao-popup-login", {
+                            method: "POST",
+                            headers: {"Content-Type": "application/json"},
+                            body: JSON.stringify({token})
+                        }).then(res => {
+                            if (res.ok) {
+                                sessionStorage.setItem("alreadyLoggedIn", "true");
+                                console.log("✅ 자동 로그인 성공");
+                            }
+                            sessionStorage.removeItem("logoutJustNow"); // 로그인 성공 후 플래그 제거
+                        });
+                    } else if (justLoggedOut) {
+                        // 로그아웃 직후 자동 로그인 차단용 플래그는
+                        // 일정 시간 후 또는 페이지 리로드 시 제거 가능
+                        setTimeout(() => sessionStorage.removeItem("logoutJustNow"), 5000);
+                    }
+                })();
+
+                localStorage.removeItem("kakaoAccessToken");
+                location.href = "/";
+            } else {
+                console.log("DEBUG: 알 수 없는 메시지 수신", event.data);
+            }
+
+        });
+
+    </script>
+
+    <script>
+        (function () {
+            const token = localStorage.getItem("kakaoAccessToken");
+            if (token) {
+                fetch("/usr/member/kakao-popup-login?token=" + token)
+                    .then(res => {
+                        console.log("자동 로그인 응답 상태:", res.status);
+                    });
+            }
+        })();
+    </script>
+
+
+</header>
+
+<!-- 현재 페이지 제목 출력 -->
+<c:if test="${not empty pageTitle}">
+<h1 class="text-xl font-bold p-4 mt-20">${pageTitle}</h1>
+</c:if>
