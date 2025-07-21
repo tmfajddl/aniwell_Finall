@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper
+	namespace="com.example.RSW.repository.WalkCrewMemberRepository">
+
+	<insert id="requestToJoinCrew">
+		INSERT INTO walk_crew_member
+		(crew_id, member_id,
+		status, request_date)
+		VALUES
+		(#{crewId}, #{memberId}, 'PENDING', NOW())
+	</insert>
+
+	<select id="findMyCrewByMemberId" resultType="WalkCrew">
+		SELECT wc.* FROM
+		walk_crew wc
+		JOIN walk_crew_member wcm ON wc.id = wcm.crewId
+		WHERE
+		wcm.memberId = #{memberId}
+		LIMIT 1
+	</select>
+
+	<select id="findCrewsAppliedBy" resultType="WalkCrew">
+		SELECT wc.* FROM
+		walk_crew wc
+		JOIN walk_crew_member wcm ON wc.id = wcm.crewId
+		WHERE
+		wcm.memberId = #{memberId}
+	</select>
+
+	<select id="findRequestListByLeaderId" resultType="map">
+		SELECT wcm.*,
+		m.nickname, wc.title
+		FROM walk_crew_member wcm
+		JOIN walk_crew wc ON
+		wcm.crewId = wc.id
+		JOIN member m ON wcm.memberId = m.id
+		WHERE
+		wc.leaderId = #{leaderId}
+	</select>
+
+	<!-- ✅ 크루 가입 여부 확인 -->
+	<select id="countByMemberIdAndCrewId" resultType="int">
+		SELECT COUNT(*)
+		FROM walk_crew_member
+		WHERE memberId = #{memberId}
+		AND crewId =
+		#{crewId}
+	</select>
+
+	<!-- ✅ 승인된 크루 멤버인지 확인하는 쿼리 - 특정 크루(crew_id)에서 특정 사용자(member_id)가 'approved' 
+		상태인지 여부를 판단하기 위해 사용 - 결과는 COUNT(*)로 반환 → 0이면 승인 안 됨, 1 이상이면 승인됨 -->
+	<select id="countApprovedMember" resultType="int">
+		SELECT COUNT(*)
+		FROM walk_crew_member
+		WHERE crewId = #{crewId}
+		AND memberId = #{memberId}
+		AND status = 'approved'         <!-- ✅ 승인 상태 -->
+	</select>
+
+
+
+</mapper>
