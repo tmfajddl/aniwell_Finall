@@ -12,6 +12,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Builder
 public class WalkCrew {
+
 	private int id; // 크루 ID
 	private String title; // 크루 제목
 	private String description; // 크루 설명
