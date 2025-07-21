@@ -63,6 +63,8 @@ document.querySelectorAll('.menu-item').forEach((item) => {
 				break
 			case 'crew':
 				url = `/usr/walkCrew/list`
+			case 'qna':
+				url = `/usr/qna/list`
 				break
 		}
 
