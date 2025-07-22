@@ -428,13 +428,39 @@
                     ? 'bg-green-500 text-white px-2 py-1 rounded'
                     : 'bg-red-500 text-white px-2 py-1 rounded';
 
-
-                // 삭제 폼 설정
+                // ✅ 삭제 버튼 생성 (이제 form 아님!)
                 const form = document.getElementById("delete-form");
-                form.action = "/adm/qna/doDelete";
-                form.innerHTML = `<input type="hidden" name="id" value="${id}">
-                      <button type="submit" class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">질문 삭제</button>`;
+                form.innerHTML = `
+    <button id="do-delete-btn" class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">질문 삭제</button>
+  `;
 
+                // ✅ 삭제 버튼 이벤트 연결
+                setTimeout(() => {
+                    document.getElementById("do-delete-btn").addEventListener("click", () => {
+                        if (!confirm("정말 삭제하시겠습니까?")) return;
+
+                        fetch("/adm/qna/doDelete", {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/x-www-form-urlencoded"
+                            },
+                            body: `id=${encodeURIComponent(id)}`
+                        })
+                            .then(res => res.json())
+                            .then(data => {
+                                if (data.resultCode === "S-1") {
+                                    document.getElementById("qna-detail").classList.add("hidden");
+                                    // ✅ 해당 질문 DOM 제거 (선택)
+                                    const item = document.querySelector(`.qna-item[data-id='${id}']`);
+                                    if (item) item.remove();
+                                } else {
+                                    alert("삭제 실패: " + data.msg);
+                                }
+                            });
+                    });
+                }, 0);
+
+                // ✅ 답변 정보 표시
                 if (answer && answer.answer) {
                     document.getElementById("qna-answer-content").classList.remove("hidden");
                     document.getElementById("answer-vetName").textContent = answer.vetName;
@@ -447,11 +473,10 @@
                     document.getElementById("qna-answer-content").classList.add("hidden");
                 }
 
-
-
                 document.getElementById("qna-detail").classList.remove("hidden");
                 document.getElementById("qna-detail").classList.add("flex");
             }
+
 
 
 
