@@ -893,21 +893,31 @@ public class UsrMemberController {
     @PostMapping("/usr/member/firebase-token")
     @ResponseBody
     public ResultData<?> generateFirebaseToken(HttpServletRequest req) {
+        System.out.println("📌 [DEBUG] generateFirebaseToken() 진입");
+
         Rq rq = (Rq) req.getAttribute("rq");
         Member member = rq.getLoginedMember();
 
-        // UID는 소셜 제공자 + 고유 ID 조합으로 구성 (예: google_123456)
-        String uid = member.getSocialProvider() + "_" + member.getSocialId();
+        if (member == null) {
+            System.out.println("⚠️ [DEBUG] 로그인된 사용자 없음");
+            return ResultData.from("F-2", "로그인 후 이용해주세요.");
+        }
 
-        // Firebase 토큰 생성
+        System.out.println("✅ [DEBUG] 로그인된 사용자: " + member.getLoginId());
+        System.out.println("✅ [DEBUG] 소셜 정보: " + member.getSocialProvider() + " / " + member.getSocialId());
+
+        String uid = member.getSocialProvider() + "_" + member.getSocialId();
+        System.out.println("🔑 [DEBUG] Firebase UID: " + uid);
+
         String customToken = memberService.createFirebaseCustomToken(uid);
 
         if (customToken == null) {
+            System.out.println("❌ [DEBUG] Firebase 토큰 생성 실패");
             return ResultData.from("F-1", "Firebase 토큰 생성 실패");
         }
 
+        System.out.println("🎉 [DEBUG] Firebase 토큰 생성 성공");
         return ResultData.from("S-1", "토큰 생성 성공", "token", customToken);
     }
-
 
 }
