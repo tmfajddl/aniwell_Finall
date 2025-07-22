@@ -8,11 +8,13 @@ import com.example.RSW.vo.Member;
 import com.example.RSW.vo.Qna;
 import com.example.RSW.vo.Rq;
 import com.example.RSW.vo.VetAnswer;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -138,19 +140,24 @@ public class UsrVetAnswerController {
 
     // 수의사 전용 질문 목록 페이지
     @RequestMapping("/vetList")
-    public String showVetQnaList(Model model) {
+    public String showVetQnaList(Model model, HttpServletResponse resp) throws IOException {
         Member loginedMember = rq.getLoginedMember();
 
-        if (loginedMember == null || loginedMember.getAuthLevel() != 3 && loginedMember.getAuthLevel() != 7) {
-            return "redirect:/usr/member/login"; // 비로그인 또는 수의사 아님
+        if (loginedMember == null || loginedMember.getAuthLevel() != 3) {
+            resp.setContentType("text/html; charset=UTF-8");
+            resp.getWriter().write("<script>alert('수의사만 접근할 수 있습니다.'); history.back();</script>");
+            resp.getWriter().flush();
+            return null; // 페이지 이동 없음
         }
 
         List<Qna> questions = qnaService.findWithoutAnswer();
-        List<Qna> myAnsweredQnas = qnaService.getMyAnsweredQna(rq.getLoginedMemberId());
+        List<Qna> myAnsweredQnas = qnaService.getMyAnsweredQna(loginedMember.getId());
+
         model.addAttribute("myAnsweredQnas", myAnsweredQnas);
         model.addAttribute("questions", questions);
         model.addAttribute("rq", rq);
 
-        return "usr/vetAnswer/vetList"; // 수의사 질문 목록 JSP
+        return "usr/vetAnswer/vetList";
     }
+
 }
