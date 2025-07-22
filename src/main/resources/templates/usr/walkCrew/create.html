@@ -127,11 +127,8 @@
 					console.error("Error loading dongs:", err);
 				});
 		}
-
-		function validateForm() {
-
-		}
-
+		
+		
 		function crewsubmit(event) {
 			event.preventDefault();
 
@@ -149,13 +146,13 @@
 				.then(response => response.json())
 				.then(result => {
 					const districtId = result?.data1?.districtId;
-
+					
 					document.getElementById("districtIdInput").value = districtId;
 
 					if (result.success) {
 						alert("등록 성공!");
 						window.parent.closeModal(); // 부모 모달 닫기
-						window.parent.location.href = '/usr/walkCrew/detail/${}';
+						window.parent.location.href = '/usr/walkCrew/list'; 
 
 						// 폼 실제 제출
 						document.querySelector("form").submit();
