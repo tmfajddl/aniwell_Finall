@@ -127,8 +127,8 @@
 					console.error("Error loading dongs:", err);
 				});
 		}
-		
-		
+
+
 		function crewsubmit(event) {
 			event.preventDefault();
 
@@ -146,13 +146,13 @@
 				.then(response => response.json())
 				.then(result => {
 					const districtId = result?.data1?.districtId;
-					
+
 					document.getElementById("districtIdInput").value = districtId;
 
 					if (result.success) {
 						alert("등록 성공!");
 						window.parent.closeModal(); // 부모 모달 닫기
-						window.parent.location.href = '/usr/walkCrew/list'; 
+						window.parent.location.href = '/usr/walkCrew/list';
 
 						// 폼 실제 제출
 						document.querySelector("form").submit();
@@ -175,12 +175,28 @@
 			}
 		});
 	</script>
-
-
 	<!-- 오류 (테스트데이터때매 발생) 로직에는 문재없음-->
 	<!-- 대전광역시 서구 둔산동 -->
 	<!-- 서울특별시 강남구 역삼동 -->
 	<!-- 부산광역시 해운대구 우동 -->
+
+	<!-- 프로필 사진 미리보기 -->
+	<script>
+		function previewImageFile(event) {
+			const file = event.target.files[0];
+			if (file) {
+				const reader = new FileReader();
+				reader.onload = function (e) {
+					const previewImg = document.getElementById("preview");
+					previewImg.src = e.target.result;
+					previewImg.style.display = "block"; // ✅ 반드시 필요
+				};
+				reader.readAsDataURL(file);
+			}
+		}
+	</script>
+
+
 
 </body>
 
