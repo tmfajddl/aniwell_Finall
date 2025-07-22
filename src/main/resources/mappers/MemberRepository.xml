@@ -194,7 +194,6 @@
             (#{regDate}, #{updateDate}, #{loginId}, #{loginPw}, #{name}, #{email}, #{authLevel}, #{delStatus}, #{socialProvider}, #{socialId})
     </insert>
 
-
     <select id="getAllMemberIds" resultType="int">
         SELECT id FROM member WHERE delStatus = 0
     </select>

@@ -84,10 +84,15 @@ public class NotificationService {
             return false;
         }
 
+        if (notification.isRead()) {
+            return true; // 이미 읽음 처리된 경우는 무시
+        }
+
         notification.setRead(true);
-        notificationRepository.insert(notification); // 또는 update()가 있다면 그걸로
-        return true;
+        int affectedRows = notificationRepository.update(notification);
+        return affectedRows == 1; // ← 실제로 DB 반영되었는지 확인
     }
+
 
     public List<Notification> getRecentNotifications(int memberId) {
         return notificationRepository.findByMemberIdOrderByRegDateDesc(memberId);

@@ -68,7 +68,7 @@
 	<!-- ✅ 스크립트 -->
 	<script th:inline="javascript">
 
-    const kakaoJsKey = /*[[${kakaoJsKey}]]*/ "";
+    const kakaoJsKey = [[${kakaoJsKey}]];
     const script = document.createElement("script");
     script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${kakaoJsKey}&autoload=false&libraries=services`;
     script.onload = () => {
