@@ -83,15 +83,17 @@
 </div>
 
 <script th:inline="javascript">
-  const crewId = [[${crewId}]];
-  const senderId = [[${loginedMember.id}]];
-  const senderNickname = "[[${loginedMember.nickname}]]";
-  const senderPhoto = "[[${pet != null and pet.photo != null ? pet.photo : '/img/default-pet.png'}]]";
-</script>
+  const crewId = [[${crewId} ?: -1]];
+  const senderId = [[${loginedMember.id} ?: -1]];
+  const senderNickname = [[${'"' + #strings.escapeJavaScript(loginedMember.nickname ?: '익명') + '"'}]];
+  const senderPhoto = [[${'"' + (pet != null and pet.photo != null ? pet.photo : '/img/default-pet.png') + '"'}]];
+
+  console.log("✅ crewId =", crewId);
+  console.log("✅ senderId =", senderId);
+  console.log("✅ senderNickname =", senderNickname);
+  console.log("✅ senderPhoto =", senderPhoto);
 
 
-
-<script>
   let stompClient = null;
   let groupBuffer = [];
   let lastDate = "";
