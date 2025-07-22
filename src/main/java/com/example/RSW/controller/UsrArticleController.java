@@ -54,7 +54,6 @@ public class UsrArticleController {
 		this.beforeActionInterceptor = beforeActionInterceptor;
 	}
 
-	@ResponseBody
 	@GetMapping("/usr/article/write/check")
 	public ResultData checkWritePermission(HttpServletRequest req, @RequestParam(required = false) Integer boardId,
 			@RequestParam(required = false) Integer crewId, @RequestParam(required = false) String type) {
@@ -93,7 +92,6 @@ public class UsrArticleController {
 	}
 
 	@PostMapping("/usr/article/doWrite")
-	@ResponseBody
 	public ResultData doWrite(HttpServletRequest req, @RequestParam(required = false) Integer crewId,
 			@RequestParam(required = false) Integer boardId, @RequestParam String title, @RequestParam String body,
 			@RequestParam(required = false) MultipartFile imageFile) {
