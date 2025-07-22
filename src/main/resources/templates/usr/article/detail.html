@@ -326,21 +326,31 @@
 							data.forEach(reply => {
 								const item = document.createElement("div");
 								item.className = "border-b pb-4 mb-4";
+
 								item.innerHTML =
 										'<div class="flex justify-between text-sm text-gray-600">' +
 										'<span>' + reply.extra__writer + '</span>' +
 										'<span>' + reply.regDate.substring(0, 10) + '</span>' +
 										'</div>' +
 										'<div class="mt-1 text-gray-800 reply-body" data-id="' + reply.id + '">' + reply.body + '</div>' +
-										'<div class="text-sm mt-2 flex justify-between">' +
-										'<div>👍 ' + reply.goodReactionPoint + ' 👎 ' + reply.badReactionPoint + '</div>' +
+
+										// 👍👎 버튼 추가
+										'<div class="text-sm mt-2 flex justify-between items-center">' +
 										'<div>' +
-										(reply.userCanModify ? '<button onclick="editReply(' + reply.id + ', \'' + reply.body + '\')" class="text-blue-600 underline">수정</button>' : '') +
-										(reply.userCanDelete ? ' <button onclick="deleteReply(' + reply.id + ')" class="text-red-600 underline">삭제</button>' : '') +
+										'<button onclick="doGoodReplyReaction(' + reply.id + ')" class="hover:scale-110 text-lg transition-transform">👍</button> ' +
+										'<span class="ml-1">' + reply.goodReactionPoint + '</span>' +
+										'<button onclick="doBadReplyReaction(' + reply.id + ')" class="ml-3 hover:scale-110 text-lg transition-transform">👎</button> ' +
+										'<span class="ml-1">' + reply.badReactionPoint + '</span>' +
+										'</div>' +
+										'<div>' +
+										(reply.userCanModify ? '<button onclick="editReply(' + reply.id + ', \'' + reply.body.replace(/'/g, "\\'") + '\')" class="text-blue-600 underline ml-2">수정</button>' : '') +
+										(reply.userCanDelete ? '<button onclick="deleteReply(' + reply.id + ')" class="text-red-600 underline ml-2">삭제</button>' : '') +
 										'</div>' +
 										'</div>';
+
 								listEl.appendChild(item);
 							});
+
 						});
 			}
 
@@ -388,13 +398,27 @@
 			loadReplies();
 
 			function doGoodReplyReaction(replyId) {
-				fetch(`/usr/reactionPoint/doGoodReactionForReply?relId=${replyId}`, { method: 'POST' })
-						.then(res => res.json())
-						.then(data => {
-							if (data.resultCode.startsWith('S-')) loadReplies();
-							else alert(data.msg);
-						});
+				$.post('/usr/reactionPoint/doGoodReaction', {relTypeCode: 'reply', relId: replyId}, function (data) {
+					if (data.resultCode.startsWith('S-')) {
+						loadReplies(); // 서버 처리 완료 후 갱신
+					} else {
+						alert(data.msg);
+					}
+				})
 			}
+
+				function doBadReplyReaction(replyId) {
+					$.post('/usr/reactionPoint/doBadReaction', {relTypeCode: 'reply', relId: replyId}, function (data) {
+						if (data.resultCode.startsWith('S-')) {
+							loadReplies();
+						} else {
+							alert(data.msg);
+						}
+					});
+				}
+
+
+
 
 
 		</script>
