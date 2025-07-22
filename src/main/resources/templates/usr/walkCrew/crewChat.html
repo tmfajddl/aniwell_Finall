@@ -5,12 +5,9 @@
   <title>산책 크루 채팅</title>
   <script src="/webjars/sockjs-client/1.5.1/sockjs.min.js"></script>
   <script src="/webjars/stomp-websocket/2.3.4/stomp.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" th:href="@{/resource/css/common.css}">
   <style>
-    body {
-      font-family: 'SUIT', sans-serif;
-      background: linear-gradient(to bottom, #DBE3A3, #FEE191);
-      margin: 0; padding: 20px;
-    }
 
     #chatBox {
       width: 90%; max-width: 500px; height: 500px;
@@ -72,7 +69,13 @@
     }
   </style>
 </head>
-<body>
+<body class="bg-gradient-to-b from-[#e4f0b9] to-[#fcdca9] font-sans">
+<div class="flex h-screen">
+  <!-- Sidebar -->
+  <div th:replace="common :: siteHeader"></div>
+
+  <!-- Main content -->
+  <main class="main_page min-h-screen flex-1 p-6 space-y-6">
 
 <h2 style="text-align:center; margin-bottom:20px;">🗨️ 산책 크루 채팅</h2>
 <div id="chatBox"></div>
@@ -233,8 +236,6 @@
 
 
 
-
-
   function formatDateOnly(iso) {
     const d = new Date(iso);
     return d.getFullYear() + "." + String(d.getMonth() + 1).padStart(2, "0") + "." + String(d.getDate()).padStart(2, "0");
@@ -287,6 +288,7 @@
     loadPreviousMessages();
   });
 </script>
-
+  </main>
+</div>
 </body>
 </html>
