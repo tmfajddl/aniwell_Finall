@@ -17,6 +17,19 @@
             padding: 1rem;
         }
     </style>
+    <!-- firebase -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "",
+            authDomain: "",
+            projectId: "",
+        };
+
+        firebase.initializeApp(firebaseConfig);
+    </script>
+
 </head>
 <body class="bg-white">
 
@@ -46,7 +59,7 @@
 
                     <!-- 네이버  -->
                     <a href="https://nid.naver.com/oauth2.0/authorize?response_type=code&client_id=ZdyW5GGtNSgCCaduup7_&redirect_uri=http://localhost:8080/usr/member/naver&state=randomString&auth_type=reprompt">
-                        <img src="/img/socialLogin/btnG_완성형.png" alt="네이버 로그인" class="h-10"/>
+                        <img th:src="@{/img.socialLogin/btnG_완성형.png}" alt="네이버 로그인" class="h-10"/>
                     </a>
                 </div>
 
