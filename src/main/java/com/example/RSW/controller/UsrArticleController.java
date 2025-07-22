@@ -1,10 +1,12 @@
 package com.example.RSW.controller;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.List;
 import java.util.Map;
 
 import com.example.RSW.service.*;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -23,6 +25,7 @@ import com.example.RSW.vo.Rq;
 import com.example.RSW.vo.WalkCrew;
 
 import jakarta.servlet.http.HttpServletRequest;
+import org.thymeleaf.spring6.templateresolver.SpringResourceTemplateResolver;
 
 @Controller
 public class UsrArticleController {
@@ -50,13 +53,19 @@ public class UsrArticleController {
 	@Autowired
 	private Cloudinary cloudinary;
 
+	@Autowired
+	private NotificationService notificationService;
+    @Autowired
+    private SpringResourceTemplateResolver springResourceTemplateResolver;
+
 	UsrArticleController(BeforeActionInterceptor beforeActionInterceptor) {
 		this.beforeActionInterceptor = beforeActionInterceptor;
 	}
 
+
 	@GetMapping("/usr/article/write/check")
 	public ResultData checkWritePermission(HttpServletRequest req, @RequestParam(required = false) Integer boardId,
-			@RequestParam(required = false) Integer crewId, @RequestParam(required = false) String type) {
+										   @RequestParam(required = false) Integer crewId, @RequestParam(required = false) String type) {
 
 		Rq rq = (Rq) req.getAttribute("rq");
 
@@ -92,9 +101,10 @@ public class UsrArticleController {
 	}
 
 	@PostMapping("/usr/article/doWrite")
+	@ResponseBody
 	public ResultData doWrite(HttpServletRequest req, @RequestParam(required = false) Integer crewId,
-			@RequestParam(required = false) Integer boardId, @RequestParam String title, @RequestParam String body,
-			@RequestParam(required = false) MultipartFile imageFile) {
+							  @RequestParam(required = false) Integer boardId, @RequestParam String title, @RequestParam String body,
+							  @RequestParam(required = false) MultipartFile imageFile) {
 
 		Rq rq = (Rq) req.getAttribute("rq");
 		int loginedMemberId = rq.getLoginedMemberId();
@@ -113,18 +123,11 @@ public class UsrArticleController {
 			}
 		}
 
-		// ✅ 게시판 ID가 null인 경우 예외 처리
-		if (crewId == null && boardId == null) {
-			return ResultData.from("F-1", "게시판 ID(boardId)는 필수입니다.");
-		}
-
-		// ✅ 게시글 작성 처리 (imageUrl 추가됨)
+		// ✅ 게시글 작성 처리
 		ResultData rd;
 		if (crewId != null) {
-			// 크루 게시글 작성
 			rd = articleService.writeCrewArticle(boardId, crewId, loginedMemberId, title, body, imageUrl);
 		} else {
-			// 일반 게시글 작성
 			rd = articleService.writeArticle(loginedMemberId, title, body, String.valueOf(boardId), imageUrl);
 		}
 
@@ -132,9 +135,17 @@ public class UsrArticleController {
 			return ResultData.from(rd.getResultCode(), rd.getMsg());
 		}
 
+		// ✅ 생성된 게시글 ID 및 이동 URL 포함 응답
 		int articleId = (int) rd.getData1();
-		String redirectUrl = (crewId != null) ? "/usr/article/detail?id=" + articleId + "&crewId=" + crewId
+		String redirectUrl = crewId != null ? "/usr/article/detail?id=" + articleId + "&crewId=" + crewId
 				: "/usr/article/detail?id=" + articleId + "&boardId=" + boardId;
+
+// ✅ 🔔 전체 알림 발송 (공지사항일 때만)
+		if (boardId != null && boardId == 1) {
+			String link = redirectUrl;
+			String notiTitle = "[공지사항] " + title;
+			notificationService.sendNotificationToAll(notiTitle, link, "NOTICE", loginedMemberId);
+		}
 
 		return ResultData.from("S-1", "게시글이 성공적으로 작성되었습니다.",
 				Map.of("articleId", articleId, "redirectUrl", redirectUrl));
@@ -143,69 +154,29 @@ public class UsrArticleController {
 	// ✅ 게시글 수정 처리 (JSON 방식)
 	@PostMapping("/usr/article/doModify")
 	@ResponseBody
-	public ResultData doModify(HttpServletRequest req, @RequestBody Map<String, Object> param) {
-		Rq rq = (Rq) req.getAttribute("rq");
+	public ResultData doModify(@RequestParam int id,
+							   @RequestParam String title,
+							   @RequestParam String body) {
 
-		int id = (int) param.get("id");
-		String title = (String) param.get("title");
-		String body = (String) param.get("body");
-
-		// 게시글 조회
 		Article article = articleService.getArticleById(id);
 		if (article == null) {
 			return ResultData.from("F-1", id + "번 게시글은 존재하지 않습니다.");
 		}
 
-		// 수정 권한 확인
 		ResultData userCanModifyRd = articleService.userCanModify(rq.getLoginedMemberId(), article);
 		if (userCanModifyRd.isFail()) {
 			return ResultData.from(userCanModifyRd.getResultCode(), userCanModifyRd.getMsg());
 		}
 
-		// 게시글 수정 처리
 		articleService.modifyArticle(id, title, body);
 
-		// 성공 응답
-		return ResultData.from("S-1", "게시글 수정이 완료되었습니다.", Map.of("redirectUrl", "/usr/article/detail?id=" + id));
+		// 클라이언트에 최신 정보 반환
+		Article updated = articleService.getArticleById(id);
+		return ResultData.from("S-1", "게시글 수정 완료", "data1", updated);
 	}
 
-	// ✅ 게시글 수정 폼 (HTML 뷰 반환 방식으로 변경)
-	@GetMapping("/usr/article/modify")
-	public String showModify(HttpServletRequest req, @RequestParam int id,
-			@RequestParam(required = false) Integer crewId, @RequestParam(required = false) Integer boardId,
-			Model model) {
-		Rq rq = (Rq) req.getAttribute("rq");
-
-		// 로그인 여부 확인
-		if (rq == null || !rq.isLogined()) {
-			model.addAttribute("errorMsg", "로그인 후 이용해주세요.");
-			return "common/error";
-		}
-
-		// 게시글 조회
-		Article article = articleService.getArticleById(id);
-		if (article == null) {
-			model.addAttribute("errorMsg", "존재하지 않는 게시물입니다.");
-			return "common/error";
-		}
-
-		// 수정 권한 확인
-		ResultData userCanModifyRd = articleService.userCanModify(rq.getLoginedMemberId(), article);
-		if (userCanModifyRd.isFail()) {
-			model.addAttribute("errorMsg", userCanModifyRd.getMsg());
-			return "common/error";
-		}
-
-		// JSP에서 사용할 데이터 전달
-		model.addAttribute("article", article);
-		model.addAttribute("crewId", crewId); // 있으면 전달
-		model.addAttribute("boardId", boardId); // 없으면 일반 게시판
-
-		return "usr/article/modify"; // ✅ JSP 뷰 경로
-	}
 
 	@PostMapping("/usr/article/doDelete")
-	@ResponseBody
 	public ResultData doDelete(HttpServletRequest req, @RequestParam int id, @RequestParam int crewId) {
 		Rq rq = (Rq) req.getAttribute("rq");
 
@@ -230,99 +201,77 @@ public class UsrArticleController {
 				Map.of("redirectUrl", "/usr/crewCafe/cafeHome?crewId=" + crewId));
 	}
 
-	@GetMapping("/usr/article/detail")
-	public String showDetail(HttpServletRequest req, @RequestParam int id,
-			@RequestParam(required = false) Integer crewId, @RequestParam(required = false) Integer boardId,
-			Model model) {
+	@RequestMapping("/usr/article/detail")
+	public String showDetail(HttpServletRequest req, HttpServletResponse resp, Model model, int id) throws IOException {
 		Rq rq = (Rq) req.getAttribute("rq");
-		int loginedMemberId = rq != null ? rq.getLoginedMemberId() : 0;
+		Article article = articleService.getForPrintArticle(rq.getLoginedMemberId(), id);
 
-		// ✅ 게시글 정보 조회
-		Article article = articleService.getForPrintArticle(loginedMemberId, id);
 		if (article == null) {
-			model.addAttribute("errorMsg", "해당 게시글이 존재하지 않습니다.");
-			return "common/error";
+			resp.setContentType("text/html; charset=UTF-8");
+			PrintWriter out = resp.getWriter();
+			out.println("<script>alert('존재하지 않는 게시글입니다.'); history.back();</script>");
+			out.flush();
+			return null; // 더 이상 진행하지 않음
 		}
 
-		// ✅ 좋아요/싫어요 여부 및 권한
-		ResultData usersReactionRd = reactionPointService.usersReaction(loginedMemberId, "article", id);
-		boolean userCanMakeReaction = usersReactionRd.isSuccess();
-
-		boolean isAlreadyAddGoodRp = reactionPointService.isAlreadyAddGoodRp(loginedMemberId, id, "article");
-		boolean isAlreadyAddBadRp = reactionPointService.isAlreadyAddBadRp(loginedMemberId, id, "article");
-
-		// ✅ 댓글 목록
-		List<Reply> replies = replyService.getForPrintReplies(loginedMemberId, "article", id);
-
-		// ✅ 크루 or 게시판 정보
-		if (crewId != null) {
-			WalkCrew crew = walkCrewService.getCrewById(crewId);
-			model.addAttribute("crew", crew);
-		} else if (boardId != null) {
-			Board board = boardService.getBoardById(boardId);
-			model.addAttribute("board", board);
+		// 사용자 리액션 상태 확인 (좋아요/싫어요)
+		ResultData usersReactionRd = reactionPointService.usersReaction(rq.getLoginedMemberId(), "article", id);
+		if (usersReactionRd.isSuccess()) {
+			model.addAttribute("userCanMakeReaction", true);
 		}
 
-		// ✅ JSP에서 사용할 데이터 전달
-		model.addAttribute("article", article);
+		// 댓글 조회
+		List<Reply> replies = replyService.getForPrintReplies(rq.getLoginedMemberId(), "article", id);
 		model.addAttribute("replies", replies);
 		model.addAttribute("repliesCount", replies.size());
-		model.addAttribute("userCanMakeReaction", userCanMakeReaction);
-		model.addAttribute("isAlreadyAddGoodRp", isAlreadyAddGoodRp);
-		model.addAttribute("isAlreadyAddBadRp", isAlreadyAddBadRp);
-		model.addAttribute("usersReaction", usersReactionRd.getData1());
 
-		return "usr/article/detail"; // ✅ JSP 파일 경로
+		model.addAttribute("article", article);
+		model.addAttribute("usersReaction", usersReactionRd.getData1());
+		model.addAttribute("isAlreadyAddGoodRp", reactionPointService.isAlreadyAddGoodRp(rq.getLoginedMemberId(), id, "article"));
+		model.addAttribute("isAlreadyAddBadRp", reactionPointService.isAlreadyAddBadRp(rq.getLoginedMemberId(), id, "article"));
+
+		return "usr/article/detail"; // 정상 진입 시 detail 페이지 이동
 	}
 
 	@GetMapping("/usr/article/list")
-	public String showList(HttpServletRequest req, @RequestParam(required = false) Integer boardId,
-			@RequestParam(required = false) Integer crewId, @RequestParam(defaultValue = "1") int page,
-			@RequestParam(defaultValue = "title") String searchKeywordTypeCode,
-			@RequestParam(defaultValue = "") String searchKeyword, Model model) {
+	public ResultData showList(HttpServletRequest req, @RequestParam(required = false) Integer boardId,
+							   @RequestParam(required = false) Integer crewId, @RequestParam(defaultValue = "1") int page,
+							   @RequestParam(defaultValue = "title") String searchKeywordTypeCode,
+							   @RequestParam(defaultValue = "") String searchKeyword) throws IOException {
 
 		Rq rq = (Rq) req.getAttribute("rq");
 
-		// ✅ 크루 게시판일 경우
+		// ✅ crewId와 boardId 모두 존재하는 경우 (크루 게시판)
 		if (crewId != null && boardId != null) {
 			WalkCrew crew = walkCrewService.getCrewById(crewId);
 			Board board = boardService.getBoardById(boardId);
 			if (crew == null || board == null) {
-				model.addAttribute("errorMsg", "존재하지 않는 크루 또는 게시판입니다.");
-				return "common/error";
+				return ResultData.from("F-1", "존재하지 않는 크루 또는 게시판입니다.");
 			}
 
 			List<Article> articles = articleService.getArticlesByCrewIdAndBoardId(crewId, boardId);
 
-			model.addAttribute("crew", crew);
-			model.addAttribute("board", board);
-			model.addAttribute("articles", articles);
-			model.addAttribute("page", page);
-
-			return "usr/article/list";
+			return ResultData.from("S-1", "크루 게시판 글 목록 조회 성공",
+					Map.of("crew", crew, "board", board, "articles", articles, "page", page));
 		}
 
-		// ✅ 크루 전체 글
+		// ✅ crewId만 존재하는 경우 (크루 전체 글)
 		if (crewId != null) {
 			WalkCrew crew = walkCrewService.getCrewById(crewId);
 			if (crew == null) {
-				model.addAttribute("errorMsg", "존재하지 않는 크루입니다.");
-				return "common/error";
+				return ResultData.from("F-2", "존재하지 않는 크루입니다.");
 			}
 
 			List<Article> articles = articleService.getArticlesByCrewId(crewId);
 
-			model.addAttribute("crew", crew);
-			model.addAttribute("articles", articles);
-			return "usr/article/list";
+			return ResultData.from("S-2", "크루 전체 글 목록 조회 성공", Map.of("crew", crew, "articles", articles));
 		}
 
 		// ✅ 일반 게시판
 		if (boardId != null) {
 			Board board = boardService.getBoardById(boardId);
 			if (board == null) {
-				model.addAttribute("errorMsg", "존재하지 않는 게시판입니다.");
-				return "common/error";
+				return ResultData.from("F-3", "존재하지 않는 게시판입니다.");
 			}
 
 			int itemsInAPage = 10;
@@ -331,6 +280,7 @@ public class UsrArticleController {
 			List<Article> articles;
 
 			if (boardId == 1) {
+				// 전체 공지사항 (관리자 전용)
 				articlesCount = articleService.getAdminOnlyArticleCount(boardId, searchKeywordTypeCode, searchKeyword);
 				pagesCount = (int) Math.ceil(articlesCount / (double) itemsInAPage);
 				articles = articleService.getAdminOnlyArticles(boardId, itemsInAPage * (page - 1), itemsInAPage,
@@ -342,24 +292,16 @@ public class UsrArticleController {
 						searchKeywordTypeCode, searchKeyword);
 			}
 
-			model.addAttribute("board", board);
-			model.addAttribute("articles", articles);
-			model.addAttribute("articlesCount", articlesCount);
-			model.addAttribute("pagesCount", pagesCount);
-			model.addAttribute("searchKeywordTypeCode", searchKeywordTypeCode);
-			model.addAttribute("searchKeyword", searchKeyword);
-			model.addAttribute("page", page);
-
-			return "usr/article/list";
+			return ResultData.from("S-3", "게시판 글 목록 조회 성공",
+					Map.of("board", board, "articles", articles, "articlesCount", articlesCount, "pagesCount",
+							pagesCount, "searchKeywordTypeCode", searchKeywordTypeCode, "searchKeyword", searchKeyword,
+							"page", page));
 		}
 
-		// ✅ boardId, crewId 모두 없는 경우
-		model.addAttribute("errorMsg", "boardId 또는 crewId가 필요합니다.");
-		return "common/error";
+		return ResultData.from("F-4", "boardId 또는 crewId가 필요합니다.");
 	}
 
 	@RequestMapping("/usr/article/doIncreaseHitCountRd")
-	@ResponseBody
 	public ResultData doIncreaseHitCount(int id) {
 		ResultData increaseHitCountRd = articleService.increaseHitCount(id);
 		if (increaseHitCountRd.isFail()) {
@@ -371,10 +313,9 @@ public class UsrArticleController {
 
 	// ✅ 모임일정 등록 (JSON 응답)
 	@PostMapping("/usr/article/doWriteSchedule")
-	@ResponseBody
 	public ResultData doWriteSchedule(@RequestParam int crewId, @RequestParam String scheduleDate,
-			@RequestParam String scheduleTitle, @RequestParam(required = false) String scheduleBody,
-			HttpServletRequest req) {
+									  @RequestParam String scheduleTitle, @RequestParam(required = false) String scheduleBody,
+									  HttpServletRequest req) {
 		Rq rq = (Rq) req.getAttribute("rq");
 
 		if (rq == null || !rq.isLogined()) {
@@ -391,20 +332,26 @@ public class UsrArticleController {
 				Map.of("crewId", crewId, "redirectUrl", "/usr/crewCafe/cafeHome?crewId=" + crewId));
 	}
 
-	// ✅ JSP View 방식으로 변경된 일정 조회
+	// ✅ JSON 응답 방식으로 변경
 	@GetMapping("/usr/article/schedule")
-	public String showSchedule(@RequestParam int crewId, Model model) {
+
+	public ResultData showSchedule(@RequestParam int crewId) {
 		List<Map<String, Object>> scheduleList = articleService.getSchedulesByCrewId(crewId);
 
 		if (scheduleList == null || scheduleList.isEmpty()) {
-			model.addAttribute("errorMsg", "등록된 모임 일정이 없습니다.");
-			return "common/error"; // ✅ 공통 에러 페이지로 이동
+			return ResultData.from("F-1", "등록된 모임 일정이 없습니다.");
 		}
 
-		model.addAttribute("crewId", crewId);
-		model.addAttribute("schedules", scheduleList);
-
-		return "usr/article/schedule"; // ✅ JSP 파일 경로
+		return ResultData.from("S-1", "모임 일정 조회 성공", Map.of("crewId", crewId, "schedules", scheduleList));
 	}
+
+	@GetMapping("/usr/article/partialList")
+	public String showPartialList(Model model) {
+		List<Article> articles = articleService.getArticles(); // ✅ 띄어쓰기 제거
+		System.out.println("✅ 게시글 수: " + articles.size());
+		model.addAttribute("articles", articles);
+		return "adm/article/list :: post-list"; // ✅ fragment 이름으로 지정
+	}
+
 
 }
