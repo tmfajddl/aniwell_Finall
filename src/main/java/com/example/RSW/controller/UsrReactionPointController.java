@@ -33,37 +33,26 @@ public class UsrReactionPointController {
     @RequestMapping("/usr/reactionPoint/doGoodReaction")
     @ResponseBody
     public ResultData doGoodReaction(String relTypeCode, int relId, String replaceUri) {
+        int actorId = rq.getLoginedMemberId();
 
-        ResultData usersReactionRd = reactionPointService.usersReaction(rq.getLoginedMemberId(), relTypeCode, relId);
+        ResultData usersReactionRd = reactionPointService.usersReaction(actorId, relTypeCode, relId);
         int usersReaction = (int) usersReactionRd.getData1();
 
         if (usersReaction == 1) {
-            // 좋아요 취소
-            ResultData rd = reactionPointService.deleteGoodReactionPoint(rq.getLoginedMemberId(), relTypeCode, relId);
-            int goodRP = articleService.getGoodRP(relId);
-            int badRP = articleService.getBadRP(relId);
-            return ResultData.from("S-1", "좋아요 취소", "goodRP", goodRP, "badRP", badRP);
+            reactionPointService.deleteGoodReactionPoint(actorId, relTypeCode, relId);
         } else if (usersReaction == -1) {
-            // 싫어요 → 좋아요 전환
-            ResultData rd = reactionPointService.deleteBadReactionPoint(rq.getLoginedMemberId(), relTypeCode, relId);
-            rd = reactionPointService.addGoodReactionPoint(rq.getLoginedMemberId(), relTypeCode, relId);
-            int goodRP = articleService.getGoodRP(relId);
-            int badRP = articleService.getBadRP(relId);
-            return ResultData.from("S-2", "싫어요 했었음", "goodRP", goodRP, "badRP", badRP);
+            reactionPointService.deleteBadReactionPoint(actorId, relTypeCode, relId);
+            reactionPointService.addGoodReactionPoint(actorId, relTypeCode, relId);
+        } else {
+            reactionPointService.addGoodReactionPoint(actorId, relTypeCode, relId);
         }
 
-        // 좋아요 등록
-        ResultData reactionRd = reactionPointService.addGoodReactionPoint(rq.getLoginedMemberId(), relTypeCode, relId);
+        int goodRP = reactionPointService.getReactionPoint(relTypeCode, relId, 1);
+        int badRP = reactionPointService.getReactionPoint(relTypeCode, relId, -1);
 
-        if (reactionRd.isFail()) {
-            return ResultData.from(reactionRd.getResultCode(), reactionRd.getMsg());
-        }
-
-        int goodRP = articleService.getGoodRP(relId);
-        int badRP = articleService.getBadRP(relId);
-
-        return ResultData.from(reactionRd.getResultCode(), reactionRd.getMsg(), "goodRP", goodRP, "badRP", badRP);
+        return ResultData.from("S-1", "처리 완료", "goodRP", goodRP, "badRP", badRP);
     }
+
 
     // ✅ 싫어요 처리
     @RequestMapping("/usr/reactionPoint/doBadReaction")

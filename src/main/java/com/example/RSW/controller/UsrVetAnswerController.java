@@ -13,7 +13,9 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Controller
 @RequestMapping("/usr/vetAnswer") // 사용자(수의사)용 답변 기능 컨트롤러
@@ -76,47 +78,63 @@ public class UsrVetAnswerController {
     // 답변 수정 처리
     @PostMapping("/doModify")
     @ResponseBody
-    public String doModify(@RequestParam int id,
-                           @RequestParam String answer) {
+    public Map<String, Object> doModify(@RequestParam int qnaId, @RequestParam String answer) {
+        Map<String, Object> result = new HashMap<>();
 
-        VetAnswer vetAnswer = vetAnswerService.getById(id);
+        VetAnswer answer1 = vetAnswerService.findByQnaId(qnaId);
         Member loginedMember = rq.getLoginedMember();
 
-        if (vetAnswer == null) {
-            return Ut.jsHistoryBack("F-1", "존재하지 않는 답변입니다.");
+        if (answer == null) {
+            result.put("resultCode", "F-1");
+            result.put("msg", "존재하지 않는 답변입니다.");
+            return result;
         }
 
-        if (loginedMember == null || loginedMember.getId() != vetAnswer.getMemberId()) {
-            return Ut.jsHistoryBack("F-2", "권한이 없습니다.");
+        if (answer1.getMemberId() != loginedMember.getId()) {
+            result.put("resultCode", "F-2");
+            result.put("msg", "권한이 없습니다.");
+            return result;
         }
 
-        vetAnswerService.modify(id, answer);
+        vetAnswerService.modify(answer1.getId(), answer);
 
-        return Ut.jsReplace("S-1", "답변이 수정되었습니다.", "/usr/qna/detail?id=" + vetAnswer.getQnaId());
+        result.put("resultCode", "S-1");
+        result.put("msg", "수정 완료되었습니다.");
+        return result;
     }
 
-    // 답변 삭제 처리
+
+
+
     @PostMapping("/doDelete")
     @ResponseBody
-    public String doDelete(@RequestParam int id) {
-        VetAnswer vetAnswer = vetAnswerService.getById(id);
+    public Map<String, Object> doDelete(@RequestParam int qnaId) {
+        Map<String, Object> result = new HashMap<>();
+
+        VetAnswer answer = vetAnswerService.findByQnaId(qnaId);
         Member loginedMember = rq.getLoginedMember();
 
-        if (vetAnswer == null) {
-            return Ut.jsHistoryBack("F-1", "존재하지 않는 답변입니다.");
+        if (answer == null) {
+            result.put("resultCode", "F-1");
+            result.put("msg", "존재하지 않는 답변입니다.");
+            return result;
         }
 
-        if (loginedMember == null || loginedMember.getId() != vetAnswer.getMemberId()) {
-            return Ut.jsHistoryBack("F-2", "권한이 없습니다.");
+        if (answer.getMemberId() != loginedMember.getId()) {
+            result.put("resultCode", "F-2");
+            result.put("msg", "권한이 없습니다.");
+            return result;
         }
 
-        vetAnswerService.delete(id);
+        vetAnswerService.delete(answer.getId());
+        qnaService.markAsAnsweredFalse(qnaId);
 
-        // 필요 시 질문을 '답변 미완료' 상태로 변경
-        qnaService.markAsAnsweredFalse(vetAnswer.getQnaId());
-
-        return Ut.jsReplace("S-1", "답변이 삭제되었습니다.", "/usr/qna/detail?id=" + vetAnswer.getQnaId());
+        result.put("resultCode", "S-1");
+        result.put("msg", "답변이 삭제되었습니다.");
+        return result;
     }
+
+
 
     // 수의사 전용 질문 목록 페이지
     @RequestMapping("/vetList")
