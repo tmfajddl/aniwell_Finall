@@ -63,6 +63,8 @@
                     </a>
                 </div>
 
+
+
                 <img class="logo-img mt-4" th:src="@{/img/logo.png}" alt="Aniwell Logo">
             </form>
 
@@ -242,6 +244,50 @@
             alert("팝업이 차단되었습니다. 팝업 차단을 해제해주세요.");
         }
     }
+</script>
+<script>
+    // 일반 로그인 form 전송 후 서버에서 Firebase Custom Token 발급 -> Firebase에 로그인 처리
+    async function handleFirebaseLogin() {
+        try {
+            const response = await fetch('/usr/member/firebase-token', {
+                method: 'POST',
+            });
+            const result = await response.json();
+
+            if (result.resultCode !== 'S-1') {
+                alert("Firebase 토큰 발급 실패");
+                return;
+            }
+
+            const customToken = result.data.token;
+
+            // Firebase 로그인
+            firebase.auth().signInWithCustomToken(customToken)
+                .then((userCredential) => {
+                    console.log("✅ Firebase 로그인 성공", userCredential);
+                    // 여기서 추가 작업 가능 (ex. 알림 초기화, Firestore 사용 등)
+                })
+                .catch((error) => {
+                    console.error("❌ Firebase 로그인 실패", error);
+                });
+        } catch (e) {
+            console.error("❌ 요청 실패", e);
+        }
+    }
+
+    // 로그인 form 전송 시 동작 추가
+    document.addEventListener("DOMContentLoaded", function () {
+        const loginForm = document.querySelector('form[action="/usr/member/doLogin"]');
+
+        if (loginForm) {
+            loginForm.addEventListener("submit", function (e) {
+                // 서버 로그인 요청 후 → Firebase 로그인 처리
+                setTimeout(() => {
+                    handleFirebaseLogin(); // 약간의 딜레이 후 실행 (서버 세션 설정 완료 후)
+                }, 300); // 필요시 delay 조절
+            });
+        }
+    });
 </script>
 
 </body>
