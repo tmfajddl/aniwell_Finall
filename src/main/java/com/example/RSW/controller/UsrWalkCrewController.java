@@ -236,6 +236,7 @@ public class UsrWalkCrewController {
 		data.put("loginMemberId", (rq != null && rq.isLogined()) ? rq.getLoginedMemberId() : "");
 
 		return ResultData.from("S-1", "크루 목록 불러오기 성공", data);
+
 	}
 
 }
