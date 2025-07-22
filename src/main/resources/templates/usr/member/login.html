@@ -12,12 +12,13 @@
             display: flex;
             transition: transform 0.3s ease;
         }
+
         .form-step {
             width: 100%;
             padding: 1rem;
         }
     </style>
-    <!-- firebase -->
+    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js"></script>
     <script>
@@ -26,10 +27,8 @@
             authDomain: "",
             projectId: "",
         };
-
         firebase.initializeApp(firebaseConfig);
     </script>
-
 </head>
 <body class="bg-white">
 
@@ -41,8 +40,8 @@
             <!-- 로그인 폼 -->
             <form class="left-panel h-full w-3/5 p-6" th:action="@{/usr/member/doLogin}" method="post">
                 <h1>LOGIN</h1>
-                <input type="text" name="loginId" placeholder="ID" required th:value="${param.loginId}" />
-                <input type="password" name="loginPw" placeholder="PW" required />
+                <input type="text" name="loginId" placeholder="ID" required th:value="${param.loginId}"/>
+                <input type="password" name="loginPw" placeholder="PW" required/>
                 <button class="sign-in-button" type="submit">sign in</button>
 
                 <!-- 소셜 로그인 버튼 영역 -->
@@ -63,12 +62,14 @@
                     </a>
                 </div>
 
+
                 <img class="logo-img mt-4" th:src="@{/img/logo.png}" alt="Aniwell Logo">
             </form>
 
             <!-- 회원가입 버튼 -->
             <div class="right-panel h-full w-2/5 flex items-center justify-center bg-yellow-100">
-                <span class="sign-up-button cursor-pointer text-lg font-semibold text-gray-700" id="show-sign-up">회원가입</span>
+                <span class="sign-up-button cursor-pointer text-lg font-semibold text-gray-700"
+                      id="show-sign-up">회원가입</span>
             </div>
         </div>
 
@@ -76,7 +77,8 @@
         <div class="sign-up flex w-full relative">
             <!-- 왼쪽 로그인으로 돌아가기 -->
             <div class="left-panel w-2/5 flex items-center justify-center bg-yellow-100">
-                <span class="sign-in-button cursor-pointer text-lg font-semibold text-gray-700" id="show-sign-in">로그인</span>
+                <span class="sign-in-button cursor-pointer text-lg font-semibold text-gray-700"
+                      id="show-sign-in">로그인</span>
             </div>
 
             <!-- 오른쪽 회원가입 -->
@@ -88,26 +90,30 @@
                     <!-- STEP 1 -->
                     <div class="form-step flex flex-col justify-around" id="step1">
                         <h2>Create Account</h2>
-                        <input type="text" name="loginId" placeholder="ID" required th:value="${param.loginId}" />
-                        <input type="password" name="loginPw" placeholder="PW" required />
-                        <input type="text" name="name" placeholder="NAME" required th:value="${param.name}" />
-                        <input type="text" name="nickname" placeholder="NICKNAME" required th:value="${param.nickname}" />
-                        <button type="button" class="next-button bg-yellow-400 p-2 rounded" onclick="goToStep(2)">다음</button>
+                        <input type="text" name="loginId" placeholder="ID" required th:value="${param.loginId}"/>
+                        <input type="password" name="loginPw" placeholder="PW" required/>
+                        <input type="text" name="name" placeholder="NAME" required th:value="${param.name}"/>
+                        <input type="text" name="nickname" placeholder="NICKNAME" required
+                               th:value="${param.nickname}"/>
+                        <button type="button" class="next-button bg-yellow-400 p-2 rounded" onclick="goToStep(2)">다음
+                        </button>
                     </div>
 
                     <!-- STEP 2 -->
                     <div class="form-step flex flex-col justify-around" id="step2">
                         <h2>Contact Info</h2>
-                        <input type="text" name="cellphone" placeholder="PHONE NUMBER" required th:value="${param.cellphone}">
-                        <input type="email" name="email" placeholder="EMAIL" required th:value="${param.email}" />
-                        <input type="text" name="address" id="address" placeholder="ADDRESS" required th:value="${param.address}" />
+                        <input type="text" name="cellphone" placeholder="PHONE NUMBER" required
+                               th:value="${param.cellphone}">
+                        <input type="email" name="email" placeholder="EMAIL" required th:value="${param.email}"/>
+                        <input type="text" name="address" id="address" placeholder="ADDRESS" required
+                               th:value="${param.address}"/>
 
                         <select name="authName" onchange="updateAuthLevel()" required>
                             <option value="일반" th:selected="${param.authName == '일반'}">일반</option>
                             <option value="수의사" th:selected="${param.authName == '수의사'}">수의사</option>
                         </select>
 
-                        <input type="hidden" id="authLevel" name="authLevel" th:value="${param.authLevel ?: 1}" />
+                        <input type="hidden" id="authLevel" name="authLevel" th:value="${param.authLevel ?: 1}"/>
                         <button type="button" class="prev-button" onclick="goToStep(1)">뒤로가기</button>
                         <button type="submit" class="submit-button bg-green-400 p-2 rounded text-white">sign up</button>
                     </div>
@@ -115,8 +121,8 @@
 
                 <!-- 🐾 발바닥 타임라인 -->
                 <div class="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-4 z-10">
-                    <img id="paw1" src="/img/paw_active.png" class="w-10 h-10 transition-transform duration-300" />
-                    <img id="paw2" src="/img/paw_inactive.png" class="w-10 h-10 transition-transform duration-300" />
+                    <img id="paw1" src="/img/paw_active.png" class="w-10 h-10 transition-transform duration-300"/>
+                    <img id="paw2" src="/img/paw_inactive.png" class="w-10 h-10 transition-transform duration-300"/>
                 </div>
             </form>
         </div>
@@ -243,6 +249,79 @@
         }
     }
 </script>
+<script>
+    // ✅ Firebase 로그인 및 Firestore 저장
+    async function handleFirebaseLogin() {
+        try {
+            const response = await fetch('/usr/member/firebase-token', {
+                method: 'POST',
+            });
 
+            const result = await response.json();
+
+            if (result.resultCode !== 'S-1') {
+                alert("Firebase 토큰 발급 실패");
+                return;
+            }
+
+            const customToken = result.data.token;
+
+            firebase.auth().signInWithCustomToken(customToken)
+                .then((userCredential) => {
+                    console.log("✅ Firebase 로그인 성공", userCredential);
+
+                    // ✅ Firestore에 사용자 정보 저장
+                    const user = userCredential.user;
+                    const uid = user.uid;
+                    const db = firebase.firestore();
+
+                    const userData = {
+                        uid: uid,
+                        email: user.email || '',
+                        displayName: user.displayName || '',
+                        lastLogin: new Date().toISOString()
+                    };
+
+                    db.collection("users").doc(uid).set(userData, {merge: true})
+                        .then(() => {
+                            console.log("✅ 사용자 정보 Firestore 저장 성공");
+                        })
+                        .catch((error) => {
+                            console.error("❌ Firestore 저장 실패", error);
+                        });
+
+                })
+                .catch((error) => {
+                    console.error("❌ Firebase 로그인 실패", error);
+                });
+
+        } catch (e) {
+            console.error("❌ 요청 실패", e);
+        }
+    }
+</script>
+
+<script>
+    // ✅ 일반 로그인 폼 제출 후 Firebase 로그인 트리거
+    document.addEventListener("DOMContentLoaded", function () {
+        const loginForm = document.querySelector('form[action="/usr/member/doLogin"]');
+        if (loginForm) {
+            loginForm.addEventListener("submit", function () {
+                setTimeout(() => {
+                    handleFirebaseLogin();
+                }, 300); // 서버 로그인 처리 이후 토큰 발급
+            });
+        }
+    });
+</script>
+
+<script>
+    // ✅ 소셜 로그인 성공 메시지 수신 시 Firebase 로그인 트리거
+    window.addEventListener("message", function (event) {
+        if (event.data === "socialLoginSuccess") {
+            handleFirebaseLogin();
+        }
+    });
+</script>
 </body>
 </html>
