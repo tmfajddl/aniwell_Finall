@@ -496,7 +496,9 @@ public class UsrMemberController {
 
             String uuid = UUID.randomUUID().toString();
             String savedFileName = uuid + "_" + originalFilename;
-            String uploadDir = "C:/upload/vet_certificates";
+
+            // 인증서 업로드 경로
+            String uploadDir = "src/main/resources/static/upload/vet_certificates";
 
             File dir = new File(uploadDir);
             if (!dir.exists()) dir.mkdirs();
@@ -504,10 +506,13 @@ public class UsrMemberController {
             File savedFile = new File(uploadDir + "/" + savedFileName);
             file.transferTo(savedFile);
 
+            // ✅ DB에 저장할 상대경로로 변경
+            String relativePath = "vet_certificates/" + savedFileName;
+
             VetCertificate cert = new VetCertificate();
             cert.setMemberId(rq.getLoginedMemberId());
             cert.setFileName(originalFilename);
-            cert.setFilePath(savedFileName);
+            cert.setFilePath(relativePath);
             cert.setUploadedAt(LocalDateTime.now());
             cert.setApproved(0);
 
@@ -820,10 +825,6 @@ public class UsrMemberController {
 
         try {
 
-            System.out.println("📌 [DEBUG] naverCallback() 진입");
-            System.out.println("📌 [DEBUG] code: " + code);
-            System.out.println("📌 [DEBUG] state: " + state);
-
             RestTemplate restTemplate = new RestTemplate();
 
             // 네이버 애플리케이션 등록 정보
@@ -837,17 +838,14 @@ public class UsrMemberController {
                     "&client_id=" + clientId +
                     "&client_secret=" + clientSecret +
                     "&code=" + code +
-                    "&state=" + state
-                    + "&auth_type=reprompt";
+                    "&state=" + state;
 
-            System.out.println("📌 [DEBUG] tokenUrl: " + tokenUrl);
+
 
             // 2️⃣ 토큰 요청 (GET 방식)
             ResponseEntity<Map> tokenResponse = restTemplate.getForEntity(tokenUrl, Map.class);
-            System.out.println("📌 [DEBUG] tokenResponse: " + tokenResponse);
 
             String accessToken = (String) tokenResponse.getBody().get("access_token");
-            System.out.println("📌 [DEBUG] accessToken: " + accessToken);
 
             // 3️⃣ 사용자 정보 요청을 위한 헤더 설정
             HttpHeaders headers = new HttpHeaders();
@@ -862,9 +860,6 @@ public class UsrMemberController {
                     Map.class
             );
 
-            System.out.println("📌 [DEBUG] userInfoResponse: " + userInfoResponse);
-            System.out.println("📌 [DEBUG] userInfoResponse.getBody(): " + userInfoResponse.getBody());
-
             // 5️⃣ 응답 파싱
             Map<String, Object> body = userInfoResponse.getBody();
             Map<String, Object> response = (Map<String, Object>) body.get("response");
@@ -874,9 +869,6 @@ public class UsrMemberController {
             String name = (String) response.get("name");           // 이름
             String email = (String) response.get("email");         // 이메일
 
-            System.out.println("📌 [DEBUG] socialId: " + socialId);
-            System.out.println("📌 [DEBUG] name: " + name);
-            System.out.println("📌 [DEBUG] email: " + email);
 
             // 7️⃣ 회원 DB에 등록 또는 기존 회원 로그인 처리
             Member member = memberService.getOrCreateSocialMember("naver", socialId, email, name);
@@ -896,5 +888,26 @@ public class UsrMemberController {
             return "redirect:/usr/member/login?error=naver";
         }
     }
+
+    // Firebase 토큰 생성
+    @PostMapping("/usr/member/firebase-token")
+    @ResponseBody
+    public ResultData<?> generateFirebaseToken(HttpServletRequest req) {
+        Rq rq = (Rq) req.getAttribute("rq");
+        Member member = rq.getLoginedMember();
+
+        // UID는 소셜 제공자 + 고유 ID 조합으로 구성 (예: google_123456)
+        String uid = member.getSocialProvider() + "_" + member.getSocialId();
+
+        // Firebase 토큰 생성
+        String customToken = memberService.createFirebaseCustomToken(uid);
+
+        if (customToken == null) {
+            return ResultData.from("F-1", "Firebase 토큰 생성 실패");
+        }
+
+        return ResultData.from("S-1", "토큰 생성 성공", "token", customToken);
+    }
+
 
 }
