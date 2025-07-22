@@ -5,19 +5,26 @@
     <title>알림함</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" th:href="@{/resource/css/common.css}">
+    <style>
+        .scroll-box {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+    </style>
+
 </head>
-<body class="bg-gradient-to-b from-[#fdf6e3] to-[#fffbea] font-sans">
+<body class="bg-gradient-to-b from-[#e4f0b9] to-[#fcdca9] font-sans">
 <div class="flex h-screen">
     <!-- Sidebar -->
     <div th:replace="common :: siteHeader"></div>
 
     <!-- Main content -->
-    <main class="main_page min-h-screen flex-1 p-6 space-y-6 overflow-y-auto">
+    <main class="main_page min-h-screen flex-1 p-6 space-y-6">
 
         <h2 class="text-3xl font-bold text-gray-800">📢 알림함</h2>
         <hr class="border-t border-yellow-400 mb-4" />
 
-        <div class="notification-list space-y-4">
+        <div class="notification-list space-y-5 scroll-box">
             <div th:if="${#lists.isEmpty(notifications)}" class="text-center text-gray-500">
                 📭 알림이 없습니다.
             </div>
@@ -80,8 +87,11 @@
                 const id = item.dataset.id;
                 const url = link.href;
 
-                fetch(`${cp}/usr/notifications/markAsRead?id=${id}`, { method: 'POST' })
-                    .then(() => {
+                fetch('/usr/notifications/markAsRead?notificationId=' + id, {
+                    method: 'POST'
+                })
+
+                        .then(() => {
                         item.classList.replace('bg-yellow-100', 'bg-white');
                         item.classList.add('opacity-70');
                         window.location.href = url;
