@@ -187,19 +187,13 @@
         SELECT * FROM member WHERE email = #{email}
     </select>
 
-<<<<<<< HEAD
-    <select id="getAllMemberIds" resultType="int">
-        SELECT id FROM member WHERE delStatus = 0
-    </select>
-
-=======
     <insert id="insert" parameterType="Member">
         INSERT INTO member
         (regDate, updateDate, loginId, loginPw, name, email, authLevel, delStatus, socialProvider, socialId)
         VALUES
             (#{regDate}, #{updateDate}, #{loginId}, #{loginPw}, #{name}, #{email}, #{authLevel}, #{delStatus}, #{socialProvider}, #{socialId})
     </insert>
->>>>>>> RSH/main
+
 
     <select id="getAllMemberIds" resultType="int">
         SELECT id FROM member WHERE delStatus = 0
