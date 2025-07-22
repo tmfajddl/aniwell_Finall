@@ -97,4 +97,9 @@
         WHERE memberId = #{memberId}
     </delete>
 
+    <update id="update">
+        UPDATE notification
+        SET isRead = #{read}
+        WHERE id = #{id}
+    </update>
 </mapper>
