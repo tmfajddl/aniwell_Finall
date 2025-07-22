@@ -1,93 +1,91 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" xmlns:c="http://www.w3.org/1999/XSL/Transform">
 <head>
-    <meta charset="UTF-8">
-    <title>관리자 대시보드</title>
-    <link rel="stylesheet"
-          href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css"/>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" th:href="@{/resource/css/common.css}">
-    <style>
-        .scroll-box {
-            max-height: 400px;
-            overflow-y: auto;
-        }
-    </style>
+<meta charset="UTF-8">
+<title>관리자 대시보드</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" />
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" th:href="@{/resource/css/common.css}">
+<style>
+.scroll-box {
+	max-height: 400px;
+	overflow-y: auto;
+}
+</style>
 </head>
 <body class="bg-gradient-to-b from-[#e4f0b9] to-[#fcdca9] font-sans">
-<div class="flex h-screen" >
-    <!-- Sidebar -->
-    <div th:replace="common :: siteHeader"></div>
+	<div class="flex h-screen">
+		<!-- Sidebar -->
+		<div th:replace="common :: siteHeader"></div>
 
-    <!-- Main content -->
-    <main class="main_page min-h-screen flex-1 p-6 grid grid-rows-12 gap-4 bg-white">
+		<!-- Main content -->
+		<main class="main_page min-h-screen flex-1 p-6 grid grid-rows-12 gap-4 bg-white">
 
-        <h1 class="text-3xl font-bold mb-6">관리자 대시보드</h1>
+			<h1 class="text-3xl font-bold mb-6">관리자 대시보드</h1>
 
-        <!-- 탭 버튼 -->
-        <div class="flex space-x-2 mb-6" style="height: 40px;">
-            <button class="tab-button bg-blue-500 text-white px-4 py-2 rounded" data-target="qna-section">QnA</button>
-            <button class="tab-button bg-gray-200 text-black px-4 py-2 rounded" data-target="member-section">멤버</button>
-            <button class="tab-button bg-gray-200 text-black px-4 py-2 rounded" data-target="post-section">게시글</button>
-        </div>
+			<!-- 탭 버튼 -->
+			<div class="flex space-x-2 mb-6" style="height: 40px;">
+				<button class="tab-button bg-blue-500 text-white px-4 py-2 rounded" data-target="qna-section">QnA</button>
+				<button class="tab-button bg-gray-200 text-black px-4 py-2 rounded" data-target="member-section">멤버</button>
+				<button class="tab-button bg-gray-200 text-black px-4 py-2 rounded" data-target="post-section">게시글</button>
+			</div>
 
-        <!-- ✅ QnA 섹션 -->
-        <div id="qna-section">
-            <div class="bg-white p-4 rounded mb-8">
-                <h2 class="text-xl font-semibold mb-4">QnA 목록</h2>
+			<!-- ✅ QnA 섹션 -->
+			<div id="qna-section">
+				<div class="bg-white p-4 rounded mb-8">
+					<h2 class="text-xl font-semibold mb-4">QnA 목록</h2>
 
-                <!-- 검색창 + 필터 드롭다운 -->
-                <div class="flex gap-2 mb-4">
-                    <select id="search-filter" class="border p-2 rounded">
-                        <option value="title">제목</option>
-                        <option value="writer">작성자</option>
-                        <option value="both">제목 + 작성자</option>
-                    </select>
-                    <input id="qna-search" type="text" placeholder="검색어 입력"
-                           class="border p-2 rounded w-full"/>
-                </div>
+					<!-- 검색창 + 필터 드롭다운 -->
+					<div class="flex gap-2 mb-4">
+						<select id="search-filter" class="border p-2 rounded">
+							<option value="title">제목</option>
+							<option value="writer">작성자</option>
+							<option value="both">제목 + 작성자</option>
+						</select>
+						<input id="qna-search" type="text" placeholder="검색어 입력" class="border p-2 rounded w-full" />
+					</div>
 
-                <!-- QnA 리스트 -->
-                <ul id="qna-list">
-                    <li th:each="qna : ${qnaList}" class="qna-item mb-2 p-2 border rounded hover:bg-gray-50 cursor-pointer"
-                        th:attr="data-id=${qna.id}, data-title=${qna.title}, data-writer=${qna.memberName}, data-date=${qna.regDate}, data-answer=${qna.hasAnswer}, data-body=${qna.body}, data-secret=${qna.secret}">
-                        <div class="flex justify-between items-center">
-                            <div>
-                                <span th:if="${qna.secret}">🔒</span>
-                                <span th:text="${qna.title}" class="qna-title text-blue-600 font-medium"></span>
-                                <span class="text-xs text-gray-400 ml-1" th:text="${qna.regDate}"></span>
-                                <div class="text-sm text-gray-600">
-                                    작성자: <span th:text="${qna.memberName}" class="qna-writer"></span>
-                                </div>
-                            </div>
-                            <span th:text="${qna.hasAnswer ? '답변완료' : '미답변'}"
-                                  th:classappend="${qna.hasAnswer ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}"
-                                  class="text-xs font-semibold px-2 py-1 rounded-full"></span>
-                        </div>
-                    </li>
-                </ul>
-            </div>
-        </div>
+					<!-- QnA 리스트 -->
+					<ul id="qna-list">
+						<li th:each="qna : ${qnaList}" class="qna-item mb-2 p-2 border rounded hover:bg-gray-50 cursor-pointer"
+							th:attr="data-id=${qna.id}, data-title=${qna.title}, data-writer=${qna.memberName}, data-date=${qna.regDate}, data-answer=${qna.hasAnswer}, data-body=${qna.body}, data-secret=${qna.secret}">
+							<div class="flex justify-between items-center">
+								<div>
+									<span th:if="${qna.secret}">🔒</span>
+									<span th:text="${qna.title}" class="qna-title text-blue-600 font-medium"></span>
+									<span class="text-xs text-gray-400 ml-1" th:text="${qna.regDate}"></span>
+									<div class="text-sm text-gray-600">
+										작성자:
+										<span th:text="${qna.memberName}" class="qna-writer"></span>
+									</div>
+								</div>
+								<span th:text="${qna.hasAnswer ? '답변완료' : '미답변'}"
+									th:classappend="${qna.hasAnswer ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}"
+									class="text-xs font-semibold px-2 py-1 rounded-full"></span>
+							</div>
+						</li>
+					</ul>
+				</div>
+			</div>
 
-        <!-- ✅ 멤버 섹션 -->
-        <div id="member-section" class="hidden">
+			<!-- ✅ 멤버 섹션 -->
+			<div id="member-section" class="hidden">
 
-            <!-- 검색 필터 -->
-            <div class="flex gap-2 mb-6">
-                <select id="member-filter" class="border p-2 rounded">
-                    <option value="authLevel">사용자 권한</option>
-                    <option value="loginId">아이디</option>
-                    <option value="name">이름</option>
-                    <option value="id">번호</option>
-                </select>
-                <input id="member-search" type="text" placeholder="검색어 입력" class="border p-2 rounded w-full"/>
-            </div>
+				<!-- 검색 필터 -->
+				<div class="flex gap-2 mb-6">
+					<select id="member-filter" class="border p-2 rounded">
+						<option value="authLevel">사용자 권한</option>
+						<option value="loginId">아이디</option>
+						<option value="name">이름</option>
+						<option value="id">번호</option>
+					</select>
+					<input id="member-search" type="text" placeholder="검색어 입력" class="border p-2 rounded w-full" />
+				</div>
 
-            <!-- 카드 리스트 -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="member-list">
-                <div th:each="member : ${members}"
-                     class="bg-white shadow p-4 rounded member-card cursor-pointer"
-                     th:attr="data-id=${member.id},
+				<!-- 카드 리스트 -->
+				<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="member-list">
+					<div th:each="member : ${members}" class="bg-white shadow p-4 rounded member-card cursor-pointer"
+						th:attr="data-id=${member.id},
               data-name=${member.name},
               data-loginid=${member.loginId},
               data-authlevel=${member.authLevel == 7 ? '관리자' : (member.authLevel == 3 ? '수의사' : '일반')},
@@ -95,237 +93,283 @@
               data-approved=${member.vetCertApproved},
               data-cert=${member.vetCertUrl}">
 
-                    <!-- 이름 + 권한 뱃지 -->
-                    <div class="flex justify-between items-center mb-2">
-                        <div class="flex items-center gap-2">
-                            <h3 class="text-base font-semibold" th:text="${member.name} + ' (' + ${member.loginId} + ')'"></h3>
-                            <span th:if="${member.authLevel == 7}" class="bg-red-100 text-red-700 text-xs font-medium px-2 py-0.5 rounded-full">관리자</span>
-                            <span th:if="${member.authLevel == 3}" class="bg-blue-100 text-blue-700 text-xs font-medium px-2 py-0.5 rounded-full">수의사</span>
-                            <span th:if="${member.authLevel != 7 and member.authLevel != 3}" class="bg-gray-100 text-gray-700 text-xs font-medium px-2 py-0.5 rounded-full">일반</span>
-                        </div>
-                        <span class="text-sm text-gray-400" th:text="'#' + ${member.id}"></span>
-                    </div>
+						<!-- 이름 + 권한 뱃지 -->
+						<div class="flex justify-between items-center mb-2">
+							<div class="flex items-center gap-2">
+								<h3 class="text-base font-semibold" th:text="${member.name} + ' (' + ${member.loginId} + ')'"></h3>
+								<span th:if="${member.authLevel == 7}"
+									class="bg-red-100 text-red-700 text-xs font-medium px-2 py-0.5 rounded-full">관리자</span>
+								<span th:if="${member.authLevel == 3}"
+									class="bg-blue-100 text-blue-700 text-xs font-medium px-2 py-0.5 rounded-full">수의사</span>
+								<span th:if="${member.authLevel != 7 and member.authLevel != 3}"
+									class="bg-gray-100 text-gray-700 text-xs font-medium px-2 py-0.5 rounded-full">일반</span>
+							</div>
+							<span class="text-sm text-gray-400" th:text="'#' + ${member.id}"></span>
+						</div>
 
-                    <!-- 이메일 -->
-                    <p class="text-sm text-gray-600 mb-1">이메일: <span th:text="${member.email}"></span></p>
+						<!-- 이메일 -->
+						<p class="text-sm text-gray-600 mb-1">
+							이메일:
+							<span th:text="${member.email}"></span>
+						</p>
 
-                    <!-- 인증 상태 -->
-                    <p class="text-sm text-gray-600 mb-1">
-                        인증 상태:
-                        <span th:if="${member.vetCertApproved == 1}">✅ 인증</span>
-                        <span th:if="${member.vetCertApproved == 2}">❌ 거절</span>
-                        <span th:if="${member.vetCertApproved == 0}">⏳ 대기 중</span>
-                    </p>
+						<!-- 인증 상태 -->
+						<p class="text-sm text-gray-600 mb-1">
+							인증 상태:
+							<span th:if="${member.vetCertApproved == 1}">✅ 인증</span>
+							<span th:if="${member.vetCertApproved == 2}">❌ 거절</span>
+							<span th:if="${member.vetCertApproved == 0}">⏳ 대기 중</span>
+						</p>
 
-                    <!-- 증명서 제출 여부 (클릭 X) -->
-                    <p class="text-sm text-gray-600">
-                        증명서:
-                        <span th:if="${member.vetCertUrl != null}">제출됨</span>
-                        <span th:unless="${member.vetCertUrl != null}">없음</span>
-                    </p>
-                </div>
-            </div>
+						<!-- 증명서 제출 여부 (클릭 X) -->
+						<p class="text-sm text-gray-600">
+							증명서:
+							<span th:if="${member.vetCertUrl != null}">제출됨</span>
+							<span th:unless="${member.vetCertUrl != null}">없음</span>
+						</p>
+					</div>
+				</div>
 
-        </div>
-
-
-
-
-        <!-- ✅ 게시글 섹션 -->
-        <!-- ✅ 게시글 섹션 -->
-        <div id="post-section" class="hidden">
-            <div class="bg-white p-4 rounded mb-8">
-                <h2 class="text-xl font-semibold mb-4">게시글 목록</h2>
-
-                <!-- 🔍 검색 필터 -->
-                <div class="flex gap-2 mb-4">
-                    <select id="post-filter" class="border p-2 rounded">
-                        <option value="title">제목</option>
-                        <option value="body">내용</option>
-                        <option value="both">제목 + 내용</option>
-                        <option value="writer">닉네임</option>
-                    </select>
-                    <input id="post-search" type="text" placeholder="검색어 입력"
-                           class="border p-2 rounded w-full"/>
-                </div>
-
-                <!-- 📋 게시글 리스트 -->
-                <ul id="post-list">
-                    <li th:each="article : ${articles}" class="post-item mb-2 p-2 border rounded hover:bg-gray-50 cursor-pointer"
-                        th:attr="data-id=${article.id}, data-title=${article.title}, data-body=${article.body}, data-writer=${article.extra__writer}, data-date=${article.regDate}, data-hit=${article.hitCount}">
-                        <div class="flex justify-between items-center">
-                            <div>
-                                <span th:text="${article.title}" class="post-title text-blue-600 font-medium"></span>
-                                <span class="text-xs text-gray-400 ml-1" th:text="${article.regDate}"></span>
-                                <div class="text-sm text-gray-600">
-                                    작성자: <span th:text="${article.extra__writer}" class="post-writer"></span>
-                                </div>
-                            </div>
-                            <span class="text-sm text-gray-400">조회 <span th:text="${article.hitCount}">0</span></span>
-                        </div>
-                    </li>
-                </ul>
-            </div>
-        </div>
-
-
-        <!-- 📄 게시글 상세보기 모달 -->
-        <div id="post-detail-modal" class="fixed inset-0 bg-black bg-opacity-40 hidden items-center justify-center z-50">
-            <div class="bg-white p-6 rounded shadow-lg w-full max-w-xl relative">
-                <button class="absolute top-2 right-2 text-gray-500 hover:text-black" onclick="hidePostDetail()">&times;</button>
-                <h3 class="text-xl font-bold mb-4" id="post-detail-title"></h3>
-                <p class="text-sm text-gray-700 mb-1">작성자: <span id="post-detail-writer"></span></p>
-                <p class="text-sm text-gray-500 mb-1">작성일: <span id="post-detail-date"></span></p>
-                <p class="text-sm text-gray-500 mb-4">조회수: <span id="post-detail-hit"></span></p>
-                <div class="border-t border-gray-200 pt-3">
-                    <p class="text-gray-800 whitespace-pre-wrap" id="post-detail-body"></p>
-                </div>
-                <div class="flex justify-end mt-4">
-                    <div class="flex justify-end mt-4">
-                        <input type="hidden" id="post-delete-id"/>
-                        <button id="post-delete-btn" class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">
-                            게시글 삭제
-                        </button>
-                    </div>
-
-                </div>
-            </div>
-        </div>
-
-        <!-- ✅ QnA 상세보기 모달 -->
-        <div id="qna-detail" class="fixed inset-0 bg-black bg-opacity-40 hidden items-center justify-center z-50">
-            <div class="bg-white p-6 rounded shadow-lg w-full max-w-xl relative">
-                <button class="absolute top-2 right-2 text-gray-500 hover:text-black" onclick="hideDetail()">&times;</button>
-
-                <!-- 제목 -->
-                <h3 class="text-xl font-bold mb-4" id="detail-title"></h3>
-
-                <!-- 작성자, 날짜 -->
-                <p class="text-sm text-gray-700 mb-1">작성자: <span id="detail-writer"></span></p>
-                <p class="text-sm text-gray-500 mb-1">작성일: <span id="detail-date"></span></p>
-
-                <!-- 비밀글 여부 -->
-                <p class="text-sm text-gray-500 mb-2">비밀글 여부: <span id="detail-secret"></span></p>
-
-                <!-- 본문 -->
-                <div class="border-t border-gray-200 pt-3 mb-4">
-                    <p class="text-gray-800 whitespace-pre-wrap" id="detail-body"></p>
-                </div>
-
-                <!-- 답변 상태 -->
-                <p class="text-sm font-semibold mb-4">답변 상태:
-                    <span id="detail-status" class="inline-block px-2 py-1 rounded text-white"></span>
-                </p>
-
-                <!-- 질문 삭제 폼 -->
-                <div class="flex justify-end gap-2">
-                    <form id="delete-form" method="post" action="#">
-                        <!-- JS에서 action 설정 및 hidden input 삽입 -->
-                    </form>
-                </div>
-
-                <!-- ✅ 답변 영역 -->
-                <div id="qna-answer-section" class="mt-4">
-                    <!-- 답변 있음 -->
-                    <div id="qna-answer-content" class="hidden border p-4 bg-gray-100 mb-4">
-                        <div class="text-sm text-gray-500 mb-1">
-                            답변자: <span id="answer-vetName"></span> /
-                            <span id="answer-date"></span>
-                        </div>
-                        <p id="answer-text" class="mb-2 whitespace-pre-wrap"></p>
-
-                        <!-- ✅ 답변 수정 버튼 (추가!) -->
-                        <button id="answer-edit-toggle-btn" class="bg-yellow-500 text-white px-3 py-1 rounded mb-2">답변 수정</button>
-
-                        <!-- ✏️ 수정 폼 -->
-                        <form id="answer-update-form" class="space-y-2 hidden">
-                            <input type="hidden" name="id" id="answer-id" />
-                            <textarea name="answer" id="answer-update-text" rows="5" class="w-full border p-2"></textarea>
-                            <button type="button" id="submit-update-btn" class="bg-yellow-500 text-white px-3 py-1 rounded">수정 완료</button>
-                        </form>
-
-                        <!-- 삭제 폼 -->
-                        <form id="answer-delete-form" method="post" action="/adm/qna/doDeleteAnswer" class="mt-2">
-                            <input type="hidden" name="id" id="answer-delete-id" />
-                            <button type="button" id="answer-delete-btn" class="bg-red-500 text-white px-3 py-1 rounded">
-                                답변 삭제
-                            </button>
-
-                        </form>
-                    </div>
-
-                </div>
-            </div>
-        </div>
+			</div>
 
 
 
-        <!-- ✅ 상세 팝업 -->
-        <div id="member-detail-modal" class="fixed inset-0 bg-black bg-opacity-40 hidden items-center justify-center z-50">
-            <div class="bg-white p-6 rounded shadow-lg w-full max-w-md relative">
-                <button class="absolute top-2 right-2 text-gray-500 hover:text-black" onclick="hideMemberDetail()">&times;</button>
-                <h2 class="text-xl font-bold mb-4" id="m-name-id"></h2>
-                <p class="text-sm mb-1">이메일: <span id="m-email"></span></p>
-                <p class="text-sm mb-1">권한: <span id="m-role"></span></p>
-                <p class="text-sm mb-1">인증 상태: <span id="m-status"></span></p>
-                <p class="text-sm mb-4">증명서: <span id="m-cert"></span></p>
-                <div class="flex justify-end gap-2">
-                    <button id="m-admin-btn" class="px-3 py-1 rounded text-white"></button>
-                    <button id="m-approve-btn" class="bg-green-500 text-white px-3 py-1 rounded hidden">승인</button>
-                    <button id="m-reject-btn" class="bg-red-500 text-white px-3 py-1 rounded hidden">거절</button>
-                </div>
-            </div>
-        </div>
 
-        <!-- 게시글 등록 모달 -->
-        <div id="post-modal" class="fixed inset-0 bg-black bg-opacity-40 hidden items-center justify-center z-50">
-            <div class="bg-white p-6 rounded-xl shadow-lg w-full max-w-2xl relative">
-                <!-- 닫기 버튼 -->
-                <button class="absolute top-2 right-2 text-gray-400 hover:text-black text-2xl font-bold"
-                        onclick="hidePostModal()">&times;</button>
+			<!-- ✅ 게시글 섹션 -->
+			<!-- ✅ 게시글 섹션 -->
+			<div id="post-section" class="hidden">
+				<div class="bg-white p-4 rounded mb-8">
+					<h2 class="text-xl font-semibold mb-4">게시글 목록</h2>
 
-                <h2 class="text-2xl font-bold mb-4">게시글 작성</h2>
+					<!-- 🔍 검색 필터 -->
+					<div class="flex gap-2 mb-4">
+						<select id="post-filter" class="border p-2 rounded">
+							<option value="title">제목</option>
+							<option value="body">내용</option>
+							<option value="both">제목 + 내용</option>
+							<option value="writer">닉네임</option>
+						</select>
+						<input id="post-search" type="text" placeholder="검색어 입력" class="border p-2 rounded w-full" />
+					</div>
 
-                <form method="POST" action="/usr/article/doWrite" class="space-y-4">
-
-                    <!-- 게시판 선택 -->
-                    <div>
-                        <label for="modal-boardId" class="block font-semibold mb-1">게시판 선택</label>
-                        <select id="modal-boardId" name="boardId" required class="select select-bordered w-full">
-                            <option value="">-- 게시판을 선택하세요 --</option>
-                            <c:if test="${rq.loginedMember.authLevel == 7}">
-                                <option value="1">공지사항</option>
-                            </c:if>
-                            <option value="2">크루모집</option>
-                        </select>
-                    </div>
-
-                    <!-- 제목 입력 -->
-                    <div>
-                        <label for="modal-title" class="block font-semibold mb-1">제목</label>
-                        <input type="text" id="modal-title" name="title" required class="input input-bordered w-full"
-                               placeholder="제목을 입력하세요"/>
-                    </div>
-
-                    <!-- 내용 입력 -->
-                    <div>
-                        <label for="modal-body" class="block font-semibold mb-1">내용</label>
-                        <textarea id="modal-body" name="body" rows="8" required class="textarea textarea-bordered w-full"
-                                  placeholder="내용을 입력하세요"></textarea>
-                    </div>
-
-                    <!-- 버튼 -->
-                    <div class="flex justify-end gap-4">
-                        <button type="submit" class="btn btn-primary">등록</button>
-                        <button type="button" class="btn btn-outline" onclick="hidePostModal()">취소</button>
-                    </div>
-
-                </form>
-            </div>
-        </div>
+					<!-- 📋 게시글 리스트 -->
+					<ul id="post-list">
+						<li th:each="article : ${articles}" class="post-item mb-2 p-2 border rounded hover:bg-gray-50 cursor-pointer"
+							th:attr="data-id=${article.id}, data-title=${article.title}, data-body=${article.body}, data-writer=${article.extra__writer}, data-date=${article.regDate}, data-hit=${article.hitCount}">
+							<div class="flex justify-between items-center">
+								<div>
+									<span th:text="${article.title}" class="post-title text-blue-600 font-medium"></span>
+									<span class="text-xs text-gray-400 ml-1" th:text="${article.regDate}"></span>
+									<div class="text-sm text-gray-600">
+										작성자:
+										<span th:text="${article.extra__writer}" class="post-writer"></span>
+									</div>
+								</div>
+								<span class="text-sm text-gray-400">
+									조회
+									<span th:text="${article.hitCount}">0</span>
+								</span>
+							</div>
+						</li>
+					</ul>
+				</div>
+			</div>
 
 
-        <script>
+			<!-- 📄 게시글 상세보기 모달 -->
+			<div id="post-detail-modal" class="fixed inset-0 bg-black bg-opacity-40 hidden items-center justify-center z-50">
+				<div class="bg-white p-6 rounded shadow-lg w-full max-w-xl relative">
+					<button class="absolute top-2 right-2 text-gray-500 hover:text-black" onclick="hidePostDetail()">&times;</button>
+					<h3 class="text-xl font-bold mb-4" id="post-detail-title"></h3>
+					<p class="text-sm text-gray-700 mb-1">
+						작성자:
+						<span id="post-detail-writer"></span>
+					</p>
+					<p class="text-sm text-gray-500 mb-1">
+						작성일:
+						<span id="post-detail-date"></span>
+					</p>
+					<p class="text-sm text-gray-500 mb-4">
+						조회수:
+						<span id="post-detail-hit"></span>
+					</p>
+					<div class="border-t border-gray-200 pt-3">
+						<p class="text-gray-800 whitespace-pre-wrap" id="post-detail-body"></p>
+					</div>
+					<div class="flex justify-end mt-4">
+						<div class="flex justify-end mt-4">
+							<input type="hidden" id="post-delete-id" />
+							<button id="post-delete-btn" class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">게시글 삭제</button>
+						</div>
+
+					</div>
+				</div>
+			</div>
+
+			<!-- ✅ QnA 상세보기 모달 -->
+			<div id="qna-detail" class="fixed inset-0 bg-black bg-opacity-40 hidden items-center justify-center z-50">
+				<div class="bg-white p-6 rounded shadow-lg w-full max-w-xl relative">
+					<button class="absolute top-2 right-2 text-gray-500 hover:text-black" onclick="hideDetail()">&times;</button>
+
+					<!-- 제목 -->
+					<h3 class="text-xl font-bold mb-4" id="detail-title"></h3>
+
+					<!-- 작성자, 날짜 -->
+					<p class="text-sm text-gray-700 mb-1">
+						작성자:
+						<span id="detail-writer"></span>
+					</p>
+					<p class="text-sm text-gray-500 mb-1">
+						작성일:
+						<span id="detail-date"></span>
+					</p>
+
+					<!-- 비밀글 여부 -->
+					<p class="text-sm text-gray-500 mb-2">
+						비밀글 여부:
+						<span id="detail-secret"></span>
+					</p>
+
+					<!-- 본문 -->
+					<div class="border-t border-gray-200 pt-3 mb-4">
+						<p class="text-gray-800 whitespace-pre-wrap" id="detail-body"></p>
+					</div>
+
+					<!-- 답변 상태 -->
+					<p class="text-sm font-semibold mb-4">
+						답변 상태:
+						<span id="detail-status" class="inline-block px-2 py-1 rounded text-white"></span>
+					</p>
+
+					<!-- 질문 삭제 폼 -->
+					<div class="flex justify-end gap-2">
+						<form id="delete-form" method="post" action="#">
+							<!-- JS에서 action 설정 및 hidden input 삽입 -->
+						</form>
+					</div>
+
+					<!-- ✅ 답변 영역 -->
+					<div id="qna-answer-section" class="mt-4">
+						<!-- 답변 있음 -->
+						<div id="qna-answer-content" class="hidden border p-4 bg-gray-100 mb-4">
+							<div class="text-sm text-gray-500 mb-1">
+								답변자:
+								<span id="answer-vetName"></span>
+								/
+								<span id="answer-date"></span>
+							</div>
+							<p id="answer-text" class="mb-2 whitespace-pre-wrap"></p>
+
+							<!-- ✅ 답변 수정 버튼 (추가!) -->
+							<button id="answer-edit-toggle-btn" class="bg-yellow-500 text-white px-3 py-1 rounded mb-2">답변 수정</button>
+
+							<!-- ✏️ 수정 폼 -->
+							<form id="answer-update-form" class="space-y-2 hidden">
+								<input type="hidden" name="id" id="answer-id" />
+								<textarea name="answer" id="answer-update-text" rows="5" class="w-full border p-2"></textarea>
+								<button type="button" id="submit-update-btn" class="bg-yellow-500 text-white px-3 py-1 rounded">수정 완료</button>
+							</form>
+
+							<!-- 삭제 폼 -->
+							<form id="answer-delete-form" method="post" action="/adm/qna/doDeleteAnswer" class="mt-2">
+								<input type="hidden" name="id" id="answer-delete-id" />
+								<button type="button" id="answer-delete-btn" class="bg-red-500 text-white px-3 py-1 rounded">답변 삭제</button>
+
+							</form>
+						</div>
+
+					</div>
+				</div>
+			</div>
+
+
+
+			<!-- ✅ 상세 팝업 -->
+			<div id="member-detail-modal" class="fixed inset-0 bg-black bg-opacity-40 hidden items-center justify-center z-50">
+				<div class="bg-white p-6 rounded shadow-lg w-full max-w-md relative">
+					<button class="absolute top-2 right-2 text-gray-500 hover:text-black" onclick="hideMemberDetail()">&times;</button>
+					<h2 class="text-xl font-bold mb-4" id="m-name-id"></h2>
+					<p class="text-sm mb-1">
+						이메일:
+						<span id="m-email"></span>
+					</p>
+					<p class="text-sm mb-1">
+						권한:
+						<span id="m-role"></span>
+					</p>
+					<p class="text-sm mb-1">
+						인증 상태:
+						<span id="m-status"></span>
+					</p>
+					<p class="text-sm mb-4">
+						증명서:
+						<span id="m-cert"></span>
+					</p>
+					<div class="flex justify-end gap-2">
+						<button id="m-admin-btn" class="px-3 py-1 rounded text-white"></button>
+						<button id="m-approve-btn" class="bg-green-500 text-white px-3 py-1 rounded hidden">승인</button>
+						<button id="m-reject-btn" class="bg-red-500 text-white px-3 py-1 rounded hidden">거절</button>
+					</div>
+				</div>
+			</div>
+
+			<!-- 게시글 등록 모달 -->
+			<div id="post-modal" class="fixed inset-0 bg-black bg-opacity-40 hidden items-center justify-center z-50">
+				<div class="bg-white p-6 rounded-xl shadow-lg w-full max-w-2xl relative">
+					<!-- 닫기 버튼 -->
+					<button class="absolute top-2 right-2 text-gray-400 hover:text-black text-2xl font-bold" onclick="hidePostModal()">&times;</button>
+
+					<h2 class="text-2xl font-bold mb-4">게시글 작성</h2>
+
+					<!-- ✅ enctype 추가 & onsubmit 자바스크립트로 전송 -->
+					<form id="writeForm" class="space-y-4" enctype="multipart/form-data"
+						onsubmit="event.preventDefault(); submitArticleJson();">
+
+						<!-- 게시판 선택 -->
+						<div>
+							<label for="modal-boardId" class="block font-semibold mb-1">게시판 선택</label>
+							<select id="modal-boardId" name="boardId" required class="select select-bordered w-full">
+								<option value="">-- 게시판을 선택하세요 --</option>
+								<c:if test="${rq.loginedMember.authLevel == 7}">
+									<option value="1">공지사항</option>
+								</c:if>
+								<option value="2">크루모집</option>
+							</select>
+						</div>
+
+						<!-- 제목 입력 -->
+						<div>
+							<label for="modal-title" class="block font-semibold mb-1">제목</label>
+							<input type="text" id="modal-title" name="title" required class="input input-bordered w-full"
+								placeholder="제목을 입력하세요" />
+						</div>
+
+						<!-- 내용 입력 -->
+						<div>
+							<label for="modal-body" class="block font-semibold mb-1">내용</label>
+							<textarea id="modal-body" name="body" rows="8" required class="textarea textarea-bordered w-full"
+								placeholder="내용을 입력하세요"></textarea>
+						</div>
+
+						<!-- ✅ 이미지 업로드 추가 -->
+						<div>
+							<label for="modal-imageFile" class="block font-semibold mb-1">이미지 첨부 (선택)</label>
+							<input type="file" id="modal-imageFile" name="imageFile" accept="image/*"
+								class="file-input file-input-bordered w-full" />
+						</div>
+
+						<!-- 버튼 -->
+						<div class="flex justify-end gap-4">
+							<button type="submit" class="btn btn-primary">등록</button>
+							<button type="button" class="btn btn-outline" onclick="hidePostModal()">취소</button>
+						</div>
+					</form>
+				</div>
+			</div>
+
+
+
+			<script>
             function showPostModal() {
                 const modal = document.getElementById("post-modal");
                 modal.classList.remove("hidden");
@@ -340,8 +384,8 @@
         </script>
 
 
-        <!-- ✅ JavaScript -->
-        <script>
+			<!-- ✅ JavaScript -->
+			<script>
             document.addEventListener("DOMContentLoaded", function () {
                 // 검색 필터 기능
                 const searchInput = document.getElementById("qna-search");
@@ -560,8 +604,8 @@
 
         </script>
 
-        <!-- ✅ 스크립트 -->
-        <script>
+			<!-- ✅ 스크립트 -->
+			<script>
             document.addEventListener("DOMContentLoaded", () => {
                 const memberRows = document.querySelectorAll(".member-row");
                 const searchInput = document.getElementById("member-search");
@@ -664,7 +708,7 @@
         </script>
 
 
-        <script>
+			<script>
             document.addEventListener("DOMContentLoaded", () => {
                 const cards = document.querySelectorAll(".member-card");
                 const searchInput = document.getElementById("member-search");
@@ -764,7 +808,7 @@
             }
         </script>
 
-        <script>
+			<script>
             document.addEventListener("DOMContentLoaded", function () {
                 // 게시글 필터
                 const postSearchInput = document.getElementById("post-search");
@@ -884,7 +928,7 @@
             });
         </script>
 
-        <script>
+			<script>
             document.addEventListener("DOMContentLoaded", () => {
                 const deleteBtn = document.getElementById("answer-delete-btn");
 
@@ -916,12 +960,10 @@
         </script>
 
 
-        <button
-                class="fixed bottom-6 right-6 w-14 h-14 bg-blue-500 hover:bg-green-600 text-white rounded-full shadow-lg text-3xl flex items-center justify-center z-50"
-                onclick="showPostModal()">
-            +
-        </button>
-    </main>
-</div>
+			<button
+				class="fixed bottom-6 right-6 w-14 h-14 bg-blue-500 hover:bg-green-600 text-white rounded-full shadow-lg text-3xl flex items-center justify-center z-50"
+				onclick="showPostModal()">+</button>
+		</main>
+	</div>
 </body>
 </html>

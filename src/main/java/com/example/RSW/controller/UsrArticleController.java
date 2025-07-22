@@ -50,13 +50,9 @@ public class UsrArticleController {
 	@Autowired
 	private Cloudinary cloudinary;
 
-	@Autowired
-	private NotificationService notificationService;
-
 	UsrArticleController(BeforeActionInterceptor beforeActionInterceptor) {
 		this.beforeActionInterceptor = beforeActionInterceptor;
 	}
-
 
 	@GetMapping("/usr/article/write/check")
 	public ResultData checkWritePermission(HttpServletRequest req, @RequestParam(required = false) Integer boardId,
@@ -140,13 +136,6 @@ public class UsrArticleController {
 		String redirectUrl = (crewId != null) ? "/usr/article/detail?id=" + articleId + "&crewId=" + crewId
 				: "/usr/article/detail?id=" + articleId + "&boardId=" + boardId;
 
-// ✅ 🔔 전체 알림 발송 (공지사항일 때만)
-		if (boardId != null && boardId == 1) {
-			String link = redirectUrl;
-			String notiTitle = "[공지사항] " + title;
-			notificationService.sendNotificationToAll(notiTitle, link, "NOTICE", loginedMemberId);
-		}
-
 		return ResultData.from("S-1", "게시글이 성공적으로 작성되었습니다.",
 				Map.of("articleId", articleId, "redirectUrl", redirectUrl));
 	}
@@ -154,27 +143,31 @@ public class UsrArticleController {
 	// ✅ 게시글 수정 처리 (JSON 방식)
 	@PostMapping("/usr/article/doModify")
 	@ResponseBody
-	public ResultData doModify(@RequestParam int id,
-							   @RequestParam String title,
-							   @RequestParam String body) {
+	public ResultData doModify(HttpServletRequest req, @RequestBody Map<String, Object> param) {
+		Rq rq = (Rq) req.getAttribute("rq");
 
+		int id = (int) param.get("id");
+		String title = (String) param.get("title");
+		String body = (String) param.get("body");
+
+		// 게시글 조회
 		Article article = articleService.getArticleById(id);
 		if (article == null) {
 			return ResultData.from("F-1", id + "번 게시글은 존재하지 않습니다.");
 		}
 
+		// 수정 권한 확인
 		ResultData userCanModifyRd = articleService.userCanModify(rq.getLoginedMemberId(), article);
 		if (userCanModifyRd.isFail()) {
 			return ResultData.from(userCanModifyRd.getResultCode(), userCanModifyRd.getMsg());
 		}
 
+		// 게시글 수정 처리
 		articleService.modifyArticle(id, title, body);
 
-		// 클라이언트에 최신 정보 반환
-		Article updated = articleService.getArticleById(id);
-		return ResultData.from("S-1", "게시글 수정 완료", "data1", updated);
+		// 성공 응답
+		return ResultData.from("S-1", "게시글 수정이 완료되었습니다.", Map.of("redirectUrl", "/usr/article/detail?id=" + id));
 	}
-
 
 	// ✅ 게시글 수정 폼 (HTML 뷰 반환 방식으로 변경)
 	@GetMapping("/usr/article/modify")
@@ -211,8 +204,8 @@ public class UsrArticleController {
 		return "usr/article/modify"; // ✅ JSP 뷰 경로
 	}
 
-
 	@PostMapping("/usr/article/doDelete")
+	@ResponseBody
 	public ResultData doDelete(HttpServletRequest req, @RequestParam int id, @RequestParam int crewId) {
 		Rq rq = (Rq) req.getAttribute("rq");
 
@@ -366,6 +359,7 @@ public class UsrArticleController {
 	}
 
 	@RequestMapping("/usr/article/doIncreaseHitCountRd")
+	@ResponseBody
 	public ResultData doIncreaseHitCount(int id) {
 		ResultData increaseHitCountRd = articleService.increaseHitCount(id);
 		if (increaseHitCountRd.isFail()) {
@@ -377,6 +371,7 @@ public class UsrArticleController {
 
 	// ✅ 모임일정 등록 (JSON 응답)
 	@PostMapping("/usr/article/doWriteSchedule")
+	@ResponseBody
 	public ResultData doWriteSchedule(@RequestParam int crewId, @RequestParam String scheduleDate,
 			@RequestParam String scheduleTitle, @RequestParam(required = false) String scheduleBody,
 			HttpServletRequest req) {
