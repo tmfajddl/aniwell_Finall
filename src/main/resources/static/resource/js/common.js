@@ -1,6 +1,8 @@
 const paw = document.getElementById('cat-paw');
 const btn = document.getElementById('hamburger-btn');
+
 let isVisible = false;
+
 btn.addEventListener('click', () => {
 	isVisible = !isVisible;
 	if (isVisible) {
@@ -11,11 +13,16 @@ btn.addEventListener('click', () => {
 		paw.classList.add('left-[-100%]');
 	}
 });
+
+
+
 function App() {
 	const [pets, setPets] = React.useState([null])
 	const [loginedMember, setLoginedMember] = React.useState(null)
 	const [crew, setCrew] = React.useState(null)
+
 	window.localStorage.setItem("loginedMemberId", loginedMember?.id);
+
 	React.useEffect(() => {
 		fetch(`/usr/member/myPage`)
 			.then(res => res.json())
@@ -25,6 +32,7 @@ function App() {
 				window.localStorage.setItem("loginedMemberId", memberData.id);
 			});
 	}, []);
+
 	React.useEffect(() => {
 		fetch(`/api/pet/list?memberId=${loginedMember?.id}`)
 			.then(res => res.json())
@@ -36,7 +44,9 @@ function App() {
 			});
 	}, [loginedMember])
 	// sidebar.js
+
 };
+
 document.querySelectorAll('.menu-item').forEach((item) => {
 	item.addEventListener('click', () => {
 		const page = item.dataset.page
@@ -56,7 +66,11 @@ document.querySelectorAll('.menu-item').forEach((item) => {
 			case 'qna':
 				url = `/usr/qna/list`
 				break
+			case 'admin':
+				url = `/adm/article/list`
+				break
 		}
+
 		window.parent.location.href = url
 	})
 })
