@@ -35,3 +35,6 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# Firebase 서비스 계정 키 #
+src/main/resources/firebase/aniwell-2a90b-firebase-adminsdk-fbsvc-3ed321093d.json
