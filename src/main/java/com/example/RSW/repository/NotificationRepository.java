@@ -39,4 +39,6 @@ public interface NotificationRepository {
     void deleteByMemberId(int memberId);
 
     int update(Notification notification);
+
+    void deleteAllByMemberId(int loginedMemberId);
 }

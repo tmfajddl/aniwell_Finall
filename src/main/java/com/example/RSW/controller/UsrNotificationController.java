@@ -168,4 +168,16 @@ public class UsrNotificationController {
                 : ResultData.from("F-1", "삭제 실패 또는 권한 없음.");
     }
 
+    @PostMapping("/deleteAll")
+    @ResponseBody
+    public ResultData deleteAllNotifications() {
+        if (!rq.isLogined()) {
+            return ResultData.from("F-1", "로그인이 필요합니다.");
+        }
+
+        notificationService.deleteAllByMemberId(rq.getLoginedMemberId());
+        return ResultData.from("S-1", "모든 알림을 삭제했습니다.");
+    }
+
+
 }

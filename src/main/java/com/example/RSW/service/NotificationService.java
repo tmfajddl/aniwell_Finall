@@ -180,4 +180,8 @@ public class NotificationService {
             notificationRepository.insert(new Notification(0, memberId, title, link, new Date(), false, null, type, senderId));
         }
     }
+
+    public void deleteAllByMemberId(int loginedMemberId) {
+        notificationRepository.deleteAllByMemberId(loginedMemberId);
+    }
 }
