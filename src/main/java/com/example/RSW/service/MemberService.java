@@ -16,6 +16,7 @@ public class MemberService {
 
 	@Value("${custom.siteMainUri}")
 	private String siteMainUri;
+
 	@Value("${custom.siteName}")
 	private String siteName;
 
@@ -152,6 +153,26 @@ public class MemberService {
 
 			int id = memberRepository.getLastInsertId();
 			member = memberRepository.getMemberById(id);
+		}
+
+		return member;
+	}
+
+
+
+	public Member getOrCreateByEmail(String email, String name) {
+		Member member = memberRepository.findByEmail(email);
+
+		if (member == null) {
+			String loginId = email.split("@")[0];
+			String loginPw = Ut.sha256("google_temp_pw");
+			String nickname = name;
+
+			memberRepository.doJoinBySocial(
+					loginId, loginPw, "google", email, name, nickname, email
+			);
+
+			member = memberRepository.findByEmail(email);
 		}
 
 		return member;

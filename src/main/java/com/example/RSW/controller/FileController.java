@@ -18,8 +18,11 @@ public class FileController {
     // 파일 다운로드 요청 처리
     @GetMapping("/gen/file/download")
     public void downloadFile(@RequestParam("path") String path, HttpServletResponse response) throws IOException {
-        // 업로드된 파일의 기본 경로 (로컬 서버 기준)
-        String basePath = "C:/upload/";
+
+
+        // static/upload 경로 기준
+        String basePath = new File("src/main/resources/static/upload").getAbsolutePath() + File.separator;
+
 
         // 요청받은 상대 경로를 OS에 맞게 파일 경로로 변환
         String fullPath = basePath + path.replace("/", File.separator);
