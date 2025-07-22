@@ -308,6 +308,7 @@
                         if (data.resultCode === "S-1") {
                             hideQnaModal();
                             refreshQnaList();
+                            refreshFaqList()
                         } else {
                             alert(data.msg || "삭제 실패");
                         }
@@ -435,6 +436,29 @@
                     });
                 });
             }
+
+            function refreshFaqList() {
+                fetch("/adm/qna/faqList")
+                    .then(res => res.json())
+                    .then(data => {
+                        const list = document.querySelector(".list-decimal");
+                        list.innerHTML = "";
+
+                        data.forEach(qna => {
+                            const li = document.createElement("li");
+                            li.className = "text-lime-700 font-medium cursor-pointer faq-item";
+                            li.dataset.id = qna.id;
+                            li.textContent = qna.title;
+                            list.appendChild(li);
+                        });
+
+                        bindFaqClickEvents(); // 다시 이벤트 바인딩
+                    })
+                    .catch(() => {
+                        alert("❌ FAQ 목록을 다시 불러오지 못했습니다.");
+                    });
+            }
+
 
 
         </script>

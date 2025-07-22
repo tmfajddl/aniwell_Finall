@@ -610,7 +610,9 @@
     function startEditFromView() {
         const e = currentDiaryData;
         $('#editEventId').val(e.id);
-        $('#editDiaryDate').val(e.eventDate);
+        $('#editDiaryDate')
+            .val(e.eventDate)
+            .data('original-date', e.eventDate); // ✅ 원래 날짜 저장 (수정 방지용)
         $('#editDiaryContent').val(e.content);
         $('#editModal .emotion-btn').removeClass('selected');
         $('#editModal .emotion-btn[data-emotion="' + e.title + '"]').addClass('selected');
@@ -618,20 +620,22 @@
         $('#editModal').show();
     }
 
+
     function updateDiary() {
         const id = $('#editEventId').val();
         const date = $('#editDiaryDate').val();
         const content = $('#editDiaryContent').val();
         const emotion = $('#editModal .emotion-btn.selected').data('emotion');
+        const originalDate = $('#editDiaryDate').data('original-date'); // 숨겨둔 원본 날짜
 
         if (!id || !date || !content || !emotion) {
             alert('모든 항목을 입력하세요.');
             return;
         }
 
-        const alreadyExists = calendar.getEvents().some(event => event.startStr === date);
-        if (alreadyExists) {
-            alert('해당 날짜에 이미 감정일기가 존재합니다.');
+        if (date !== originalDate) {
+            alert('감정일기의 날짜는 수정할 수 없습니다.');
+            $('#editDiaryDate').val(originalDate); // 다시 원래 날짜로 되돌림 (선택사항)
             return;
         }
 
@@ -648,6 +652,7 @@
             }
         });
     }
+
 
     function updateDiaryListForCurrentMonth() {
         const container = $('.diary-container');

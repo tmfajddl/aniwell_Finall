@@ -28,7 +28,7 @@ import com.cloudinary.utils.ObjectUtils;
 import com.example.RSW.config.AppConfig;
 import com.example.RSW.repository.DistrictRepository;
 import com.example.RSW.service.DistrictService;
-import com.example.RSW.service.MemberService;
+
 import com.example.RSW.service.WalkCrewMemberService;
 import com.example.RSW.service.WalkCrewService;
 
@@ -119,7 +119,7 @@ public class UsrWalkCrewController {
 		Map<String, Object> data = new HashMap<>();
 		data.put("crewId", walkCrew.getId());
 
-		return ResultData.from("S-1", "크루 생성 완료", data);
+		return ResultData.from("S-1", "등록이 완료되었습니다", data);
 	}
 
 	// 크루 상세보기 페이지
@@ -205,7 +205,7 @@ public class UsrWalkCrewController {
 	public ResultData getDistrictId(@RequestParam String city, @RequestParam String district,
 			@RequestParam String dong) {
 		int id = districtRepository.getDistrictIdByFullAddress(city, district, dong);
-
+		System.out.println(id);
 		Map<String, Object> data = new HashMap<>();
 		data.put("districtId", id);
 
