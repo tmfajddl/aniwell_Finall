@@ -174,11 +174,13 @@ public class UsrMemberController {
         req.getSession().setAttribute("rq", rq);  // 세션에 rq 객체 저장
 
         // ✅ Firebase 연동 - uid는 이메일 기반으로 구성
-        String uid = member.getLoginId() + "@yourdomain.com";
+        String uid = member.getLoginId() + "@aniwell.com";
         String firebaseToken = memberService.createFirebaseCustomToken(uid);
         req.getSession().setAttribute("firebaseToken", firebaseToken);
 
-        return Ut.jsReplace("S-1", Ut.f("%s님 환영합니다", member.getNickname()), afterLoginUri);
+        return Ut.jsReplace("S-1", Ut.f("%s님 환영합니다", member.getNickname()),
+                afterLoginUri + "?firebaseToken=" + firebaseToken);
+
     }
 
 
