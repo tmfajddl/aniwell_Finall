@@ -7,7 +7,7 @@
     <link rel="stylesheet" th:href="@{/resource/css/common.css}">
     <style>
         .scroll-box {
-            max-height: 400px;
+            max-height: 80%;
             overflow-y: auto;
         }
     </style>
@@ -21,7 +21,12 @@
     <!-- Main content -->
     <main class="main_page min-h-screen flex-1 p-6 space-y-6">
 
-        <h2 class="text-3xl font-bold text-gray-800">📢 알림함</h2>
+        <div class="flex justify-between items-center">
+            <h2 class="text-3xl font-bold text-gray-800">📢 알림함</h2>
+            <button id="markAllAsRead" class="bg-yellow-400 hover:bg-yellow-300 text-white font-semibold px-4 py-2 rounded shadow">
+                모두 읽음
+            </button>
+        </div>
         <hr class="border-t border-yellow-400 mb-4" />
 
         <div class="notification-list space-y-5 scroll-box">
@@ -126,6 +131,29 @@
             });
         });
     });
+
+    document.getElementById('markAllAsRead')?.addEventListener('click', () => {
+        if (!confirm('모든 알림을 읽음 처리하시겠습니까?')) return;
+
+        fetch('/usr/notifications/markAllAsRead', {
+            method: 'POST'
+        })
+            .then(res => res.json())
+            .then(json => {
+                if (json.resultCode && json.resultCode.startsWith('S-')) {
+                    document.querySelectorAll('.notification-list [data-id]').forEach(item => {
+                        item.classList.replace('bg-yellow-100', 'bg-white');
+                        item.classList.add('opacity-70');
+                    });
+                } else {
+                    alert(json.msg || '처리에 실패했습니다.');
+                }
+            })
+            .catch(() => {
+                alert('서버 오류로 처리에 실패했습니다.');
+            });
+    });
+
 </script>
 </body>
 </html>
