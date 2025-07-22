@@ -191,7 +191,7 @@ public class UsrWalkCrewController {
 	@ResponseBody
 	public ResultData getDongs(@RequestParam String city, @RequestParam String district) {
 		List<String> dongs = districtService.findDongsByCityAndDistrict(city, district);
-
+		
 		Map<String, Object> data = new HashMap<>();
 		data.put("dongs", dongs);
 
