@@ -210,6 +210,12 @@
 			<version>20240303</version>
 		</dependency>
 
+		<!-- Firebase -->
+		<dependency>
+			<groupId>com.google.firebase</groupId>
+			<artifactId>firebase-admin</artifactId>
+			<version>9.2.0</version>
+		</dependency>
 
 	</dependencies>
 
