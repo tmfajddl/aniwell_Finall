@@ -7,10 +7,10 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" th:href="@{/resource/css/common.css}">
 <style>
-.scroll-box {
-	max-height: 400px;
-	overflow-y: auto;
-}
+	.scroll-box {
+		max-height: 400px;
+		overflow-y: auto;
+	}
 </style>
 </head>
 <body class="bg-gradient-to-b from-[#e4f0b9] to-[#fcdca9] font-sans">
@@ -46,7 +46,7 @@
 					</div>
 
 					<!-- QnA 리스트 -->
-					<ul id="qna-list">
+					<ul id="qna-list" class="scroll-box">
 						<li th:each="qna : ${qnaList}" class="qna-item mb-2 p-2 border rounded hover:bg-gray-50 cursor-pointer"
 							th:attr="data-id=${qna.id}, data-title=${qna.title}, data-writer=${qna.memberName}, data-date=${qna.regDate}, data-answer=${qna.hasAnswer}, data-body=${qna.body}, data-secret=${qna.secret}">
 							<div class="flex justify-between items-center">
@@ -83,7 +83,7 @@
 				</div>
 
 				<!-- 카드 리스트 -->
-				<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="member-list">
+				<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 scroll-box" id="member-list">
 					<div th:each="member : ${members}" class="bg-white shadow p-4 rounded member-card cursor-pointer"
 						th:attr="data-id=${member.id},
               data-name=${member.name},
@@ -136,7 +136,6 @@
 
 
 			<!-- ✅ 게시글 섹션 -->
-			<!-- ✅ 게시글 섹션 -->
 			<div id="post-section" class="hidden">
 				<div class="bg-white p-4 rounded mb-8">
 					<h2 class="text-xl font-semibold mb-4">게시글 목록</h2>
@@ -153,7 +152,7 @@
 					</div>
 
 					<!-- 📋 게시글 리스트 -->
-					<ul id="post-list">
+					<ul id="post-list" class="scroll-box" th:fragment="post-list">
 						<li th:each="article : ${articles}" class="post-item mb-2 p-2 border rounded hover:bg-gray-50 cursor-pointer"
 							th:attr="data-id=${article.id}, data-title=${article.title}, data-body=${article.body}, data-writer=${article.extra__writer}, data-date=${article.regDate}, data-hit=${article.hitCount}">
 							<div class="flex justify-between items-center">
@@ -320,10 +319,10 @@
 					<button class="absolute top-2 right-2 text-gray-400 hover:text-black text-2xl font-bold" onclick="hidePostModal()">&times;</button>
 
 					<h2 class="text-2xl font-bold mb-4">게시글 작성</h2>
+					<input type="hidden" name="crewId" value="3" />
 
 					<!-- ✅ enctype 추가 & onsubmit 자바스크립트로 전송 -->
-					<form id="writeForm" class="space-y-4" enctype="multipart/form-data"
-						onsubmit="event.preventDefault(); submitArticleJson();">
+					<form id="articleForm" enctype="multipart/form-data" method="post">
 
 						<!-- 게시판 선택 -->
 						<div>
@@ -340,26 +339,23 @@
 						<!-- 제목 입력 -->
 						<div>
 							<label for="modal-title" class="block font-semibold mb-1">제목</label>
-							<input type="text" id="modal-title" name="title" required class="input input-bordered w-full"
-								placeholder="제목을 입력하세요" />
+							<input type="text" id="modal-title" name="title" required class="input input-bordered w-full" placeholder="제목을 입력하세요" />
 						</div>
 
 						<!-- 내용 입력 -->
 						<div>
 							<label for="modal-body" class="block font-semibold mb-1">내용</label>
-							<textarea id="modal-body" name="body" rows="8" required class="textarea textarea-bordered w-full"
-								placeholder="내용을 입력하세요"></textarea>
+							<textarea id="modal-body" name="body" rows="8" required class="textarea textarea-bordered w-full" placeholder="내용을 입력하세요"></textarea>
 						</div>
 
-						<!-- ✅ 이미지 업로드 추가 -->
+						<!-- 이미지 업로드 -->
 						<div>
 							<label for="modal-imageFile" class="block font-semibold mb-1">이미지 첨부 (선택)</label>
-							<input type="file" id="modal-imageFile" name="imageFile" accept="image/*"
-								class="file-input file-input-bordered w-full" />
+							<input type="file" id="modal-imageFile" name="imageFile" accept="image/*" class="file-input file-input-bordered w-full" />
 						</div>
 
 						<!-- 버튼 -->
-						<div class="flex justify-end gap-4">
+						<div class="flex justify-end gap-4 mt-4">
 							<button type="submit" class="btn btn-primary">등록</button>
 							<button type="button" class="btn btn-outline" onclick="hidePostModal()">취소</button>
 						</div>
@@ -370,7 +366,50 @@
 
 
 			<script>
-            function showPostModal() {
+				document.getElementById("articleForm").onsubmit = async function (e) {
+					e.preventDefault();
+
+					const form = e.target;
+					const formData = new FormData(form);
+
+					try {
+						const res = await fetch("/usr/article/doWrite", {
+							method: "POST",
+							body: formData
+						});
+
+						const result = await res.json();
+
+						if (result.success) {
+							hidePostModal();
+							form.reset();    // 폼 초기화
+							refreshArticleList()
+						} else {
+							alert("❌ " + result.msg);
+						}
+					} catch (err) {
+						console.error("❌ 에러 발생:", err);
+						alert("서버 오류가 발생했습니다.");
+					}
+				};
+
+				function refreshArticleList() {
+					fetch("/usr/article/partialList")
+							.then(res => res.text())
+							.then(html => {
+								const temp = document.createElement("div");
+								temp.innerHTML = html;
+								const newList = temp.querySelector("#post-list");
+								if (newList) {
+									document.getElementById("post-list").innerHTML = newList.innerHTML;
+								}
+							})
+							.catch(err => {
+								console.error("❌ 게시글 목록 갱신 실패:", err);
+							});
+				}
+
+				function showPostModal() {
                 const modal = document.getElementById("post-modal");
                 modal.classList.remove("hidden");
                 modal.classList.add("flex");
@@ -472,13 +511,39 @@
                     ? 'bg-green-500 text-white px-2 py-1 rounded'
                     : 'bg-red-500 text-white px-2 py-1 rounded';
 
-
-                // 삭제 폼 설정
+                // ✅ 삭제 버튼 생성 (이제 form 아님!)
                 const form = document.getElementById("delete-form");
-                form.action = "/adm/qna/doDelete";
-                form.innerHTML = `<input type="hidden" name="id" value="${id}">
-                      <button type="submit" class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">질문 삭제</button>`;
+                form.innerHTML = `
+    <button id="do-delete-btn" class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">질문 삭제</button>
+  `;
 
+                // ✅ 삭제 버튼 이벤트 연결
+                setTimeout(() => {
+                    document.getElementById("do-delete-btn").addEventListener("click", () => {
+                        if (!confirm("정말 삭제하시겠습니까?")) return;
+
+                        fetch("/adm/qna/doDelete", {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/x-www-form-urlencoded"
+                            },
+                            body: `id=${encodeURIComponent(id)}`
+                        })
+                            .then(res => res.json())
+                            .then(data => {
+                                if (data.resultCode === "S-1") {
+                                    document.getElementById("qna-detail").classList.add("hidden");
+                                    // ✅ 해당 질문 DOM 제거 (선택)
+                                    const item = document.querySelector(`.qna-item[data-id='${id}']`);
+                                    if (item) item.remove();
+                                } else {
+                                    alert("삭제 실패: " + data.msg);
+                                }
+                            });
+                    });
+                }, 0);
+
+                // ✅ 답변 정보 표시
                 if (answer && answer.answer) {
                     document.getElementById("qna-answer-content").classList.remove("hidden");
                     document.getElementById("answer-vetName").textContent = answer.vetName;
@@ -491,11 +556,10 @@
                     document.getElementById("qna-answer-content").classList.add("hidden");
                 }
 
-
-
                 document.getElementById("qna-detail").classList.remove("hidden");
                 document.getElementById("qna-detail").classList.add("flex");
             }
+
 
 
 
@@ -932,7 +996,9 @@
                     });
                 }
             });
-        </script>
+
+
+			</script>
 
 
 			<button

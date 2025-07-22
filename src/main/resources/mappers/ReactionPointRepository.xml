@@ -40,6 +40,14 @@
             RP.memberId = #{memberId};
     </select>
 
+    <select id="getReactionPoint" resultType="int">
+        SELECT IFNULL(SUM(point), 0)
+        FROM reactionPoint
+        WHERE relTypeCode = #{relTypeCode}
+          AND relId = #{relId}
+          AND point = #{point}
+    </select>
+
     <delete id="deleteReactionPoint">
         DELETE FROM reactionPoint
         WHERE memberId = #{memberId}
