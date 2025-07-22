@@ -486,7 +486,8 @@ public class UsrMemberController {
             // 기존 인증서 삭제
             VetCertificate existing = vetCertificateService.getCertificateByMemberId(rq.getLoginedMemberId());
             if (existing != null) {
-                vetCertificateService.deleteCertificateWithFile(existing);
+                vetCertificateService.deleteCertificateWithFile(existing); // 기존 DB 삭제
+                // Cloudinary도 삭제하고 싶으면 이후 추가
             }
 
             String originalFilename = file.getOriginalFilename();
@@ -494,68 +495,46 @@ public class UsrMemberController {
                 return Ut.jsReplace("F-2", "파일명이 유효하지 않습니다.", "/usr/member/myPage");
             }
 
-            String uuid = UUID.randomUUID().toString();
-            String savedFileName = uuid + "_" + originalFilename;
-
-            // 인증서 업로드 경로
-            String uploadDir = "src/main/resources/static/upload/vet_certificates";
-
-            File dir = new File(uploadDir);
-            if (!dir.exists()) dir.mkdirs();
-
-            File savedFile = new File(uploadDir + "/" + savedFileName);
-            file.transferTo(savedFile);
-
-            // ✅ DB에 저장할 상대경로로 변경
-            String relativePath = "vet_certificates/" + savedFileName;
+            // ✅ Cloudinary 업로드
+            Map uploadResult = cloudinary.uploader().upload(file.getBytes(), ObjectUtils.emptyMap());
+            String secureUrl = (String) uploadResult.get("secure_url");
 
             VetCertificate cert = new VetCertificate();
             cert.setMemberId(rq.getLoginedMemberId());
             cert.setFileName(originalFilename);
-            cert.setFilePath(relativePath);
+            cert.setFilePath(secureUrl); // 🔄 실제 저장은 Cloudinary의 URL
             cert.setUploadedAt(LocalDateTime.now());
             cert.setApproved(0);
 
-            System.out.println("📥 저장될 인증서: " + cert.toString());
+            System.out.println("📤 Cloudinary 인증서 업로드됨: " + secureUrl);
 
             vetCertificateService.registerCertificate(cert);
-            memberService.updateVetCertInfo(rq.getLoginedMemberId(), savedFileName, 0);
+            memberService.updateVetCertInfo(rq.getLoginedMemberId(), secureUrl, 0);
 
-            // 인증서 업로드 성공 후 관리자에게 알림 전송
+
+            // 관리자 알림 전송
             notificationService.sendNotificationToAdmins(rq.getLoginedMemberId());
 
-
             return """
-                    <html>
-                    <head>
-                      <meta charset="UTF-8">
-                      <script>
-                        alert('✅ 수의사 인증서가 등록되었습니다. 관리자 승인을 기다려주세요.');
-                        location.replace('myCert');
-                      </script>
-                    </head>
-                    <body></body>
-                    </html>
-                    """;
+            <html>
+            <head><meta charset="UTF-8"><script>
+            alert('✅ 수의사 인증서가 등록되었습니다. 관리자 승인을 기다려주세요.');
+            location.replace('myCert');
+            </script></head><body></body></html>
+        """;
 
         } catch (Exception e) {
             e.printStackTrace();
-            System.err.println("❌ 업로드 예외 발생: " + e.getMessage());
-
             return """
-                    <html>
-                    <head>
-                      <meta charset="UTF-8">
-                      <script>
-                        alert('⚠ 업로드 중 오류가 발생했습니다. 다시 시도해주세요.');
-                        location.replace('/usr/member/myPage');
-                      </script>
-                    </head>
-                    <body></body>
-                    </html>
-                    """;
+            <html>
+            <head><meta charset="UTF-8"><script>
+            alert('⚠ 업로드 중 오류가 발생했습니다. 다시 시도해주세요.');
+            location.replace('/usr/member/myPage');
+            </script></head><body></body></html>
+        """;
         }
     }
+
 
 
     @RequestMapping("/usr/member/myCert")
