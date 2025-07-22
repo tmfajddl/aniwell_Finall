@@ -889,4 +889,25 @@ public class UsrMemberController {
         }
     }
 
+    // Firebase 토큰 생성
+    @PostMapping("/usr/member/firebase-token")
+    @ResponseBody
+    public ResultData<?> generateFirebaseToken(HttpServletRequest req) {
+        Rq rq = (Rq) req.getAttribute("rq");
+        Member member = rq.getLoginedMember();
+
+        // UID는 소셜 제공자 + 고유 ID 조합으로 구성 (예: google_123456)
+        String uid = member.getSocialProvider() + "_" + member.getSocialId();
+
+        // Firebase 토큰 생성
+        String customToken = memberService.createFirebaseCustomToken(uid);
+
+        if (customToken == null) {
+            return ResultData.from("F-1", "Firebase 토큰 생성 실패");
+        }
+
+        return ResultData.from("S-1", "토큰 생성 성공", "token", customToken);
+    }
+
+
 }
