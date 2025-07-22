@@ -43,7 +43,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
 @RequestMapping("/usr/crewCafe")
-@RestController
+@Controller
 public class UsrCrewCafeController {
 
 	@Autowired
@@ -67,12 +67,10 @@ public class UsrCrewCafeController {
 	}
 
 	// 까페홈에 article 글 보이게 하기
-	@GetMapping("/home")
-	public ResultData getCafeHome(@RequestParam int crewId) {
+	@GetMapping("/cafeHome")
+	public String showCafeHome(@RequestParam(defaultValue = "0") int crewId, Model model, HttpServletRequest req) {
+		Rq rq = (Rq) req.getAttribute("rq");
 		WalkCrew crew = walkCrewService.getCrewById(crewId);
-		if (crew == null) {
-			return ResultData.from("F-1", "크루 정보가 없습니다.");
-		}
 
 		// ✅ 게시판 ID 기준으로 불러오기
 		int noticeBoardId = 1; // 공지사항
@@ -80,35 +78,44 @@ public class UsrCrewCafeController {
 		int galleryBoardId = 4; // 사진첩
 		int scheduleBoardId = 5; // 일정 게시판
 
+		// 로그용
+		System.out.println("✅ crewId = " + crewId);
+
 		// ✅ 공지글 5개
 		List<Article> noticeArticles = articleService.getRecentArticlesByCrewAndBoardId(crewId, noticeBoardId, 5);
+		System.out.println("✅ noticeArticles.size = " + noticeArticles.size());
 
 		// ✅ 자유글 5개
 		List<Article> freeArticles = articleService.getRecentArticlesByCrewAndBoardId(crewId, freeBoardId, 5);
+		System.out.println("✅ freeArticles.size = " + freeArticles.size());
+		for (Article a : freeArticles) {
+			System.out.println("📝 자유글: id=" + a.getId() + ", title=" + a.getTitle());
+		}
 
-		// ✅ 사진용 게시글: 사진첩(boardId=4) 중 imageUrl이 있는 글만 최대 20개
-		List<Article> galleryArticles = articleService.getRecentArticlesByCrewAndBoardId(crewId, galleryBoardId, 20)
-				.stream().filter(a -> a.getImageUrl() != null && !a.getImageUrl().isEmpty()
-						&& !"undefined".equals(a.getImageUrl()))
+		// ✅ 사진용 게시글: 자유게시판(boardId=3) 중 imageUrl이 있는 글만 최대 20개
+		List<Article> galleryArticles = articleService
+				.getRecentArticlesByCrewAndBoardId(crewId, freeBoardId, 20).stream().filter(a -> a.getImageUrl() != null
+						&& !a.getImageUrl().isEmpty() && !"undefined".equals(a.getImageUrl()))
 				.collect(Collectors.toList());
 
-		// ✅ 일정모임 리스트 불러오기
+		System.out.println("✅ galleryArticles.size = " + galleryArticles.size());
+
+		// 일정모임 리스트 불러오기
 		List<Article> scheduleArticles = articleService.getRecentArticlesByCrewAndBoardId(crewId, scheduleBoardId, 10);
 
-		// ✅ Java 8 대응: Map.of(...) 대신 new HashMap<>() + put() 사용
-		Map<String, Object> data = new HashMap<>();
-		data.put("crew", crew);
-		data.put("noticeArticles", noticeArticles);
-		data.put("freeArticles", freeArticles);
-		data.put("galleryArticles", galleryArticles);
-		data.put("scheduleArticles", scheduleArticles);
+		// 모델에 데이터 전달
+		model.addAttribute("crew", crew);
+		model.addAttribute("noticeArticles", noticeArticles);
+		model.addAttribute("freeArticles", freeArticles);
+		model.addAttribute("galleryArticles", galleryArticles);
+		model.addAttribute("scheduleArticles", scheduleArticles);
 
-		return ResultData.from("S-1", "카페 콘텐츠 불러오기 성공", data);
+		return "usr/crewCafe/cafeHome";
 	}
 
 	// ✅ 내가 가입한 크루의 카페로 이동
 	@GetMapping("/myCrewCafe")
-	public ResultData getMyCrewCafe(HttpServletRequest req) {
+	public String goToMyCrewCafe(HttpServletRequest req, Model model) {
 		Rq rq = (Rq) req.getAttribute("rq");
 		int memberId = rq.getLoginedMemberId();
 
@@ -118,18 +125,15 @@ public class UsrCrewCafeController {
 		}
 
 		if (myCrew == null) {
-			return ResultData.from("F-1", "가입된 크루가 없습니다.");
+			return rq.historyBackOnView("가입된 크루가 없습니다.");
 		}
 
-		// ✅ 기존 model.addAttribute("crew", ...), model.addAttribute("articles", ...) 내용을
-		// JSON으로 반환
+		// ✅ 이렇게 수정!
+		model.addAttribute("crew", myCrew);
 		List<Article> articles = articleService.getArticlesByCrewId(myCrew.getId());
+		model.addAttribute("articles", articles);
 
-		Map<String, Object> data = new HashMap<>();
-		data.put("crew", myCrew);
-		data.put("articles", articles);
-
-		return ResultData.from("S-1", "내 크루 카페 정보 반환 성공", data);
+		return "redirect:/usr/crewCafe/cafeHome?crewId=" + myCrew.getId(); // ✅ 요거만 바꾸면 됨
 	}
 
 }
