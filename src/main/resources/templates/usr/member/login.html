@@ -276,11 +276,9 @@
 
             console.log("📌 Firebase 토큰 발급 성공, 로그인 시도");
 
-            // 컨트롤러에서 토큰 생성된 것을 호출
             const userCredential = await firebase.auth().signInWithCustomToken(customToken);
             console.log("✅ Firebase 로그인 성공", userCredential);
 
-            // 로그인 성공 후 Firestore에 저장
             const user = userCredential.user;
             const uid = user.uid;
             const db = firebase.firestore();
