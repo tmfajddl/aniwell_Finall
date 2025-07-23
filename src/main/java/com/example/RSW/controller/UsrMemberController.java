@@ -911,19 +911,26 @@ public class UsrMemberController {
     // ✅ Firebase Custom Token 발급용 엔드포인트
     @RequestMapping("/usr/member/firebase-token")
     @ResponseBody
-    public ResultData<Map<String, String>> generateFirebaseToken(HttpServletRequest req) {
-        Rq rq = (Rq) req.getAttribute("rq");
-        Member loginedMember = rq.getLoginedMember();
+    public ResultData<Map<String, String>> generateFirebaseToken(HttpServletRequest req, HttpServletResponse resp) {
+        // ✅ 세션에서 loginedMemberId 가져오기
+        Integer memberId = (Integer) req.getSession().getAttribute("loginedMemberId");
 
-        if (loginedMember == null) {
+        if (memberId == null) {
             return ResultData.from("F-1", "로그인 후 이용 가능합니다.");
         }
 
-        try {
-            // UID는 고유 식별자 (이메일이나 회원번호 사용 가능)
-            String uid = "user_" + loginedMember.getId();
+        // ✅ memberService 통해 회원 객체 조회
+        Member loginedMember = memberService.getMemberById(memberId);
 
-            // Firebase Custom Token 생성
+        if (loginedMember == null) {
+            return ResultData.from("F-2", "회원 정보를 찾을 수 없습니다.");
+        }
+
+        try {
+            // ✅ Rq 객체 강제 주입 (선택)
+            req.setAttribute("rq", new Rq(req, resp, memberService));
+
+            String uid = "user_" + loginedMember.getId();
             String customToken = FirebaseAuth.getInstance().createCustomToken(uid);
 
             Map<String, String> data = new HashMap<>();
@@ -931,7 +938,7 @@ public class UsrMemberController {
 
             return ResultData.from("S-1", "토큰 생성 성공", data);
         } catch (Exception e) {
-            return ResultData.from("F-2", "Firebase 토큰 생성 실패: " + e.getMessage());
+            return ResultData.from("F-3", "Firebase 토큰 생성 실패: " + e.getMessage());
         }
     }
 
