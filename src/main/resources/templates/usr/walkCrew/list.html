@@ -20,6 +20,7 @@
 				<div class="p-3 flex justify-around text-gray-800 grid grid-cols-12">
 					<div class="col-span-3 p-3">
 						<div id="crewAside"></div>
+
 					</div>
 					<div class="p-2 col-span-9 w-full flex flex-col mx-auto">
 						<div class="h-[97%]">
@@ -114,6 +115,8 @@
 								<div class="text-xl font-semibold mb-4 border-b border-gray-300 pb-2">
 								  ${district || '로딩중'}
 								</div>
+								<div class="h-[70vh] overflow-y-auto">
+							
 							    <ul class="grid grid-cols-2 gap-2 text-sm text-gray-700">
 							      ${dongs.map((dong) => `
 							        <li>
@@ -126,6 +129,7 @@
 							        </li>
 							      `).join('')}
 							    </ul>
+							    </div>
 							  </aside>
 							`;
 
@@ -221,6 +225,7 @@
 		window.parent.closeModal(); // 모달 닫기
 		window.parent.loadCrewList(); // 모달 닫고 목록 갱신
 	</script>
+
 
 
 </body>
