@@ -29,13 +29,22 @@ function closeCommentModal() {
 	modal.classList.add("translate-y-full");  // 아래로 다시 내려감
 }
 
-// 📝 게시글 작성 모달
-function articleModal() {
+// 📝 게시글 상세보기모달
+function detailModal(e) {
+	const free = {
+		title: e.dataset.title,
+		body: e.dataset.body,
+		imageUrl: e.dataset.imageUrl,
+		writer: e.dataset.extra__writer,
+		regDate: e.dataset.regDate
+	};
+
+
 	const html = `
 	<div class="flex h-full">
 		  <!-- 왼쪽 이미지 영역 -->
 		  <div class="w-1/2 bg-gray-100">
-		    <img th:src="${free.imageUrl}" alt="product" class="object-cover w-full h-full" />
+		    <img src=${free.imageUrl} alt="product" class="object-cover w-full h-full" />
 		  </div>
 
 		  <!-- 오른쪽 텍스트 영역 -->
@@ -43,17 +52,17 @@ function articleModal() {
 		    <!-- 게시글 본문 -->
 		    <div class="flex-1 flex flex-col justify-between shadow p-4 overflow-auto">
 		      <div class="overflow-y-auto h-[300px] text-sm leading-relaxed mb-4">
-		        <p>게시글</p>
+					${free.body}
 		      </div>
 		      <div class="flex justify-between text-xs text-gray-500 mt-2">
-		        <span class="font-bold">admin</span>
-		        <span>2025.07.20</span>
+		        <span class="font-bold>${free.writer}</span>
+		        <span>${free.regDate}</span>
 		      </div>
 		    </div>
 
 		    <!-- 댓글 버튼 -->
-		    <div class="shadow p-4 text-sm rounded cursor-pointer hover:bg-gray-100" onclick="openCommentModal()">
-		      <p class="text-gray-500">여기누르기기</p>
+		    <div class="shadow w-[100%] p-4 text-sm rounded cursor-pointer hover:bg-gray-100" onclick="openCommentModal()">
+		      <p class="flex text-gray-500">여기누르기기</p>
 		    </div>
 
 		    <!-- ✅ 오른쪽 영역 내부에서 슬라이드되는 댓글 모달 -->
@@ -150,7 +159,7 @@ function scModal() {
 }
 
 // 📸 사진 추가 모달
-function photoModal() {
+function photoModal(photo) {
 	const html = `
 	<div class="w-full max-w-xl mx-auto flex">
 
@@ -162,7 +171,9 @@ function photoModal() {
 	  
 	  <!-- 이미지 -->
 	  <div class="flex-1 overflow-hidden rounded-lg">
-	  	<div class="w-full object-cover h-96 transition duration-300"></div>
+	  	<div class="w-full object-cover h-96 transition duration-300">
+		<img th:src="${photo.imageUrl}" alt="사진" class="object-cover w-full h-full rounded-lg" />
+		</div>
 	  </div>
 
 	  <!-- 우측 화살표 -->
@@ -531,23 +542,23 @@ function showDetail(id) {
 
 function rejectRequest() {
 	const selectedMemberId = document.getElementById("requestDetail").dataset.userId;
-		consol.log(`❌ ID ${selectedMemberId} 거절 처리`);
+	consol.log(`❌ ID ${selectedMemberId} 거절 처리`);
 
-		// 1. applicants 배열에서 해당 멤버 삭제
-		applicants = applicants.filter(app => app.memberId != selectedMemberId);
+	// 1. applicants 배열에서 해당 멤버 삭제
+	applicants = applicants.filter(app => app.memberId != selectedMemberId);
 
-		// 2. 리스트 다시 렌더링
-		const list = document.getElementById("requestList");
-		list.innerHTML = applicants.map(r =>
-			`<li class="cursor-pointer hover:bg-yellow-100 p-2 rounded" onclick="showDetail(${r.memberId})">${r.memberName}</li>`
-		).join('');
+	// 2. 리스트 다시 렌더링
+	const list = document.getElementById("requestList");
+	list.innerHTML = applicants.map(r =>
+		`<li class="cursor-pointer hover:bg-yellow-100 p-2 rounded" onclick="showDetail(${r.memberId})">${r.memberName}</li>`
+	).join('');
 
-		// 3. 디테일 영역 초기화
-		const detail = document.getElementById("requestDetail");
-		const buttons = document.getElementById("actionButtons");
-		detail.innerHTML = `<p>좌측에서 신청자를 선택하세요.</p>`;
-		delete detail.dataset.userId;
-		buttons.style.display = "none";
+	// 3. 디테일 영역 초기화
+	const detail = document.getElementById("requestDetail");
+	const buttons = document.getElementById("actionButtons");
+	detail.innerHTML = `<p>좌측에서 신청자를 선택하세요.</p>`;
+	delete detail.dataset.userId;
+	buttons.style.display = "none";
 }
 
 window.onload = renderRequestList;
