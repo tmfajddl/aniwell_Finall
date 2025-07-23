@@ -17,6 +17,7 @@ import com.example.RSW.vo.District;
 import com.example.RSW.vo.Member;
 import com.example.RSW.vo.ResultData;
 import com.example.RSW.vo.WalkCrew;
+import com.example.RSW.vo.WalkCrewMember;
 
 @Service
 public class WalkCrewService {
@@ -115,7 +116,5 @@ public class WalkCrewService {
 		// ✅ 이 로직은 VO가 아니라 서비스 내부에 위치해야 합니다
 		return crew.getLeaderId() == memberId;
 	}
-	
-	
 
 }
