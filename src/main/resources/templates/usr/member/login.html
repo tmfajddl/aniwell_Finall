@@ -35,8 +35,8 @@
 
                 <!-- 소셜 로그인 버튼 영역 -->
                 <div class="social-login-buttons flex flex-col gap-2 mt-4">
-                    <!-- 구글 -->
-                    <a href="https://accounts.google.com/o/oauth2/v2/auth?client_id=291458660034-978ksq36uneqg2hk830718s98turccbp.apps.googleusercontent.com&redirect_uri=http://localhost:8080/usr/member/google&response_type=code&scope=email%20profile&access_type=offline&prompt=select_account">
+                    <!-- ✅ 버튼 클릭 시 팝업 방식으로 열기 -->
+                    <a href="javascript:openGooglePopup()">
                         <img th:src="@{/img.socialLogin/web_light_sq_SI@3x.png}" alt="구글 로그인" class="h-10"/>
                     </a>
 
@@ -238,28 +238,45 @@
         }
     }
 </script>
+<script>
+    function openGooglePopup() {
+        const clientId = "291458660034-978ksq36uneqg2hk830718s98turccbp.apps.googleusercontent.com";
+        const redirectUri = "http://localhost:8080/usr/member/google"; // 서버 컨트롤러에 맞게 설정
+        const scope = "email profile";
+        const url = `https://accounts.google.com/o/oauth2/v2/auth` +
+            `?client_id=${clientId}` +
+            `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+            `&response_type=code` +
+            `&scope=${encodeURIComponent(scope)}` +
+            `&prompt=select_account`;
+
+        const popup = window.open(
+            url,
+            "googleLoginPopup",
+            "width=500,height=600"
+        );
+
+        if (!popup || popup.closed || typeof popup.closed == 'undefined') {
+            alert("팝업이 차단되었습니다. 팝업 차단을 해제해주세요.");
+        }
+    }
+</script>
+
 <!-- ✅ Firebase CDN 설정 -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script>
-    const firebaseConfig = {
-        apiKey: "",
-        authDomain: "",
-        projectId: "",
-    };
+    // ✅ Firebase 설정
+
     firebase.initializeApp(firebaseConfig);
-
-    console.log("🔥 Firebase 앱 초기화 상태:", firebase.apps.length);
-    console.log("🔥 firebase.auth() 객체:", firebase.auth());
-    console.log("🔥 firebase.firestore() 객체:", firebase.firestore());
 </script>
-<script>
-    console.log("🔥 JS 로드 확인용 로그");
 
+<script>
     async function handleFirebaseLogin() {
         try {
             console.log("📌 Firebase 토큰 요청 시작");
+
             const response = await fetch('/usr/member/firebase-token', {
                 method: 'POST'
             });
@@ -273,6 +290,7 @@
             }
 
             const customToken = result.data1.token;
+            const provider = result.data1.provider || "email"; // ✅ 기본값 email
 
             console.log("📌 Firebase 토큰 발급 성공, 로그인 시도");
 
@@ -287,16 +305,16 @@
                 uid: uid,
                 email: user.email || '',
                 displayName: user.displayName || '',
-                lastLogin: new Date().toISOString()
+                lastLogin: new Date().toISOString(),
+                provider: provider  // ✅ 제공업체 추가
             };
 
             await db.collection("users").doc(uid).set(userData, { merge: true });
-            console.log("✅ 사용자 정보 Firestore 저장 성공");
+            console.log("✅ Firestore에 사용자 정보 저장 완료");
 
-            // ✅ 3초 후 메인으로 이동 (로그 확인 시간 확보)
             setTimeout(() => {
                 window.location.href = "/";
-            }, 3000);
+            }, 2000);
 
         } catch (error) {
             console.error("❌ Firebase 로그인 처리 중 오류 발생", error);
@@ -308,10 +326,9 @@
 
         if (loginForm) {
             loginForm.addEventListener("submit", async function (e) {
-                e.preventDefault(); // ✅ 서버 리다이렉트 막기
+                e.preventDefault();
 
                 const formData = new FormData(loginForm);
-
                 try {
                     const response = await fetch(loginForm.getAttribute("action"), {
                         method: "POST",
@@ -325,7 +342,7 @@
                         return;
                     }
 
-                    await handleFirebaseLogin(); // ✅ Firebase 처리
+                    await handleFirebaseLogin();
 
                 } catch (err) {
                     console.error("❌ 로그인 중 에러 발생", err);
@@ -334,17 +351,16 @@
             });
         }
 
-        // ✅ URL에 ?social=1 이 있는 경우 → Firebase 자동 로그인
+        // ✅ 소셜 로그인 후 자동 실행
         const urlParams = new URLSearchParams(window.location.search);
         const isSocialLogin = urlParams.get("social");
-
         if (isSocialLogin === "1") {
             console.log("✅ 소셜 로그인 감지됨 → Firebase 처리 시작");
             handleFirebaseLogin();
         }
     });
 
-    // ✅ 팝업 메시지 수신 처리
+    // ✅ 팝업 로그인 성공 메시지 감지
     window.addEventListener("message", function (event) {
         if (event.data === "socialLoginSuccess") {
             setTimeout(() => {
