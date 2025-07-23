@@ -2,14 +2,14 @@
 <html>
 
 <head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<script src="https://cdn.tailwindcss.com"></script>
-	<link rel="stylesheet" th:href="@{/resource/css/common.css}">
-	<title>크루 모집 목록</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" th:href="@{/resource/css/common.css}">
+<title>크루 모집 목록</title>
 </head>
 
-<body class="bg-gradient-to-b from-[#e4f0b9] to-[#fcdca9] font-sans" >
+<body class="bg-gradient-to-b from-[#e4f0b9] to-[#fcdca9] font-sans">
 	<div class="flex h-screen">
 		<!-- Sidebar -->
 		<div th:replace="common :: siteHeader"></div>
@@ -19,41 +19,70 @@
 
 
 			<!-- 왼쪽: 정보 섹션 -->
+			<!-- 크루 상세 페이지의 사이드바 영역 (1/4 너비, 세로 방향 레이아웃 구성) -->
 			<aside class="w-1/4 space-y-1 p-6 grid grid-rows-12 h-[100%] ">
+
+				<!-- 상단 6줄(Row span 6) 영역: 크루 기본 정보 -->
 				<div class="row-span-6 ">
+
+					<!-- 목록으로 돌아가기 링크 -->
 					<a href="/usr/walkCrew/list" class="back-link">← 목록으로 돌아가기</a>
+
+					<!-- 크루 이미지와 제목, 멤버 수 출력 -->
 					<div class="flex space-y-2 items-center gap-3">
+						<!-- 크루 썸네일 이미지 (미등록시 회색 배경 처리) -->
 						<div class="w-14 h-14 bg-gray-300 "></div>
+
+						<!-- 크루명과 멤버 수 출력 -->
 						<div class="p-3">
 							<h2 class="text-xl font-semibold" th:text="${crew.title}">크루원들 모여라</h2>
 							<p class="text-sm text-gray-500">멤버 111</p>
+							<!-- 멤버 수는 추후 동적 처리 필요 -->
 						</div>
 					</div>
 
-					<div class="text-sm text-gray-700" th:text="${crew.description}">
-						Lorem ipsum dolor, sit amet consectetur adipisicing elit...
-					</div>
+					<!-- 크루 설명 출력 -->
+					<div class="text-sm text-gray-700" th:text="${crew.description}">Lorem ipsum dolor, sit amet consectetur
+						adipisicing elit...</div>
 
+					<!-- 시/구/동 정보 출력 -->
 					<div class="flex gap-5 text-sm text-gray-600 py-5">
 						<div class="bg-gray-200 rounded-full px-3 py-1" th:text="${crew.city}">시</div>
 						<div class="bg-gray-200 rounded-full px-3 py-1" th:text="${crew.district}">구</div>
 						<div class="bg-gray-200 rounded-full px-3 py-1" th:text="${crew.dong}">동</div>
 					</div>
 				</div>
-				<button class="bg-gray-200 w-full rounded-full justify-center flex h-10 p-1 py-1" th:onclick="|crewJoin(${crew.id})|">크루신청</button>
+
+				<!-- 크루 신청 버튼 -->
+				<button class="bg-gray-200 w-full rounded-full justify-center flex h-10 p-1 py-1"
+					th:onclick="|crewJoin(${crew.id})|">크루신청</button>
+
+				<!-- 공지사항 리스트 영역 (row-span-5) -->
 				<div class="shadow row-span-5">
+
+					<!-- 공지사항 타이틀 -->
 					<div class="mx-3 pb-3 pt-2 border-b border-1 border-black">공지사항</div>
+
+					<!-- 공지사항 반복 출력 (noticeArticles에서 반복) -->
 					<div th:each="article : ${noticeArticles}" class="p-4 border-b">
+						<!-- 작성자 ID 출력 -->
 						<div class="text-sm text-gray-500" th:text="'작성자 ID: ' + ${article.memberId}"></div>
+						<!-- 제목 출력 -->
 						<div class="text-lg font-bold text-gray-800" th:text="${article.title}">제목</div>
+						<!-- 본문 출력 -->
 						<div class="text-sm text-gray-700 mt-1" th:text="${article.body}">내용</div>
 					</div>
 				</div>
+
+				<!-- 하단 수정/삭제 버튼 영역 -->
 				<div class="row-sapn-1 flex justify-around self-end">
 					<div>수정</div>
+					<!-- 수정 버튼 (기능은 JS로 연결해야 함) -->
 					<div>삭제</div>
+					<!-- 삭제 버튼 (기능은 JS로 연결해야 함) -->
 				</div>
 			</aside>
+
 
 			<!-- 오른쪽: 콘텐츠 섹션 -->
 			<div class="flex-1 space-y-6 h-[100%] flex flex-col p-2 ">
@@ -62,10 +91,8 @@
 					<div class="flex justify-between items-center mb-2 px-5">
 						<h3 class="font-bold text-lg">앨범</h3>
 					</div>
-					<div onclick="photoModal()" th:if="${#lists.isEmpty(photoList)}"
-						class="text-center text-gray-500 px-5 py-10">
-						사진이 없습니다.
-					</div>
+					<div onclick="photoModal()" th:if="${#lists.isEmpty(photoList)}" class="text-center text-gray-500 px-5 py-10">
+						사진이 없습니다.</div>
 
 					<div th:each="photo : ${photoList}" class="w-40 h-40 bg-gray-300 rounded-lg cursor-pointer"
 						th:onclick="|photoModal(${photo.id})|">
@@ -116,7 +143,11 @@
 					</div>
 					<div class="flex gap-5 overflow-x-auto px-4 pb-1">
 						<div onclick="scModal()" class="w-12 text-center p-1 px-3 shadow">
-							<div class="text-sm font-bold">7월<br>07</div>
+							<div class="text-sm font-bold">
+								7월
+								<br>
+								07
+							</div>
 							<div class="text-xs text-gray-500">모임</div>
 						</div>
 					</div>
@@ -134,28 +165,26 @@
 	</div>
 	<!--기본팝업창-->
 	<div id="modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-		<div
-			class="relative w-[90%] max-w-[1000px] h-[700px] bg-transparent flex rounded-2xl overflow-hidden shadow-2xl">
+		<div class="relative w-[90%] max-w-[1000px] h-[700px] bg-transparent flex rounded-2xl overflow-hidden shadow-2xl">
 			<div class="w-full h-full flex bg-gradient-to-b from-[#FCE9A3] to-[#E0C878]">
 				<div class="w-[5%] text-center">
-					<button onclick="closeModal()"
-						class="text-3xl font-light text-gray-600 hover:text-black">&times;</button>
+					<button onclick="closeModal()" class="text-3xl font-light text-gray-600 hover:text-black">&times;</button>
 				</div>
-				<div id="modalContent" class="relative flex-1 bg-white rounded-l-3xl">
-				</div>
+				<div id="modalContent" class="relative flex-1 bg-white rounded-l-3xl"></div>
 			</div>
 		</div>
 	</div>
 	<!--그냥팝업-->
 	<div id="comModal"></div>
 	<!--사이드팝업창-->
-	<div id="sideModal" class="fixed top-0 right-0 h-full w-[400px] bg-white shadow-lg z-50 transform translate-x-full transition-transform duration-300 ease-in-out"></div>
-		
+	<div id="sideModal"
+		class="fixed top-0 right-0 h-full w-[400px] bg-white shadow-lg z-50 transform translate-x-full transition-transform duration-300 ease-in-out"></div>
+
 	</div>
-	
+
 	<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 	<script th:src="@{/resource/js/crew.js}"></script>
-	
+
 </body>
 
 </html>
