@@ -17,6 +17,7 @@ import com.example.RSW.vo.Article;
 import com.example.RSW.vo.ResultData;
 import com.example.RSW.vo.Rq;
 import com.example.RSW.vo.WalkCrew;
+import com.example.RSW.vo.WalkCrewMember;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -260,6 +261,13 @@ public class UsrWalkCrewMemberController {
 		data.put("memberId", memberId);
 
 		return ResultData.from("S-1", "크루 탈퇴가 완료되었습니다.", data);
+	}
+
+	@GetMapping("/usr/walkCrew/memberList")
+	@ResponseBody
+	public ResultData getMemberList(@RequestParam int crewId) {
+		List<WalkCrewMember> members = walkCrewMemberService.getMembersByCrewId(crewId);
+		return ResultData.from("S-1", "크루 멤버 리스트", members);
 	}
 
 }
