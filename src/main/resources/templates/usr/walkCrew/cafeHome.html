@@ -9,7 +9,7 @@
 	<title>크루 모집 목록</title>
 </head>
 
-<body class="bg-gradient-to-b from-[#e4f0b9] to-[#fcdca9] font-sans ">
+<body class="bg-gradient-to-b from-[#e4f0b9] to-[#fcdca9] font-sans" >
 	<div class="flex h-screen">
 		<!-- Sidebar -->
 		<div th:replace="common :: siteHeader"></div>
@@ -40,7 +40,7 @@
 						<div class="bg-gray-200 rounded-full px-3 py-1" th:text="${crew.dong}">동</div>
 					</div>
 				</div>
-				<button class="bg-gray-200 w-full rounded-full justify-center flex h-10 p-1 py-1">크루신청</button>
+				<button class="bg-gray-200 w-full rounded-full justify-center flex h-10 p-1 py-1" th:onclick="|crewJoin(${crew.id})|">크루신청</button>
 				<div class="shadow row-span-5">
 					<div class="mx-3 pb-3 pt-2 border-b border-1 border-black">공지사항</div>
 					<div th:each="article : ${noticeArticles}" class="p-4 border-b">
@@ -152,7 +152,10 @@
 	<div id="sideModal" class="fixed top-0 right-0 h-full w-[400px] bg-white shadow-lg z-50 transform translate-x-full transition-transform duration-300 ease-in-out"></div>
 		
 	</div>
+	
+	<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 	<script th:src="@{/resource/js/crew.js}"></script>
+	
 </body>
 
 </html>
