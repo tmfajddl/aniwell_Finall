@@ -184,6 +184,7 @@ public class UsrMemberController {
     }
 
 
+
     @RequestMapping("/usr/member/join")
     public String showJoin(HttpServletRequest req) {
         return "/usr/member/join";
@@ -779,9 +780,7 @@ public class UsrMemberController {
 
             // 1. access token 요청
             MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-            params.add("code", code);
-            params.add("client_id", "");
-            params.add("client_secret", "");
+            params.add("code", code);  
             params.add("redirect_uri", "http://localhost:8080/usr/member/google");
             params.add("grant_type", "authorization_code");
 
@@ -934,5 +933,4 @@ public class UsrMemberController {
             return ResultData.from("F-2", "Firebase 토큰 생성 실패: " + e.getMessage());
         }
     }
-
 }
