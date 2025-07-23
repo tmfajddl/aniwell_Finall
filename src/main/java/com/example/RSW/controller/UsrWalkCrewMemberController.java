@@ -47,6 +47,7 @@ public class UsrWalkCrewMemberController {
 		}
 
 		int memberId = rq.getLoginedMemberId();
+		System.out.println(memberId);
 
 		// getTitle()은 롬복 @Data로 자동 생성됨
 		WalkCrew crew = walkCrewService.getCrewByLeaderId(memberId);
@@ -135,7 +136,7 @@ public class UsrWalkCrewMemberController {
 	@ResponseBody
 	public ResultData showRequestDetail(@RequestParam int crewId, @RequestParam int memberId, HttpServletRequest req) {
 		Rq rq = (Rq) req.getAttribute("rq");
-
+		System.out.println(memberId);
 		if (rq == null || !rq.isLogined()) {
 			return ResultData.from("F-1", "로그인 후 이용해주세요.");
 		}

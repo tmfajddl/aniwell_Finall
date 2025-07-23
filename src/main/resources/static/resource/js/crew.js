@@ -434,39 +434,100 @@ function handleCrewJoin() {
 	crewjoy();        // 참가 신청 로직 실행
 }
 
-const sampleRequests = [
-	{ id: 1, name: "김철수", age: 28, comment: "산책이 좋아요!" },
-	{ id: 2, name: "박영희", age: 32, comment: "강아지를 좋아해요!" }
-];
+// 신청자 정보 전역변수
+let applicants = [];
 
-// 왼쪽 리스트 렌더링
+// 신청자 리스트 보기
 function renderRequestList() {
-	const list = document.getElementById("requestList");
-	list.innerHTML = sampleRequests.map(r =>
-		`<li class="cursor-pointer hover:bg-yellow-100 p-2 rounded" onclick="showDetail(${r.id})">${r.name}</li>`
-	).join('');
+	$.ajax({
+		url: "/usr/walkCrewMember/requestList",
+		type: "GET",
+		data: { crewId },
+		success: function(response) {
+			console.log(response);
+			// 응답 결과는 response.data 형태로 가정
+			applicants = response.data1.applicants;
+
+			const list = document.getElementById("requestList");
+			list.innerHTML = applicants.map(r =>
+				`<li class="cursor-pointer hover:bg-yellow-100 p-2 rounded" onclick="showDetail(${r.memberId})">${r.memberName}</li>`
+			).join('');
+		},
+		error: function(xhr, status, error) {
+			console.error("🚨 요청 실패:", status, error);
+			alert("요청 목록 불러오기에 실패했습니다.");
+		}
+	});
+}
+
+function acceptRequest() {
+	const slelctMemberId = document.getElementById("requestDetail").dataset.userId;
+
+	$.ajax({
+		url: "/usr/walkCrewMember/approve",
+		type: "POST",
+		data: {
+			crewId: crewId,
+			memberId: slelctMemberId
+		},
+		success: function(res) {
+			console.log("✅ 요청 성공:", res);
+			// ✅ 1. applicants 배열에서 삭제
+			applicants = applicants.filter(app => app.memberId != slelctMemberId);
+
+			// ✅ 2. 리스트 다시 렌더링
+			const list = document.getElementById("requestList");
+			list.innerHTML = applicants.map(r =>
+				`<li class="cursor-pointer hover:bg-yellow-100 p-2 rounded" onclick="showDetail(${r.memberId})">${r.memberName}</li>`
+			).join('');
+
+			// ✅ 3. 디테일 초기화
+			const detail = document.getElementById("requestDetail");
+			const buttons = document.getElementById("actionButtons");
+			detail.innerHTML = `<p>좌측에서 신청자를 선택하세요.</p>`;
+			delete detail.dataset.userId;
+			buttons.style.display = "none";
+		},
+		error: function(xhr, status, error) {
+			console.error("🚨 요청 실패:", status, error);
+			alert("요청 처리에 실패했습니다.");
+		}
+	});
 }
 
 // 클릭 시 상세 정보 표시
 function showDetail(id) {
-	const user = sampleRequests.find(u => u.id === id);
+	const user = applicants.find(u => u.memberId === id);
 	const detail = document.getElementById("requestDetail");
 	const buttons = document.getElementById("actionButtons");
+	const memberId = user.memberId;
+	$.ajax({
+		url: "/usr/walkCrewMember/requestDetail",
+		type: "GET",
+		data: {
+			crewId: crewId,
+			memberId: memberId
+		},
+		success: function(res) {
+			console.log("✅ 요청 성공:", res);
+			const selectusr = res.data1.applicant;
 
-	detail.innerHTML = `
-    <p><strong>이름:</strong> ${user.name}</p>
-    <p><strong>나이:</strong> ${user.age}</p>
-    <p><strong>소개:</strong> ${user.comment}</p>
-  `;
+			detail.innerHTML = `
+			    <p><strong>닉네:</strong> ${selectusr.memberNickname}</p>
+			    <p><strong>주소:</strong> ${selectusr.memberAddress}</p>
+			  `;
+		},
+		error: function(xhr, status, error) {
+			console.error("🚨 요청 실패:", status, error);
+			alert("요청 처리에 실패했습니다.");
+		}
+	});
+
 	buttons.style.display = "block";
-	detail.dataset.userId = user.id; // 다음 처리를 위한 저장
+	detail.dataset.userId = user.memberId; // 다음 처리를 위한 저장
 }
 
-function acceptRequest() {
-	const id = document.getElementById("requestDetail").dataset.userId;
-	alert(`✅ ID ${id} 수락 처리`);
-	// 여기서 실제 처리 로직 추가
-}
+
 
 function rejectRequest() {
 	const id = document.getElementById("requestDetail").dataset.userId;
@@ -562,7 +623,7 @@ function crewJoin(crewId) {
 		url: `/usr/walkCrewMember/doJoin`,
 		data: { crewId },
 		success: function(data) {
-			console.log(data.msg);			
+			console.log(data.msg);
 		},
 		error: function(err) {
 			console.error("참가등록실", err);
