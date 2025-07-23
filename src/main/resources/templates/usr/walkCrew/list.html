@@ -2,11 +2,11 @@
 <html>
 
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<script src="https://cdn.tailwindcss.com"></script>
-<link rel="stylesheet" th:href="@{/resource/css/common.css}">
-<title>크루 모집 목록</title>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<script src="https://cdn.tailwindcss.com"></script>
+	<link rel="stylesheet" th:href="@{/resource/css/common.css}">
+	<title>크루 모집 목록</title>
 </head>
 
 <body class="bg-gradient-to-b from-[#e4f0b9] to-[#fcdca9] font-sans ">
@@ -25,11 +25,14 @@
 						<div class="h-[97%]">
 							<div class="stickypb">
 								<div class="w-full max-w-xl mx-auto">
-									<div class="flex items-center bg-white border border-gray-200 shadow-sm rounded-full px-4 py-2">
+									<div
+										class="flex items-center bg-white border border-gray-200 shadow-sm rounded-full px-4 py-2">
 										<form method="get" th:action="@{/usr/walkCrew/list}" class="flex w-full">
-											<input type="text" name="query" placeholder="검색어를 입력하세요" th:value="${param.query}"
+											<input type="text" name="query" placeholder="검색어를 입력하세요"
+												th:value="${param.query}"
 												class="flex-1 text-sm text-gray-800 bg-transparent outline-none placeholder:text-gray-400" />
-											<button type="submit" class="ml-2 text-gray-500 hover:text-black">🔍</button>
+											<button type="submit"
+												class="ml-2 text-gray-500 hover:text-black">🔍</button>
 										</form>
 									</div>
 								</div>
@@ -41,14 +44,16 @@
 							</div>
 
 							<!-- 모달 -->
-							<div id="modal" class="hidden fixed inset-0 z-50 flex items-center justify-around bg-black bg-opacity-50">
+							<div id="modal"
+								class="hidden fixed inset-0 z-50 flex items-center justify-around bg-black bg-opacity-50">
 								<div
 									class="relative w-[90%] max-w-[1000px] h-[700px] bg-transparent flex rounded-2xl overflow-hidden shadow-2xl">
 
 									<!-- 왼쪽 연노랑 배경 -->
 									<div class="w-full h-full flex bg-gradient-to-b from-[#FCE9A3] to-[#E0C878]">
 										<div class="w-[5%] text-center">
-											<button onclick="closeModal()" class="text-3xl font-light text-gray-600 hover:text-black">&times;</button>
+											<button onclick="closeModal()"
+												class="text-3xl font-light text-gray-600 hover:text-black">&times;</button>
 										</div>
 										<!-- 오른쪽 내용 -->
 										<div class="relative flex-1 bg-white rounded-l-3xl">
@@ -60,7 +65,8 @@
 
 											<!-- iframe 내용 -->
 											<div class="p-4 h-[calc(100%-4rem)] w-[100%]">
-												<iframe src="/usr/walkCrew/create" class="h-[100%] w-[100%] p-1 border-none"></iframe>
+												<iframe src="/usr/walkCrew/create"
+													class="h-[100%] w-[100%] p-1 border-none"></iframe>
 											</div>
 										</div>
 									</div>
@@ -114,6 +120,7 @@
 								<div class="text-xl font-semibold mb-4 border-b border-gray-300 pb-2">
 								  ${district || '로딩중'}
 								</div>
+								<div class="h-[70vh] overflow-y-auto">
 							    <ul class="grid grid-cols-2 gap-2 text-sm text-gray-700">
 							      ${dongs.map((dong) => `
 							        <li>
@@ -126,6 +133,7 @@
 							        </li>
 							      `).join('')}
 							    </ul>
+								</div>
 							  </aside>
 							`;
 
@@ -150,39 +158,39 @@
 	</script>
 
 	<script>
-	function loadCrewList() {
-		const query = $('#searchInput').val();
+		function loadCrewList() {
+			const query = $('#searchInput').val();
 
-		$.ajax({
-			url: '/usr/walkCrew/api/list',
-			method: 'GET',
-			dataType: 'json',
-			success: function (response) {
-				if (response.resultCode !== 'S-1') {
-					alert('❌ 불러오기 실패: ' + response.msg);
-					return;
-				}
+			$.ajax({
+				url: '/usr/walkCrew/api/list',
+				method: 'GET',
+				dataType: 'json',
+				success: function (response) {
+					if (response.resultCode !== 'S-1') {
+						alert('❌ 불러오기 실패: ' + response.msg);
+						return;
+					}
 
-				const crewList = response.data1.crews;
-				const container = $('#crewListContainer');
-				container.empty();
+					const crewList = response.data1.crews;
+					const container = $('#crewListContainer');
+					container.empty();
 
-				if (crewList.length === 0) {
-					container.append('<p class="text-center text-gray-400">등록된 크루가 없습니다.</p>');
-					return;
-				}
+					if (crewList.length === 0) {
+						container.append('<p class="text-center text-gray-400">등록된 크루가 없습니다.</p>');
+						return;
+					}
 
-				crewList.forEach(crew => {
-					if (query && !crew.title.includes(query) && !crew.description.includes(query)) return;
+					crewList.forEach(crew => {
+						if (query && !crew.title.includes(query) && !crew.description.includes(query)) return;
 
-					const formattedDate = new Date(crew.createdAt).toLocaleDateString('ko-KR');
+						const formattedDate = new Date(crew.createdAt).toLocaleDateString('ko-KR');
 
-					// ✅ 이미지가 있는 경우엔 <img>로 출력, 없으면 회색박스
-					const thumbnail = crew.imageUrl
-						? `<img src="${crew.imageUrl}" alt="크루 이미지" class="w-20 h-20 object-cover rounded-md shrink-0">`
-						: `<div class="w-20 h-20 bg-gray-200 rounded-md shrink-0"></div>`;
+						// ✅ 이미지가 있는 경우엔 <img>로 출력, 없으면 회색박스
+						const thumbnail = crew.imageUrl
+							? `<img src="${crew.imageUrl}" alt="크루 이미지" class="w-20 h-20 object-cover rounded-md shrink-0">`
+							: `<div class="w-20 h-20 bg-gray-200 rounded-md shrink-0"></div>`;
 
-					const html = `
+						const html = `
 						<div class="bg-white rounded-lg shadow p-4 flex gap-4 items-start cursor-pointer"
 						     onclick="location.href='/usr/crewCafe/cafeHome?crewId=${crew.id}'">
 
@@ -202,20 +210,20 @@
 						  </div>
 						</div>
 					`;
-					container.append(html);
-				});
-			},
-			error: function (err) {
-				console.error('❌ Ajax 에러:', err);
-				alert('서버 연결 실패');
-			}
-		});
-	}
+						container.append(html);
+					});
+				},
+				error: function (err) {
+					console.error('❌ Ajax 에러:', err);
+					alert('서버 연결 실패');
+				}
+			});
+		}
 
-	$(document).ready(function () {
-		loadCrewList();
-	});
-</script>
+		$(document).ready(function () {
+			loadCrewList();
+		});
+	</script>
 
 	<script>
 		window.parent.closeModal(); // 모달 닫기

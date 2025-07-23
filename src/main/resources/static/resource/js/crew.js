@@ -425,53 +425,53 @@ function crewjoy() {
 
     `;
 	openModal(html);
-	
-setTimeout(() => renderRequestList(), 0);
-	
+
+	setTimeout(() => renderRequestList(), 0);
+
 }
 function handleCrewJoin() {
-  closeSideModal(); // 사이드바 닫기
-  crewjoy();        // 참가 신청 로직 실행
+	closeSideModal(); // 사이드바 닫기
+	crewjoy();        // 참가 신청 로직 실행
 }
 
 const sampleRequests = [
-  { id: 1, name: "김철수", age: 28, comment: "산책이 좋아요!" },
-  { id: 2, name: "박영희", age: 32, comment: "강아지를 좋아해요!" }
+	{ id: 1, name: "김철수", age: 28, comment: "산책이 좋아요!" },
+	{ id: 2, name: "박영희", age: 32, comment: "강아지를 좋아해요!" }
 ];
 
 // 왼쪽 리스트 렌더링
 function renderRequestList() {
-  const list = document.getElementById("requestList");
-  list.innerHTML = sampleRequests.map(r =>
-    `<li class="cursor-pointer hover:bg-yellow-100 p-2 rounded" onclick="showDetail(${r.id})">${r.name}</li>`
-  ).join('');
+	const list = document.getElementById("requestList");
+	list.innerHTML = sampleRequests.map(r =>
+		`<li class="cursor-pointer hover:bg-yellow-100 p-2 rounded" onclick="showDetail(${r.id})">${r.name}</li>`
+	).join('');
 }
 
 // 클릭 시 상세 정보 표시
 function showDetail(id) {
-  const user = sampleRequests.find(u => u.id === id);
-  const detail = document.getElementById("requestDetail");
-  const buttons = document.getElementById("actionButtons");
+	const user = sampleRequests.find(u => u.id === id);
+	const detail = document.getElementById("requestDetail");
+	const buttons = document.getElementById("actionButtons");
 
-  detail.innerHTML = `
+	detail.innerHTML = `
     <p><strong>이름:</strong> ${user.name}</p>
     <p><strong>나이:</strong> ${user.age}</p>
     <p><strong>소개:</strong> ${user.comment}</p>
   `;
-  buttons.style.display = "block";
-  detail.dataset.userId = user.id; // 다음 처리를 위한 저장
+	buttons.style.display = "block";
+	detail.dataset.userId = user.id; // 다음 처리를 위한 저장
 }
 
 function acceptRequest() {
-  const id = document.getElementById("requestDetail").dataset.userId;
-  alert(`✅ ID ${id} 수락 처리`);
-  // 여기서 실제 처리 로직 추가
+	const id = document.getElementById("requestDetail").dataset.userId;
+	alert(`✅ ID ${id} 수락 처리`);
+	// 여기서 실제 처리 로직 추가
 }
 
 function rejectRequest() {
-  const id = document.getElementById("requestDetail").dataset.userId;
-  alert(`❌ ID ${id} 거절 처리`);
-  // 여기서 실제 처리 로직 추가
+	const id = document.getElementById("requestDetail").dataset.userId;
+	alert(`❌ ID ${id} 거절 처리`);
+	// 여기서 실제 처리 로직 추가
 }
 
 window.onload = renderRequestList;
@@ -479,8 +479,8 @@ window.onload = renderRequestList;
 
 function handleCrewMember() {
 	closeSideModal(); // 사이드바 닫기
-	  crewMember(); 
-	
+	crewMember();
+
 }
 
 
@@ -512,43 +512,71 @@ function crewMember() {
 
 	
 	    `;
-		openModal(html);
-		
+	openModal(html);
+
 	setTimeout(() => renderMemberList(), 0);
-		
+
 }
 const members = [
-  { id: 1, name: "김철수", role: "일반", comment: "자주 산책합니다." },
-  { id: 2, name: "박영희", role: "방장", comment: "운영자입니다." },
+	{ id: 1, name: "김철수", role: "일반", comment: "자주 산책합니다." },
+	{ id: 2, name: "박영희", role: "방장", comment: "운영자입니다." },
 ];
 
 // 리스트 렌더링
 function renderMemberList() {
-  const list = document.getElementById("memberList");
-  list.innerHTML = members.map(m =>
-    `<li class="cursor-pointer hover:bg-yellow-100 p-2 rounded" onclick="showMemberDetail(${m.id})">${m.name}</li>`
-  ).join('');
+	const list = document.getElementById("memberList");
+	list.innerHTML = members.map(m =>
+		`<li class="cursor-pointer hover:bg-yellow-100 p-2 rounded" onclick="showMemberDetail(${m.id})">${m.name}</li>`
+	).join('');
 }
 
 // 상세 보기
 function showMemberDetail(id) {
-  const member = members.find(m => m.id === id);
-  const detail = document.getElementById("memberDetail");
-  const buttons = document.getElementById("memberActionButtons");
+	const member = members.find(m => m.id === id);
+	const detail = document.getElementById("memberDetail");
+	const buttons = document.getElementById("memberActionButtons");
 
-  detail.innerHTML = `
+	detail.innerHTML = `
     <p><strong>이름:</strong> ${member.name}</p>
     <p><strong>역할:</strong> ${member.role}</p>
     <p><strong>소개:</strong> ${member.comment}</p>
   `;
-  detail.dataset.userId = member.id;
-  buttons.style.display = "block";
+	detail.dataset.userId = member.id;
+	buttons.style.display = "block";
 }
 
 // 강퇴 처리
 function kickMember() {
-  const id = document.getElementById("memberDetail").dataset.userId;
-  alert(`❌ ID ${id} 회원 강퇴 처리`);
-  // 실제 삭제 로직은 이곳에 추가
+	const id = document.getElementById("memberDetail").dataset.userId;
+	alert(`❌ ID ${id} 회원 강퇴 처리`);
+	// 실제 삭제 로직은 이곳에 추가
 }
 //////
+
+
+
+////참가신청로직
+function crewJoin(crewId) {
+	$.ajax({
+		type: "POST",
+		url: `/usr/walkCrewMember/doJoin`,
+		data: { crewId },
+		success: function(data) {
+			console.log(data.msg);			
+		},
+		error: function(err) {
+			console.error("참가등록실", err);
+		}
+	});
+}
+
+
+
+
+
+
+
+
+
+
+
