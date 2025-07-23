@@ -35,7 +35,7 @@ function articleModal() {
 	<div class="flex h-full">
 		  <!-- 왼쪽 이미지 영역 -->
 		  <div class="w-1/2 bg-gray-100">
-		    <img src="https://via.placeholder.com/500" alt="product" class="object-cover w-full h-full" />
+		    <img th:src="${free.imageUrl}" alt="product" class="object-cover w-full h-full" />
 		  </div>
 
 		  <!-- 오른쪽 텍스트 영역 -->
