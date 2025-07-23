@@ -67,14 +67,11 @@
 					<div th:if="${galleryArticles.isEmpty()}" class="text-center text-gray-500 px-5 py-10">
 						사진이 없습니다.
 					</div>
-
 					<div th:each="photo : ${galleryArticles}"
-						class="ml-5 w-40 h-40 bg-gray-300 rounded-lg cursor-pointer"
+						class="ml-5 w-32 h-32 bg-gray-300 rounded-lg cursor-pointer"
 						th:attr="data-url=${photo.imageUrl}" onclick="photoModal(this)">
-
 						<img th:src="${photo.imageUrl}" alt="사진" class="object-cover w-full h-full rounded-lg" />
 					</div>
-
 				</div>
 				<!-- 게시글 -->
 				<div class="py-1 row-span-4 shadow relative">
@@ -83,12 +80,17 @@
 						<h3 class="font-bold" th:text="${freeArticles.size}">게시글</h3>
 						<button onclick="crewArtAdd()" class="p-1 shadow text-gray-600 hover:text-black">추가 ＋</button>
 					</div>
-					<div class="gap-3 px-4 h-[78%] flex">
-						<div th:each="free : ${freeArticles}" th:attr="data-url=${free}" onclick="articleModal(this)"
-							class="aspect-[1/1] bg-white rounded shadow p-2 h-[100%] w-1/6 flex flex-col">
+					<div class="gap-3 px-4 h-[78%] flex overflow-x-auto">
+						<div th:each="free : ${freeArticles}" 
+						th:attr="data-title=${free.title}, 
+						         data-body=${free.body},
+						         data-image-url=${free.imageUrl},
+						         data-writer=${free.extra__writer},
+						         data-reg-date=${free.regDate}" onclick="detailModal(this)"
+							class="z-10 aspect-[1/1] bg-white rounded shadow p-2 h-[100%] w-1/4 flex flex-col">
 							<img th:src="${free.imageUrl}" alt="사진" class="w-full flex-1 rounded" />
 							<div class="font-semibold mt-2 flex justify-between">
-								<div th:text="${free.title}">게시글 제목</div>
+								<div th:text="${free.title}" class="overflow-hidden">게시글 제목</div>
 								<div class="text-sm">🤍️</div>
 							</div>
 						</div>
@@ -114,9 +116,11 @@
 					<div class="flex gap-5 overflow-x-auto px-4 pb-1">
 						<div th:each="schedule : ${scheduleArticles}" th:attr="data-url=${schedule}" onclick="scModal()"
 							class="w-12 text-center p-1 px-3 shadow">
-							<div th:text="${schedule.scheduleDate}" class="text-sm font-bold">
-								<div class="text-xs text-gray-500">모임</div>
+							<div th:text="${#dates.format(schedule.scheduleDate, 'MM')}" class="text-sm font-bold">
 							</div>
+							<div th:text="${#dates.format(schedule.scheduleDate, 'dd')}" class="text-xs text-gray-500">
+							</div>
+							<div class="text-xs text-gray-500">모임</div>
 						</div>
 					</div>
 
@@ -157,6 +161,14 @@
 	<script>
 		var crewId = [[${crew.id}]];
 		console.log(crewId);
+	</script>
+	<script>
+		function formatDate(dateStr) {
+			if (!dateStr || dateStr === "0000-00-00") return null;
+
+			const [year, month, day] = dateStr.split("-");
+			return `${month}-${day}`;
+		}
 	</script>
 
 	<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
