@@ -2,27 +2,29 @@
 <html>
 
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<script src="https://cdn.tailwindcss.com"></script>
-<title>크루 등록</title>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<script src="https://cdn.tailwindcss.com"></script>
+	<title>크루 등록</title>
 </head>
 
 <body class="min-h-screen h-auto">
 	<div class="h-[100%] w-full flex justify-center items-start p-6">
-		<form class="w-full h-[200%] space-y-6 flex py-4 justify-between gap-5" action="/usr/walkCrew/doCreate" method="post"
-			enctype="multipart/form-data" onsubmit="return validateForm()">
+		<form class="w-full h-[200%] space-y-6 flex py-4 justify-between gap-5" action="/usr/walkCrew/doCreate"
+			method="post" enctype="multipart/form-data" onsubmit="return validateForm()">
 			<div class="w-full h-[100%] max-w-[600px]">
 				<!-- 제목 -->
 				<div class="mb-3">
 					<label class="font-semibold block mb-4">크루 이름</label>
-					<input type="text" name="title" required class="w-full rounded-md shadow-sm border border-yellow-100 p-2" />
+					<input type="text" name="title" required
+						class="w-full rounded-md shadow-sm border border-yellow-100 p-2" />
 				</div>
 
 				<!-- 설명 -->
 				<div class="mb-3">
 					<label class="font-semibold block mb-4">소개</label>
-					<textarea name="description" rows="5" required class="w-full rounded-md shadow-sm border border-yellow-100 p-2"></textarea>
+					<textarea name="description" rows="5" required
+						class="w-full rounded-md shadow-sm border border-yellow-100 p-2"></textarea>
 				</div>
 
 				<!-- 동 선택 -->
@@ -36,7 +38,8 @@
 					<!-- 드롭다운 형태 -->
 					<div>
 						<details class="relative w-[250px]" id="dongDropdown">
-							<summary class="px-4 py-2 border rounded cursor-pointer bg-white shadow" id="dongDropdownLabel"> 동 선택 </summary>
+							<summary class="px-4 py-2 border rounded cursor-pointer bg-white shadow"
+								id="dongDropdownLabel"> 동 선택 </summary>
 							<ul id="dongListContainer"
 								class="h-[140px] absolute z-10 w-full bg-white border rounded shadow mt-2 max-h-48 overflow-y-auto hidden divide-y divide-gray-100 text-sm">
 							</ul>
@@ -49,7 +52,8 @@
 
 				<!-- 등록 버튼 -->
 				<div class="text-right">
-					<button type="submit" class="px-6 py-2 bg-gradient-to-r from-green-200 to-yellow-200 rounded-xl shadow">완료</button>
+					<button type="submit"
+						class="px-6 py-2 bg-gradient-to-r from-green-200 to-yellow-200 rounded-xl shadow">완료</button>
 				</div>
 			</div>
 
@@ -163,19 +167,19 @@
 
 	<!-- 프로필 사진 미리보기 -->
 	<script>
-	function previewImageFile(event) {
-		const file = event.target.files[0];
-		if (file) {
-			const reader = new FileReader();
-			reader.onload = function (e) {
-				const previewImg = document.getElementById("preview");
-				previewImg.src = e.target.result;
-				previewImg.style.display = "block"; // ✅ 반드시 필요
-			};
-			reader.readAsDataURL(file);
+		function previewImageFile(event) {
+			const file = event.target.files[0];
+			if (file) {
+				const reader = new FileReader();
+				reader.onload = function (e) {
+					const previewImg = document.getElementById("preview");
+					previewImg.src = e.target.result;
+					previewImg.style.display = "block"; // ✅ 반드시 필요
+				};
+				reader.readAsDataURL(file);
+			}
 		}
-	}
-</script>
+	</script>
 
 
 
