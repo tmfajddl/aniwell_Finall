@@ -530,9 +530,24 @@ function showDetail(id) {
 
 
 function rejectRequest() {
-	const id = document.getElementById("requestDetail").dataset.userId;
-	alert(`❌ ID ${id} 거절 처리`);
-	// 여기서 실제 처리 로직 추가
+	const selectedMemberId = document.getElementById("requestDetail").dataset.userId;
+		consol.log(`❌ ID ${selectedMemberId} 거절 처리`);
+
+		// 1. applicants 배열에서 해당 멤버 삭제
+		applicants = applicants.filter(app => app.memberId != selectedMemberId);
+
+		// 2. 리스트 다시 렌더링
+		const list = document.getElementById("requestList");
+		list.innerHTML = applicants.map(r =>
+			`<li class="cursor-pointer hover:bg-yellow-100 p-2 rounded" onclick="showDetail(${r.memberId})">${r.memberName}</li>`
+		).join('');
+
+		// 3. 디테일 영역 초기화
+		const detail = document.getElementById("requestDetail");
+		const buttons = document.getElementById("actionButtons");
+		detail.innerHTML = `<p>좌측에서 신청자를 선택하세요.</p>`;
+		delete detail.dataset.userId;
+		buttons.style.display = "none";
 }
 
 window.onload = renderRequestList;
