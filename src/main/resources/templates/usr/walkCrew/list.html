@@ -20,7 +20,6 @@
 				<div class="p-3 flex justify-around text-gray-800 grid grid-cols-12">
 					<div class="col-span-3 p-3">
 						<div id="crewAside"></div>
-
 					</div>
 					<div class="p-2 col-span-9 w-full flex flex-col mx-auto">
 						<div class="h-[97%]">
@@ -116,7 +115,6 @@
 								  ${district || '로딩중'}
 								</div>
 								<div class="h-[70vh] overflow-y-auto">
-							
 							    <ul class="grid grid-cols-2 gap-2 text-sm text-gray-700">
 							      ${dongs.map((dong) => `
 							        <li>
@@ -129,7 +127,7 @@
 							        </li>
 							      `).join('')}
 							    </ul>
-							    </div>
+								</div>
 							  </aside>
 							`;
 
@@ -154,39 +152,39 @@
 	</script>
 
 	<script>
-	function loadCrewList() {
-		const query = $('#searchInput').val();
+		function loadCrewList() {
+			const query = $('#searchInput').val();
 
-		$.ajax({
-			url: '/usr/walkCrew/api/list',
-			method: 'GET',
-			dataType: 'json',
-			success: function (response) {
-				if (response.resultCode !== 'S-1') {
-					alert('❌ 불러오기 실패: ' + response.msg);
-					return;
-				}
+			$.ajax({
+				url: '/usr/walkCrew/api/list',
+				method: 'GET',
+				dataType: 'json',
+				success: function (response) {
+					if (response.resultCode !== 'S-1') {
+						alert('❌ 불러오기 실패: ' + response.msg);
+						return;
+					}
 
-				const crewList = response.data1.crews;
-				const container = $('#crewListContainer');
-				container.empty();
+					const crewList = response.data1.crews;
+					const container = $('#crewListContainer');
+					container.empty();
 
-				if (crewList.length === 0) {
-					container.append('<p class="text-center text-gray-400">등록된 크루가 없습니다.</p>');
-					return;
-				}
+					if (crewList.length === 0) {
+						container.append('<p class="text-center text-gray-400">등록된 크루가 없습니다.</p>');
+						return;
+					}
 
-				crewList.forEach(crew => {
-					if (query && !crew.title.includes(query) && !crew.description.includes(query)) return;
+					crewList.forEach(crew => {
+						if (query && !crew.title.includes(query) && !crew.description.includes(query)) return;
 
-					const formattedDate = new Date(crew.createdAt).toLocaleDateString('ko-KR');
+						const formattedDate = new Date(crew.createdAt).toLocaleDateString('ko-KR');
 
-					// ✅ 이미지가 있는 경우엔 <img>로 출력, 없으면 회색박스
-					const thumbnail = crew.imageUrl
-						? `<img src="${crew.imageUrl}" alt="크루 이미지" class="w-20 h-20 object-cover rounded-md shrink-0">`
-						: `<div class="w-20 h-20 bg-gray-200 rounded-md shrink-0"></div>`;
+						// ✅ 이미지가 있는 경우엔 <img>로 출력, 없으면 회색박스
+						const thumbnail = crew.imageUrl
+							? `<img src="${crew.imageUrl}" alt="크루 이미지" class="w-20 h-20 object-cover rounded-md shrink-0">`
+							: `<div class="w-20 h-20 bg-gray-200 rounded-md shrink-0"></div>`;
 
-					const html = `
+						const html = `
 						<div class="bg-white rounded-lg shadow p-4 flex gap-4 items-start cursor-pointer"
 						     onclick="location.href='/usr/crewCafe/cafeHome?crewId=${crew.id}'">
 
@@ -206,26 +204,25 @@
 						  </div>
 						</div>
 					`;
-					container.append(html);
-				});
-			},
-			error: function (err) {
-				console.error('❌ Ajax 에러:', err);
-				alert('서버 연결 실패');
-			}
-		});
-	}
+						container.append(html);
+					});
+				},
+				error: function (err) {
+					console.error('❌ Ajax 에러:', err);
+					alert('서버 연결 실패');
+				}
+			});
+		}
 
-	$(document).ready(function () {
-		loadCrewList();
-	});
-</script>
+		$(document).ready(function () {
+			loadCrewList();
+		});
+	</script>
 
 	<script>
 		window.parent.closeModal(); // 모달 닫기
 		window.parent.loadCrewList(); // 모달 닫고 목록 갱신
 	</script>
-
 
 
 </body>
