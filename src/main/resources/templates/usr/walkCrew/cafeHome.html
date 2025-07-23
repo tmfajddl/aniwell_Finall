@@ -58,9 +58,9 @@
 			</aside>
 
 			<!-- 오른쪽: 콘텐츠 섹션 -->
-			<div class="flex-1 space-y-6 h-[100%] grid gird-rows-8 p-2 ">
+			<div class="flex-1 space-y-3 h-[100%] grid gird-rows-12 p-2 ">
 				<!-- 앨범 -->
-				<div class="py-1 row-span-2 shadow overflow-x-auto w-[100%]">
+				<div class="py-1 row-span-4 shadow overflow-x-auto w-[100%]">
 					<div class="flex justify-between items-center mb-2 px-5">
 						<h3 class="font-bold text-lg">앨범</h3>
 					</div>
@@ -69,7 +69,7 @@
 					</div>
 
 					<div th:each="photo : ${galleryArticles}"
-						class="ml-2 w-40 h-40 bg-gray-300 rounded-lg cursor-pointer"
+						class="ml-5 w-40 h-40 bg-gray-300 rounded-lg cursor-pointer"
 						th:attr="data-url=${photo.imageUrl}" onclick="photoModal(this)">
 
 						<img th:src="${photo.imageUrl}" alt="사진" class="object-cover w-full h-full rounded-lg" />
@@ -77,7 +77,7 @@
 
 				</div>
 				<!-- 게시글 -->
-				<div class="py-1 row-span-2 shadow relative">
+				<div class="py-1 row-span-4 shadow relative">
 
 					<div class="flex justify-between px-5 items-center mb-1">
 						<h3 class="font-bold" th:text="${freeArticles.size}">게시글</h3>
@@ -95,12 +95,12 @@
 					</div>
 				</div>
 				<!-- 멤버 -->
-				<div class="py-1 row-span-2 shadow">
+				<div class="py-1 flex flex-col row-span-2 shadow flex">
 					<h3 class="font-bold text-lg mb-2 px-5">멤버 8</h3>
-					<div class="flex gap-4 overflow-x-auto px-5 items-center">
-						<div onclick="memberModal()" class=" flex flex-col px-3">
+					<div class="flex gap-4 overflow-x-auto px-5 flex-1">
+						<div onclick="memberModal()" class="h-full flex flex-col px-3 justify-center">
 							<div class="w-12 h-12 bg-gray-300 rounded-full"></div>
-							<div class="p-1">닉네임</div>
+							<div class="py-1">닉네임</div>
 						</div>
 					</div>
 				</div>
