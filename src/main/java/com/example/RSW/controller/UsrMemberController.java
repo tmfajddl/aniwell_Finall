@@ -174,12 +174,15 @@ public class UsrMemberController {
         req.getSession().setAttribute("rq", rq);  // 세션에 rq 객체 저장
 
         // ✅ Firebase 연동 - uid는 이메일 기반으로 구성
-        String uid = member.getLoginId() + "@yourdomain.com";
+        String uid = member.getLoginId() + "@aniwell.com";
         String firebaseToken = memberService.createFirebaseCustomToken(uid);
         req.getSession().setAttribute("firebaseToken", firebaseToken);
 
-        return Ut.jsReplace("S-1", Ut.f("%s님 환영합니다", member.getNickname()), afterLoginUri);
+        return Ut.jsReplace("S-1", Ut.f("%s님 환영합니다", member.getNickname()),
+                afterLoginUri + "?firebaseToken=" + firebaseToken);
+
     }
+
 
 
     @RequestMapping("/usr/member/join")
@@ -777,9 +780,7 @@ public class UsrMemberController {
 
             // 1. access token 요청
             MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-            params.add("code", code);
-            params.add("client_id", "");
-            params.add("client_secret", "");
+            params.add("code", code);  
             params.add("redirect_uri", "http://localhost:8080/usr/member/google");
             params.add("grant_type", "authorization_code");
 

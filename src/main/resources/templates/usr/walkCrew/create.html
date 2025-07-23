@@ -2,29 +2,27 @@
 <html>
 
 <head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<script src="https://cdn.tailwindcss.com"></script>
-	<title>크루 등록</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://cdn.tailwindcss.com"></script>
+<title>크루 등록</title>
 </head>
 
 <body class="min-h-screen h-auto">
 	<div class="h-[100%] w-full flex justify-center items-start p-6">
-		<form class="w-full h-[200%] space-y-6 flex py-4 justify-between gap-5" action="/usr/walkCrew/doCreate"
-			method="post" onsubmit="return validateForm()">
+		<form class="w-full h-[200%] space-y-6 flex py-4 justify-between gap-5" action="/usr/walkCrew/doCreate" method="post"
+			enctype="multipart/form-data" onsubmit="return validateForm()">
 			<div class="w-full h-[100%] max-w-[600px]">
 				<!-- 제목 -->
 				<div class="mb-3">
 					<label class="font-semibold block mb-4">크루 이름</label>
-					<input type="text" name="title" required
-						class="w-full rounded-md shadow-sm border border-yellow-100 p-2" />
+					<input type="text" name="title" required class="w-full rounded-md shadow-sm border border-yellow-100 p-2" />
 				</div>
 
 				<!-- 설명 -->
 				<div class="mb-3">
 					<label class="font-semibold block mb-4">소개</label>
-					<textarea name="description" rows="5" required
-						class="w-full rounded-md shadow-sm border border-yellow-100 p-2"></textarea>
+					<textarea name="description" rows="5" required class="w-full rounded-md shadow-sm border border-yellow-100 p-2"></textarea>
 				</div>
 
 				<!-- 동 선택 -->
@@ -38,8 +36,7 @@
 					<!-- 드롭다운 형태 -->
 					<div>
 						<details class="relative w-[250px]" id="dongDropdown">
-							<summary class="px-4 py-2 border rounded cursor-pointer bg-white shadow"
-								id="dongDropdownLabel"> 동 선택 </summary>
+							<summary class="px-4 py-2 border rounded cursor-pointer bg-white shadow" id="dongDropdownLabel"> 동 선택 </summary>
 							<ul id="dongListContainer"
 								class="h-[140px] absolute z-10 w-full bg-white border rounded shadow mt-2 max-h-48 overflow-y-auto hidden divide-y divide-gray-100 text-sm">
 							</ul>
@@ -52,26 +49,30 @@
 
 				<!-- 등록 버튼 -->
 				<div class="text-right">
-					<button onclick="return crewsubmit(event)" type="submit"
-						class="px-6 py-2 bg-gradient-to-r from-green-200 to-yellow-200 rounded-xl shadow">완료</button>
+					<button type="submit" class="px-6 py-2 bg-gradient-to-r from-green-200 to-yellow-200 rounded-xl shadow">완료</button>
 				</div>
 			</div>
 
-			<div class="flex h-[200%] flex-col">
-				<div class="w-[200px] h-[200px] bg-[#f6df85] rounded-xl overflow-hidden shadow-md">
-					<div class="">사진미리보기</div>
+			<div class="flex h-[200%] flex-col items-center gap-2">
+				<!-- ✅ 기존 노란 배경 박스 유지 -->
+				<div class="w-[200px] h-[200px] bg-[#f6df85] rounded-xl overflow-hidden shadow-md relative">
+					<div class="absolute top-1 left-2 text-sm text-black z-10">사진미리보기</div>
+					<!-- ✅ 미리보기 이미지 (선택 시만 보임) -->
+					<img id="preview" class="w-full h-full object-cover" style="display: none;" />
 				</div>
-				<label for="imageUpload"
-					class="my-2 mr-1 bottom-2 right-2 flex items-center justify-center cursor-pointer">
+
+				<!-- ✅ 업로드 버튼 그대로 유지 -->
+				<label for="imageUpload" class="my-2 mr-1 flex items-center justify-center cursor-pointer">
 					<div class="px-4 py-1 bg-[#b4d6b4] rounded-full shadow">업로드</div>
 				</label>
 				<input type="file" name="imageFile" id="imageUpload" accept="image/*" class="hidden"
 					onchange="previewImageFile(event)" />
 			</div>
+
 		</form>
 	</div>
 
-	<!-- ✅ 스크립트 -->
+	<!-- 위치기반 동네불러오기 -->
 	<script th:inline="javascript">
 		let city = localStorage.getItem("userCity");
 		let district = localStorage.getItem("userDistrict");
@@ -116,6 +117,15 @@
 							});
 							btn.classList.add("bg-gray-200", "font-bold");
 							console.log(dong);
+							fetch("/usr/walkCrew/getDistrictId"
+								+ "?city=" + encodeURIComponent(city)
+								+ "&district=" + encodeURIComponent(district)
+								+ "&dong=" + encodeURIComponent(dong))
+								.then(response => response.json())
+								.then(result => {
+									const districtId = result?.data1?.districtId;
+									document.getElementById("districtIdInput").value = districtId;
+								});
 						};
 
 						li.appendChild(btn);
@@ -128,43 +138,16 @@
 				});
 		}
 
-
-		function crewsubmit(event) {
-			event.preventDefault();
-
-			const dong = document.getElementById("selectedDong").value;
-
-			if (!dong) {
+		function validateForm() {
+			const districtId = document.getElementById("districtIdInput").value;
+			if (!districtId || isNaN(districtId)) {
 				alert("동을 선택해주세요.");
 				return false;
 			}
-
-			fetch("/usr/walkCrew/getDistrictId"
-				+ "?city=" + encodeURIComponent(city)
-				+ "&district=" + encodeURIComponent(district)
-				+ "&dong=" + encodeURIComponent(dong))
-				.then(response => response.json())
-				.then(result => {
-					const districtId = result?.data1?.districtId;
-
-					document.getElementById("districtIdInput").value = districtId;
-
-					if (result.success) {
-						alert("등록 성공!");
-						window.parent.closeModal(); // 부모 모달 닫기
-						window.parent.location.href = '/usr/walkCrew/list';
-
-						// 폼 실제 제출
-						document.querySelector("form").submit();
-					} else {
-						alert("등록 실패: " + result.msg);
-					}
-				});
-
-			return false; // 기본 제출 방지
+			return true;
 		}
-
 	</script>
+
 	<script>
 		document.querySelector("details").addEventListener("toggle", function () {
 			const list = this.querySelector("#dongListContainer");
@@ -174,27 +157,25 @@
 				list.classList.add("hidden");
 			}
 		});
+
+
 	</script>
-	<!-- 오류 (테스트데이터때매 발생) 로직에는 문재없음-->
-	<!-- 대전광역시 서구 둔산동 -->
-	<!-- 서울특별시 강남구 역삼동 -->
-	<!-- 부산광역시 해운대구 우동 -->
 
 	<!-- 프로필 사진 미리보기 -->
 	<script>
-		function previewImageFile(event) {
-			const file = event.target.files[0];
-			if (file) {
-				const reader = new FileReader();
-				reader.onload = function (e) {
-					const previewImg = document.getElementById("preview");
-					previewImg.src = e.target.result;
-					previewImg.style.display = "block"; // ✅ 반드시 필요
-				};
-				reader.readAsDataURL(file);
-			}
+	function previewImageFile(event) {
+		const file = event.target.files[0];
+		if (file) {
+			const reader = new FileReader();
+			reader.onload = function (e) {
+				const previewImg = document.getElementById("preview");
+				previewImg.src = e.target.result;
+				previewImg.style.display = "block"; // ✅ 반드시 필요
+			};
+			reader.readAsDataURL(file);
 		}
-	</script>
+	}
+</script>
 
 
 
