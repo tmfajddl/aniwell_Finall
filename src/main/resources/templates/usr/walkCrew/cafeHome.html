@@ -23,7 +23,10 @@
 				<div class="row-span-6 ">
 					<a href="/usr/walkCrew/list" class="back-link">← 목록으로 돌아가기</a>
 					<div class="flex space-y-2 items-center gap-3">
-						<div class="w-14 h-14 bg-gray-300 "></div>
+						<div class="w-14 h-14 bg-gray-300 rounded-xl">
+							<img th:src="${crew.imageUrl}" alt="크루 이미지" class="w-14 h-14 object-cover " />
+
+						</div>
 						<div class="p-3">
 							<h2 class="text-xl font-semibold" th:text="${crew.title}">크루원들 모여라</h2>
 							<p class="text-sm text-gray-500">멤버 111</p>
@@ -44,8 +47,8 @@
 					<div class="mx-3 pb-3 pt-2 border-b border-1 border-black">공지사항</div>
 					<div th:each="article : ${noticeArticles}" class="p-4 border-b">
 						<div class="text-sm text-gray-500" th:text="'작성자 ID: ' + ${article.memberId}"></div>
-						<div class="text-lg font-bold text-gray-800" th:text="${article.title}">제목</div>
-						<div class="text-sm text-gray-700 mt-1" th:text="${article.body}">내용</div>
+						<div class="text-[15px] font-bold text-gray-800" th:text="${article.title}">제목</div>
+						<div class="text-[10px] text-gray-700 mt-1" th:text="${article.body}">내용</div>
 					</div>
 				</div>
 				<div class="row-sapn-1 flex justify-around self-end">
@@ -55,52 +58,47 @@
 			</aside>
 
 			<!-- 오른쪽: 콘텐츠 섹션 -->
-			<div class="flex-1 space-y-6 h-[100%] flex flex-col p-2 ">
+			<div class="flex-1 space-y-6 h-[100%] grid gird-rows-8 p-2 ">
 				<!-- 앨범 -->
-				<div class="py-2 flex-1 shadow">
+				<div class="py-1 row-span-2 shadow overflow-x-auto w-[100%]">
 					<div class="flex justify-between items-center mb-2 px-5">
 						<h3 class="font-bold text-lg">앨범</h3>
 					</div>
-					<div onclick="photoModal()" th:if="${#lists.isEmpty(photoList)}"
-						class="text-center text-gray-500 px-5 py-10">
+					<div th:if="${galleryArticles.isEmpty()}" class="text-center text-gray-500 px-5 py-10">
 						사진이 없습니다.
 					</div>
 
-					<div th:each="photo : ${photoList}" class="w-40 h-40 bg-gray-300 rounded-lg cursor-pointer"
-						th:onclick="|photoModal(${photo.id})|">
-						<img th:src="${photo.url}" alt="사진" class="object-cover w-full h-full rounded-lg" />
+					<div th:each="photo : ${galleryArticles}"
+						class="ml-2 w-40 h-40 bg-gray-300 rounded-lg cursor-pointer"
+						th:attr="data-url=${photo.imageUrl}" onclick="photoModal(this)">
+
+						<img th:src="${photo.imageUrl}" alt="사진" class="object-cover w-full h-full rounded-lg" />
 					</div>
+
 				</div>
 				<!-- 게시글 -->
-				<div class="py-2 flex-1 shadow relative">
+				<div class="py-1 row-span-2 shadow relative">
 
 					<div class="flex justify-between px-5 items-center mb-1">
 						<h3 class="font-bold" th:text="${freeArticles.size}">게시글</h3>
 						<button onclick="crewArtAdd()" class="p-1 shadow text-gray-600 hover:text-black">추가 ＋</button>
 					</div>
-					<div class="gap-3 px-4 h-[78%]">
-						<div onclick="articleModal()" class="bg-white rounded shadow p-2 h-[100%] w-1/5 flex flex-col">
-							<img src="https://via.placeholder.com/150" class="w-full flex-1 rounded" />
+					<div class="gap-3 px-4 h-[78%] flex">
+						<div th:each="free : ${freeArticles}" th:attr="data-url=${free}" onclick="articleModal(this)"
+							class="aspect-[1/1] bg-white rounded shadow p-2 h-[100%] w-1/6 flex flex-col">
+							<img th:src="${free.imageUrl}" alt="사진" class="w-full flex-1 rounded" />
 							<div class="font-semibold mt-2 flex justify-between">
-								<div>게시글 제목</div>
+								<div th:text="${free.title}">게시글 제목</div>
 								<div class="text-sm">🤍️</div>
 							</div>
 						</div>
 					</div>
 				</div>
 				<!-- 멤버 -->
-				<div class="py-2 shadow">
+				<div class="py-1 row-span-2 shadow">
 					<h3 class="font-bold text-lg mb-2 px-5">멤버 8</h3>
 					<div class="flex gap-4 overflow-x-auto px-5 items-center">
 						<div onclick="memberModal()" class=" flex flex-col px-3">
-							<div class="w-12 h-12 bg-gray-300 rounded-full"></div>
-							<div class="p-1">닉네임</div>
-						</div>
-						<div class=" flex flex-col px-3">
-							<div class="w-12 h-12 bg-gray-300 rounded-full"></div>
-							<div class="p-1">닉네임</div>
-						</div>
-						<div class=" flex flex-col px-3">
 							<div class="w-12 h-12 bg-gray-300 rounded-full"></div>
 							<div class="p-1">닉네임</div>
 						</div>
@@ -108,21 +106,23 @@
 				</div>
 
 				<!-- 일정 -->
-				<div class="py-3 shadow">
+				<div class="py-1 row-span-2 shadow">
 					<div class="flex justify-between items-center mb-1 px-5">
-						<h3 class="font-bold text-lg">일정 15</h3>
+						<h3 th:text="${scheduleArticles.size}" class="font-bold text-lg">일정 15</h3>
 						<button onclick="scAdd()" class="p-1 shadow text-gray-600 hover:text-black">추가 ＋</button>
 					</div>
 					<div class="flex gap-5 overflow-x-auto px-4 pb-1">
-						<div onclick="scModal()" class="w-12 text-center p-1 px-3 shadow">
-							<div class="text-sm font-bold">7월<br>07</div>
-							<div class="text-xs text-gray-500">모임</div>
+						<div th:each="schedule : ${scheduleArticles}" th:attr="data-url=${schedule}" onclick="scModal()"
+							class="w-12 text-center p-1 px-3 shadow">
+							<div th:text="${schedule.scheduleDate}" class="text-sm font-bold">
+								<div class="text-xs text-gray-500">모임</div>
+							</div>
 						</div>
 					</div>
-				</div>
 
+				</div>
 			</div>
-			<div class="w-10">
+			<div class="w-10 flex">
 				<button class="hamburger" onclick="modal_btn()" aria-label="메뉴 열기">
 					<span class="bar"></span>
 					<span class="bar"></span>
