@@ -6,13 +6,16 @@
 <mapper namespace="com.example.RSW.repository.WalkCrewRepository">
 
 	<!-- 크루 등록 (SET 방식) -->
-	<insert id="insert">
-		INSERT INTO walk_crew
+	<insert id="insert" useGeneratedKeys="true" keyProperty="id">
+		INSERT
+		INTO walk_crew
 		SET title = #{title},
 		description = #{description},
 		district_id = #{districtId},
 		leaderId =
 		#{leaderId},
+		imageUrl =
+		#{imageUrl},
 		createdAt = NOW()
 	</insert>
 
@@ -44,6 +47,7 @@
 		wc.id,
 		wc.title,
 		wc.description,
+		wc.imageUrl AS imageUrl,
 		wc.district_id AS districtId,
 		wc.leaderId,
 		wc.createdAt,
@@ -51,10 +55,12 @@
 		d.city,
 		d.district,
 		d.dong
-		FROM walk_crew wc
+		FROM
+		walk_crew wc
 		LEFT JOIN member m
 		ON wc.leaderId = m.id
-		LEFT JOIN district d ON wc.district_id = d.id
+		LEFT JOIN district
+		d ON wc.district_id = d.id
 		ORDER BY wc.createdAt DESC
 	</select>
 
@@ -92,17 +98,21 @@
 		wc.district_id AS
 		districtId,
 		wc.leaderId,
+		wc.imageUrl,
 		wc.createdAt,
 		m.nickname,
 		d.city,
 		d.district,
 		d.dong
 		FROM walk_crew wc
-		INNER JOIN member m ON wc.leaderId = m.id
+		INNER JOIN member
+		m ON wc.leaderId =
+		m.id
 		INNER
 		JOIN
 		district d ON wc.district_id = d.id
-		ORDER BY wc.createdAt DESC
+		ORDER BY wc.createdAt
+		DESC
 	</select>
 
 
@@ -183,4 +193,55 @@
 		createdAt DESC
 		LIMIT 1
 	</select>
+
+	<!-- ✅ 조건에 맞는 크루 리스트 조회 (검색 + 동 필터 + 페이징 포함) -->
+	<!-- WalkCrewRepository.xml -->
+	<select id="findPagedFilteredCrews" resultType="WalkCrew">
+		SELECT ...
+		FROM walk_crew
+		WHERE 1=1
+		<if test="searchKeyword != null and searchKeyword != ''">
+			AND ${searchKeywordTypeCode} LIKE CONCAT('%', #{searchKeyword}, '%')
+		</if>
+		<if test="dong != null and dong != ''">
+			AND dong LIKE CONCAT('%', #{dong}, '%') <!-- 여기 -->
+		</if>
+		ORDER BY createdAt DESC
+		LIMIT #{pageSize} OFFSET #{offset}
+	</select>
+
+
+	<!-- ✅ 조건에 맞는 전체 크루 수 조회 (페이징 계산용) -->
+	<select id="countFilteredCrews" parameterType="map"
+		resultType="int">
+		SELECT COUNT(*)
+		FROM walk_crew wc
+		LEFT JOIN member m ON wc.leaderId =
+		m.id
+		LEFT JOIN district d ON wc.district_id = d.id
+		WHERE 1 = 1
+		<if test="dong != null and dong != ''">
+			AND d.dong = #{dong}
+		</if>
+		<if test="searchKeyword != null and searchKeyword != ''">
+			<choose>
+				<when test="searchKeywordTypeCode == 'title'">
+					AND wc.title LIKE CONCAT('%', #{searchKeyword}, '%')
+				</when>
+				<when test="searchKeywordTypeCode == 'nickname'">
+					AND m.nickname LIKE CONCAT('%', #{searchKeyword},
+					'%')
+				</when>
+				<otherwise>
+					AND (
+					wc.title LIKE CONCAT('%', #{searchKeyword}, '%')
+					OR
+					m.nickname
+					LIKE CONCAT('%', #{searchKeyword}, '%')
+					)
+				</otherwise>
+			</choose>
+		</if>
+	</select>
+
 </mapper>
