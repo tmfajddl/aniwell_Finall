@@ -2,11 +2,13 @@
 <html>
 
 <head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<script src="https://cdn.tailwindcss.com"></script>
-	<link rel="stylesheet" th:href="@{/resource/css/common.css}">
-	<title>크루 모집 목록</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://cdn.tailwindcss.com"></script>
+<!-- ✅ Font Awesome CDN 추가 -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+<link rel="stylesheet" th:href="@{/resource/css/common.css}">
+<title>크루 모집 목록</title>
 </head>
 
 <body class="bg-gradient-to-b from-[#e4f0b9] to-[#fcdca9] font-sans">
@@ -24,15 +26,11 @@
 					<a href="/usr/walkCrew/list" class="back-link">← 목록으로 돌아가기</a>
 					<div class="flex space-y-2 items-center gap-3">
 						<div class="w-14 h-14 bg-yellow-300 rounded-xl overflow-hidden relative">
-						  <img th:if="${crew.imageUrl != null}"
-						       th:src="${crew.imageUrl}"
-						       alt="크루 이미지"
-						       class="w-full h-full object-cover absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[40%]" />
+							<img th:if="${crew.imageUrl != null}" th:src="${crew.imageUrl}" alt="크루 이미지"
+								class="w-full h-full object-cover absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[40%]" />
 
-						  <img th:if="${crew.imageUrl == null}"
-						       th:src="@{/img/default-pet.png}"
-						       alt="기본 이미지"
-						       class="w-full h-full object-cover absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[40%]" />
+							<img th:if="${crew.imageUrl == null}" th:src="@{/img/default-pet.png}" alt="기본 이미지"
+								class="w-full h-full object-cover absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[40%]" />
 						</div>
 						<div class="p-3">
 							<h2 class="text-xl font-semibold" th:text="${crew.title}">크루원들 모여라</h2>
@@ -41,16 +39,45 @@
 						</div>
 					</div>
 
-					<div class="text-sm text-gray-700" th:text="${crew.description}">
-						Lorem ipsum dolor, sit amet consectetur adipisicing elit...
-					</div>
+					<div class="text-sm text-gray-700" th:text="${crew.description}">Lorem ipsum dolor, sit amet consectetur
+						adipisicing elit...</div>
 				</div>
 
 				<!-- 가입된 크루가 아닐경우 크루신청이미지가 보이도 -->
-				<div>
-					<button class="bg-gray-200 w-full rounded-full justify-center flex h-10 p-1 py-1"
-						th:onclick="|crewJoin(${crew.id})|">크루신청</button>
+				<!-- ✅ 채팅방 입장 (멤버 또는 리더) -->
+				<div th:if="${isJoined or isLeader}">
+					<a th:href="@{/api/chat/room(crewId=${crew.id})}">
+						<i class="fa-solid fa-comment-dots"></i>
+						채팅방 입장
+					</a>
 				</div>
+
+				<!-- ✅ 신청 대기 중인 경우 (리더는 제외) -->
+				<div th:if="${!isLeader and !isJoined and isPending}">
+					<button disabled>
+						<i class="fa-solid fa-clock-rotate-left"></i>
+						신청 대기중
+					</button>
+				</div>
+
+				<!-- ✅ 아직 신청하지 않은 경우 (리더는 제외) -->
+				<div th:if="${!isLeader and !isJoined and !isPending}">
+					<button th:onclick="|crewJoin(${crew.id})|">
+						<i class="fa-solid fa-dog"></i>
+						크루 신청
+					</button>
+				</div>
+
+				<!-- ✅ 리더 전용 -->
+				<div th:if="${isLeader}">
+					<button>
+						<i class="fa-solid fa-gear"></i>
+						크루 관리
+					</button>
+				</div>
+
+
+
 				<div class="shadow row-span-5">
 					<div class="mx-3 pb-3 pt-2 border-b border-1 border-black">공지사항</div>
 					<div th:each="article : ${noticeArticles}" class="p-4 border-b">
@@ -72,11 +99,8 @@
 					<div class="flex justify-between items-center mb-2 px-5">
 						<h3 class="font-bold text-lg">앨범</h3>
 					</div>
-					<div th:if="${galleryArticles.isEmpty()}" class="text-center text-gray-500 px-5 py-10">
-						사진이 없습니다.
-					</div>
-					<div th:each="photo : ${galleryArticles}"
-						class="ml-5 w-32 h-32 bg-gray-300 rounded-lg cursor-pointer"
+					<div th:if="${galleryArticles.isEmpty()}" class="text-center text-gray-500 px-5 py-10">사진이 없습니다.</div>
+					<div th:each="photo : ${galleryArticles}" class="ml-5 w-32 h-32 bg-gray-300 rounded-lg cursor-pointer"
 						th:attr="data-url=${photo.imageUrl}" onclick="photoModal(this)">
 						<img th:src="${photo.imageUrl}" alt="사진" class="object-cover w-full h-full rounded-lg" />
 					</div>
@@ -89,12 +113,13 @@
 						<button onclick="crewArtAdd()" class="p-1 shadow text-gray-600 hover:text-black">추가 ＋</button>
 					</div>
 					<div class="gap-3 px-4 h-[78%] flex overflow-x-auto">
-						<div th:each="free : ${freeArticles}" th:attr="data-title=${free.title}, 
+						<div th:each="free : ${freeArticles}"
+							th:attr="data-title=${free.title}, 
 						         data-body=${free.body},
 						         data-image-url=${free.imageUrl},
 						         data-writer=${free.extra__writer},
-						         data-reg-date=${free.regDate}" onclick="detailModal(this)"
-							class="z-10 aspect-[1/1] bg-white rounded shadow p-2 h-[100%] w-1/4 flex flex-col">
+						         data-reg-date=${free.regDate}"
+							onclick="detailModal(this)" class="z-10 aspect-[1/1] bg-white rounded shadow p-2 h-[100%] w-1/4 flex flex-col">
 							<img th:src="${free.imageUrl}" alt="사진" class="w-full flex-1 rounded" />
 							<div class="font-semibold mt-2 flex justify-between">
 								<div th:text="${free.title}" class="overflow-hidden">게시글 제목</div>
@@ -106,8 +131,7 @@
 				<!-- 멤버 -->
 				<div class="py-1 flex flex-col row-span-2 shadow flex">
 					<h3 class="font-bold text-lg mb-2 px-5">멤버 8</h3>
-					<div id="crewMemberList" class="flex gap-4 overflow-x-auto px-5 flex-1">
-					</div>
+					<div id="crewMemberList" class="flex gap-4 overflow-x-auto px-5 flex-1"></div>
 				</div>
 
 				<!-- 일정 -->
@@ -119,10 +143,8 @@
 					<div class="flex gap-5 overflow-x-auto px-4 pb-1">
 						<div th:each="schedule : ${scheduleArticles}" th:attr="data-url=${schedule}" onclick="scModal()"
 							class="w-12 text-center p-1 px-3 shadow">
-							<div th:text="${#dates.format(schedule.scheduleDate, 'MM')}" class="text-sm font-bold">
-							</div>
-							<div th:text="${#dates.format(schedule.scheduleDate, 'dd')}" class="text-xs text-gray-500">
-							</div>
+							<div th:text="${#dates.format(schedule.scheduleDate, 'MM')}" class="text-sm font-bold"></div>
+							<div th:text="${#dates.format(schedule.scheduleDate, 'dd')}" class="text-xs text-gray-500"></div>
 							<div class="text-xs text-gray-500">모임</div>
 						</div>
 					</div>
@@ -140,15 +162,12 @@
 	</div>
 	<!--기본팝업창-->
 	<div id="modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-		<div
-			class="relative w-[90%] max-w-[1000px] h-[700px] bg-transparent flex rounded-2xl overflow-hidden shadow-2xl">
+		<div class="relative w-[90%] max-w-[1000px] h-[700px] bg-transparent flex rounded-2xl overflow-hidden shadow-2xl">
 			<div class="w-full h-full flex bg-gradient-to-b from-[#FCE9A3] to-[#E0C878]">
 				<div class="w-[5%] text-center">
-					<button onclick="closeModal()"
-						class="text-3xl font-light text-gray-600 hover:text-black">&times;</button>
+					<button onclick="closeModal()" class="text-3xl font-light text-gray-600 hover:text-black">&times;</button>
 				</div>
-				<div id="modalContent" class="relative flex-1 bg-white rounded-l-3xl">
-				</div>
+				<div id="modalContent" class="relative flex-1 bg-white rounded-l-3xl"></div>
 			</div>
 		</div>
 	</div>

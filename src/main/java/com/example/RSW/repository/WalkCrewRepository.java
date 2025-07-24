@@ -48,4 +48,6 @@ public interface WalkCrewRepository {
 
 	int countFilteredCrews(String searchKeywordTypeCode, String searchKeyword, String dong);
 
+	void updateCrewLeader(int crewId, int newLeaderId);
+
 }
