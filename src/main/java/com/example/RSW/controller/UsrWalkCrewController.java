@@ -19,6 +19,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.example.RSW.vo.Rq;
 import com.example.RSW.vo.WalkCrew;
+import com.example.RSW.vo.WalkCrewMember;
 import com.example.RSW.vo.District;
 import com.example.RSW.vo.Member;
 import com.example.RSW.vo.ResultData;
@@ -36,6 +37,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.net.URLEncoder;
@@ -191,7 +193,7 @@ public class UsrWalkCrewController {
 	@ResponseBody
 	public ResultData getDongs(@RequestParam String city, @RequestParam String district) {
 		List<String> dongs = districtService.findDongsByCityAndDistrict(city, district);
-		
+
 		Map<String, Object> data = new HashMap<>();
 		data.put("dongs", dongs);
 
@@ -224,19 +226,65 @@ public class UsrWalkCrewController {
 		return ResultData.from("S-1", "참가 요청을 수락했습니다.", data);
 	}
 
+	// ✅ 크루 목록을 JSON 형태로 반환하는 API 컨트롤러
 	@GetMapping("/api/list")
 	@ResponseBody
-	public ResultData getCrewListAsJson(HttpServletRequest req) {
+	public ResultData getCrewListAsJson(HttpServletRequest req, @RequestParam(required = false) String query, // 🔍 검색어
+			@RequestParam(required = false) String dong) {
+		// 🔹 로그인 사용자 정보 가져오기 (Rq는 로그인 상태 확인용 커스텀 객체)
 		Rq rq = (Rq) req.getAttribute("rq");
 
+		// 🔹 모든 크루 정보를 데이터베이스에서 조회
 		List<WalkCrew> crews = walkCrewService.getAllCrews();
 
+		// 🔹 프론트에 반환할 JSON 형태로 변환할 리스트 선언
+		List<Map<String, Object>> resultList = new ArrayList<>();
+
+		// 🔁 필터링된 데이터만 추출
+		for (WalkCrew crew : crews) {
+			// ✅ query (검색어) 필터 조건
+			if (query != null && !query.isBlank()) {
+				boolean titleMatch = crew.getTitle() != null && crew.getTitle().contains(query);
+				boolean descMatch = crew.getDescription() != null && crew.getDescription().contains(query);
+				if (!titleMatch && !descMatch) {
+					continue; // 검색어와 일치하지 않으면 건너뜀
+				}
+			}
+
+			// ✅ dong (동네) 필터 조건
+			if (dong != null && !dong.isBlank()) {
+				if (crew.getDong() == null || !crew.getDong().equals(dong)) {
+					continue; // 동네가 일치하지 않으면 제외
+				}
+			}
+
+			Map<String, Object> crewMap = new HashMap<>();
+
+			// ▶️ 크루 기본 정보 저장
+			crewMap.put("id", crew.getId());
+			crewMap.put("title", crew.getTitle());
+			crewMap.put("description", crew.getDescription());
+			crewMap.put("nickname", crew.getNickname());
+			crewMap.put("city", crew.getCity());
+			crewMap.put("district", crew.getDistrict());
+			crewMap.put("dong", crew.getDong());
+			crewMap.put("createdAt", crew.getCreatedAt());
+
+			// ✅ 핵심: 이미지 URL도 포함해야 프론트에서 썸네일 출력 가능
+			crewMap.put("imageUrl", crew.getImageUrl());
+
+			// ▶️ 완성된 crewMap을 결과 리스트에 추가
+			resultList.add(crewMap);
+		}
+
+		// 🔹 최종 반환용 data 객체 생성 (crews 리스트 + 로그인한 사용자 ID 포함)
 		Map<String, Object> data = new HashMap<>();
-		data.put("crews", crews);
+		data.put("crews", resultList); // 크루 목록 데이터
 		data.put("loginMemberId", (rq != null && rq.isLogined()) ? rq.getLoginedMemberId() : "");
 
+		// 🔚 ResultData 포맷으로 응답 반환
 		return ResultData.from("S-1", "크루 목록 불러오기 성공", data);
-
 	}
+
 
 }
