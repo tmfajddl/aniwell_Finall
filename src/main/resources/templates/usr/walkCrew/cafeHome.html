@@ -23,12 +23,20 @@
 				<div class="row-span-6 ">
 					<a href="/usr/walkCrew/list" class="back-link">← 목록으로 돌아가기</a>
 					<div class="flex space-y-2 items-center gap-3">
-						<div class="w-14 h-14 bg-gray-300 rounded-xl">
-							<img th:src="${crew.imageUrl}" alt="크루 이미지" class="w-14 h-14 object-cover rounded-xl" />
+						<div class="w-14 h-14 bg-yellow-300 rounded-xl overflow-hidden relative">
+						  <img th:if="${crew.imageUrl != null}"
+						       th:src="${crew.imageUrl}"
+						       alt="크루 이미지"
+						       class="w-full h-full object-cover absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[40%]" />
 
+						  <img th:if="${crew.imageUrl == null}"
+						       th:src="@{/img/default-pet.png}"
+						       alt="기본 이미지"
+						       class="w-full h-full object-cover absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[40%]" />
 						</div>
 						<div class="p-3">
 							<h2 class="text-xl font-semibold" th:text="${crew.title}">크루원들 모여라</h2>
+							<div id="memberSize"></div>
 							<p class="text-sm text-gray-500">멤버 111</p>
 						</div>
 					</div>
@@ -81,8 +89,7 @@
 						<button onclick="crewArtAdd()" class="p-1 shadow text-gray-600 hover:text-black">추가 ＋</button>
 					</div>
 					<div class="gap-3 px-4 h-[78%] flex overflow-x-auto">
-						<div th:each="free : ${freeArticles}" 
-						th:attr="data-title=${free.title}, 
+						<div th:each="free : ${freeArticles}" th:attr="data-title=${free.title}, 
 						         data-body=${free.body},
 						         data-image-url=${free.imageUrl},
 						         data-writer=${free.extra__writer},
@@ -99,11 +106,7 @@
 				<!-- 멤버 -->
 				<div class="py-1 flex flex-col row-span-2 shadow flex">
 					<h3 class="font-bold text-lg mb-2 px-5">멤버 8</h3>
-					<div class="flex gap-4 overflow-x-auto px-5 flex-1">
-						<div onclick="memberModal()" class="h-full flex flex-col px-3 justify-center">
-							<div class="w-12 h-12 bg-gray-300 rounded-full"></div>
-							<div class="py-1">닉네임</div>
-						</div>
+					<div id="crewMemberList" class="flex gap-4 overflow-x-auto px-5 flex-1">
 					</div>
 				</div>
 
@@ -173,6 +176,46 @@
 
 	<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 	<script th:src="@{/resource/js/crew.js}"></script>
+
+	<script>
+		function renderCrewMemberSection() {
+			$.ajax({
+				type: "GET",
+				url: `/usr/walkCrewMember/usr/walkCrew/memberList`,
+				data: {crewId},
+				success: function (data) {
+					const members = data.data1;
+					const container = document.getElementById("crewMemberList");
+					const countEl = document.getElementById("memberCount");
+
+					if (!container) return;
+					
+					container.innerHTML = members.map(m => `
+					  <div onclick="memberModal()" class="h-full flex flex-col px-3 justify-center">
+					    <div class="w-12 h-12 bg-yellow-300 rounded-full">
+					      <img src="${m.crew_member_photo ? m.crew_member_photo : '/img/default-pet.png'}"
+					           alt="프로필" class="w-full h-full object-cover" />
+					    </div>
+					    <div class="py-1 text-sm text-center">${m.crew_member_name}</div>
+					  </div>
+					`).join('');
+
+
+					countEl.textContent = members.length;
+				},
+				error: function (err) {
+					console.error("멤버 섹션 렌더링 실패:", err);
+				}
+			});
+		}
+
+		window.addEventListener('DOMContentLoaded', () => {
+			renderCrewMemberSection();
+		});
+	</script>
+
+
+
 
 </body>
 
