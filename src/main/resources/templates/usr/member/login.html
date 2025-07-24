@@ -45,7 +45,7 @@
                     </a>
 
                     <!-- 네이버  -->
-                    <a href="https://nid.naver.com/oauth2.0/authorize?response_type=code&client_id=ZdyW5GGtNSgCCaduup7_&redirect_uri=http://localhost:8080/usr/member/naver&state=randomString">
+                    <a href="javascript:openNaverPopup()">
                         <img th:src="@{/img.socialLogin/btnG_완성형.png}" alt="네이버 로그인" class="h-10"/>
                     </a>
                 </div>
@@ -224,6 +224,7 @@
     });
 </script>
 
+<!--카카오-->
 <script src="https://developers.kakao.com/sdk/js/kakao.js"></script>
 <script>
     function openKakaoPopup() {
@@ -245,6 +246,8 @@
         }
     }
 </script>
+
+<!--구글-->
 <script>
     // ✅ 전역 등록
     window.loginWithGoogle = async function () {
@@ -277,6 +280,27 @@
         } catch (error) {
             console.error("❌ Google 로그인 실패", error);
             alert("Google 로그인 중 오류가 발생했습니다.");
+        }
+    }
+</script>
+
+<!--네이버-->
+<script>
+    function openNaverPopup() {
+        const popup = window.open(
+            "https://nid.naver.com/oauth2.0/authorize?" +
+            new URLSearchParams({
+                response_type: "code",
+                client_id: "ZdyW5GGtNSgCCaduup7_",
+                redirect_uri: "http://localhost:8080/usr/member/naver",
+                state: "randomString"
+            }),
+            "naverLoginPopup",
+            "width=500,height=600"
+        );
+
+        if (!popup || popup.closed || typeof popup.closed == 'undefined') {
+            alert("팝업이 차단되었습니다. 팝업 차단을 해제해주세요.");
         }
     }
 </script>

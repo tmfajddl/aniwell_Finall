@@ -756,7 +756,7 @@ public class UsrMemberController {
             MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
             params.add("code", code);
             params.add("client_id", "구글 클라이언트 키");
-            params.add("client_secret", "구글 클라이언트 시크릿 키");
+            params.add("client_secret", "구글 시크릿 키");
             params.add("redirect_uri", "http://localhost:8080/usr/member/google");
             params.add("grant_type", "authorization_code");
 
@@ -820,6 +820,7 @@ public class UsrMemberController {
 
     // 네이버 로그인 콜백 처리
     @RequestMapping("/usr/member/naver")
+    @ResponseBody
     public String naverCallback(@RequestParam("code") String code,
                                 @RequestParam("state") String state,
                                 HttpServletRequest req, HttpServletResponse resp) {
@@ -883,8 +884,13 @@ public class UsrMemberController {
             String firebaseToken = memberService.createFirebaseCustomToken(uid);
             req.getSession().setAttribute("firebaseToken", firebaseToken);
 
-            // ✅ 로그인 완료 후 홈으로 리다이렉트
-            return "redirect:/";
+            // ✅ 팝업 방식 Firebase 연동용 JS 리턴
+            return """
+                    <script>
+                        window.opener.postMessage("socialLoginSuccess", "*");
+                        window.close();
+                    </script>
+                    """;
 
         } catch (Exception e) {
             // ⚠ 예외 처리 (토큰 요청 실패, 사용자 정보 오류 등)
