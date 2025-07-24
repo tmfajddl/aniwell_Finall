@@ -6,6 +6,9 @@ import com.example.RSW.service.NotificationService;
 import com.example.RSW.service.VetCertificateService;
 import com.example.RSW.vo.VetCertificate;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseAuthException;
+import com.google.firebase.auth.FirebaseToken;
+import com.google.firebase.auth.UserRecord;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -919,7 +922,6 @@ public class UsrMemberController {
         }
     }
 
-    // ✅ Firebase Custom Token 발급용 엔드포인트
     @RequestMapping("/usr/member/firebase-token")
     @ResponseBody
     public ResultData<Map<String, String>> generateFirebaseToken(HttpServletRequest req, HttpServletResponse resp) {
@@ -938,22 +940,99 @@ public class UsrMemberController {
         try {
             req.setAttribute("rq", new Rq(req, resp, memberService));
 
-            String uid = "user_" + loginedMember.getId();
-            String customToken = FirebaseAuth.getInstance().createCustomToken(uid);
-
-            // ✅ 소셜 제공업체 이름 세팅
+            String uid = UUID.randomUUID().toString();
+            String email = loginedMember.getEmail();
+            String name = loginedMember.getNickname(); // 또는 name
             String provider = loginedMember.getSocialProvider();
+
             if (provider == null || provider.trim().isEmpty()) {
                 provider = "email";
             }
 
+            // ✅ 1. 먼저 Firebase 사용자 등록 (이미 있는 경우는 무시)
+            try {
+                UserRecord.CreateRequest request = new UserRecord.CreateRequest()
+                        .setUid(uid)
+                        .setEmail(email)
+                        .setDisplayName(name)
+                        .setEmailVerified(true);
+
+                FirebaseAuth.getInstance().createUser(request);
+            } catch (FirebaseAuthException e) {
+                // ✅ 이미 등록된 경우는 무시 (UID 또는 이메일 중복)
+                if (!e.getErrorCode().equals("UID_ALREADY_EXISTS") &&
+                        !e.getErrorCode().equals("EMAIL_ALREADY_EXISTS")) {
+                    return ResultData.from("F-4", "Firebase 사용자 등록 실패: " + e.getMessage());
+                }
+            }
+
+
+            // ✅ 2. Custom Token 발급
+            String customToken = FirebaseAuth.getInstance().createCustomToken(uid);
+
             Map<String, String> data = new HashMap<>();
             data.put("token", customToken);
-            data.put("provider", provider); // ✅ 클라이언트에 전달
+            data.put("provider", provider);
 
             return ResultData.from("S-1", "토큰 생성 성공", data);
+
         } catch (Exception e) {
             return ResultData.from("F-3", "Firebase 토큰 생성 실패: " + e.getMessage());
+        }
+    }
+
+    @RequestMapping("/usr/member/firebase-session-login")
+    @ResponseBody
+    public ResultData doFirebaseSessionLogin(@RequestBody Map<String, String> body, HttpServletRequest req) {
+        String idToken = body.get("idToken");
+
+        System.out.println("📥 [로그] firebase-session-login 요청 도착");
+        System.out.println("📥 [로그] 전달된 idToken: " + (idToken != null ? "존재함" : "없음"));
+
+        try {
+            FirebaseToken decodedToken = FirebaseAuth.getInstance().verifyIdToken(idToken);
+            String email = decodedToken.getEmail();
+            String uid = decodedToken.getUid();
+            String name = decodedToken.getName(); // ✅ 이름 정보 추가
+
+            System.out.println("✅ [로그] Firebase 인증 성공");
+            System.out.println("   - UID: " + uid);
+            System.out.println("   - 이메일: " + email);
+
+            if (Ut.isEmpty(email)) {
+                return ResultData.from("F-2", "이메일 정보 없음");
+            }
+
+            // ✅ 기존 회원 조회
+            Member member = memberService.findByEmail(email);
+
+            // ❗ 없으면 자동 가입
+            if (member == null) {
+                System.out.println("📌 [로그] 회원 정보 없음 → 자동 가입 시도");
+
+                member = memberService.getOrCreateByEmail(email, name);
+
+                if (member == null) {
+                    System.out.println("❌ [로그] 자동 가입 실패");
+                    return ResultData.from("F-9", "회원 자동 가입 실패");
+                }
+
+                System.out.println("📌 [로그] 자동 가입 완료 → ID: " + member.getId());
+            }
+
+            // ✅ 세션 저장
+            req.getSession().setAttribute("loginedMemberId", member.getId());
+            req.getSession().setAttribute("loginedMember", member);
+
+            System.out.println("✅ [로그] 세션에 로그인 정보 저장 완료");
+            System.out.println("   - memberId: " + member.getId());
+            System.out.println("   - nickname: " + member.getNickname());
+
+            return ResultData.from("S-1", "세션 로그인 완료");
+
+        } catch (FirebaseAuthException e) {
+            System.out.println("❌ [로그] Firebase 인증 실패: " + e.getMessage());
+            return ResultData.from("F-1", "Firebase 인증 실패: " + e.getMessage());
         }
     }
 
