@@ -23,12 +23,16 @@
 				<div class="row-span-6 ">
 					<a href="/usr/walkCrew/list" class="back-link">← 목록으로 돌아가기</a>
 					<div class="flex space-y-2 items-center gap-3">
-						<div class="w-14 h-14 bg-gray-300 rounded-xl">
-							<img th:src="${crew.imageUrl}" alt="크루 이미지" class="w-14 h-14 object-cover rounded-xl" />
+						<div class="w-14 h-14 bg-yellow-300 rounded-xl overflow-hidden relative">
+							<img th:if="${crew.imageUrl != null}" th:src="${crew.imageUrl}" alt="크루 이미지"
+								class="w-full h-full object-cover absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[40%]" />
 
+							<img th:if="${crew.imageUrl == null}" th:src="@{/img/default-pet.png}" alt="기본 이미지"
+								class="w-full h-full object-cover absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[40%]" />
 						</div>
 						<div class="p-3">
 							<h2 class="text-xl font-semibold" th:text="${crew.title}">크루원들 모여라</h2>
+							<div id="memberSize"></div>
 							<p class="text-sm text-gray-500">멤버 111</p>
 						</div>
 					</div>
@@ -38,22 +42,10 @@
 				</div>
 
 				<!-- 가입된 크루가 아닐경우 크루신청이미지가 보이도 -->
-				<!-- ① 가입자: 버튼 없음 -->
-				<div th:if="${isJoined}"></div>
-
-				<!-- ② 신청 대기자: 버튼 비활성 + 안내 -->
-				<div th:if="${!isJoined and isPending}">
-					<button
-						class="bg-gray-300 w-full rounded-full flex h-10 items-center justify-center text-gray-500 cursor-not-allowed"
-						disabled>신청 대기중</button>
-				</div>
-
-				<!-- ③ 미가입자: 신청 버튼 표시 -->
-				<div th:if="${!isJoined and !isPending}">
+				<div>
 					<button class="bg-gray-200 w-full rounded-full justify-center flex h-10 p-1 py-1"
-						th:onclick="|crewJoin(${crew.id})|">크루 신청</button>
+						th:onclick="|crewJoin(${crew.id})|">크루신청</button>
 				</div>
-
 				<div class="shadow row-span-5">
 					<div class="mx-3 pb-3 pt-2 border-b border-1 border-black">공지사항</div>
 					<div th:each="article : ${noticeArticles}" class="p-4 border-b">
@@ -62,12 +54,10 @@
 						<div class="text-[10px] text-gray-700 mt-1" th:text="${article.body}">내용</div>
 					</div>
 				</div>
-				<!-- ✅ 크루장 / 부크루장만 보이도록 수정 -->
-				<div class="row-span-1 flex justify-around self-end" th:if="${myRole == 'leader' or myRole == 'subleader'}">
+				<div class="row-sapn-1 flex justify-around self-end">
 					<div>수정</div>
 					<div>삭제</div>
 				</div>
-
 			</aside>
 
 			<!-- 오른쪽: 콘텐츠 섹션 -->
@@ -109,24 +99,8 @@
 				<!-- 멤버 -->
 				<div class="py-1 flex flex-col row-span-2 shadow flex">
 					<h3 class="font-bold text-lg mb-2 px-5">멤버 8</h3>
-					<div class="flex gap-4 overflow-x-auto px-5 flex-1">
-						<!-- ✅ 멤버 반복문 시작 (예시) -->
-						<div th:each="member : ${crewMembers}" class="h-full flex flex-col px-3 justify-center">
-							<div class="w-12 h-12 bg-gray-300 rounded-full">
-								<img th:src="${member.profileImg}" alt="프로필" class="w-full h-full rounded-full object-cover" />
-							</div>
-							<div class="py-1" th:text="${member.nickname}">닉네임</div>
-
-							<!-- ✅ 리더만 부크루장/강퇴 버튼 표시 -->
-							<div class="text-xs text-center mt-1 space-x-1" th:if="${myRole == 'leader'}">
-								<button class="text-blue-500 text-xs" th:onclick="|appointSubleader(${member.memberId})|">부크루장</button>
-								<button class="text-red-500 text-xs" th:onclick="|expelMember(${member.memberId})|">강퇴</button>
-							</div>
-						</div>
-						<!-- ✅ 멤버 반복문 끝 -->
-					</div>
+					<div id="crewMemberList" class="flex gap-4 overflow-x-auto px-5 flex-1"></div>
 				</div>
-
 
 				<!-- 일정 -->
 				<div class="py-1 row-span-2 shadow">
@@ -187,27 +161,48 @@
 		}
 	</script>
 
-	<!-- ✅ [추가] 부크루장 임명 및 강퇴 처리 함수 -->
-	<script>
-	function appointSubleader(memberId) {
-		if (!confirm("해당 멤버를 부크루장으로 임명하시겠습니까?")) return;
-		$.post("/usr/walkCrewMember/appointSubleader", { crewId, memberId }, function(res) {
-			alert(res.msg);
-			location.reload();
-		});
-	}
-
-	function expelMember(memberId) {
-		if (!confirm("해당 멤버를 강퇴하시겠습니까?")) return;
-		$.post("/usr/walkCrewMember/expel", { crewId, memberId }, function(res) {
-			alert(res.msg);
-			location.reload();
-		});
-	}
-</script>
-
 	<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 	<script th:src="@{/resource/js/crew.js}"></script>
+
+	<script>
+		function renderCrewMemberSection() {
+			$.ajax({
+				type: "GET",
+				url: `/usr/walkCrewMember/usr/walkCrew/memberList`,
+				data: {crewId},
+				success: function (data) {
+					const members = data.data1;
+					const container = document.getElementById("crewMemberList");
+					const countEl = document.getElementById("memberCount");
+
+					if (!container) return;
+					
+					container.innerHTML = members.map(m => `
+					  <div onclick="memberModal()" class="h-full flex flex-col px-3 justify-center">
+					    <div class="w-12 h-12 bg-yellow-300 rounded-full">
+					      <img src="${m.crew_member_photo ? m.crew_member_photo : '/img/default-pet.png'}"
+					           alt="프로필" class="w-full h-full object-cover" />
+					    </div>
+					    <div class="py-1 text-sm text-center">${m.crew_member_name}</div>
+					  </div>
+					`).join('');
+
+
+					countEl.textContent = members.length;
+				},
+				error: function (err) {
+					console.error("멤버 섹션 렌더링 실패:", err);
+				}
+			});
+		}
+
+		window.addEventListener('DOMContentLoaded', () => {
+			renderCrewMemberSection();
+		});
+	</script>
+
+
+
 
 </body>
 

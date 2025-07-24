@@ -654,7 +654,6 @@ function showMemberDetail(id) {
 		}
 	});
 
-
 }
 
 // 강퇴 처리
@@ -678,7 +677,7 @@ function crewJoin(crewId) {
 			console.log(data.msg);
 			// ✅ 참가 수락 후 멤버 목록도 다시 렌더링
 			renderMemberList();
-
+			renderCrewMemberSection();
 		},
 		error: function(err) {
 			console.error("참가등록실패", err);
