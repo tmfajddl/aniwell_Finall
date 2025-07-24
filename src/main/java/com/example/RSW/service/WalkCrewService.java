@@ -117,4 +117,7 @@ public class WalkCrewService {
 		return crew.getLeaderId() == memberId;
 	}
 
+	public void updateLeader(int crewId, int newLeaderId) {
+		walkCrewRepository.updateCrewLeader(crewId, newLeaderId);
+	}
 }

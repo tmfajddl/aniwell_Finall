@@ -22,15 +22,10 @@
 
 	<!-- 크루 단건 조회 -->
 	<select id="findById" resultType="com.example.RSW.vo.WalkCrew">
-		SELECT
-		id,
-		title,
-		description,
-		district_id AS districtId,
-		leaderId,
-		createdAt
+		SELECT *
 		FROM walk_crew
-		WHERE id =
+		WHERE id
+		=
 		#{id}
 	</select>
 
@@ -117,9 +112,9 @@
 
 
 	<select id="getWalkCrews"
-		resultType="com.example.RSW.vo.WalkCrew">
-		SELECT * FROM walk_crew WHERE id = #{memberId}
-	</select>
+	resultType="com.example.RSW.vo.WalkCrew">
+	SELECT * FROM walk_crew WHERE id = #{memberId}
+</select>
 
 	<!-- ✅ 특정 멤버가 해당 크루에 이미 참가했는지 확인 -->
 	<select id="countByCrewIdAndMemberId" resultType="int">
@@ -201,7 +196,8 @@
 		FROM walk_crew
 		WHERE 1=1
 		<if test="searchKeyword != null and searchKeyword != ''">
-			AND ${searchKeywordTypeCode} LIKE CONCAT('%', #{searchKeyword}, '%')
+			AND ${searchKeywordTypeCode} LIKE CONCAT('%',
+			#{searchKeyword}, '%')
 		</if>
 		<if test="dong != null and dong != ''">
 			AND dong LIKE CONCAT('%', #{dong}, '%') <!-- 여기 -->
@@ -243,5 +239,12 @@
 			</choose>
 		</if>
 	</select>
+
+	<!-- walk_crew의 리더 변경 -->
+	<update id="updateCrewLeader">
+		UPDATE walk_crew
+		SET leaderId = #{newLeaderId}
+		WHERE id = #{crewId}
+	</update>
 
 </mapper>
