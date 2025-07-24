@@ -38,4 +38,6 @@ public interface WalkCrewMemberRepository {
 	void updateRole(int currentLeaderId, int crewId, String string);
 
 	String findRoleByMemberIdAndCrewId(int memberId, int crewId);
+
+	int countPendingRequest(int crewId, int memberId);
 }

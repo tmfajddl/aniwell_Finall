@@ -52,19 +52,25 @@
 
 	<!-- ✅ 승인된 크루 멤버인지 확인하는 쿼리 - 특정 크루(crew_id)에서 특정 사용자(member_id)가 'approved' 
 		상태인지 여부를 판단하기 위해 사용 - 결과는 COUNT(*)로 반환 → 0이면 승인 안 됨, 1 이상이면 승인됨 -->
+	<!-- 승인된 멤버 여부 -->
 	<select id="countApprovedMember" resultType="int">
-		SELECT COUNT(*)
-		FROM walk_crew_member
-		WHERE crewId = #{crewId}
-		AND
-		memberId = #{memberId}
-		AND status = 'approved'         <!-- ✅ 승인 상태 -->
+		SELECT COUNT(*) FROM walk_crew_member
+		WHERE crewId = #{crewId} AND memberId = #{memberId} AND status = 'approved'
+	</select>
+
+
+	<!-- 신청 상태 여부 -->
+	<select id="countPendingRequest" resultType="int">
+		SELECT COUNT(*) FROM
+		walk_crew_member
+		WHERE crewId = #{crewId} AND memberId = #{memberId}
+		AND status = 'pending'
 	</select>
 
 	<!-- ✅ 강퇴 & 탈퇴 처리 -->
 	<delete id="deleteMemberFromCrew" parameterType="map">
 		DELETE FROM
-		walk_crew_member	
+		walk_crew_member
 		WHERE crewId = #{crewId} AND memberId = #{memberId}
 	</delete>
 
@@ -74,7 +80,8 @@
 		SELECT
 		wcm.*,
 		m.id AS crew_member_id,
-		m.nickname AS crew_member_name,
+		m.nickname AS
+		crew_member_name,
 		m.photo AS crew_member_photo
 		FROM walk_crew_member wcm
 		LEFT JOIN member m ON wcm.memberId = m.id
