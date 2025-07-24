@@ -654,7 +654,6 @@ function showMemberDetail(id) {
 		}
 	});
 
-
 }
 
 // 강퇴 처리
