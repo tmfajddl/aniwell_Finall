@@ -28,9 +28,19 @@ public class WalkCrewMemberService {
 	@Autowired
 	WalkCrewService walkCrewService;
 
-	// ✅ 크루 참가 요청
-	public void requestToJoinCrew(int crewId, int memberId) {
+	// ✅ 크루 참가 요청 (중복 방지 추가)
+	public ResultData requestToJoinCrew(int crewId, int memberId) {
+
+		// ✅ 1. 이미 신청한 경우 중복 방지
+		boolean alreadyRequested = walkCrewMemberRepository.exists(crewId, memberId);
+		if (alreadyRequested) {
+			return ResultData.from("F-1", "이미 신청한 크루입니다.");
+		}
+
+		// ✅ 2. 신청 정보 DB에 등록
 		walkCrewMemberRepository.requestToJoinCrew(crewId, memberId);
+
+		return ResultData.from("S-1", "크루 신청이 완료되었습니다.");
 	}
 
 	// ✅ 내가 가입한 크루 1개 가져오기 (크루 카페 진입용)
