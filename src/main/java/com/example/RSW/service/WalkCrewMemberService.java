@@ -25,6 +25,9 @@ public class WalkCrewMemberService {
 	@Autowired
 	WalkCrewMemberRepository walkCrewMemberRepository;
 
+	@Autowired
+	WalkCrewService walkCrewService;
+
 	// ✅ 크루 참가 요청
 	public void requestToJoinCrew(int crewId, int memberId) {
 		walkCrewMemberRepository.requestToJoinCrew(crewId, memberId);
@@ -59,6 +62,32 @@ public class WalkCrewMemberService {
 	// 크루멤버리스트
 	public List<WalkCrewMember> getMembersByCrewId(int crewId) {
 		return walkCrewMemberRepository.findMembersByCrewId(crewId);
+	}
+
+	public boolean transferLeadership(int crewId, int currentLeaderId, int newLeaderId) {
+		try {
+			// 1. walk_crew 테이블의 leaderId 변경
+			walkCrewService.updateLeader(crewId, newLeaderId);
+
+			// 2. 기존 리더 → subleader
+			walkCrewMemberRepository.updateRole(currentLeaderId, crewId, "subleader");
+
+			// 3. 새로운 리더 → leader
+			walkCrewMemberRepository.updateRole(newLeaderId, crewId, "leader");
+
+			return true;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return false;
+		}
+	}
+
+	public String getRole(int memberId, int crewId) {
+		return walkCrewMemberRepository.findRoleByMemberIdAndCrewId(memberId, crewId);
+	}
+
+	public boolean isMemberOfCrew(int memberId, int crewId) {
+		return walkCrewMemberRepository.countByMemberIdAndCrewId(memberId, crewId) > 0;
 	}
 
 }
