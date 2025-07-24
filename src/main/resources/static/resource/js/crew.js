@@ -350,7 +350,7 @@ function nextMonth() {
 }
 
 
-// sideModal
+// sideModal////////////////////////////////////////////////
 
 function modal_btn() {
 	const modal = document.getElementById("sideModal");
@@ -397,6 +397,10 @@ function modal_btn() {
 	modal.innerHTML = contentHtml;
 	modal.classList.remove("translate-x-full");
 	modal.classList.add("translate-x-0");
+	
+	requestAnimationFrame(() => {
+		renderMemberList();
+	});
 }
 
 
@@ -616,7 +620,7 @@ function renderMemberList() {
 			members = data.data1;
 			const list = document.getElementById("memberList");
 			list.innerHTML = members.map(m =>
-				`<li class="cursor-pointer hover:bg-yellow-100 p-2 rounded" onclick="showMemberDetail(${m.crew_member_id})">${m.crew_member_name}</li>`
+				`<li class="cursor-pointer hover:bg-yellow-100 p-2 rounded" onclick="showMemberDetail(${m.memberId})">${m.crew_member_name}</li>`
 			).join('');
 		},
 		error: function(err) {
@@ -672,6 +676,9 @@ function crewJoin(crewId) {
 		success: function(data) {
 
 			console.log(data.msg);
+			// ✅ 참가 수락 후 멤버 목록도 다시 렌더링
+			renderMemberList();
+
 		},
 		error: function(err) {
 			console.error("참가등록실패", err);
