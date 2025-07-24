@@ -22,13 +22,7 @@
 
 	<!-- 크루 단건 조회 -->
 	<select id="findById" resultType="com.example.RSW.vo.WalkCrew">
-		SELECT
-		id,
-		title,
-		description,
-		district_id AS districtId,
-		leaderId,
-		createdAt
+		SELECT *
 		FROM walk_crew
 		WHERE id =
 		#{id}
