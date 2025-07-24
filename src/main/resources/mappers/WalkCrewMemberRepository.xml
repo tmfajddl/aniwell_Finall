@@ -73,13 +73,32 @@
 		resultType="com.example.RSW.vo.WalkCrewMember">
 		SELECT
 		wcm.*,
-		m.nickname,
-		(member 테이블에서 조인)
-		m.profileImg
+		m.id AS crew_member_id,
+		m.nickname AS crew_member_name,
+		m.photo AS crew_member_photo
 		FROM walk_crew_member wcm
-		LEFT JOIN member m ON wcm.member_id = m.id
-		WHERE wcm.crew_id = #{crewId}
+		LEFT JOIN member m ON wcm.memberId = m.id
+		WHERE wcm.crewId = #{crewId}
 	</select>
 
+
+	<!-- 리더 변경 -->
+	<update id="updateRole">
+		UPDATE walk_crew_member
+		SET role = #{role}
+		WHERE
+		memberId = #{memberId} AND crewId = #{crewId}
+	</update>
+
+	<!-- ✅ 특정 크루에서 특정 멤버의 역할(role)을 조회하는 쿼리 -->
+	<!-- 예: leader / subleader / member 중 어떤 역할인지 확인할 때 사용 -->
+	<!-- 리더 위임, 강퇴, 권한 제어 등에서 권한 체크 용도로 사용됨 -->
+
+	<select id="findRoleByMemberIdAndCrewId" resultType="string">
+		SELECT role
+		FROM walk_crew_member
+		WHERE memberId = #{memberId} AND crewId =
+		#{crewId}
+	</select>
 
 </mapper>
