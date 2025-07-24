@@ -517,25 +517,24 @@ public class UsrMemberController {
             notificationService.sendNotificationToAdmins(rq.getLoginedMemberId());
 
             return """
-            <html>
-            <head><meta charset="UTF-8"><script>
-            alert('✅ 수의사 인증서가 등록되었습니다. 관리자 승인을 기다려주세요.');
-            location.replace('myCert');
-            </script></head><body></body></html>
-        """;
+                        <html>
+                        <head><meta charset="UTF-8"><script>
+                        alert('✅ 수의사 인증서가 등록되었습니다. 관리자 승인을 기다려주세요.');
+                        location.replace('myCert');
+                        </script></head><body></body></html>
+                    """;
 
         } catch (Exception e) {
             e.printStackTrace();
             return """
-            <html>
-            <head><meta charset="UTF-8"><script>
-            alert('⚠ 업로드 중 오류가 발생했습니다. 다시 시도해주세요.');
-            location.replace('/usr/member/myPage');
-            </script></head><body></body></html>
-        """;
+                        <html>
+                        <head><meta charset="UTF-8"><script>
+                        alert('⚠ 업로드 중 오류가 발생했습니다. 다시 시도해주세요.');
+                        location.replace('/usr/member/myPage');
+                        </script></head><body></body></html>
+                    """;
         }
     }
-
 
 
     @RequestMapping("/usr/member/myCert")
@@ -578,9 +577,9 @@ public class UsrMemberController {
 
         MultiValueMap<String, String> tokenParams = new LinkedMultiValueMap<>();
         tokenParams.add("grant_type", "authorization_code");
-        tokenParams.add("client_id", kakaoRestApiKey); // 카카오 REST API 키
-        tokenParams.add("redirect_uri", "http://localhost:8080/usr/member/kakao"); // 고정값
-        tokenParams.add("client_secret", kakaoClientSecret); // 카카오 클라이언트 시크릿
+        tokenParams.add("client_id", kakaoRestApiKey);
+        tokenParams.add("redirect_uri", "http://localhost:8080/usr/member/kakao");
+        tokenParams.add("client_secret", kakaoClientSecret);
         tokenParams.add("code", code);
 
         HttpEntity<MultiValueMap<String, String>> tokenRequest = new HttpEntity<>(tokenParams, tokenHeaders);
@@ -599,13 +598,18 @@ public class UsrMemberController {
                 Map.class
         );
 
-        Map properties = (Map) profileResponse.getBody().get("properties");
+        Map body = profileResponse.getBody();
+        Map properties = (Map) body.get("properties");
+        Map kakaoAccount = (Map) body.get("kakao_account");
 
-        String socialId = String.valueOf(profileResponse.getBody().get("id"));
+        String socialId = String.valueOf(body.get("id"));
         String name = (String) properties.get("nickname");
-
         String provider = "kakao";
-        String email = ""; // 이메일은 비워둠
+
+        // ✅ 이메일 강제 생성
+        String email = provider + "_" + socialId + "@noemail.kakao";
+        System.out.println("📌 강제 생성된 email: " + email);
+
 
         // 기존 사용자 조회 또는 새로 생성
         Member member = memberService.getOrCreateSocialMember(provider, socialId, email, name);
@@ -614,24 +618,22 @@ public class UsrMemberController {
         Rq rq = new Rq(req, resp, memberService);
         rq.login(member);
         req.getSession().setAttribute("rq", rq);
-        req.getSession().setAttribute("kakaoAccessToken", accessToken); // 자동 로그인용 저장
+        req.getSession().setAttribute("kakaoAccessToken", accessToken);
 
         // ✅ Firebase 토큰 생성 및 세션 저장
         String uid = member.getSocialProvider() + "_" + member.getSocialId();
         String firebaseToken = memberService.createFirebaseCustomToken(uid);
         req.getSession().setAttribute("firebaseToken", firebaseToken);
 
-        // ✅ 팝업 닫고 부모 창 새로고침
+        // ✅ 팝업 닫고 부모 창에 Firebase 연동 메시지 전송
         resp.setContentType("text/html; charset=UTF-8");
         PrintWriter out = resp.getWriter();
         out.println("<script>");
-        out.println("localStorage.setItem('kakaoAccessToken', '" + accessToken + "');"); // ✅ 자동 로그인용 토큰 저장
-        out.println("window.opener.location.href = '/';");
+        out.println("localStorage.setItem('kakaoAccessToken', '" + accessToken + "');");
+        out.println("window.opener.postMessage('socialLoginSuccess', '*');");
         out.println("window.close();");
         out.println("</script>");
-
     }
-
 
     // 카카오 팝업 로그인 처리용 REST API 컨트롤러 메서드
     @PostMapping("/usr/member/social-login")
@@ -754,7 +756,8 @@ public class UsrMemberController {
             MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
             params.add("code", code);
             params.add("client_id", "구글 클라이언트 키");
-            params.add("client_secret", "구글 클라이언트 시크릿 키");
+            params.add("client_secret", "구글 시크릿 키");
+
             params.add("redirect_uri", "http://localhost:8080/usr/member/google");
             params.add("grant_type", "authorization_code");
 
@@ -818,6 +821,7 @@ public class UsrMemberController {
 
     // 네이버 로그인 콜백 처리
     @RequestMapping("/usr/member/naver")
+    @ResponseBody
     public String naverCallback(@RequestParam("code") String code,
                                 @RequestParam("state") String state,
                                 HttpServletRequest req, HttpServletResponse resp) {
@@ -881,8 +885,13 @@ public class UsrMemberController {
             String firebaseToken = memberService.createFirebaseCustomToken(uid);
             req.getSession().setAttribute("firebaseToken", firebaseToken);
 
-            // ✅ 로그인 완료 후 홈으로 리다이렉트
-            return "redirect:/";
+            // ✅ 팝업 방식 Firebase 연동용 JS 리턴
+            return """
+                    <script>
+                        window.opener.postMessage("socialLoginSuccess", "*");
+                        window.close();
+                    </script>
+                    """;
 
         } catch (Exception e) {
             // ⚠ 예외 처리 (토큰 요청 실패, 사용자 정보 오류 등)
@@ -952,11 +961,12 @@ public class UsrMemberController {
 
         } catch (Exception e) {
             return ResultData.from("F-3", "토큰 생성 실패: " + e.getMessage());
+
         }
     }
 
 
-    @RequestMapping("/usr/member/firebase-session-login")
+     @RequestMapping("/usr/member/firebase-session-login")
     @ResponseBody
     public ResultData doFirebaseSessionLogin(@RequestBody Map<String, String> body, HttpServletRequest req) {
         String idToken = body.get("idToken");
@@ -985,7 +995,12 @@ public class UsrMemberController {
             if (member == null) {
                 System.out.println("📌 [로그] 회원 정보 없음 → 자동 가입 시도");
 
-                member = memberService.getOrCreateByEmail(email, name);
+                String provider = "email";
+                if (uid != null && uid.contains("_")) {
+                    provider = uid.split("_")[0];
+                }
+
+                member = memberService.getOrCreateByEmail(email, name, provider);
 
                 if (member == null) {
                     System.out.println("❌ [로그] 자동 가입 실패");
@@ -1010,5 +1025,4 @@ public class UsrMemberController {
             return ResultData.from("F-1", "Firebase 인증 실패: " + e.getMessage());
         }
     }
-
 }
