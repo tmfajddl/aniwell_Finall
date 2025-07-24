@@ -76,6 +76,7 @@ public class UsrCrewCafeController {
 		// ✅ 가입 여부 / 신청 여부
 		boolean isJoined = walkCrewMemberService.isApprovedMember(crewId, memberId);
 		boolean isPending = walkCrewMemberService.isPendingRequest(crewId, memberId);
+		boolean isLeader = crew.getLeaderId() == memberId; // 리더인지
 
 		// ✅ 게시판 ID 기준으로 불러오기
 		int noticeBoardId = 1; // 공지사항
@@ -116,6 +117,7 @@ public class UsrCrewCafeController {
 		model.addAttribute("scheduleArticles", scheduleArticles);
 		model.addAttribute("isJoined", isJoined);
 		model.addAttribute("isPending", isPending);
+		model.addAttribute("isLeader", isLeader);
 		return "usr/walkCrew/cafeHome";
 	}
 

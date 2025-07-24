@@ -54,8 +54,10 @@
 		상태인지 여부를 판단하기 위해 사용 - 결과는 COUNT(*)로 반환 → 0이면 승인 안 됨, 1 이상이면 승인됨 -->
 	<!-- 승인된 멤버 여부 -->
 	<select id="countApprovedMember" resultType="int">
-		SELECT COUNT(*) FROM walk_crew_member
-		WHERE crewId = #{crewId} AND memberId = #{memberId} AND status = 'approved'
+		SELECT COUNT(*) FROM
+		walk_crew_member
+		WHERE crewId = #{crewId} AND memberId = #{memberId}
+		AND status = 'approved'
 	</select>
 
 
@@ -106,6 +108,17 @@
 		FROM walk_crew_member
 		WHERE memberId = #{memberId} AND crewId =
 		#{crewId}
+		Limit 1
 	</select>
+
+	<!-- ✅ 크루 신청을 수락할 때 사용되는 쿼리 -->
+	<update id="approveMember">
+		<!-- walk_crew_member 테이블의 status 값을 'APPROVED'로 변경 -->
+		UPDATE walk_crew_member
+		SET
+		status = 'APPROVED'
+		WHERE crewId = #{crewId} AND memberId = #{memberId}
+	</update>
+
 
 </mapper>

@@ -40,4 +40,6 @@ public interface WalkCrewMemberRepository {
 	String findRoleByMemberIdAndCrewId(int memberId, int crewId);
 
 	int countPendingRequest(int crewId, int memberId);
+
+	void approveMember(int crewId, int memberId);
 }
