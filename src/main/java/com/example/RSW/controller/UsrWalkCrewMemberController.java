@@ -91,9 +91,16 @@ public class UsrWalkCrewMemberController {
 		}
 
 		int memberId = rq.getLoginedMemberId();
-		walkCrewMemberService.requestToJoinCrew(crewId, memberId);
 
-		// ✅ Java 8 호환: Map.of(...) → HashMap 사용
+		// ✅ 중복 신청 방지 로직을 포함한 서비스 호출
+		ResultData resultData = walkCrewMemberService.requestToJoinCrew(crewId, memberId);
+
+		// ✅ 실패 시 그대로 반환
+		if (resultData.isFail()) {
+			return resultData;
+		}
+
+		// ✅ 성공 시 응답 데이터 구성
 		Map<String, Object> data = new HashMap<>();
 		data.put("crewId", crewId);
 		data.put("memberId", memberId);

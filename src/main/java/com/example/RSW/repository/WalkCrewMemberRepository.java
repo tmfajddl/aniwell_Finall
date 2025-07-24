@@ -42,4 +42,8 @@ public interface WalkCrewMemberRepository {
 	int countPendingRequest(int crewId, int memberId);
 
 	void approveMember(int crewId, int memberId);
+
+	boolean exists(int crewId, int memberId);
+
+
 }
