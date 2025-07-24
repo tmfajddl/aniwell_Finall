@@ -350,7 +350,7 @@ function nextMonth() {
 }
 
 
-// sideModal
+// sideModal////////////////////////////////////////////////
 
 function modal_btn() {
 	const modal = document.getElementById("sideModal");
@@ -397,6 +397,10 @@ function modal_btn() {
 	modal.innerHTML = contentHtml;
 	modal.classList.remove("translate-x-full");
 	modal.classList.add("translate-x-0");
+	
+	requestAnimationFrame(() => {
+		renderMemberList();
+	});
 }
 
 
@@ -457,7 +461,7 @@ function renderRequestList() {
 		success: function(response) {
 			console.log(response);
 			// 응답 결과는 response.data 형태로 가정
-			applicants = response.data1.applicants;
+			applicants = response.data1;
 
 			const list = document.getElementById("requestList");
 			list.innerHTML = applicants.map(r =>
@@ -604,39 +608,60 @@ function crewMember() {
 	setTimeout(() => renderMemberList(), 0);
 
 }
-const members = [
-	{ id: 1, name: "김철수", role: "일반", comment: "자주 산책합니다." },
-	{ id: 2, name: "박영희", role: "방장", comment: "운영자입니다." },
-];
+let members = [];
 
 // 리스트 렌더링
 function renderMemberList() {
-	const list = document.getElementById("memberList");
-	list.innerHTML = members.map(m =>
-		`<li class="cursor-pointer hover:bg-yellow-100 p-2 rounded" onclick="showMemberDetail(${m.id})">${m.name}</li>`
-	).join('');
+	$.ajax({
+		type: "get",
+		url: `/usr/walkCrewMember/usr/walkCrew/memberList`,
+		data: { crewId },
+		success: function(data) {
+			members = data.data1;
+			const list = document.getElementById("memberList");
+			list.innerHTML = members.map(m =>
+				`<li class="cursor-pointer hover:bg-yellow-100 p-2 rounded" onclick="showMemberDetail(${m.memberId})">${m.crew_member_name}</li>`
+			).join('');
+		},
+		error: function(err) {
+			console.error("err list", err);
+		}
+	});
+
 }
 
 // 상세 보기
 function showMemberDetail(id) {
-	const member = members.find(m => m.id === id);
+	const member = members.find(m => m.memberId === id);
 	const detail = document.getElementById("memberDetail");
 	const buttons = document.getElementById("memberActionButtons");
+	console.log(members);
+	$.ajax({
+		type: "GET",
+		url: `/api/member/getUsrInfo`,
+		data: { memberId: member.memberId },
+		success: function(data) {
+			console.log(data);
+			detail.innerHTML = `
+				  <p>${data.photo}</p>
+				  <p>${data.nickname}</p>
+				`;
+			detail.dataset.userId = member.id;
+			buttons.style.display = "block";
+		},
+		error: function(err) {
+			console.error("참가등록실패", err);
+		}
+	});
 
-	detail.innerHTML = `
-    <p><strong>이름:</strong> ${member.name}</p>
-    <p><strong>역할:</strong> ${member.role}</p>
-    <p><strong>소개:</strong> ${member.comment}</p>
-  `;
-	detail.dataset.userId = member.id;
-	buttons.style.display = "block";
+
 }
 
 // 강퇴 처리
 function kickMember() {
 	const id = document.getElementById("memberDetail").dataset.userId;
 	alert(`❌ ID ${id} 회원 강퇴 처리`);
-	// 실제 삭제 로직은 이곳에 추가
+
 }
 //////
 
@@ -649,16 +674,17 @@ function crewJoin(crewId) {
 		url: `/usr/walkCrewMember/doJoin`,
 		data: { crewId },
 		success: function(data) {
+
 			console.log(data.msg);
+			// ✅ 참가 수락 후 멤버 목록도 다시 렌더링
+			renderMemberList();
+
 		},
 		error: function(err) {
-			console.error("참가등록실", err);
+			console.error("참가등록실패", err);
 		}
 	});
 }
-
-
-
 
 
 
