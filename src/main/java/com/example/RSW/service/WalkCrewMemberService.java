@@ -25,6 +25,9 @@ public class WalkCrewMemberService {
 	@Autowired
 	WalkCrewMemberRepository walkCrewMemberRepository;
 
+	@Autowired
+	WalkCrewService walkCrewService;
+
 	// ✅ 크루 참가 요청
 	public void requestToJoinCrew(int crewId, int memberId) {
 		walkCrewMemberRepository.requestToJoinCrew(crewId, memberId);
@@ -45,11 +48,6 @@ public class WalkCrewMemberService {
 		return walkCrewMemberRepository.findRequestListByLeaderId(leaderId);
 	}
 
-	// ✅ 크루에 이미 가입했는지 여부 확인
-	public boolean isJoinedCrew(int memberId, int crewId) {
-		return walkCrewMemberRepository.countByMemberIdAndCrewId(memberId, crewId) > 0;
-	}
-
 	// ✅ 강퇴 & 탈퇴 공통 처리
 	public boolean expelMemberFromCrew(int crewId, int memberId) {
 		int affectedRows = walkCrewMemberRepository.deleteMemberFromCrew(crewId, memberId);
@@ -59,6 +57,52 @@ public class WalkCrewMemberService {
 	// 크루멤버리스트
 	public List<WalkCrewMember> getMembersByCrewId(int crewId) {
 		return walkCrewMemberRepository.findMembersByCrewId(crewId);
+	}
+
+	public boolean transferLeadership(int crewId, int currentLeaderId, int newLeaderId) {
+		try {
+			// 1. walk_crew 테이블의 leaderId 변경
+			walkCrewService.updateLeader(crewId, newLeaderId);
+
+			// 2. 기존 리더 → subleader
+			walkCrewMemberRepository.updateRole(currentLeaderId, crewId, "subleader");
+
+			// 3. 새로운 리더 → leader
+			walkCrewMemberRepository.updateRole(newLeaderId, crewId, "leader");
+
+			return true;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return false;
+		}
+	}
+
+	public String getRole(int memberId, int crewId) {
+		return walkCrewMemberRepository.findRoleByMemberIdAndCrewId(memberId, crewId);
+	}
+
+	public boolean isMemberOfCrew(int memberId, int crewId) {
+		return walkCrewMemberRepository.countByMemberIdAndCrewId(memberId, crewId) > 0;
+	}
+
+	public boolean isApprovedMember(int crewId, int memberId) {
+		return walkCrewMemberRepository.countApprovedMember(crewId, memberId) > 0;
+	}
+
+	// ① 크루 가입 여부 확인
+	public boolean isJoinedCrew(int crewId, int memberId) {
+		String role = walkCrewMemberRepository.findRoleByMemberIdAndCrewId(memberId, crewId);
+		return role != null && (role.equals("leader") || role.equals("subleader") || role.equals("member"));
+	}
+
+	// ② 신청 대기 여부 확인
+	public boolean isPendingRequest(int crewId, int memberId) {
+		String role = walkCrewMemberRepository.findRoleByMemberIdAndCrewId(memberId, crewId);
+		return "pending".equals(role); // 승인되지 않은 신청자
+	}
+
+	public void approveMember(int crewId, int memberId) {
+		walkCrewMemberRepository.approveMember(crewId, memberId);
 	}
 
 }
