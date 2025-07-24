@@ -101,4 +101,8 @@ public class WalkCrewMemberService {
 		return "pending".equals(role); // 승인되지 않은 신청자
 	}
 
+	public void approveMember(int crewId, int memberId) {
+		walkCrewMemberRepository.approveMember(crewId, memberId);
+	}
+
 }
