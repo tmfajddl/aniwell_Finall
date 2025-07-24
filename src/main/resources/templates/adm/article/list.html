@@ -684,6 +684,8 @@
                         const authLevel = parseInt(row.dataset.authlevel);
                         const approved = row.dataset.approved;
                         const cert = row.dataset.cert;
+						console.log(cert);
+
 
                         document.getElementById("m-name-id").textContent = `${name} (${loginId})`;
                         document.getElementById("m-email").textContent = email;
@@ -691,9 +693,16 @@
                         document.getElementById("m-status").textContent = approved == 1 ? "✅ 인증" : approved == 2 ? "❌ 거절" : "⏳ 대기 중";
 
                         const certEl = document.getElementById("m-cert");
-                        certEl.innerHTML = cert ? `<a href="/gen/file/download?path=vet_certificates/${cert}" class="text-blue-600 underline" target="_blank">다운로드</a>` : "없음";
+						certEl.innerHTML = cert
+								? '<a href="/gen/file/download?url=' + encodeURIComponent(cert) + '" target="_blank" class="text-blue-600 underline">다운로드</a>'
+								: '없음';
 
-                        // 권한 버튼
+
+
+
+
+
+						// 권한 버튼
                         const adminBtn = document.getElementById("m-admin-btn");
                         const isAdmin = authLevel === 7;
                         adminBtn.textContent = isAdmin ? "권한 해제" : "관리자 부여";
@@ -791,10 +800,23 @@
                         document.getElementById("m-status").textContent =
                             approved == 1 ? "✅ 인증" : approved == 2 ? "❌ 거절" : "⏳ 대기 중";
 
-                        const certEl = document.getElementById("m-cert");
-                        certEl.innerHTML = cert ? `<a href="/gen/file/download?path=vet_certificates/${cert}" target="_blank" class="text-blue-600 underline">다운로드</a>` : "없음";
+						const certEl = document.getElementById("m-cert");
+						if (cert) {
+							const encodedUrl = encodeURIComponent(cert);
+							certEl.innerHTML = `
+        <div class="flex gap-4 items-center">
+            <a href="${cert}" target="_blank">
+                🔍 미리보기
+            </a>
+            <a href="/gen/file/download?url=${encodedUrl}" ...>⬇️ 다운로드</a>
+        </div>
+    `;
+						} else {
+							certEl.innerHTML = "❌ 인증서 없음";
+						}
 
-                        const adminBtn = document.getElementById("m-admin-btn");
+
+						const adminBtn = document.getElementById("m-admin-btn");
                         const isAdmin = role === 7;
                         adminBtn.textContent = isAdmin ? "권한 해제" : "관리자 부여";
                         adminBtn.className = isAdmin
