@@ -286,5 +286,4 @@ public class UsrWalkCrewController {
 		return ResultData.from("S-1", "크루 목록 불러오기 성공", data);
 	}
 
-
 }

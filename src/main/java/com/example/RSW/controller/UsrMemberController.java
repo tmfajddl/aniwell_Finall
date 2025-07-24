@@ -757,6 +757,7 @@ public class UsrMemberController {
             params.add("code", code);
             params.add("client_id", "구글 클라이언트 키");
             params.add("client_secret", "구글 시크릿 키");
+
             params.add("redirect_uri", "http://localhost:8080/usr/member/google");
             params.add("grant_type", "authorization_code");
 
@@ -960,11 +961,12 @@ public class UsrMemberController {
 
         } catch (Exception e) {
             return ResultData.from("F-3", "토큰 생성 실패: " + e.getMessage());
+
         }
     }
 
 
-    @RequestMapping("/usr/member/firebase-session-login")
+     @RequestMapping("/usr/member/firebase-session-login")
     @ResponseBody
     public ResultData doFirebaseSessionLogin(@RequestBody Map<String, String> body, HttpServletRequest req) {
         String idToken = body.get("idToken");
@@ -1023,5 +1025,4 @@ public class UsrMemberController {
             return ResultData.from("F-1", "Firebase 인증 실패: " + e.getMessage());
         }
     }
-
 }
