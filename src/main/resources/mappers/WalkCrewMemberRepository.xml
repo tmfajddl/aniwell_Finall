@@ -64,7 +64,7 @@
 	<!-- ✅ 강퇴 & 탈퇴 처리 -->
 	<delete id="deleteMemberFromCrew" parameterType="map">
 		DELETE FROM
-		walk_crew_member
+		walk_crew_member	
 		WHERE crewId = #{crewId} AND memberId = #{memberId}
 	</delete>
 
