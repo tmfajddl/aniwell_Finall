@@ -70,7 +70,12 @@ public class UsrCrewCafeController {
 	@GetMapping("/cafeHome")
 	public String showCafeHome(@RequestParam(defaultValue = "0") int crewId, Model model, HttpServletRequest req) {
 		Rq rq = (Rq) req.getAttribute("rq");
+		int memberId = rq.getLoginedMemberId();
 		WalkCrew crew = walkCrewService.getCrewById(crewId);
+
+		// ✅ 가입 여부 / 신청 여부
+		boolean isJoined = walkCrewMemberService.isApprovedMember(crewId, memberId);
+		boolean isPending = walkCrewMemberService.isPendingRequest(crewId, memberId);
 
 		// ✅ 게시판 ID 기준으로 불러오기
 		int noticeBoardId = 1; // 공지사항
@@ -109,7 +114,8 @@ public class UsrCrewCafeController {
 		model.addAttribute("freeArticles", freeArticles);
 		model.addAttribute("galleryArticles", galleryArticles);
 		model.addAttribute("scheduleArticles", scheduleArticles);
-
+		model.addAttribute("isJoined", isJoined);
+		model.addAttribute("isPending", isPending);
 		return "usr/walkCrew/cafeHome";
 	}
 
