@@ -84,4 +84,28 @@
           AND vaccineName = #{vaccineName}
     </update>
 
+    <!-- 1. 최신 접종일 조회 -->
+    <select id="findLatestInjectionDate" resultType="java.time.LocalDate">
+        SELECT MAX(injectionDate)
+        FROM pet_vaccination
+        WHERE petId = #{petId}
+          AND vaccineName = #{vaccineName}
+    </select>
+
+    <!-- 2. 백신 주기 조회 -->
+    <select id="findIntervalMonthsByVaccine" resultType="int">
+        SELECT intervalMonths
+        FROM vaccine_schedule
+        WHERE vaccineName = #{vaccineName}
+            LIMIT 1
+    </select>
+
+    <!-- 3. nextDueDate 일괄 업데이트 -->
+    <update id="updateAllNextDueDates">
+        UPDATE pet_vaccination
+        SET nextDueDate = #{nextDueDate}
+        WHERE petId = #{petId}
+          AND vaccineName = #{vaccineName}
+    </update>
+
 </mapper>
