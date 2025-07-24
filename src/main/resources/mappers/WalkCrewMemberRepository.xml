@@ -5,12 +5,16 @@
 <mapper
 	namespace="com.example.RSW.repository.WalkCrewMemberRepository">
 
+	<!-- ✅ 크루 참가 신청 쿼리 - walk_crew_member 테이블에 새로운 참가 신청 레코드를 삽입합니다. - 신청자는 
+		'PENDING' 상태로 등록되어, 리더의 승인을 기다리는 상태가 됩니다. - 현재 시간(NOW())을 joinedAt에 기록합니다. -->
 	<insert id="requestToJoinCrew">
 		INSERT INTO walk_crew_member
-		(crewId, memberId,
-		status, joinedAt)
-		VALUES
-		(#{crewId}, #{memberId}, 'PENDING', NOW())
+		SET
+		crewId = #{crewId},
+		memberId = #{memberId},
+		status = 'PENDING',
+		joinedAt
+		= NOW()
 	</insert>
 
 	<select id="findMyCrewByMemberId" resultType="WalkCrew">
@@ -117,8 +121,26 @@
 		UPDATE walk_crew_member
 		SET
 		status = 'APPROVED'
-		WHERE crewId = #{crewId} AND memberId = #{memberId}
+		WHERE crewId = #{crewId}
+		AND memberId = #{memberId}
 	</update>
 
+	<!-- 중복 체크 -->
+	<select id="exists" resultType="boolean">
+		SELECT EXISTS (
+		SELECT 1
+		FROM
+		walk_crew_member
+		WHERE crewid = #{crewId} AND memberid = #{memberId}
+		)
+	</select>
+
+	<!-- 신청자의 상태(status)를 조회 -->
+	<select id="findStatusByMemberIdAndCrewId" resultType="string">
+		SELECT status
+		FROM walk_crew_member
+		WHERE crewId = #{crewId} AND memberId = #{memberId}
+		LIMIT 1
+	</select>
 
 </mapper>

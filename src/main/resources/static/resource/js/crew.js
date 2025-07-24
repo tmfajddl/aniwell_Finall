@@ -397,7 +397,7 @@ function modal_btn() {
 	modal.innerHTML = contentHtml;
 	modal.classList.remove("translate-x-full");
 	modal.classList.add("translate-x-0");
-	
+
 	requestAnimationFrame(() => {
 		renderMemberList();
 	});
@@ -666,24 +666,31 @@ function kickMember() {
 
 
 
-////참가신청로직
+
+//// 참가신청로직 (수정된 버전)
 function crewJoin(crewId) {
 	$.ajax({
 		type: "POST",
 		url: `/usr/walkCrewMember/doJoin`,
 		data: { crewId },
 		success: function(data) {
-
-			console.log(data.msg);
-			// ✅ 참가 수락 후 멤버 목록도 다시 렌더링
-			renderMemberList();
-			renderCrewMemberSection();
+			if (data.resultCode && data.resultCode.startsWith("S-")) {
+				alert("크루 신청이 완료되었습니다.");
+				// ✅ 신청 성공 후 멤버 영역 리렌더링
+				renderMemberList();
+				renderCrewMemberSection();
+			} else {
+				// ✅ 중복 신청 등 실패 시 사용자 알림
+				alert(data.msg);  // 예: "이미 신청한 크루입니다."
+			}
 		},
 		error: function(err) {
 			console.error("참가등록실패", err);
+			alert("서버 오류로 참가 신청에 실패했습니다.");
 		}
 	});
 }
+
 
 
 
