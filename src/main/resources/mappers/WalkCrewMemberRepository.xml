@@ -64,7 +64,7 @@
 	<!-- ✅ 강퇴 & 탈퇴 처리 -->
 	<delete id="deleteMemberFromCrew" parameterType="map">
 		DELETE FROM
-		walk_crew_member
+		walk_crew_member	
 		WHERE crewId = #{crewId} AND memberId = #{memberId}
 	</delete>
 
@@ -73,12 +73,12 @@
 		resultType="com.example.RSW.vo.WalkCrewMember">
 		SELECT
 		wcm.*,
-		m.nickname,
-		(member 테이블에서 조인)
-		m.profileImg
+		m.id AS crew_member_id,
+		m.nickname AS crew_member_name,
+		m.photo AS crew_member_photo
 		FROM walk_crew_member wcm
-		LEFT JOIN member m ON wcm.member_id = m.id
-		WHERE wcm.crew_id = #{crewId}
+		LEFT JOIN member m ON wcm.memberId = m.id
+		WHERE wcm.crewId = #{crewId}
 	</select>
 
 
