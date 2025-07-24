@@ -9,6 +9,7 @@ import com.example.RSW.vo.Rq;
 import jakarta.servlet.http.HttpServletRequest;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -18,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-@RestController
+@Controller
 @RequestMapping("/api/chat")
 public class CrewChatApiController {
 	@Autowired
@@ -44,8 +45,10 @@ public class CrewChatApiController {
 		model.addAttribute("crewId", crewId);
 		model.addAttribute("loginedMember", memberService.getMemberById(memberId));
 
-		Pet pet = petService.getPetByMemberId(memberId); // 사용자 반려동물 사진
-		model.addAttribute("pet", pet);
+		/*
+		 * Pet pet = petService.getPetByMemberId(memberId); // 사용자 반려동물 사진
+		 * model.addAttribute("pet", pet);
+		 */
 
 		return "usr/walkCrew/crewChat";
 	}

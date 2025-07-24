@@ -46,7 +46,7 @@
 				<!-- 가입된 크루가 아닐경우 크루신청이미지가 보이도 -->
 				<!-- ✅ 채팅방 입장 (멤버 또는 리더) -->
 				<div th:if="${isJoined or isLeader}">
-					<a th:href="@{/usr/chat/room(crewId=${crew.id})}">
+					<a th:href="@{/api/chat/room(crewId=${crew.id})}">
 						<i class="fa-solid fa-comment-dots"></i>
 						채팅방 입장
 					</a>
