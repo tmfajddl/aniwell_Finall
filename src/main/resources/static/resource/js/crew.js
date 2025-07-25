@@ -378,10 +378,10 @@ function modal_btn() {
 	     내가 쓴 글
 	    </button>
 
-	    <!-- 멤버 관리 (방장만 노출) -->
-	    <button onclick="handleCrewMember()" class="w-full text-left text-sm font-medium text-gray-800 hover:text-yellow-500 transition">
-	      멤버 관리
-	    </button>
+
+
+
+
 	  </div>
 
 	  <!-- 멤버 목록 -->
@@ -461,7 +461,7 @@ function renderRequestList() {
 		success: function(response) {
 			console.log(response);
 			// 응답 결과는 response.data 형태로 가정
-			applicants = response.data1;
+			applicants = response.data1.applicants;
 
 			const list = document.getElementById("requestList");
 			list.innerHTML = applicants.map(r =>
@@ -475,6 +475,7 @@ function renderRequestList() {
 	});
 }
 
+// 참가동의 해주는 로직
 function acceptRequest() {
 	const slelctMemberId = document.getElementById("requestDetail").dataset.userId;
 
@@ -502,6 +503,9 @@ function acceptRequest() {
 			detail.innerHTML = `<p>좌측에서 신청자를 선택하세요.</p>`;
 			delete detail.dataset.userId;
 			buttons.style.display = "none";
+
+			renderCrewMemberSection();
+
 		},
 		error: function(xhr, status, error) {
 			console.error("🚨 요청 실패:", status, error);
@@ -610,7 +614,7 @@ function crewMember() {
 }
 let members = [];
 
-// 리스트 렌더링
+// 리스트 렌더링 크루에 저장된 크루멤버 리스트를 뿌리는 메서드 
 function renderMemberList() {
 	$.ajax({
 		type: "get",
@@ -666,36 +670,21 @@ function kickMember() {
 
 
 
-
-//// 참가신청로직 (수정된 버전)
+////참가신청로직
 function crewJoin(crewId) {
 	$.ajax({
 		type: "POST",
 		url: `/usr/walkCrewMember/doJoin`,
 		data: { crewId },
 		success: function(data) {
-			if (data.resultCode && data.resultCode.startsWith("S-")) {
-				alert("크루 신청이 완료되었습니다.");
-				// ✅ 신청 성공 후 멤버 영역 리렌더링
-				renderMemberList();
-				renderCrewMemberSection();
-			} else {
-				// ✅ 중복 신청 등 실패 시 사용자 알림
-				alert(data.msg);  // 예: "이미 신청한 크루입니다."
-			}
+
+			console.log(data.msg);
+			// ✅ 참가 수락 후 멤버 목록도 다시 렌더링
+			renderMemberList();
+
 		},
 		error: function(err) {
 			console.error("참가등록실패", err);
-			alert("서버 오류로 참가 신청에 실패했습니다.");
 		}
 	});
 }
-
-
-
-
-
-
-
-
-

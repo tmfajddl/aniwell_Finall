@@ -1,123 +1,116 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login</title>
-    <link rel="stylesheet" th:href="@{/resource/css/login_join.css}">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <style>
-        .form-panel-slide {
-            display: flex;
-            transition: transform 0.3s ease;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login</title>
+<link rel="stylesheet" th:href="@{/resource/css/login_join.css}">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<style>
+.form-panel-slide {
+	display: flex;
+	transition: transform 0.3s ease;
+}
 
-        .form-step {
-            width: 100%;
-            padding: 1rem;
-        }
-    </style>
+.form-step {
+	width: 100%;
+	padding: 1rem;
+}
+</style>
 </head>
 <body class="bg-white">
 
-<div class="form-wrapper flex-row overflow-hidden relative" id="form-wrapper">
+	<div class="form-wrapper flex-row overflow-hidden relative" id="form-wrapper">
 
-    <div class="form-slider w-[200%] flex transition-transform duration-300">
-        <!-- 로그인 화면 -->
-        <div class="sign-in flex w-full relative">
-            <!-- 로그인 폼 -->
-            <form class="left-panel h-full w-3/5 p-6" th:action="@{/usr/member/doLogin}" method="post">
-                <h1>LOGIN</h1>
-                <input type="text" name="loginId" placeholder="ID" required th:value="${param.loginId}"/>
-                <input type="password" name="loginPw" placeholder="PW" required/>
-                <button class="sign-in-button" type="submit">sign in</button>
+		<div class="form-slider w-[200%] flex transition-transform duration-300">
+			<!-- 로그인 화면 -->
+			<div class="sign-in flex w-full relative">
+				<!-- 로그인 폼 -->
+				<form class="left-panel h-full w-3/5 p-6" th:action="@{/usr/member/doLogin}" method="post">
+					<h1>LOGIN</h1>
+					<input type="text" name="loginId" placeholder="ID" required th:value="${param.loginId}" />
+					<input type="password" name="loginPw" placeholder="PW" required />
+					<button class="sign-in-button" type="submit">sign in</button>
 
-                <!-- 소셜 로그인 버튼 영역 -->
-                <div class="social-login-buttons flex flex-col gap-2 mt-4">
-                    <a href="javascript:loginWithGoogle()">
-                        <img th:src="@{/img.socialLogin/web_light_sq_SI@3x.png}" alt="구글 로그인" class="h-10"/>
-                    </a>
+					<!-- 소셜 로그인 버튼 영역 -->
+					<div class="social-login-buttons flex flex-col gap-2 mt-4">
+						<a href="javascript:loginWithGoogle()">
+							<img th:src="@{/img.socialLogin/web_light_sq_SI@3x.png}" alt="구글 로그인" class="h-10" />
+						</a>
 
-                    <!-- 카카오 (팝업 방식) -->
-                    <a href="javascript:openKakaoPopup()">
-                        <img th:src="@{/img.socialLogin/kakao_login_medium_narrow.png}" alt="카카오 로그인" class="h-10"/>
-                    </a>
+						<!-- 카카오 (팝업 방식) -->
+						<a href="javascript:openKakaoPopup()">
+							<img th:src="@{/img.socialLogin/kakao_login_medium_narrow.png}" alt="카카오 로그인" class="h-10" />
+						</a>
 
-                    <!-- 네이버  -->
-                    <a href="javascript:openNaverPopup()">
-                        <img th:src="@{/img.socialLogin/btnG_완성형.png}" alt="네이버 로그인" class="h-10"/>
-                    </a>
-                </div>
+						<!-- 네이버  -->
+						<a href="javascript:openNaverPopup()">
+							<img th:src="@{/img.socialLogin/btnG_완성형.png}" alt="네이버 로그인" class="h-10" />
+						</a>
+					</div>
 
 
-                <img class="logo-img mt-4" th:src="@{/img/logo.png}" alt="Aniwell Logo">
-            </form>
+					<img class="logo-img mt-4" th:src="@{/img/logo.png}" alt="Aniwell Logo">
+				</form>
 
-            <!-- 회원가입 버튼 -->
-            <div class="right-panel h-full w-2/5 flex items-center justify-center bg-yellow-100">
-                <span class="sign-up-button cursor-pointer text-lg font-semibold text-gray-700"
-                      id="show-sign-up">회원가입</span>
-            </div>
-        </div>
+				<!-- 회원가입 버튼 -->
+				<div class="right-panel h-full w-2/5 flex items-center justify-center bg-yellow-100">
+					<span class="sign-up-button cursor-pointer text-lg font-semibold text-gray-700" id="show-sign-up">회원가입</span>
+				</div>
+			</div>
 
-        <!-- 회원가입 화면 -->
-        <div class="sign-up flex w-full relative">
-            <!-- 왼쪽 로그인으로 돌아가기 -->
-            <div class="left-panel w-2/5 flex items-center justify-center bg-yellow-100">
-                <span class="sign-in-button cursor-pointer text-lg font-semibold text-gray-700"
-                      id="show-sign-in">로그인</span>
-            </div>
+			<!-- 회원가입 화면 -->
+			<div class="sign-up flex w-full relative">
+				<!-- 왼쪽 로그인으로 돌아가기 -->
+				<div class="left-panel w-2/5 flex items-center justify-center bg-yellow-100">
+					<span class="sign-in-button cursor-pointer text-lg font-semibold text-gray-700" id="show-sign-in">로그인</span>
+				</div>
 
-            <!-- 오른쪽 회원가입 -->
-            <form class="form-panel w-3/5 relative overflow-hidden"
-                  th:action="@{/usr/member/doJoin}" method="post"
-                  onsubmit="return validateForm()">
+				<!-- 오른쪽 회원가입 -->
+				<form class="form-panel w-3/5 relative overflow-hidden" th:action="@{/usr/member/doJoin}" method="post"
+					onsubmit="return validateForm()">
 
-                <div class="form-panel-slide h-full flex relative" id="slide-panel">
-                    <!-- STEP 1 -->
-                    <div class="form-step flex flex-col justify-around" id="step1">
-                        <h2>Create Account</h2>
-                        <input type="text" name="loginId" placeholder="ID" required th:value="${param.loginId}"/>
-                        <input type="password" name="loginPw" placeholder="PW" required/>
-                        <input type="text" name="name" placeholder="NAME" required th:value="${param.name}"/>
-                        <input type="text" name="nickname" placeholder="NICKNAME" required
-                               th:value="${param.nickname}"/>
-                        <button type="button" class="next-button bg-yellow-400 p-2 rounded" onclick="goToStep(2)">다음
-                        </button>
-                    </div>
+					<div class="form-panel-slide h-full flex relative" id="slide-panel">
+						<!-- STEP 1 -->
+						<div class="form-step flex flex-col justify-around" id="step1">
+							<h2>Create Account</h2>
+							<input type="text" name="loginId" placeholder="ID" required th:value="${param.loginId}" />
+							<input type="password" name="loginPw" placeholder="PW" required />
+							<input type="text" name="name" placeholder="NAME" required th:value="${param.name}" />
+							<input type="text" name="nickname" placeholder="NICKNAME" required th:value="${param.nickname}" />
+							<button type="button" class="next-button bg-yellow-400 p-2 rounded" onclick="goToStep(2)">다음</button>
+						</div>
 
-                    <!-- STEP 2 -->
-                    <div class="form-step flex flex-col justify-around" id="step2">
-                        <h2>Contact Info</h2>
-                        <input type="text" name="cellphone" placeholder="PHONE NUMBER" required
-                               th:value="${param.cellphone}">
-                        <input type="email" name="email" placeholder="EMAIL" required th:value="${param.email}"/>
-                        <input type="text" name="address" id="address" placeholder="ADDRESS" required
-                               th:value="${param.address}"/>
+						<!-- STEP 2 -->
+						<div class="form-step flex flex-col justify-around" id="step2">
+							<h2>Contact Info</h2>
+							<input type="text" name="cellphone" placeholder="PHONE NUMBER" required th:value="${param.cellphone}">
+							<input type="email" name="email" placeholder="EMAIL" required th:value="${param.email}" />
+							<input type="text" name="address" id="address" placeholder="ADDRESS" required th:value="${param.address}" />
 
-                        <select name="authName" onchange="updateAuthLevel()" required>
-                            <option value="일반" th:selected="${param.authName == '일반'}">일반</option>
-                            <option value="수의사" th:selected="${param.authName == '수의사'}">수의사</option>
-                        </select>
+							<select name="authName" onchange="updateAuthLevel()" required>
+								<option value="일반" th:selected="${param.authName == '일반'}">일반</option>
+								<option value="수의사" th:selected="${param.authName == '수의사'}">수의사</option>
+							</select>
 
-                        <input type="hidden" id="authLevel" name="authLevel" th:value="${param.authLevel ?: 1}"/>
-                        <button type="button" class="prev-button" onclick="goToStep(1)">뒤로가기</button>
-                        <button type="submit" class="submit-button bg-green-400 p-2 rounded text-white">sign up</button>
-                    </div>
-                </div>
+							<input type="hidden" id="authLevel" name="authLevel" th:value="${param.authLevel ?: 1}" />
+							<button type="button" class="prev-button" onclick="goToStep(1)">뒤로가기</button>
+							<button type="submit" class="submit-button bg-green-400 p-2 rounded text-white">sign up</button>
+						</div>
+					</div>
 
-                <!-- 🐾 발바닥 타임라인 -->
-                <div class="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-4 z-10">
-                    <img id="paw1" src="/img/paw_active.png" class="w-10 h-10 transition-transform duration-300"/>
-                    <img id="paw2" src="/img/paw_inactive.png" class="w-10 h-10 transition-transform duration-300"/>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
+					<!-- 🐾 발바닥 타임라인 -->
+					<div class="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-4 z-10">
+						<img id="paw1" src="/img/paw_active.png" class="w-10 h-10 transition-transform duration-300" />
+						<img id="paw2" src="/img/paw_inactive.png" class="w-10 h-10 transition-transform duration-300" />
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
 
-<script>
+	<script>
     // 로그인 ↔ 회원가입 전환
     $(document).ready(function () {
         $('#show-sign-up').on('click', function () {
@@ -225,9 +218,9 @@
 </script>
 
 
-<!--카카오-->
-<script src="https://developers.kakao.com/sdk/js/kakao.js"></script>
-<script>
+	<!--카카오-->
+	<script src="https://developers.kakao.com/sdk/js/kakao.js"></script>
+	<script>
     function openKakaoPopup() {
         const popup = window.open(
             "https://kauth.kakao.com/oauth/authorize?" +
@@ -248,8 +241,8 @@
     }
 </script>
 
-<!--구글-->
-<script>
+	<!--구글-->
+	<script>
     // ✅ 전역 등록
     window.loginWithGoogle = async function () {
         const provider = new firebase.auth.GoogleAuthProvider();
@@ -285,8 +278,8 @@
     }
 </script>
 
-<!--네이버-->
-<script>
+	<!--네이버-->
+	<script>
     function openNaverPopup() {
         const popup = window.open(
             "https://nid.naver.com/oauth2.0/authorize?" +
@@ -306,18 +299,22 @@
     }
 </script>
 
-<!-- ✅ Firebase 라이브러리 로드 -->
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+	<!-- ✅ Firebase 라이브러리 로드 -->
+	<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
-<!-- ✅ Firebase 초기화 -->
-<script>
+	<!-- ✅ Firebase 초기화 -->
+	<script>
     <!--  Firebase 키 놓는 위치  -->
-
+    const firebaseConfig = {
+            apiKey: "AIzaSyCickEEoEGDTVyy-7defZSkOSSmWj2shkw",
+            authDomain: "aniwell-2a90b.firebaseapp.com",
+            projectId: "aniwell-2a90b",
+        };
     firebase.initializeApp(firebaseConfig);
 </script>
-<script>
+	<script>
     let isGooglePopupInProgress = false;
 
     window.loginWithGoogle = async function () {
@@ -363,7 +360,7 @@
     }
 </script>
 
-<script>
+	<script>
     async function handleFirebaseLogin() {
         try {
             console.log("📌 [handleFirebaseLogin] Firebase 토큰 요청 시작");
