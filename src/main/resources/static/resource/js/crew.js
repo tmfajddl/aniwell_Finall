@@ -393,7 +393,7 @@ function modal_btn() {
 	modal.innerHTML = contentHtml;
 	modal.classList.remove("translate-x-full");
 	modal.classList.add("translate-x-0");
-	
+
 	requestAnimationFrame(() => {
 		renderMemberList();
 	});
@@ -499,9 +499,9 @@ function acceptRequest() {
 			detail.innerHTML = `<p>좌측에서 신청자를 선택하세요.</p>`;
 			delete detail.dataset.userId;
 			buttons.style.display = "none";
-			
+
 			renderCrewMemberSection();
-			
+
 		},
 		error: function(xhr, status, error) {
 			console.error("🚨 요청 실패:", status, error);
@@ -677,17 +677,10 @@ function crewJoin(crewId) {
 			console.log(data.msg);
 			// ✅ 참가 수락 후 멤버 목록도 다시 렌더링
 			renderMemberList();
+
 		},
 		error: function(err) {
 			console.error("참가등록실패", err);
 		}
 	});
 }
-
-
-
-
-
-
-
-
