@@ -146,4 +146,16 @@
 		LIMIT 1
 	</select>
 
+	<!-- ✅ 크루 멤버 직접 등록 (예: 크루장 등록 시 사용) -->
+	<insert id="insert"
+		parameterType="com.example.RSW.vo.WalkCrewMember">
+		INSERT INTO walk_crew_member
+		SET
+		crewId = #{crewId},
+		memberId = #{memberId},
+		role = #{role},
+		status = 'APPROVED',
+		joinedAt = NOW()
+	</insert>
+
 </mapper>

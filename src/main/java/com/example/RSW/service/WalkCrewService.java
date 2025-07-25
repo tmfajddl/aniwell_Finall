@@ -36,7 +36,16 @@ public class WalkCrewService {
 
 	// 크루 등록
 	public void createCrew(WalkCrew walkCrew) {
+		// 1. 크루 DB 저장 (자동 ID 생성 포함)
 		walkCrewRepository.insert(walkCrew);
+
+		// 2. 크루장을 walk_crew_member 테이블에 등록
+		WalkCrewMember leader = new WalkCrewMember();
+		leader.setCrewId(walkCrew.getId()); // 크루 PK
+		leader.setMemberId(walkCrew.getLeaderId()); // 크루장 ID
+		leader.setRole("leader"); // 역할 지정
+
+		walkCrewMemberRepository.insert(leader); // DB에 등록
 	}
 
 	// ID로 크루 상세 조회
