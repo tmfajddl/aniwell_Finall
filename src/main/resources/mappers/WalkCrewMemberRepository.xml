@@ -88,6 +88,7 @@
 		FROM walk_crew_member wcm
 		LEFT JOIN member m ON wcm.memberId = m.id
 		WHERE wcm.crewId = #{crewId}
+		AND wcm.`status`='approved';
 	</select>
 
 
