@@ -378,10 +378,6 @@ function modal_btn() {
 	     내가 쓴 글
 	    </button>
 
-
-
-
-
 	  </div>
 
 	  <!-- 멤버 목록 -->
