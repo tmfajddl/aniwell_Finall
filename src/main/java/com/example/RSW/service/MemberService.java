@@ -161,6 +161,7 @@ public class MemberService {
     }
 
 
+
     public Member getOrCreateByEmail(String email, String name, String provider) {
         Member member = memberRepository.findByEmail(email);
 
@@ -169,7 +170,7 @@ public class MemberService {
             String loginPw = Ut.sha256("temp_pw_" + provider);
             String nickname = name;
 
-            // 여기서 provider와 socialId는 명확히 구분해야 함
+            // provider와 socialId 구분
             memberRepository.doJoinBySocial(
                     loginId,
                     loginPw,
@@ -186,8 +187,7 @@ public class MemberService {
         return member;
     }
 
-
-    // ✅ Firebase 커스텀 토큰 생성
+ // ✅ Firebase 커스텀 토큰 생성
     public String createFirebaseCustomToken(String uid) {
         try {
             System.out.println("📌 [DEBUG] createFirebaseCustomToken() 진입, uid = " + uid);
@@ -205,5 +205,6 @@ public class MemberService {
     public Member findByEmail(String email) {
         return memberRepository.findByEmail(email);
     }
+
 
 }
