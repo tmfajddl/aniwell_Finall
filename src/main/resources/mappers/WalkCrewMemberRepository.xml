@@ -109,7 +109,8 @@
 	<!-- 리더 위임, 강퇴, 권한 제어 등에서 권한 체크 용도로 사용됨 -->
 
 	<select id="findRoleByMemberIdAndCrewId" resultType="string">
-		SELECT role
+		SELECT
+		status
 		FROM walk_crew_member
 		WHERE memberId = #{memberId} AND crewId =
 		#{crewId}
@@ -155,7 +156,16 @@
 		memberId = #{memberId},
 		role = #{role},
 		status = 'APPROVED',
-		joinedAt = NOW()
+		joinedAt =
+		NOW()
 	</insert>
+
+	<!-- ✅ 크루 멤버 상태를 PENDING으로 되돌리는 쿼리 -->
+	<update id="setPendingStatus">
+		UPDATE walk_crew_member
+		SET status = 'PENDING'
+		WHERE id
+		= #{id} AND crewId = #{crewId} AND memberId = #{memberId}
+	</update>
 
 </mapper>

@@ -37,7 +37,8 @@ public interface WalkCrewMemberRepository {
 
 	void updateRole(int currentLeaderId, int crewId, String string);
 
-	String findRoleByMemberIdAndCrewId(int memberId, int crewId);
+	
+	String findRoleByMemberIdAndCrewId(@Param("memberId") int memberId, @Param("crewId") int crewId);
 
 	int countPendingRequest(int crewId, int memberId);
 
@@ -46,5 +47,7 @@ public interface WalkCrewMemberRepository {
 	boolean exists(int crewId, int memberId);
 
 	void insert(WalkCrewMember leader);
+
+	void setPendingStatus(int id, int crewId, int memberId);
 
 }
