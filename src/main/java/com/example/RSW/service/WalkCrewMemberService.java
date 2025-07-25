@@ -107,12 +107,17 @@ public class WalkCrewMemberService {
 
 	// ② 신청 대기 여부 확인
 	public boolean isPendingRequest(int crewId, int memberId) {
-		String role = walkCrewMemberRepository.findRoleByMemberIdAndCrewId(memberId, crewId);
-		return "pending".equals(role); // 승인되지 않은 신청자
+		String status = walkCrewMemberRepository.findRoleByMemberIdAndCrewId(memberId, crewId); // status 가져옴
+		return "pending".equalsIgnoreCase(status); // status와 비교
 	}
 
 	public void approveMember(int crewId, int memberId) {
 		walkCrewMemberRepository.approveMember(crewId, memberId);
+	}
+
+	// ✅ 크루 멤버 상태를 PENDING으로 되돌리는 서비스 메서드
+	public void revertToPendingStatus(int id, int crewId, int memberId) {
+		walkCrewMemberRepository.setPendingStatus(id, crewId, memberId);
 	}
 
 }
