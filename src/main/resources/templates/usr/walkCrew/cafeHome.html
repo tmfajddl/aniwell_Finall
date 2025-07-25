@@ -94,23 +94,23 @@
 			</aside>
 
 			<!-- 오른쪽: 콘텐츠 섹션 -->
-			<div class="flex-1 w-3/4 space-y-3 h-[100%] grid gird-rows-12 p-2 overflow-x-auto">
+			<div class="flex-1 w-3/4 space-y-3 h-[100%] grid grid-rows-12 p-2 overflow-x-auto">
 				<!-- 앨범 -->
-				<div class="py-1 row-span-4 shadow overflow-x-auto w-full">
+				<div class="py-1 row-span-4 shadow overflow-x-auto h-full w-full">
 					<div class="flex justify-between items-center mb-2 px-5">
 						<h3 class="font-bold text-lg">앨범</h3>
 					</div>
 					<div th:if="${galleryArticles.isEmpty()}" class="text-center text-gray-500 px-5 py-10">사진이 없습니다.</div>
-					<div th:each="photo : ${galleryArticles}" class="ml-5 w-32 h-32 bg-gray-300 rounded-lg cursor-pointer"
+					<div th:each="photo : ${galleryArticles}" class="ml-5 aspect-[1/1] h-full bg-gray-300 rounded-lg cursor-pointer"
 						th:attr="data-url=${photo.imageUrl}" onclick="photoModal(this)">
 						<img th:src="${photo.imageUrl}" alt="사진" class="object-cover w-full h-full rounded-lg" />
 					</div>
 				</div>
 				<!-- 게시글 -->
-				<div class="py-1 row-span-4 shadow relative w-full overflow-x-auto">
+				<div class="py-1 row-span-4 shadow relative w-full h-full overflow-x-auto">
 
 					<div class="flex justify-between px-5 items-center mb-1">
-						<h3 class="font-bold" th:text="${freeArticles.size}">게시글</h3>
+						<h3 class="font-bold">게시글</h3>
 						<button onclick="crewArtAdd()" class="p-1 shadow text-gray-600 hover:text-black">추가 ＋</button>
 					</div>
 					<div class="gap-3 px-4 h-[78%] flex overflow-x-auto">
@@ -131,14 +131,14 @@
 				</div>
 				<!-- 멤버 -->
 				<div class="py-1 flex flex-col row-span-2 shadow w-full overflow-x-auto">
-					<h3 class="font-bold text-lg mb-2 px-5">멤버 8</h3>
+					<h3 class="font-bold text-lg mb-2 px-5">멤버</h3>
 					<div id="crewMemberList" class="flex gap-4 overflow-x-auto px-5 flex-1"></div>
 				</div>
 
 				<!-- 일정 -->
 				<div class="py-1 row-span-2 shadow w-full overflow-x-auto">
 					<div class="flex justify-between items-center mb-1 px-5">
-						<h3 th:text="${scheduleArticles.size}" class="font-bold text-lg">일정 15</h3>
+						<h3 class="font-bold text-lg">일정</h3>
 						<button onclick="scAdd()" class="p-1 shadow text-gray-600 hover:text-black">추가 ＋</button>
 					</div>
 					<div class="flex gap-5 overflow-x-auto px-4 pb-1">
