@@ -5,10 +5,7 @@ import com.cloudinary.utils.ObjectUtils;
 import com.example.RSW.service.NotificationService;
 import com.example.RSW.service.VetCertificateService;
 import com.example.RSW.vo.VetCertificate;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseAuthException;
-import com.google.firebase.auth.FirebaseToken;
-import com.google.firebase.auth.UserRecord;
+import com.google.firebase.auth.*;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -169,12 +166,16 @@ public class UsrMemberController {
 
         // Firebase용 UID 기준 토큰 생성 (선택사항: uid = 이메일도 가능)
         String uid = member.getLoginId() + "@aniwell.com";
-        String firebaseToken = memberService.createFirebaseCustomToken(uid); // 너가 만든 메서드
+        String firebaseToken = memberService.createFirebaseCustomToken(uid);
         req.getSession().setAttribute("firebaseToken", firebaseToken);
 
-        System.out.println("✅ [로그] 로그인 성공 → memberId: " + member.getId());
+
         // 성공 응답 (JSON)
-        return ResultData.from("S-1", Ut.f("%s님 환영합니다", member.getNickname()));
+        Map<String, Object> data = new HashMap<>();
+        data.put("token", firebaseToken);
+
+        return ResultData.from("S-1", Ut.f("%s님 환영합니다", member.getNickname()), "data1", data);
+
     }
 
 
@@ -608,7 +609,6 @@ public class UsrMemberController {
 
         // ✅ 이메일 강제 생성
         String email = provider + "_" + socialId + "@noemail.kakao";
-        System.out.println("📌 강제 생성된 email: " + email);
 
 
         // 기존 사용자 조회 또는 새로 생성
@@ -914,7 +914,7 @@ public class UsrMemberController {
         if (loginedMember == null) return ResultData.from("F-2", "회원 정보를 찾을 수 없습니다.");
 
         try {
-            String uid = UUID.randomUUID().toString();
+            String uid;
             String email = loginedMember.getEmail();
             String name = loginedMember.getNickname();
             String provider = loginedMember.getSocialProvider();
@@ -923,32 +923,30 @@ public class UsrMemberController {
             System.out.println("   - 이메일: " + email);
 
             try {
-                UserRecord.CreateRequest request = new UserRecord.CreateRequest()
-                        .setUid(uid)
-                        .setEmail(email)
-                        .setDisplayName(name)
-                        .setEmailVerified(true);
-
-                FirebaseAuth.getInstance().createUser(request);
-                System.out.println("✅ [로그] Firebase 새 사용자 등록 완료");
-
+                // ✅ 이미 존재하는 사용자인지 먼저 확인
+                UserRecord existingUser = FirebaseAuth.getInstance().getUserByEmail(email);
+                uid = existingUser.getUid();
+                System.out.println("✅ [로그] 기존 Firebase 사용자 UID 조회 성공: " + uid);
             } catch (FirebaseAuthException e) {
-                if (e.getErrorCode().equals("EMAIL_ALREADY_EXISTS") || e.getMessage().contains("EMAIL_EXISTS")) {
-                    System.out.println("⚠️ [로그] 이미 등록된 사용자 → uid 조회");
-                    try {
-                        UserRecord existingUser = FirebaseAuth.getInstance().getUserByEmail(email);
-                        uid = existingUser.getUid();
-                        System.out.println("   - 기존 UID: " + uid);
-                    } catch (FirebaseAuthException ex) {
-                        System.out.println("❌ [로그] UID 조회 실패: " + ex.getMessage());
-                        return ResultData.from("F-5", "기존 UID 조회 실패: " + ex.getMessage());
-                    }
+                // ❗ 존재하지 않는 경우 → 새로 생성
+                if (e.getAuthErrorCode() == AuthErrorCode.USER_NOT_FOUND) {
+                    uid = UUID.randomUUID().toString();
+
+                    UserRecord.CreateRequest request = new UserRecord.CreateRequest()
+                            .setUid(uid)
+                            .setEmail(email)
+                            .setDisplayName(name)
+                            .setEmailVerified(true);
+
+                    FirebaseAuth.getInstance().createUser(request);
+                    System.out.println("✅ [로그] Firebase 새 사용자 등록 완료: " + uid);
                 } else {
-                    System.out.println("❌ [로그] Firebase 사용자 등록 실패: " + e.getMessage());
-                    return ResultData.from("F-4", "Firebase 사용자 등록 실패: " + e.getMessage());
+                    System.out.println("❌ [로그] Firebase 사용자 조회 실패: " + e.getMessage());
+                    return ResultData.from("F-4", "Firebase 사용자 조회 실패: " + e.getMessage());
                 }
             }
 
+            // ✅ 커스텀 토큰 발급
             String customToken = FirebaseAuth.getInstance().createCustomToken(uid);
             System.out.println("✅ [로그] 커스텀 토큰 발급 완료");
 
