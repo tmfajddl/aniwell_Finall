@@ -1,128 +1,99 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-<meta charset="UTF-8">
-<title>산책 크루 채팅</title>
-<script src="/webjars/sockjs-client/1.5.1/sockjs.min.js"></script>
-<script src="/webjars/stomp-websocket/2.3.4/stomp.min.js"></script>
-<script src="https://cdn.tailwindcss.com"></script>
-<link rel="stylesheet" th:href="@{/resource/css/common.css}">
-<style>
-#chatBox {
-	width: 90%;
-	max-width: 500px;
-	height: 500px;
-	margin: auto;
-	padding: 20px;
-	background: #ffffffcc;
-	border-radius: 30px;
-	overflow-y: auto;
-	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
+  <meta charset="UTF-8">
+  <title>산책 크루 채팅</title>
+  <script src="/webjars/sockjs-client/1.5.1/sockjs.min.js"></script>
+  <script src="/webjars/stomp-websocket/2.3.4/stomp.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" th:href="@{/resource/css/common.css}">
+  <style>
 
-.msg {
-	display: flex;
-	margin: 12px 0;
-	align-items: flex-end;
-}
+    #chatBox {
+      width: 90%; max-width: 500px; height: 500px;
+      margin: auto; padding: 20px;
+      background: #ffffffcc;
+      border-radius: 30px;
+      overflow-y: auto;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
 
-.msg.me {
-	justify-content: flex-end;
-}
+    .msg { display: flex; margin: 12px 0; align-items: flex-end; }
+    .msg.me { justify-content: flex-end; }
 
-.profile {
-	width: 36px;
-	height: 36px;
-	border-radius: 50%;
-	margin-right: 8px;
-	object-fit: cover;
-	border: 2px solid #eee4c1;
-}
+    .profile {
+      width: 36px; height: 36px; border-radius: 50%;
+      margin-right: 8px; object-fit: cover;
+      border: 2px solid #eee4c1;
+    }
 
-.profile-placeholder {
-	width: 36px;
-	height: 36px;
-	margin-right: 8px;
-}
+    .profile-placeholder { width: 36px; height: 36px; margin-right: 8px; }
 
-.bubble-wrap {
-	max-width: 70%;
-}
+    .bubble-wrap { max-width: 70%; }
+    .bubble {
+      padding: 10px; background-color: #fff9d4;
+      border-radius: 18px; box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      white-space: pre-wrap;
+    }
 
-.bubble {
-	padding: 10px;
-	background-color: #fff9d4;
-	border-radius: 18px;
-	box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-	white-space: pre-wrap;
-}
+    .msg.me .bubble { background-color: #d0f4e1; }
 
-.msg.me .bubble {
-	background-color: #d0f4e1;
-}
+    .nickname {
+      font-size: 13px; font-weight: bold;
+      margin-bottom: 4px; color: #585858;
+    }
 
-.nickname {
-	font-size: 13px;
-	font-weight: bold;
-	margin-bottom: 4px;
-	color: #585858;
-}
+    .time {
+      font-size: 11px; color: #aaa;
+      text-align: right; margin-top: 4px;
+    }
 
-.time {
-	font-size: 11px;
-	color: #aaa;
-	text-align: right;
-	margin-top: 4px;
-}
+    .date-divider {
+      text-align: center; color: #888;
+      margin: 20px 0 10px; font-size: 13px;
+    }
 
-.date-divider {
-	text-align: center;
-	color: #888;
-	margin: 20px 0 10px;
-	font-size: 13px;
-}
+    #chatInput {
+      width: 80%; max-width: 400px;
+      padding: 10px; border-radius: 20px;
+      border: none; outline: none;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
 
-#chatInput {
-	width: 80%;
-	max-width: 400px;
-	padding: 10px;
-	border-radius: 20px;
-	border: none;
-	outline: none;
-	box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-}
-
-#sendBtn {
-	padding: 10px 16px;
-	background-color: #A7CFB3;
-	color: white;
-	border: none;
-	border-radius: 20px;
-	cursor: pointer;
-	margin-left: 8px;
-}
-</style>
+    #sendBtn {
+      padding: 10px 16px;
+      background-color: #A7CFB3;
+      color: white; border: none;
+      border-radius: 20px;
+      cursor: pointer; margin-left: 8px;
+    }
+  </style>
 </head>
 <body class="bg-gradient-to-b from-[#e4f0b9] to-[#fcdca9] font-sans">
-	<div class="flex h-screen">
-		<!-- Sidebar -->
-		<div th:replace="common :: siteHeader"></div>
+<div class="flex h-screen">
+  <!-- Sidebar -->
+  <div th:replace="common :: siteHeader"></div>
 
-		<!-- Main content -->
-		<main class="main_page min-h-screen flex-1 p-6 space-y-6">
+  <!-- Main content -->
+  <main class="main_page min-h-screen flex-1 p-6 space-y-6">
 
-			<h2 style="text-align: center; margin-bottom: 20px;">🗨️ 산책 크루 채팅</h2>
-			<div id="chatBox"></div>
+<h2 style="text-align:center; margin-bottom:20px;">🗨️ 산책 크루 채팅</h2>
+<div id="chatBox"></div>
 
-			<div style="text-align: center; margin-top: 20px;">
-				<input type="text" id="chatInput" placeholder="메시지를 입력하세요">
-				<button id="sendBtn">전송</button>
-			</div>
+<div style="text-align:center; margin-top:20px;">
+  <input type="text" id="chatInput" placeholder="메시지를 입력하세요">
+  <button id="sendBtn">전송</button>
+</div>
 
-			<script th:inline="javascript">
+	  <input type="hidden" id="senderNickname" th:value="${loginedMember.nickname != null ? loginedMember.nickname : '익명'}" />
+
+
+	  <script th:inline="javascript">
   const crewId = [[${crewId} ?: -1]];
   const senderId = [[${loginedMember.id} ?: -1]];
-  const senderNickname = [[${'"' + #strings.escapeJavaScript(loginedMember.nickname ?: '익명') + '"'}]];
+  const senderNickname = document.getElementById("senderNickname").value;
+  console.log("✅ senderNickname =", senderNickname);  // 여기서 한글이 깨졌는지 확인
+
   const senderPhoto = [[${'"' + (pet != null and pet.photo != null ? pet.photo : '/img/default-pet.png') + '"'}]];
 
   console.log("✅ crewId =", crewId);
@@ -175,25 +146,29 @@
 
   // 메세지 불러오기
   function renderMessage(msg) {
-    const timeKey = msg.sentAt.slice(0, 16); // 분 단위
+    const timeKey = msg.sentAt.slice(0, 16); // "2025-07-25T17:04"
     const groupKey = msg.senderId + "_" + timeKey;
 
-    if (groupKey !== lastGroupKey && groupBuffer.length > 0) {
-      renderGroup(groupBuffer);
-      groupBuffer = [];
-    }
-
-    groupBuffer.push(msg);
-    lastGroupKey = groupKey;
-
-    clearTimeout(flushTimeout);
-    flushTimeout = setTimeout(() => {
+    if (groupKey === lastGroupKey) {
+      // 👉 같은 그룹: 버퍼에 추가만
+      groupBuffer.push(msg);
+      clearTimeout(flushTimeout);
+      flushTimeout = setTimeout(() => {
+        if (groupBuffer.length > 0) {
+          renderGroup(groupBuffer);
+          groupBuffer = [];
+        }
+      }, 500);
+    } else {
+      // 👉 다른 그룹: 기존 그룹 먼저 렌더링 후 새 그룹 시작
       if (groupBuffer.length > 0) {
         renderGroup(groupBuffer);
-        groupBuffer = [];
       }
-    }, 300);
+      groupBuffer = [msg];
+      lastGroupKey = groupKey;
+    }
   }
+
 
 
 
@@ -212,40 +187,46 @@
     }
 
     const currentTimeKey = formatTime(messages[0].sentAt);
+    const allMsgs = document.querySelectorAll(".msg");
+    let timeMatchedMsgs = [];
 
-    const allTimeElements = document.querySelectorAll(".msg .time");
-    allTimeElements.forEach(function (el) {
-      if (el.textContent === currentTimeKey) {
-        el.remove();
+    allMsgs.forEach(el => {
+      const time = el.querySelector(".time");
+      if (time && time.textContent === currentTimeKey) {
+        timeMatchedMsgs.push(el);
       }
     });
 
+    // ✅ 첫 메시지 제외 모두 닉네임/프로필 제거
+    timeMatchedMsgs.slice(1).forEach(el => {
+      const nick = el.querySelector(".nickname");
+      const profile = el.querySelector(".profile");
+      if (nick) nick.remove();
+      if (profile) profile.remove();
+    });
 
-    const firstMsg = messages[0];
-    const isMe = firstMsg.senderId === senderId;
+    // ✅ 메시지 그리기
     const chatBox = document.getElementById("chatBox");
 
-    messages.forEach(function (msg, index) {
-      const isFirst = index === 0;
-      const isLast = index === messages.length - 1;
-
+    messages.forEach((msg, i) => {
+      const isMe = msg.senderId === senderId;
       const msgDiv = document.createElement("div");
       msgDiv.className = "msg" + (isMe ? " me" : "");
 
       if (!isMe) {
-        const profileHtml = isFirst
-                ? "<img class='profile' src='" + (msg.photo || "/img/default-pet.png") + "' />"
-                : "<div class='profile-placeholder'></div>";
-        msgDiv.innerHTML += profileHtml;
+        msgDiv.innerHTML +=
+                i === 0
+                        ? `<img class='profile' src='${msg.photo || "/img/default-pet.png"}'>`
+                        : `<div class='profile-placeholder'></div>`;
       }
 
       const wrap = document.createElement("div");
       wrap.className = "bubble-wrap";
 
-      if (!isMe && isFirst) {
+      if (!isMe && i === 0) {
         const nick = document.createElement("div");
         nick.className = "nickname";
-        nick.textContent = msg.nickname || "알 수 없음";
+        nick.textContent = msg.nickname;
         wrap.appendChild(nick);
       }
 
@@ -254,7 +235,7 @@
       bubble.textContent = msg.content;
       wrap.appendChild(bubble);
 
-      if (isLast) {
+      if (i === messages.length - 1) {
         const time = document.createElement("div");
         time.className = "time";
         time.textContent = formatTime(msg.sentAt);
@@ -267,6 +248,11 @@
 
     requestAnimationFrame(scrollToBottom);
   }
+
+
+
+
+
 
 
 
@@ -322,7 +308,7 @@
     loadPreviousMessages();
   });
 </script>
-		</main>
-	</div>
+  </main>
+</div>
 </body>
 </html>
