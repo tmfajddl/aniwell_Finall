@@ -249,15 +249,13 @@
 
 <!--구글-->
 <script>
-    // ✅ 전역 등록
+
     window.loginWithGoogle = async function () {
         const provider = new firebase.auth.GoogleAuthProvider();
 
         try {
             const result = await firebase.auth().signInWithPopup(provider);
             const user = result.user;
-
-            console.log("✅ Firebase 로그인 성공:", user);
 
             const uid = user.uid;
             const email = user.email;
@@ -365,35 +363,31 @@
 <script>
     async function handleFirebaseLogin() {
         try {
-            console.log("📌 [handleFirebaseLogin] Firebase 토큰 요청 시작");
+            console.time("🔄 전체 로그인 시간");
 
+            console.time("🟠 1. Firebase 토큰 요청");
             const response = await fetch('/usr/member/firebase-token', { method: 'POST' });
             const result = await response.json();
-
-            console.log("📦 [handleFirebaseLogin] /firebase-token 응답:", result);
+            console.timeEnd("🟠 1. Firebase 토큰 요청");
 
             if (result.resultCode !== 'S-1') {
-                console.warn("❌ [handleFirebaseLogin] Firebase 토큰 발급 실패:", result.msg);
+                alert(result.msg || "토큰 발급 실패");
                 return;
             }
 
             if (!result.data1 || !result.data1.token) {
-                console.warn("❌ [handleFirebaseLogin] 응답 데이터 오류: token 누락됨");
+                alert("Firebase 토큰이 응답에 없습니다.");
                 return;
             }
 
             const customToken = result.data1.token;
             const provider = result.data1.provider || "email";
 
-            console.log("✅ [handleFirebaseLogin] Firebase CustomToken 수신 완료:", customToken);
-
+            console.time("🟢 2. Firebase 로그인");
             const userCredential = await firebase.auth().signInWithCustomToken(customToken);
             const user = userCredential.user;
             const uid = user.uid;
-
-            console.log("✅ [handleFirebaseLogin] Firebase 로그인 성공 - uid:", uid);
-            console.log("   🔹 email:", user.email);
-            console.log("   🔹 displayName:", user.displayName);
+            console.timeEnd("🟢 2. Firebase 로그인");
 
             const userData = {
                 uid,
@@ -403,13 +397,16 @@
                 provider
             };
 
+            console.time("🟡 3. Firestore 저장");
             const db = firebase.firestore();
             await db.collection("users").doc(uid).set(userData, { merge: true });
-            console.log("✅ [handleFirebaseLogin] Firestore 저장 완료:", userData);
+            console.timeEnd("🟡 3. Firestore 저장");
 
+            console.time("🔵 4. Firebase ID 토큰 발급");
             const idToken = await user.getIdToken();
-            console.log("📌 [handleFirebaseLogin] Firebase ID Token:", idToken);
+            console.timeEnd("🔵 4. Firebase ID 토큰 발급");
 
+            console.time("🟣 5. 서버 세션 설정");
             const sessionResponse = await fetch("/usr/member/firebase-session-login", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -418,19 +415,20 @@
             });
 
             const sessionResult = await sessionResponse.json();
-            console.log("📦 [handleFirebaseLogin] /firebase-session-login 응답:", sessionResult);
+            console.timeEnd("🟣 5. 서버 세션 설정");
 
             if (sessionResult.resultCode === "S-1") {
-                console.log("✅ [handleFirebaseLogin] 서버 세션 설정 성공 → 메인으로 이동");
+                console.timeEnd("🔄 전체 로그인 시간");
                 window.location.replace("/");
             } else {
-                console.warn("❌ [handleFirebaseLogin] 서버 세션 설정 실패 → 메인으로 이동하지 않음");
+                alert("서버 세션 설정 실패");
             }
 
         } catch (error) {
-            console.error("❌ [handleFirebaseLogin] Firebase 로그인 처리 중 오류 발생", error);
+            alert("Firebase 로그인 중 오류가 발생했습니다.");
         }
     }
+
 
     document.addEventListener("DOMContentLoaded", function () {
         const loginForm = document.querySelector('form[action="/usr/member/doLogin"]');
@@ -438,7 +436,6 @@
         if (loginForm) {
             loginForm.addEventListener("submit", async function (e) {
                 e.preventDefault();
-                console.log("📌 [submit] 로그인 폼 제출됨");
 
                 const formData = new FormData(loginForm);
                 try {
@@ -448,14 +445,12 @@
                     });
 
                     const result = await response.json();
-                    console.log("📦 [submit] /doLogin 응답:", result);
 
                     if (result.resultCode !== "S-1") {
                         alert(result.msg || "로그인 실패");
                         return;
                     }
 
-                    console.log("✅ [submit] 로그인 성공 → Firebase 연동 시작");
                     await handleFirebaseLogin();
 
                 } catch (err) {
@@ -467,17 +462,15 @@
 
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.get("social") === "1") {
-            console.log("✅ [DOMContentLoaded] 소셜 로그인 감지됨 → Firebase 처리 시작");
+
             handleFirebaseLogin();
         }
     });
 
     window.addEventListener("message", function (event) {
         if (event.data === "socialLoginSuccess") {
-            console.log("✅ [message] 소셜 로그인 성공 메시지 수신 → Firebase 처리 시작");
-            setTimeout(() => {
-                handleFirebaseLogin();
-            }, 1000);
+
+            handleFirebaseLogin();
         }
     });
 </script>
