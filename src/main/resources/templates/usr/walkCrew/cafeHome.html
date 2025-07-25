@@ -62,7 +62,8 @@
 
 				<!-- ✅ 아직 신청하지 않은 경우 (리더는 제외) -->
 				<div th:if="${!isLeader and !isJoined and !isPending}">
-					<button th:onclick="|crewJoin(${crew.id})|">
+					<!-- ⛳ crewJoin 함수에 this 전달 -->
+					<button th:onclick="|crewJoin(this, ${crew.id})|">
 						<i class="fa-solid fa-dog"></i>
 						크루 신청
 					</button>
@@ -318,8 +319,33 @@
     }
   }
 </script>
+	<script>
+	function crewJoin(btnElement, crewId) {
+		$.ajax({
+			type: "POST",
+			url: `/usr/walkCrewMember/doJoin`,
+			data: { crewId },
+			success: function (data) {
+				console.log(data.msg);
 
+				// ✅ 버튼 영역 즉시 업데이트 (새로고침 없이 상태 반영)
+				const parent = btnElement.parentElement;
+				parent.innerHTML = `
+					<button disabled>
+						<i class="fa-solid fa-clock-rotate-left"></i>
+						신청 대기중
+					</button>
+				`;
 
+				// ✅ 멤버 목록 다시 불러오기 (기존 코드 유지)
+				renderCrewMemberSection();
+			},
+			error: function (err) {
+				console.error("참가등록실패", err);
+			}
+		});
+	}
+</script>
 
 </body>
 
