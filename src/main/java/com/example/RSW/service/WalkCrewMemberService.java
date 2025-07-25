@@ -28,9 +28,19 @@ public class WalkCrewMemberService {
 	@Autowired
 	WalkCrewService walkCrewService;
 
-	// ✅ 크루 참가 요청
-	public void requestToJoinCrew(int crewId, int memberId) {
+	// ✅ 크루 참가 요청 (중복 방지 추가)
+	public ResultData requestToJoinCrew(int crewId, int memberId) {
+
+		// ✅ 1. 이미 신청한 경우 중복 방지
+		boolean alreadyRequested = walkCrewMemberRepository.exists(crewId, memberId);
+		if (alreadyRequested) {
+			return ResultData.from("F-1", "이미 신청한 크루입니다.");
+		}
+
+		// ✅ 2. 신청 정보 DB에 등록
 		walkCrewMemberRepository.requestToJoinCrew(crewId, memberId);
+
+		return ResultData.from("S-1", "크루 신청이 완료되었습니다.");
 	}
 
 	// ✅ 내가 가입한 크루 1개 가져오기 (크루 카페 진입용)
@@ -97,12 +107,17 @@ public class WalkCrewMemberService {
 
 	// ② 신청 대기 여부 확인
 	public boolean isPendingRequest(int crewId, int memberId) {
-		String role = walkCrewMemberRepository.findRoleByMemberIdAndCrewId(memberId, crewId);
-		return "pending".equals(role); // 승인되지 않은 신청자
+		String status = walkCrewMemberRepository.findRoleByMemberIdAndCrewId(memberId, crewId); // status 가져옴
+		return "pending".equalsIgnoreCase(status); // status와 비교
 	}
 
 	public void approveMember(int crewId, int memberId) {
 		walkCrewMemberRepository.approveMember(crewId, memberId);
+	}
+
+	// ✅ 크루 멤버 상태를 PENDING으로 되돌리는 서비스 메서드
+	public void revertToPendingStatus(int id, int crewId, int memberId) {
+		walkCrewMemberRepository.setPendingStatus(id, crewId, memberId);
 	}
 
 }
