@@ -271,4 +271,47 @@ public class UsrWalkCrewMemberController {
 		return ResultData.from("S-1", "크루 멤버 리스트", members);
 	}
 
+	// ✅ 크루장 권한 위임 기능
+	@PostMapping("/transferLeadership")
+	@ResponseBody
+	public ResultData transferLeadership(@RequestParam int crewId, @RequestParam int newLeaderId,
+			HttpServletRequest req) {
+		Rq rq = (Rq) req.getAttribute("rq");
+
+		// 로그인 확인
+		if (rq == null || !rq.isLogined()) {
+			return ResultData.from("F-1", "로그인 후 이용해주세요.");
+		}
+
+		int currentLeaderId = rq.getLoginedMemberId();
+
+		// 본인에게 위임 불가
+		if (currentLeaderId == newLeaderId) {
+			return ResultData.from("F-2", "본인에게는 위임할 수 없습니다.");
+		}
+
+		// 현재 리더인지 확인
+		String currentRole = walkCrewMemberService.getRole(currentLeaderId, crewId);
+		if (!"leader".equals(currentRole)) {
+			return ResultData.from("F-3", "크루장만 권한을 위임할 수 있습니다.");
+		}
+
+		// 대상 멤버가 크루 멤버인지 확인
+		if (!walkCrewMemberService.isMemberOfCrew(newLeaderId, crewId)) {
+			return ResultData.from("F-4", "해당 멤버는 이 크루의 멤버가 아닙니다.");
+		}
+
+		// 위임 처리
+		boolean success = walkCrewMemberService.transferLeadership(crewId, currentLeaderId, newLeaderId);
+		if (!success) {
+			return ResultData.from("F-5", "위임 처리에 실패했습니다.");
+		}
+
+		Map<String, Object> data = new HashMap<>();
+		data.put("crewId", crewId);
+		data.put("newLeaderId", newLeaderId);
+
+		return ResultData.from("S-1", "크루장 권한이 성공적으로 위임되었습니다.", data);
+	}
+
 }

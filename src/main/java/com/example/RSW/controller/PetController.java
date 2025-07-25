@@ -403,10 +403,14 @@ public class PetController {
 
 
 	// 백신 등록 로직
+// 백신 등록
 	@RequestMapping("/usr/pet/vaccination/doRegistration")
 	@ResponseBody
-	public ResultData doRegistration(HttpServletRequest req, @RequestParam("petId") int petId, String vaccineName,
-									 String injectionDate, String notes) {
+	public ResultData doRegistration(HttpServletRequest req,
+									 @RequestParam("petId") int petId,
+									 String vaccineName,
+									 String injectionDate,
+									 String notes) {
 
 		int memberId = rq.getLoginedMemberId();
 		Pet pet = petService.getPetsById(petId);
@@ -421,19 +425,27 @@ public class PetController {
 			return ResultData.from("F-3", "접종 날짜를 입력하세요");
 		}
 
-		// 비고 있는 경우와 없는 경우 로직 분리
+		ResultData rd;
+
 		if (notes == null) {
-			return petVaccinationService.insertPetVaccination(petId, vaccineName, injectionDate);
+			rd = petVaccinationService.insertPetVaccination(petId, vaccineName, injectionDate);
 		} else {
-			return petVaccinationService.insertPetVaccinationWithNotes(petId, vaccineName, injectionDate, notes);
+			rd = petVaccinationService.insertPetVaccinationWithNotes(petId, vaccineName, injectionDate, notes);
 		}
+
+		// ✅ 추가: 등록 후 모든 nextDueDate 갱신
+		petVaccinationService.updateNextDueDates(petId, vaccineName);
+
+		return rd;
 	}
 
-	// 백신 수정 로직
+
+	// 백신 수정
 	@RequestMapping("/usr/pet/vaccination/doModify")
 	@ResponseBody
 	public ResultData doVaccinationModify(@RequestParam("vaccinationId") int vaccinationId,
-										  @RequestParam String vaccineName, @RequestParam String injectionDate,
+										  @RequestParam String vaccineName,
+										  @RequestParam String injectionDate,
 										  @RequestParam(required = false) String notes) {
 
 		PetVaccination petVaccination = petVaccinationService.getVaccinationsById(vaccinationId);
@@ -457,12 +469,15 @@ public class PetController {
 		if (Ut.isEmptyOrNull(notes)) {
 			modifyRd = petVaccinationService.updatePetVaccination(vaccinationId, vaccineName, injectionDate);
 		} else {
-			modifyRd = petVaccinationService.updatePetVaccinationWithNotes(vaccinationId, vaccineName, injectionDate,
-					notes);
+			modifyRd = petVaccinationService.updatePetVaccinationWithNotes(vaccinationId, vaccineName, injectionDate, notes);
 		}
+
+		// ✅ 추가: 수정 후 nextDueDate 전체 갱신
+		petVaccinationService.updateNextDueDates(petId, vaccineName);
 
 		return ResultData.from("S-1", "수정 완료");
 	}
+
 
 	@RequestMapping("/usr/pet/vaccination/events")
 	@ResponseBody
