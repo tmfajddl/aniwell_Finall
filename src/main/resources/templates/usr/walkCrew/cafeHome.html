@@ -62,7 +62,8 @@
 
 				<!-- ✅ 아직 신청하지 않은 경우 (리더는 제외) -->
 				<div th:if="${!isLeader and !isJoined and !isPending}">
-					<button th:onclick="|crewJoin(${crew.id})|">
+					<!-- ⛳ crewJoin 함수에 this 전달 -->
+					<button th:onclick="|crewJoin(this, ${crew.id})|">
 						<i class="fa-solid fa-dog"></i>
 						크루 신청
 					</button>
@@ -93,7 +94,7 @@
 			</aside>
 
 			<!-- 오른쪽: 콘텐츠 섹션 -->
-			<div class="flex-1 w-3/4 space-y-3 h-[100%] grid gird-rows-12 p-2 overflow-x-auto" >
+			<div class="flex-1 w-3/4 space-y-3 h-[100%] grid gird-rows-12 p-2 overflow-x-auto">
 				<!-- 앨범 -->
 				<div class="py-1 row-span-4 shadow overflow-x-auto w-full">
 					<div class="flex justify-between items-center mb-2 px-5">
@@ -171,67 +172,180 @@
 			</div>
 		</div>
 	</div>
-	<!--그냥팝업-->
+	<!-- ✅ 그냥 팝업 (기존 유지) -->
 	<div id="comModal"></div>
-	<!--사이드팝업창-->
+
+	<!-- ✅ 사이드팝업창 -->
 	<div id="sideModal"
 		class="fixed top-0 right-0 h-full w-[400px] bg-white shadow-lg z-50 transform translate-x-full transition-transform duration-300 ease-in-out">
+		<!-- ✅ 이곳은 JS에서 Ajax 호출로 채워짐 -->
 	</div>
 
-	</div>
-
+	<!-- ✅ 역할 변경 및 멤버 목록 Ajax 렌더링 JS -->
 	<script>
-		var crewId = [[${crew.id}]];
-		console.log(crewId);
-	</script>
+	function handleCrewMember() {
+		$.ajax({
+			type: "GET",
+			url: `/usr/walkCrewMember/usr/walkCrew/memberList`,
+			data: { crewId },
+			success: function (data) {
+				const members = data.data1;
+
+				let memberListHtml = members.map(member => {
+					return `
+						<div class="flex items-center justify-between p-2 border-b">
+							<div>
+								<div class="font-semibold">${member.crew_member_name}</div>
+								<div class="text-xs text-gray-500">${member.role}</div>
+							</div>
+							<!-- ✅ 역할 변경 드롭다운 (크루장 위임 포함) -->
+							<div class="flex gap-2 items-center">
+								<select onchange="changeRole(${member.id}, this.value)" class="border px-2 py-1 rounded">
+									<option value="member" ${member.role === 'member' ? 'selected' : ''}>멤버</option>
+									<option value="subleader" ${member.role === 'subleader' ? 'selected' : ''}>부크루장</option>
+									<option value="leader" ${member.role === 'leader' ? 'selected' : ''}>크루장</option>
+									<!-- ✅ 크루장 위임 시 이 옵션 선택 -->
+								</select>
+							</div>
+						</div>
+					`;
+				}).join('');
+
+				// ✅ 모달 내부에 렌더링
+				document.getElementById("sideModal").innerHTML = `
+					<div class="p-5 space-y-4">
+						<h2 class="text-lg font-bold">크루원 역할 관리</h2>
+						${memberListHtml}
+					</div>
+				`;
+
+				// ✅ 모달 열기
+				document.getElementById("sideModal").classList.remove("translate-x-full");
+			},
+			error: function (err) {
+				console.error("크루 멤버 목록 가져오기 실패", err);
+			}
+		});
+	}
+</script>
+
+
+
+
+
+	<!-- ✅ 크루 ID 설정 (Thymeleaf에서 전달됨) -->
 	<script>
-		function formatDate(dateStr) {
-			if (!dateStr || dateStr === "0000-00-00") return null;
+	var crewId = [[${crew.id}]];
+	console.log(crewId); // 디버깅용
+</script>
 
-			const [year, month, day] = dateStr.split("-");
-			return `${month}-${day}`;
-		}
-	</script>
+	<!-- ✅ 날짜 포맷 변경 함수 (YYYY-MM-DD → MM-DD) -->
+	<script>
+	function formatDate(dateStr) {
+		if (!dateStr || dateStr === "0000-00-00") return null;
 
+		const [year, month, day] = dateStr.split("-");
+		return `${month}-${day}`;
+	}
+</script>
+
+	<!-- ✅ jQuery & 외부 JS 불러오기 -->
 	<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 	<script th:src="@{/resource/js/crew.js}"></script>
 
+	<!-- ✅ 멤버 섹션 렌더링 함수 (메인 우측 '멤버' 목록에 출력) -->
 	<script>
-		function renderCrewMemberSection() {
-			$.ajax({
-				type: "GET",
-				url: `/usr/walkCrewMember/usr/walkCrew/memberList`,
-				data: {crewId},
-				success: function (data) {
-					const members = data.data1;
-					const container = document.getElementById("crewMemberList");
+	function renderCrewMemberSection() {
+		$.ajax({
+			type: "GET",
+			url: `/usr/walkCrewMember/usr/walkCrew/memberList`,
+			data: { crewId },
+			success: function (data) {
+				const members = data.data1;
+				const container = document.getElementById("crewMemberList");
 
-					if (!container) return;
-					
-					container.innerHTML = members.map(m => `
-					  <div onclick="memberModal()" class="h-full flex flex-col px-3 justify-center">
-					    <div class="w-12 h-12 bg-yellow-300 rounded-full">
-					      <img src="${m.crew_member_photo ? m.crew_member_photo : '/img/default-pet.png'}"
-					           alt="프로필" class="w-full h-full object-cover" />
-					    </div>
-					    <div class="py-1 text-sm text-center">${m.crew_member_name}</div>
-					  </div>
-					`).join('');
-					
-				},
-				error: function (err) {
-					console.error("멤버 섹션 렌더링 실패:", err);
-				}
-			});
-		}
+				if (!container) return;
 
-		window.addEventListener('DOMContentLoaded', () => {
-			renderCrewMemberSection();
+				// 📌 멤버 리스트 동적 생성
+				container.innerHTML = members.map(m => `
+					<div onclick="memberModal()" class="h-full flex flex-col px-3 justify-center">
+						<div class="w-12 h-12 bg-yellow-300 rounded-full">
+							<img src="${m.crew_member_photo ? m.crew_member_photo : '/img/default-pet.png'}"
+								alt="프로필" class="w-full h-full object-cover" />
+						</div>
+						<div class="py-1 text-sm text-center">${m.crew_member_name}</div>
+					</div>
+				`).join('');
+			},
+			error: function (err) {
+				console.error("멤버 섹션 렌더링 실패:", err);
+			}
 		});
-	</script>
+	}
 
+	// 페이지 로드 후 멤버 섹션 자동 호출
+	window.addEventListener('DOMContentLoaded', () => {
+		renderCrewMemberSection();
+	});
+</script>
 
+	<!-- ✅ 역할 변경 처리 함수 (크루장 위임 포함) -->
+	<script>
+  /*
+   * 멤버 역할 변경 처리
+   * - leader: 크루장 위임 (confirm 후 서버로 POST)
+   * - subLeader/member: 일반 역할 변경
+   */
+  function changeRole(memberId, newRole) {
+    if (newRole === "leader") {
+      const confirmed = confirm("정말 이 멤버에게 크루장 권한을 위임하시겠습니까?");
+      if (!confirmed) return;
 
+      // 🔄 크루장 위임 API 호출
+      $.post("/usr/walkCrewMember/transferLeadership", {
+        crewId: crewId,
+        newLeaderId: memberId
+      }, function (res) {
+        if (res.success) {
+          alert("크루장 권한이 성공적으로 위임되었습니다.");
+          location.reload(); // 성공 후 페이지 새로고침
+        } else {
+          alert(res.msg);
+        }
+      });
+    } else {
+      // 🔄 일반 역할 변경 요청 함수 호출 (ex. subLeader, member)
+      sendRoleChange(memberId, newRole);
+    }
+  }
+</script>
+	<script>
+	function crewJoin(btnElement, crewId) {
+		$.ajax({
+			type: "POST",
+			url: `/usr/walkCrewMember/doJoin`,
+			data: { crewId },
+			success: function (data) {
+				console.log(data.msg);
+
+				// ✅ 버튼 영역 즉시 업데이트 (새로고침 없이 상태 반영)
+				const parent = btnElement.parentElement;
+				parent.innerHTML = `
+					<button disabled>
+						<i class="fa-solid fa-clock-rotate-left"></i>
+						신청 대기중
+					</button>
+				`;
+
+				// ✅ 멤버 목록 다시 불러오기 (기존 코드 유지)
+				renderCrewMemberSection();
+			},
+			error: function (err) {
+				console.error("참가등록실패", err);
+			}
+		});
+	}
+</script>
 
 </body>
 
