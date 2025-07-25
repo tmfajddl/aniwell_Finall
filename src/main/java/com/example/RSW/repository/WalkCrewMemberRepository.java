@@ -45,5 +45,6 @@ public interface WalkCrewMemberRepository {
 
 	boolean exists(int crewId, int memberId);
 
+	void insert(WalkCrewMember leader);
 
 }
