@@ -17,7 +17,7 @@
 		<div th:replace="common :: siteHeader"></div>
 
 		<!-- Main content -->
-		<main class="main_page min-h-screen flex-1 p-3 flex contect-around">
+		<main class="main_page min-h-screen flex-1 p-3 flex contect-around w-screen">
 
 
 			<!-- 왼쪽: 정보 섹션 -->
@@ -27,7 +27,7 @@
 					<div class="flex space-y-2 items-center gap-3">
 						<div class="w-14 h-14 bg-yellow-300 rounded-xl overflow-hidden relative">
 							<img th:if="${crew.imageUrl != null}" th:src="${crew.imageUrl}" alt="크루 이미지"
-								class="w-full h-full object-cover absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[40%]" />
+								class="w-full h-full object-cover absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
 
 							<img th:if="${crew.imageUrl == null}" th:src="@{/img/default-pet.png}" alt="기본 이미지"
 								class="w-full h-full object-cover absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[40%]" />
@@ -70,7 +70,7 @@
 
 				<!-- ✅ 리더 전용 -->
 				<div th:if="${isLeader}">
-					<button>
+					<button onclick="handleCrewMember()">
 						<i class="fa-solid fa-gear"></i>
 						크루 관리
 					</button>
@@ -93,9 +93,9 @@
 			</aside>
 
 			<!-- 오른쪽: 콘텐츠 섹션 -->
-			<div class="flex-1 space-y-3 h-[100%] grid gird-rows-12 p-2 ">
+			<div class="flex-1 w-3/4 space-y-3 h-[100%] grid gird-rows-12 p-2 overflow-x-auto">
 				<!-- 앨범 -->
-				<div class="py-1 row-span-4 shadow overflow-x-auto w-[100%]">
+				<div class="py-1 row-span-4 shadow overflow-x-auto w-full">
 					<div class="flex justify-between items-center mb-2 px-5">
 						<h3 class="font-bold text-lg">앨범</h3>
 					</div>
@@ -106,7 +106,7 @@
 					</div>
 				</div>
 				<!-- 게시글 -->
-				<div class="py-1 row-span-4 shadow relative">
+				<div class="py-1 row-span-4 shadow relative w-full overflow-x-auto">
 
 					<div class="flex justify-between px-5 items-center mb-1">
 						<h3 class="font-bold" th:text="${freeArticles.size}">게시글</h3>
@@ -129,13 +129,13 @@
 					</div>
 				</div>
 				<!-- 멤버 -->
-				<div class="py-1 flex flex-col row-span-2 shadow flex">
+				<div class="py-1 flex flex-col row-span-2 shadow w-full overflow-x-auto">
 					<h3 class="font-bold text-lg mb-2 px-5">멤버 8</h3>
 					<div id="crewMemberList" class="flex gap-4 overflow-x-auto px-5 flex-1"></div>
 				</div>
 
 				<!-- 일정 -->
-				<div class="py-1 row-span-2 shadow">
+				<div class="py-1 row-span-2 shadow w-full overflow-x-auto">
 					<div class="flex justify-between items-center mb-1 px-5">
 						<h3 th:text="${scheduleArticles.size}" class="font-bold text-lg">일정 15</h3>
 						<button onclick="scAdd()" class="p-1 shadow text-gray-600 hover:text-black">추가 ＋</button>
@@ -205,7 +205,6 @@
 				success: function (data) {
 					const members = data.data1;
 					const container = document.getElementById("crewMemberList");
-					const countEl = document.getElementById("memberCount");
 
 					if (!container) return;
 					
@@ -218,9 +217,7 @@
 					    <div class="py-1 text-sm text-center">${m.crew_member_name}</div>
 					  </div>
 					`).join('');
-
-
-					countEl.textContent = members.length;
+					
 				},
 				error: function (err) {
 					console.error("멤버 섹션 렌더링 실패:", err);

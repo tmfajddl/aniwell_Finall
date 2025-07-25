@@ -43,6 +43,7 @@
 		JOIN member m ON wcm.memberId = m.id
 		WHERE
 		wc.leaderId = #{leaderId}
+		AND wcm.status = 'PENDING'
 	</select>
 
 	<!-- ✅ 크루 가입 여부 확인 -->
@@ -92,8 +93,8 @@
 		FROM walk_crew_member wcm
 		LEFT JOIN member m ON wcm.memberId = m.id
 		WHERE wcm.crewId = #{crewId}
+		AND wcm.status = 'APPROVED'
 	</select>
-
 
 	<!-- 리더 변경 -->
 	<update id="updateRole">
@@ -137,9 +138,11 @@
 
 	<!-- 신청자의 상태(status)를 조회 -->
 	<select id="findStatusByMemberIdAndCrewId" resultType="string">
-		SELECT status
+		SELECT
+		status
 		FROM walk_crew_member
-		WHERE crewId = #{crewId} AND memberId = #{memberId}
+		WHERE crewId = #{crewId} AND memberId =
+		#{memberId}
 		LIMIT 1
 	</select>
 
