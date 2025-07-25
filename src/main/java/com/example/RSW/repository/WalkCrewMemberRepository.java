@@ -34,4 +34,12 @@ public interface WalkCrewMemberRepository {
 
 	// 멤버리스트 조회
 	List<WalkCrewMember> findMembersByCrewId(int crewId);
+
+	void updateRole(int currentLeaderId, int crewId, String string);
+
+	String findRoleByMemberIdAndCrewId(int memberId, int crewId);
+
+	int countPendingRequest(int crewId, int memberId);
+
+	void approveMember(int crewId, int memberId);
 }

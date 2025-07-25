@@ -3,6 +3,7 @@ package com.example.RSW.repository;
 import com.example.RSW.vo.PetVaccination;
 import org.apache.ibatis.annotations.Mapper;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Mapper
@@ -27,4 +28,10 @@ public interface PetVaccinationRepository {
     void invalidateNextDueDates(int petId, String vaccineName);
 
     List<PetVaccination> findByPetIdAndMonth(int petId, String yearMonth);
+
+    LocalDate findLatestInjectionDate(int petId, String vaccineName);
+
+    Integer findIntervalMonthsByVaccine(String vaccineName);
+
+    void updateAllNextDueDates(int petId, String vaccineName, LocalDate nextDueDate);
 }
