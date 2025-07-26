@@ -21,10 +21,10 @@
 
 
 			<!-- 왼쪽: 정보 섹션 -->
-			<aside class="w-1/4 space-y-1 p-6 grid grid-rows-12 h-[100%] ">
-				<div class="row-span-6 ">
+			<aside class="w-1/4 space-y-1 p-3 grid grid-rows-12 h-[100%] ">
+				<div class="row-span-6">
 					<a href="/usr/walkCrew/list" class="back-link">← 목록으로 돌아가기</a>
-					<div class="flex space-y-2 items-center gap-3">
+					<div class="flex space-y-2 items-center gap-3 mt-2">
 						<div class="w-14 h-14 bg-yellow-300 rounded-xl overflow-hidden relative">
 							<img th:if="${crew.imageUrl != null}" th:src="${crew.imageUrl}" alt="크루 이미지"
 								class="w-full h-full object-cover absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
@@ -35,75 +35,89 @@
 						<div class="p-3">
 							<h2 class="text-xl font-semibold" th:text="${crew.title}">크루원들 모여라</h2>
 							<div id="memberSize"></div>
-							<p class="text-sm text-gray-500">멤버 111</p>
 						</div>
 					</div>
 
-					<div class="text-sm text-gray-700" th:text="${crew.description}">Lorem ipsum dolor, sit amet
+					<div class="text-sm text-gray-700 mt-4" th:text="${crew.description}">Lorem ipsum dolor, sit amet
 						consectetur
 						adipisicing elit...</div>
 				</div>
 
-				<!-- 가입된 크루가 아닐경우 크루신청이미지가 보이도 -->
-				<!-- ✅ 채팅방 입장 (멤버 또는 리더) -->
-				<div th:if="${isJoined or isLeader}">
-					<a th:href="@{/api/chat/room(crewId=${crew.id})}">
-						<i class="fa-solid fa-comment-dots"></i>
-						채팅방 입장
-					</a>
-				</div>
+				<div class="row-span-1 flex justify-center h-[70%] self-end">
+					<!-- 가입된 크루가 아닐경우 크루신청이미지가 보이도 -->
+					<!-- ✅ 채팅방 입장 (멤버 또는 리더) -->
+					<div th:if="${isLeader}"
+						class="w-[50%] p-2 m-1 flex justify-center items-center rounded-xl shadow font-semibold text-gray-700 bg-gradient-to-r from-[#e4f0b9] to-[#fcdca9] hover:brightness-105 transition duration-300 cursor-pointer">
+						<a th:href="@{/api/chat/room(crewId=${crew.id})}">
+							<i class="fa-solid fa-comment-dots"></i>
+							채팅방 입장
+						</a>
+					</div>
 
-				<!-- ✅ 신청 대기 중인 경우 (리더는 제외) -->
-				<div th:if="${!isLeader and !isJoined and isPending}">
-					<button disabled>
-						<i class="fa-solid fa-clock-rotate-left"></i>
-						신청 대기중
-					</button>
-				</div>
+					<div th:if="${isJoined}"
+						class="w-[100%] p-2 m-1 flex justify-center items-center rounded-xl shadow font-semibold text-gray-700 bg-gradient-to-r from-[#e4f0b9] to-[#fcdca9] hover:brightness-105 transition duration-300 cursor-pointer">
+						<a th:href="@{/api/chat/room(crewId=${crew.id})}">
+							<i class="fa-solid fa-comment-dots"></i>
+							채팅방 입장
+						</a>
+					</div>
 
-				<!-- ✅ 아직 신청하지 않은 경우 (리더는 제외) -->
-				<div th:if="${!isLeader and !isJoined and !isPending}">
-					<!-- ⛳ crewJoin 함수에 this 전달 -->
-					<button th:onclick="|crewJoin(this, ${crew.id})|">
-						<i class="fa-solid fa-dog"></i>
-						크루 신청
-					</button>
-				</div>
+					<!-- ✅ 신청 대기 중인 경우 (리더는 제외) -->
+					<div th:if="${!isLeader and !isJoined and isPending}"
+						class="w-[100%] p-2 m-1 flex justify-center text-center rounded-xl shadow font-semibold text-gray-700 bg-gradient-to-r from-[#e4f0b9] to-[#fcdca9] hover:brightness-105 transition duration-300 cursor-pointer">
+						<button disabled>
+							<i class="fa-solid fa-clock-rotate-left"></i>
+							신청 대기중
+						</button>
+					</div>
 
-				<!-- ✅ 리더 전용 -->
-				<div th:if="${isLeader}">
-					<button onclick="handleCrewMember()">
-						<i class="fa-solid fa-gear"></i>
-						크루 관리
-					</button>
-				</div>
+					<!-- ✅ 아직 신청하지 않은 경우 (리더는 제외) -->
+					<div th:if="${!isLeader and !isJoined and !isPending}"
+						class="w-[100%] p-2 m-1 flex justify-center text-center rounded-xl shadow font-semibold text-gray-700 bg-gradient-to-r from-[#e4f0b9] to-[#fcdca9] hover:brightness-105 transition duration-300 cursor-pointer">
+						<!-- ⛳ crewJoin 함수에 this 전달 -->
+						<button th:onclick="|crewJoin(this, ${crew.id})|">
+							<i class="fa-solid fa-dog"></i>
+							크루 신청
+						</button>
+					</div>
 
-
-
-				<div class="shadow row-span-5">
-					<div class="mx-3 pb-3 pt-2 border-b border-1 border-black">공지사항</div>
-					<div th:each="article : ${noticeArticles}" class="p-4 border-b">
-						<div class="text-sm text-gray-500" th:text="'작성자 ID: ' + ${article.memberId}"></div>
-						<div class="text-[15px] font-bold text-gray-800" th:text="${article.title}">제목</div>
-						<div class="text-[10px] text-gray-700 mt-1" th:text="${article.body}">내용</div>
+					<!-- ✅ 리더 전용 -->
+					<div th:if="${isLeader}"
+						class="w-[50%] p-2 m-1 flex justify-center text-center rounded-xl shadow font-semibold text-gray-700 bg-gradient-to-r from-[#e4f0b9] to-[#fcdca9] hover:brightness-105 transition duration-300 cursor-pointer">
+						<button onclick="handleCrewMember()">
+							<i class="fa-solid fa-gear"></i>
+							크루 관리
+						</button>
 					</div>
 				</div>
-				<div class="row-sapn-1 flex justify-around self-end">
-					<div>수정</div>
-					<div>삭제</div>
+
+
+				<div class="space-y-1 shadow row-span-6 overflow-hidden">
+					<div class="mx-3 pb-3 pt-2 border-b border-1 border-black flex justify-between">공지사항
+						<div th:if="${isLeader}">
+							<div onclick="noti_btn()" class="cursor-pointer">＋</div>
+						</div>
+					</div>
+					<div class="h-full overflow-x-auto pb-10">
+						<div th:each="article : ${noticeArticles}" class="p-4 border-b">
+							<div class="text-sm text-gray-500" th:text="'작성자 ID: ' + ${article.memberId}"></div>
+							<div class="text-[15px] font-bold text-gray-800" th:text="${article.title}">제목</div>
+							<div class="text-[10px] text-gray-700 mt-1" th:text="${article.body}">내용</div>
+						</div>
+					</div>
 				</div>
 			</aside>
 
 			<!-- 오른쪽: 콘텐츠 섹션 -->
-			<div class="flex-1 w-3/4 space-y-3 h-[100%] grid grid-rows-12 p-2 overflow-x-auto">
+			<div class="flex-1 w-3/4 space-y-3 h-[100%] grid grid-rows-12 p-2 overflow-x-auto gap-2">
 				<!-- 앨범 -->
-				<div class="py-1 row-span-4 flex flex-col shadow overflow-x-auto h-full w-full">
+				<div class="row-span-4 flex flex-col shadow overflow-x-auto h-full w-full">
 					<div class="flex justify-between items-center mb-2 px-5">
 						<h3 class="font-bold text-lg">앨범</h3>
 					</div>
+					<div th:if="${galleryArticles.isEmpty()}" class="h-full text-center text-gray-500 px-5 py-10">
+						사진이 없습니다.</div>
 					<div class="grid grid-cols-4 gap-3 px-2">
-						<div th:if="${galleryArticles.isEmpty()}" class="h-full text-center text-gray-500 px-5 py-10">
-							사진이 없습니다.</div>
 						<div th:each="photo : ${galleryArticles}"
 							class="aspect-square ml-5 span-row-1 bg-gray-300 rounded-lg cursor-pointer"
 							th:attr="data-url=${photo.imageUrl}" onclick="photoModal(this)">
@@ -112,13 +126,17 @@
 					</div>
 				</div>
 				<!-- 게시글 -->
-				<div class="py-1 row-span-4 shadow relative w-full h-full overflow-x-auto">
+				<div class="row-span-4 shadow relative w-full h-full overflow-x-auto">
 
 					<div class="flex justify-between px-5 items-center mb-1">
 						<h3 class="font-bold">게시글</h3>
 						<button onclick="crewArtAdd()" class="p-1 shadow text-gray-600 hover:text-black">추가 ＋</button>
 					</div>
-					<div class="gap-4 px-4 h-[78%] flex overflow-x-auto">
+					<div th:if="${freeArticles == null or freeArticles.isEmpty()}"
+						class="text-center text-gray-500 px-5 py-10">
+						게시글 없습니다.</div>
+					<div th:if="${freeArticles != null and !freeArticles.isEmpty()}"
+						class="gap-4 px-4 h-[78%] flex overflow-x-auto">
 						<div th:each="free : ${freeArticles}" th:attr="data-title=${free.title}, 
 						         data-body=${free.body},
 						         data-image-url=${free.imageUrl},
@@ -134,18 +152,23 @@
 					</div>
 				</div>
 				<!-- 멤버 -->
-				<div class="py-1 flex flex-col row-span-2 shadow w-full overflow-x-auto">
-					<h3 class="font-bold text-lg mb-2 px-5">멤버</h3>
+				<div class="row-span-2 shadow w-full overflow-x-auto">
+					<div class="flex justify-between items-center mb-1 px-5">
+						<h3 class="font-bold text-lg">멤버</h3>
+					</div>
 					<div id="crewMemberList" class="flex gap-4 overflow-x-auto px-5 flex-1"></div>
 				</div>
 
 				<!-- 일정 -->
-				<div class="py-1 row-span-2 shadow w-full overflow-x-auto">
+				<div class="row-span-2 shadow w-full overflow-x-auto">
 					<div class="flex justify-between items-center mb-1 px-5">
 						<h3 class="font-bold text-lg">일정</h3>
 						<button onclick="scAdd()" class="p-1 shadow text-gray-600 hover:text-black">추가 ＋</button>
 					</div>
-					<div class="flex gap-5 overflow-x-auto px-4 pb-1">
+					<div th:if="${scheduleArticles.isEmpty()}" class="text-center text-gray-500 px-5 py-3">
+						일정 없습니다.</div>
+					<div th:if="${scheduleArticles != null and !scheduleArticles.isEmpty()}"
+						class="flex gap-5 overflow-x-auto px-4 pb-1">
 						<div th:each="schedule : ${scheduleArticles}" th:attr="data-url=${schedule}" onclick="scModal()"
 							class="w-12 text-center p-1 px-3 shadow">
 							<div th:text="${#dates.format(schedule.scheduleDate, 'MM')}" class="text-sm font-bold">
@@ -158,7 +181,7 @@
 
 				</div>
 			</div>
-			<div class="w-10 flex">
+			<div class="w-10 flex justify-end">
 				<button class="hamburger" onclick="modal_btn()" aria-label="메뉴 열기">
 					<span class="bar"></span>
 					<span class="bar"></span>
@@ -182,7 +205,7 @@
 	</div>
 	<!-- ✅ 그냥 팝업 (기존 유지) -->
 	<div id="comModal"></div>
-
+	<div id="comNobgModal"></div>
 	<!-- ✅ 사이드팝업창 -->
 	<div id="sideModal"
 		class="fixed top-0 right-0 h-full w-[400px] bg-white shadow-lg z-50 transform translate-x-full transition-transform duration-300 ease-in-out">
@@ -236,7 +259,6 @@
 			});
 		}
 	</script>
-
 
 
 
