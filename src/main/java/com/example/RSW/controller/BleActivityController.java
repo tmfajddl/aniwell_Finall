@@ -14,6 +14,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Controller
@@ -62,5 +63,13 @@ public class BleActivityController {
 
         return "usr/pet/activity";
     }
+
+    @GetMapping("/usr/pet/activity/list")
+    @ResponseBody
+    public List<PetBleActivity> getActivityList(@RequestParam int petId, @RequestParam String date) {
+        LocalDate targetDate = LocalDate.parse(date);
+        return bleService.getByPetIdAndDate(petId, targetDate);
+    }
+
 
 }
