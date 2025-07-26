@@ -2,112 +2,169 @@
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
   <meta charset="UTF-8">
-  <title>무게 변화량 차트</title>
+  <title>사료 무게 변화량 차트</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
   <style>
     body { font-family: sans-serif; padding: 20px; background: #fdfae9; }
     canvas { background: white; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    #datePicker { margin-bottom: 1rem; }
   </style>
 </head>
 <body>
-<h2>🪶 사료 무게 변화량</h2>
+<h2>사료 무게 변화량</h2>
+
+<!-- 날짜 선택 -->
+<input type="date" id="datePicker" th:value="${#temporals.format(today, 'yyyy-MM-dd')}" />
+
+<!-- 차트 -->
 <canvas id="weightChart" width="800" height="400"></canvas>
 
 <script th:inline="javascript">
-  const rawData = /*[[${logs}]]*/ [];
   const petId = /*[[${petId}]]*/ 0;
+  const todayStr = new Date().toISOString().split("T")[0];
+  const dateInput = document.getElementById("datePicker");
 
   const labels = [];
   const deltas = [];
   const bgColors = [];
   const tooltipLabels = [];
+  const rawData = [];
+  let weightChart = null;
+  let stompClient = null;
+  let subscription = null;
 
-  if (rawData.length < 2) {
-    alert('데이터가 부족합니다.');
-  } else {
-    rawData.sort((a, b) => new Date(a.logDate) - new Date(b.logDate));
+  const ctx = document.getElementById('weightChart').getContext('2d');
 
-    for (let i = 1; i < rawData.length; i++) {
-      const prev = rawData[i - 1];
-      const curr = rawData[i];
+  function renderChart(data) {
+    labels.length = deltas.length = bgColors.length = tooltipLabels.length = 0;
+    rawData.length = 0;
+
+    if (!Array.isArray(data)) {
+      console.error("❌ 서버 응답이 배열이 아닙니다:", data);
+      alert("데이터 형식이 잘못되었습니다.");
+      return;
+    }
+
+    rawData.push(...data);
+    data.sort((a, b) => new Date(a.logDate) - new Date(b.logDate));
+
+    for (let i = 1; i < data.length; i++) {
+      const prev = data[i - 1];
+      const curr = data[i];
       const diff = parseFloat(curr.foodWeight) - parseFloat(prev.foodWeight);
       const absDiff = Math.abs(diff).toFixed(2);
+      const label = new Date(curr.logDate).toTimeString().slice(0, 5);
 
-      const timeLabel = new Date(curr.logDate).toTimeString().slice(0, 5);
-      labels.push(timeLabel);
+      labels.push(label);
       deltas.push(absDiff);
+      const color = diff < 0 ? 'rgba(76, 175, 80, 0.2)' : 'rgba(255, 165, 0, 0.2)';
+      bgColors.push(color);
+      tooltipLabels.push(diff < 0 ? `섭취: ${absDiff}g` : `급식: ${absDiff}g`);
+    }
 
-      if (diff < 0) {
-        bgColors.push('rgba(76, 175, 80, 0.2)');
-        tooltipLabels.push(`급식: ${absDiff}g`);
-      } else {
-        bgColors.push('rgba(255, 165, 0, 0.2)');
-        tooltipLabels.push(`섭취: ${absDiff}g`);
-      }
+    if (!weightChart) {
+      weightChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: '사료 변화량 (절대값)',
+            data: deltas,
+            backgroundColor: bgColors,
+            borderColor: bgColors.map(c => c.replace('0.2', '1')),
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: false,
+          scales: {
+            y: { title: { display: true, text: 'g' }},
+            x: { title: { display: true, text: '시간 (HH:MM)' }}
+          },
+          plugins: {
+            tooltip: {
+              callbacks: {
+                label: (context) => tooltipLabels[context.dataIndex]
+              }
+            }
+          }
+        }
+      });
+    } else {
+      weightChart.data.labels = labels;
+      weightChart.data.datasets[0].data = deltas;
+      weightChart.data.datasets[0].backgroundColor = bgColors;
+      weightChart.data.datasets[0].borderColor = bgColors.map(c => c.replace('0.2', '1'));
+      weightChart.update();
     }
   }
 
-  // ✅ 차트 전역 변수 선언
-  const ctx = document.getElementById('weightChart').getContext('2d');
-  const weightChart = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: labels,
-      datasets: [{
-        label: '사료 변화량 (절대값)',
-        data: deltas,
-        backgroundColor: bgColors,
-        borderColor: bgColors.map(c => c.replace('0.2', '1')),
-        borderWidth: 1
-      }]
-    },
-    options: {
-      responsive: false,
-      scales: {
-        y: { title: { display: true, text: 'g' }},
-        x: { title: { display: true, text: '시간 (HH:MM)' }}
-      },
-      plugins: {
-        tooltip: {
-          callbacks: {
-            label: (context) => tooltipLabels[context.dataIndex]
-          }
-        }
-      }
-    }
-  });
+  function connectWebSocket() {
+    const socket = new SockJS('/ws');
+    stompClient = Stomp.over(socket);
+    stompClient.connect({}, () => {
+      console.log('🔌 WebSocket 연결됨');
+      subscription = stompClient.subscribe(`/topic/health/${petId}`, (message) => {
+        const newLog = JSON.parse(message.body);
+        updateChartWithNewLog(newLog);
+      });
+    });
+  }
 
-  // ✅ WebSocket 연결
-  const socket = new SockJS('/ws');
-  const stompClient = Stomp.over(socket);
+  function disconnectWebSocket() {
+    if (subscription) subscription.unsubscribe();
+    if (stompClient) stompClient.disconnect();
+  }
 
-  stompClient.connect({}, () => {
-    console.log("🔌 WebSocket 연결됨");
+  function updateChartWithNewLog(newLog) {
+    const last = rawData[rawData.length - 1];
+    const diff = parseFloat(newLog.foodWeight) - parseFloat(last.foodWeight);
+    const absDiff = Math.abs(diff).toFixed(2);
+    const timeLabel = new Date(newLog.logDate).toTimeString().slice(0, 5);
 
-    stompClient.subscribe(`/topic/health/${petId}`, (message) => {
-      const newLog = JSON.parse(message.body);
-      const last = rawData[rawData.length - 1];
+    rawData.push(newLog);
+    labels.push(timeLabel);
+    deltas.push(absDiff);
+    const color = diff < 0 ? 'rgba(76, 175, 80, 0.2)' : 'rgba(255, 165, 0, 0.2)';
+    bgColors.push(color);
+    tooltipLabels.push(diff < 0 ? `섭취: ${absDiff}g` : `급식: ${absDiff}g`);
 
-      const diff = parseFloat(newLog.foodWeight) - parseFloat(last.foodWeight);
-      const absDiff = Math.abs(diff).toFixed(2);
-      const timeLabel = new Date(newLog.logDate).toTimeString().slice(0, 5);
+    weightChart.update();
+  }
 
-      // 배열 갱신
-      rawData.push(newLog);
-      labels.push(timeLabel);
-      deltas.push(absDiff);
-      if (diff < 0) {
-        bgColors.push('rgba(76, 175, 80, 0.2)');
-        tooltipLabels.push(`급식: ${absDiff}g`);
-      } else {
-        bgColors.push('rgba(255, 165, 0, 0.2)');
-        tooltipLabels.push(`섭취: ${absDiff}g`);
-      }
+  function loadDataAndDraw(dateStr) {
+    if (!dateStr) dateStr = todayStr;
 
-      // 차트 업데이트
-      weightChart.update();
+    fetch(`/usr/pet/health/logs?petId=${petId}&date=${dateStr}`)
+            .then(res => {
+              if (!res.ok) {
+                throw new Error("404 또는 서버 오류");
+              }
+              return res.json();
+            })
+            .then(data => {
+              renderChart(data);
+              if (dateStr === todayStr) {
+                connectWebSocket();
+              } else {
+                disconnectWebSocket();
+              }
+            })
+            .catch(err => {
+              console.error("🚨 데이터 로딩 실패:", err);
+              alert("데이터를 불러올 수 없습니다.");
+            });
+  }
+
+  // ✅ 초기 실행
+  window.addEventListener("DOMContentLoaded", () => {
+    loadDataAndDraw(dateInput?.value || todayStr);
+
+    dateInput.addEventListener("change", () => {
+      disconnectWebSocket();
+      loadDataAndDraw(dateInput.value);
     });
   });
 </script>
