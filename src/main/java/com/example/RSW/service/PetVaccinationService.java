@@ -91,10 +91,14 @@ public class PetVaccinationService {
         Integer intervalMonths = petVaccinationRepository.findIntervalMonthsByVaccine(vaccineName);
         if (intervalMonths == null) return;
 
-        // 3. nextDueDate 계산
+        // 3. 다음 예정일 계산
         LocalDate nextDueDate = latestInjectionDate.plusMonths(intervalMonths);
 
-        // 4. 전체 업데이트
-        petVaccinationRepository.updateAllNextDueDates(petId, vaccineName, nextDueDate);
+        // 4. 가장 최신 날짜의 nextDueDate 설정
+        petVaccinationRepository.updateNextDueDateByInjectionDate(petId, vaccineName, latestInjectionDate, nextDueDate);
+
+        // 5. 최신이 아닌 기록은 nextDueDate = NULL 처리
+        petVaccinationRepository.invalidateOldNextDueDates(petId, vaccineName, latestInjectionDate);
     }
+
 }
