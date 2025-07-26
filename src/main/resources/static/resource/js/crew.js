@@ -120,6 +120,35 @@ function openComModal(contentHTML) {
 	modal.classList.remove('hidden');
 }
 
+function openComNobgModal(contentHTML) {
+	const modal = document.getElementById('comNobgModal');
+	modal.innerHTML = `
+		<div class="fixed flex flex-col inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+			<button onclick="closeComNobgModal()" class="pl-[50%] content-center text-xl hover:text-black">&times;</button>
+			<div class="flex">	
+				<!-- 좌측 화살표 -->
+				<button onclick="prevImage()"
+				        class="">
+				  ◀
+				</button>
+
+				
+				<div class="p-6 rounded-lg max-w-md w-full">
+				${contentHTML}
+				</div>
+			
+				<!-- 우측 화살표 -->
+				  <button onclick="nextImage()"
+			          class="">
+			   		 ▶
+			  	</button>	
+			
+				</div>	
+		</div>
+	`;
+	modal.classList.remove('hidden');
+}
+
 function closeModal() {
 	document.getElementById('modal').classList.add('hidden');
 }
@@ -127,6 +156,10 @@ function closeModal() {
 function closeComModal() {
 	document.getElementById('comModal').classList.add('hidden');
 	document.getElementById('comModal').innerHTML = ''; // 내용도 초기화
+}
+
+function closeComNobgModal() {
+	document.getElementById('comNobgModal').classList.add('hidden');
 }
 
 function memberModal() {
@@ -143,6 +176,7 @@ function memberModal() {
 	openComModal(html);
 }
 
+
 // 📅 일정 보기 모달
 function scModal() {
 	const html = `
@@ -158,39 +192,106 @@ function scModal() {
 	openComModal(html);
 }
 
-// 📸 사진 추가 모달
-function photoModal(photo) {
+// 📸 사진 보기 
+// 모달
+function photoModal(e) {
+	const photo = {
+		imageUrl: e.dataset.url,
+	};
+
 	const html = `
 	<div class="w-full max-w-xl mx-auto flex">
-
-	  <!-- 좌측 화살표 -->
-	  <button onclick="prevImage()"
-	          class="ml-[-20%]">
-	    ◀
-	  </button>
 	  
 	  <!-- 이미지 -->
 	  <div class="flex-1 overflow-hidden rounded-lg">
-	  	<div class="w-full object-cover h-96 transition duration-300">
-		<img th:src="${photo.imageUrl}" alt="사진" class="object-cover w-full h-full rounded-lg" />
+	  	<div class="w-full object-cover transition duration-300">
+		<img src=${photo.imageUrl} alt="사진" class="object-cover w-full h-full rounded-lg" />
 		</div>
 	  </div>
 
-	  <!-- 우측 화살표 -->
-	  <button onclick="nextImage()"
-	          class="mr-[-20%]">
-	    ▶
-	  </button>
 
 	</div>
 
     `;
-	openComModal(html);
-
+	openComNobgModal(html);
 
 }
 
 // 아래는 add 로직
+//공지사항
+function noti_btn() {
+	const html = `
+	<div class="flex h-full">
+	  <div class="w-full p-3 flex flex-col justify-between text-gray-800 space-y-4 relative">
+	    <div class="flex-1 flex flex-col justify-between shadow p-4 rounded bg-white">
+	      <input type="hidden" id="crewIdInput" value="${crewId}">
+	      <input type="hidden" id="boardIdInput" value="1">
+
+	      <!-- 제목 입력 -->
+	      <div class="mb-4">
+	        <label class="block text-sm font-bold mb-1">제목</label>
+	        <input type="text" id="titleInput" placeholder="제목을 입력하세요"
+	          class="w-full border rounded px-3 py-2 text-sm shadow-sm" required />
+	      </div>
+
+	      <!-- 내용 입력 -->
+	      <div class="mb-4 flex-1">
+	        <label class="block text-sm font-bold mb-1">내용</label>
+	        <textarea id="bodyInput" rows="20" placeholder="내용을 입력하세요"
+	          class="w-full border rounded px-3 py-2 text-sm shadow-sm resize-none" required></textarea>
+	      </div>
+
+	      <!-- 등록 버튼 -->
+	      <div class="text-right mt-4">
+	        <button id="submitArticleBtn"
+	          class="bg-gradient-to-r from-green-200 to-yellow-200 px-6 py-2 rounded-full shadow hover:shadow-md">
+	          등록
+	        </button>
+	      </div>
+	    </div>
+	  </div>
+	</div>
+	`
+	openComModal(html);
+	setTimeout(() => {
+		$('#submitArticleBtn').on('click', function(e) {
+			e.preventDefault();
+
+			const crewId = $('#crewIdInput').val();
+			const boardId = $('#boardIdInput').val();
+			const title = $('#titleInput').val();
+			const body = $('#bodyInput').val();
+
+			const formData = new FormData();
+			formData.append("crewId", crewId);
+			formData.append("boardId", boardId);
+			formData.append("title", title);
+			formData.append("body", body);
+
+			$.ajax({
+				url: '/usr/article/doWrite',
+				type: 'POST',
+				data: formData,
+				contentType: false,
+				processData: false,
+				success: function(data) {
+					if (data.resultCode === "S-1") {
+						alert('게시글이 작성되었습니다.');
+						window.location.href = data.data.redirectUrl;
+					} else {
+						alert("⚠️ " + data.msg);
+					}
+				},
+				error: function(err) {
+					console.error("❌ 등록 실패:", err);
+					alert('등록 중 오류가 발생했습니다.');
+				}
+			});
+		});
+	}, 0);
+}
+
+
 function crewArtAdd() {
 	const html = `
 	<div class="flex h-full">
@@ -285,9 +386,23 @@ function renderCalendar() {
 	const calendarBody = document.getElementById("calendarBody");
 	const calendarHeader = document.getElementById("calendarHeader");
 
-	// DOM이 없으면 중단 (방어코드)
+	// ⛔ DOM이 없다면 재시도 (최대 10번까지)
 	if (!calendarBody || !calendarHeader) {
-		console.warn("⛔ 캘린더 요소를 찾을 수 없습니다.");
+		console.warn("⛔ 캘린더 요소를 찾을 수 없습니다. 100ms 후 재시도합니다.");
+		let retryCount = 0;
+		const interval = setInterval(() => {
+			const calBody = document.getElementById("calendarBody");
+			const calHeader = document.getElementById("calendarHeader");
+			if (calBody && calHeader) {
+				clearInterval(interval);
+				renderCalendar(); // 재실행
+			}
+			retryCount++;
+			if (retryCount > 10) {
+				clearInterval(interval);
+				console.error("❌ 캘린더 DOM을 찾을 수 없습니다. 렌더링 포기.");
+			}
+		}, 100);
 		return;
 	}
 
