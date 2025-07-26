@@ -6,9 +6,9 @@ import com.example.RSW.vo.PetHealthLog;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 
 @Service
 public class PetHealthService {
@@ -16,20 +16,33 @@ public class PetHealthService {
     @Autowired
     private PetHealthRepository repo;
 
-    public void save(PetHealthLogDto dto) {
-        Map<String, Object> param = new HashMap<>();
-        param.put("petId", dto.getPetId());
-        param.put("logDate", dto.getLogDate());
-        param.put("foodWeight", dto.getFoodWeight());
-        param.put("waterWeight", dto.getWaterWeight());
-        param.put("litterCount", dto.getLitterCount());
-        param.put("soundLevel", dto.getSoundLevel());
-        param.put("notes", dto.getNotes());
-        repo.insertLog(param);
+    // ✅ Dto를 VO로 변환해 저장하고, 저장된 VO 반환
+    public PetHealthLog save(PetHealthLogDto dto) {
+        PetHealthLog log = PetHealthLog.builder()
+                .petId(dto.getPetId())
+                .logDate(LocalDateTime.parse(dto.getLogDate()))
+                .foodWeight(dto.getFoodWeight())
+                .waterWeight(dto.getWaterWeight())
+                .litterCount(dto.getLitterCount())
+                .soundLevel(dto.getSoundLevel())
+                .notes(dto.getNotes())
+                .build();
+
+        repo.insertLog(log);
+        return log;  // WebSocket 브로드캐스트용
+    }
+
+    // ✅ VO 자체 저장도 가능하게
+    public PetHealthLog save(PetHealthLog log) {
+        repo.insertLog(log);
+        return log;
     }
 
     public List<PetHealthLog> getLogsByPetId(int petId) {
         return repo.findLogsByPetId(petId);
     }
-}
 
+    public List<PetHealthLog> getLogsByPetIdAndDate(int petId, LocalDate date) {
+        return repo.findByPetIdAndDate(petId, date);
+    }
+}
