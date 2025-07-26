@@ -8,6 +8,7 @@ import java.util.Map;
 
 @Mapper
 public interface PetHealthRepository {
-    void insertLog(Map<String, Object> param);
+    void insertLog(PetHealthLog log);  // Map 대신 VO 사용
     List<PetHealthLog> findLogsByPetId(int petId);
 }
+
