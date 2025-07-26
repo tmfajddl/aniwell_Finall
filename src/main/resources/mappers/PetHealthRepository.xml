@@ -5,12 +5,13 @@
 
 <mapper namespace="com.example.RSW.repository.PetHealthRepository">
 
-    <insert id="insertLog" parameterType="map">
-        INSERT INTO pet__health_log
+    <insert id="insertLog" parameterType="com.example.RSW.vo.PetHealthLog">
+        INSERT INTO pet_health_log
         (petId, logDate, foodWeight, waterWeight, litterCount, soundLevel, notes)
         VALUES
             (#{petId}, #{logDate}, #{foodWeight}, #{waterWeight}, #{litterCount}, #{soundLevel}, #{notes})
     </insert>
+
 
     <select id="findLogsByPetId" parameterType="int" resultType="com.example.RSW.vo.PetHealthLog">
         SELECT * FROM pet__health_log
