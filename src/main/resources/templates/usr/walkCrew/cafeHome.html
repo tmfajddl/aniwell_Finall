@@ -2,13 +2,13 @@
 <html>
 
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<script src="https://cdn.tailwindcss.com"></script>
-<!-- ✅ Font Awesome CDN 추가 -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
-<link rel="stylesheet" th:href="@{/resource/css/common.css}">
-<title>크루 모집 목록</title>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<script src="https://cdn.tailwindcss.com"></script>
+	<!-- ✅ Font Awesome CDN 추가 -->
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+	<link rel="stylesheet" th:href="@{/resource/css/common.css}">
+	<title>크루 모집 목록</title>
 </head>
 
 <body class="bg-gradient-to-b from-[#e4f0b9] to-[#fcdca9] font-sans">
@@ -39,7 +39,8 @@
 						</div>
 					</div>
 
-					<div class="text-sm text-gray-700" th:text="${crew.description}">Lorem ipsum dolor, sit amet consectetur
+					<div class="text-sm text-gray-700" th:text="${crew.description}">Lorem ipsum dolor, sit amet
+						consectetur
 						adipisicing elit...</div>
 				</div>
 
@@ -96,14 +97,18 @@
 			<!-- 오른쪽: 콘텐츠 섹션 -->
 			<div class="flex-1 w-3/4 space-y-3 h-[100%] grid grid-rows-12 p-2 overflow-x-auto">
 				<!-- 앨범 -->
-				<div class="py-1 row-span-4 shadow overflow-x-auto h-full w-full">
+				<div class="py-1 row-span-4 flex flex-col shadow overflow-x-auto h-full w-full">
 					<div class="flex justify-between items-center mb-2 px-5">
 						<h3 class="font-bold text-lg">앨범</h3>
 					</div>
-					<div th:if="${galleryArticles.isEmpty()}" class="text-center text-gray-500 px-5 py-10">사진이 없습니다.</div>
-					<div th:each="photo : ${galleryArticles}" class="ml-5 aspect-[1/1] h-full bg-gray-300 rounded-lg cursor-pointer"
-						th:attr="data-url=${photo.imageUrl}" onclick="photoModal(this)">
-						<img th:src="${photo.imageUrl}" alt="사진" class="object-cover w-full h-full rounded-lg" />
+					<div class="grid grid-cols-4 gap-3 px-2">
+						<div th:if="${galleryArticles.isEmpty()}" class="h-full text-center text-gray-500 px-5 py-10">
+							사진이 없습니다.</div>
+						<div th:each="photo : ${galleryArticles}"
+							class="aspect-square ml-5 span-row-1 bg-gray-300 rounded-lg cursor-pointer"
+							th:attr="data-url=${photo.imageUrl}" onclick="photoModal(this)">
+							<img th:src="${photo.imageUrl}" alt="사진" class="object-cover w-full h-full rounded-lg" />
+						</div>
 					</div>
 				</div>
 				<!-- 게시글 -->
@@ -113,14 +118,13 @@
 						<h3 class="font-bold">게시글</h3>
 						<button onclick="crewArtAdd()" class="p-1 shadow text-gray-600 hover:text-black">추가 ＋</button>
 					</div>
-					<div class="gap-3 px-4 h-[78%] flex overflow-x-auto">
-						<div th:each="free : ${freeArticles}"
-							th:attr="data-title=${free.title}, 
+					<div class="gap-4 px-4 h-[78%] flex overflow-x-auto">
+						<div th:each="free : ${freeArticles}" th:attr="data-title=${free.title}, 
 						         data-body=${free.body},
 						         data-image-url=${free.imageUrl},
 						         data-writer=${free.extra__writer},
-						         data-reg-date=${free.regDate}"
-							onclick="detailModal(this)" class="z-10 aspect-[1/1] bg-white rounded shadow p-2 h-[100%] w-1/4 flex flex-col">
+						         data-reg-date=${free.regDate}" onclick="detailModal(this)"
+							class="z-10 w-1/4 aspect-[3/4] bg-white rounded shadow p-2 flex flex-col mb-1">
 							<img th:src="${free.imageUrl}" alt="사진" class="w-full flex-1 rounded" />
 							<div class="font-semibold mt-2 flex justify-between">
 								<div th:text="${free.title}" class="overflow-hidden">게시글 제목</div>
@@ -144,8 +148,10 @@
 					<div class="flex gap-5 overflow-x-auto px-4 pb-1">
 						<div th:each="schedule : ${scheduleArticles}" th:attr="data-url=${schedule}" onclick="scModal()"
 							class="w-12 text-center p-1 px-3 shadow">
-							<div th:text="${#dates.format(schedule.scheduleDate, 'MM')}" class="text-sm font-bold"></div>
-							<div th:text="${#dates.format(schedule.scheduleDate, 'dd')}" class="text-xs text-gray-500"></div>
+							<div th:text="${#dates.format(schedule.scheduleDate, 'MM')}" class="text-sm font-bold">
+							</div>
+							<div th:text="${#dates.format(schedule.scheduleDate, 'dd')}" class="text-xs text-gray-500">
+							</div>
 							<div class="text-xs text-gray-500">모임</div>
 						</div>
 					</div>
@@ -163,10 +169,12 @@
 	</div>
 	<!--기본팝업창-->
 	<div id="modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-		<div class="relative w-[90%] max-w-[1000px] h-[700px] bg-transparent flex rounded-2xl overflow-hidden shadow-2xl">
+		<div
+			class="relative w-[90%] max-w-[1000px] h-[700px] bg-transparent flex rounded-2xl overflow-hidden shadow-2xl">
 			<div class="w-full h-full flex bg-gradient-to-b from-[#FCE9A3] to-[#E0C878]">
 				<div class="w-[5%] text-center">
-					<button onclick="closeModal()" class="text-3xl font-light text-gray-600 hover:text-black">&times;</button>
+					<button onclick="closeModal()"
+						class="text-3xl font-light text-gray-600 hover:text-black">&times;</button>
 				</div>
 				<div id="modalContent" class="relative flex-1 bg-white rounded-l-3xl"></div>
 			</div>
@@ -183,16 +191,16 @@
 
 	<!-- ✅ 역할 변경 및 멤버 목록 Ajax 렌더링 JS -->
 	<script>
-	function handleCrewMember() {
-		$.ajax({
-			type: "GET",
-			url: `/usr/walkCrewMember/usr/walkCrew/memberList`,
-			data: { crewId },
-			success: function (data) {
-				const members = data.data1;
+		function handleCrewMember() {
+			$.ajax({
+				type: "GET",
+				url: `/usr/walkCrewMember/usr/walkCrew/memberList`,
+				data: {crewId},
+				success: function (data) {
+					const members = data.data1;
 
-				let memberListHtml = members.map(member => {
-					return `
+					let memberListHtml = members.map(member => {
+						return `
 						<div class="flex items-center justify-between p-2 border-b">
 							<div>
 								<div class="font-semibold">${member.crew_member_name}</div>
@@ -209,25 +217,25 @@
 							</div>
 						</div>
 					`;
-				}).join('');
+					}).join('');
 
-				// ✅ 모달 내부에 렌더링
-				document.getElementById("sideModal").innerHTML = `
+					// ✅ 모달 내부에 렌더링
+					document.getElementById("sideModal").innerHTML = `
 					<div class="p-5 space-y-4">
 						<h2 class="text-lg font-bold">크루원 역할 관리</h2>
 						${memberListHtml}
 					</div>
 				`;
 
-				// ✅ 모달 열기
-				document.getElementById("sideModal").classList.remove("translate-x-full");
-			},
-			error: function (err) {
-				console.error("크루 멤버 목록 가져오기 실패", err);
-			}
-		});
-	}
-</script>
+					// ✅ 모달 열기
+					document.getElementById("sideModal").classList.remove("translate-x-full");
+				},
+				error: function (err) {
+					console.error("크루 멤버 목록 가져오기 실패", err);
+				}
+			});
+		}
+	</script>
 
 
 
@@ -235,19 +243,19 @@
 
 	<!-- ✅ 크루 ID 설정 (Thymeleaf에서 전달됨) -->
 	<script>
-	var crewId = [[${crew.id}]];
-	console.log(crewId); // 디버깅용
-</script>
+		var crewId = [[${crew.id}]];
+		console.log(crewId); // 디버깅용
+	</script>
 
 	<!-- ✅ 날짜 포맷 변경 함수 (YYYY-MM-DD → MM-DD) -->
 	<script>
-	function formatDate(dateStr) {
-		if (!dateStr || dateStr === "0000-00-00") return null;
+		function formatDate(dateStr) {
+			if (!dateStr || dateStr === "0000-00-00") return null;
 
-		const [year, month, day] = dateStr.split("-");
-		return `${month}-${day}`;
-	}
-</script>
+			const [year, month, day] = dateStr.split("-");
+			return `${month}-${day}`;
+		}
+	</script>
 
 	<!-- ✅ jQuery & 외부 JS 불러오기 -->
 	<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -255,19 +263,19 @@
 
 	<!-- ✅ 멤버 섹션 렌더링 함수 (메인 우측 '멤버' 목록에 출력) -->
 	<script>
-	function renderCrewMemberSection() {
-		$.ajax({
-			type: "GET",
-			url: `/usr/walkCrewMember/usr/walkCrew/memberList`,
-			data: { crewId },
-			success: function (data) {
-				const members = data.data1;
-				const container = document.getElementById("crewMemberList");
+		function renderCrewMemberSection() {
+			$.ajax({
+				type: "GET",
+				url: `/usr/walkCrewMember/usr/walkCrew/memberList`,
+				data: {crewId},
+				success: function (data) {
+					const members = data.data1;
+					const container = document.getElementById("crewMemberList");
 
-				if (!container) return;
+					if (!container) return;
 
-				// 📌 멤버 리스트 동적 생성
-				container.innerHTML = members.map(m => `
+					// 📌 멤버 리스트 동적 생성
+					container.innerHTML = members.map(m => `
 					<div onclick="memberModal()" class="h-full flex flex-col px-3 justify-center">
 						<div class="w-12 h-12 bg-yellow-300 rounded-full">
 							<img src="${m.crew_member_photo ? m.crew_member_photo : '/img/default-pet.png'}"
@@ -276,76 +284,76 @@
 						<div class="py-1 w-40% text-sm text-center whitespace-pre-line">${m.crew_member_name}</div>
 					</div>
 				`).join('');
-			},
-			error: function (err) {
-				console.error("멤버 섹션 렌더링 실패:", err);
-			}
-		});
-	}
+				},
+				error: function (err) {
+					console.error("멤버 섹션 렌더링 실패:", err);
+				}
+			});
+		}
 
-	// 페이지 로드 후 멤버 섹션 자동 호출
-	window.addEventListener('DOMContentLoaded', () => {
-		renderCrewMemberSection();
-	});
-</script>
+		// 페이지 로드 후 멤버 섹션 자동 호출
+		window.addEventListener('DOMContentLoaded', () => {
+			renderCrewMemberSection();
+		});
+	</script>
 
 	<!-- ✅ 역할 변경 처리 함수 (크루장 위임 포함) -->
 	<script>
-  /*
-   * 멤버 역할 변경 처리
-   * - leader: 크루장 위임 (confirm 후 서버로 POST)
-   * - subLeader/member: 일반 역할 변경
-   */
-  function changeRole(memberId, newRole) {
-    if (newRole === "leader") {
-      const confirmed = confirm("정말 이 멤버에게 크루장 권한을 위임하시겠습니까?");
-      if (!confirmed) return;
+		/*
+		 * 멤버 역할 변경 처리
+		 * - leader: 크루장 위임 (confirm 후 서버로 POST)
+		 * - subLeader/member: 일반 역할 변경
+		 */
+		function changeRole(memberId, newRole) {
+			if (newRole === "leader") {
+				const confirmed = confirm("정말 이 멤버에게 크루장 권한을 위임하시겠습니까?");
+				if (!confirmed) return;
 
-      // 🔄 크루장 위임 API 호출
-      $.post("/usr/walkCrewMember/transferLeadership", {
-        crewId: crewId,
-        newLeaderId: memberId
-      }, function (res) {
-        if (res.success) {
-          alert("크루장 권한이 성공적으로 위임되었습니다.");
-          location.reload(); // 성공 후 페이지 새로고침
-        } else {
-          alert(res.msg);
-        }
-      });
-    } else {
-      // 🔄 일반 역할 변경 요청 함수 호출 (ex. subLeader, member)
-      sendRoleChange(memberId, newRole);
-    }
-  }
-</script>
+				// 🔄 크루장 위임 API 호출
+				$.post("/usr/walkCrewMember/transferLeadership", {
+					crewId: crewId,
+					newLeaderId: memberId
+				}, function (res) {
+					if (res.success) {
+						alert("크루장 권한이 성공적으로 위임되었습니다.");
+						location.reload(); // 성공 후 페이지 새로고침
+					} else {
+						alert(res.msg);
+					}
+				});
+			} else {
+				// 🔄 일반 역할 변경 요청 함수 호출 (ex. subLeader, member)
+				sendRoleChange(memberId, newRole);
+			}
+		}
+	</script>
 	<script>
-	function crewJoin(btnElement, crewId) {
-		$.ajax({
-			type: "POST",
-			url: `/usr/walkCrewMember/doJoin`,
-			data: { crewId },
-			success: function (data) {
-				console.log(data.msg);
+		function crewJoin(btnElement, crewId) {
+			$.ajax({
+				type: "POST",
+				url: `/usr/walkCrewMember/doJoin`,
+				data: {crewId},
+				success: function (data) {
+					console.log(data.msg);
 
-				// ✅ 버튼 영역 즉시 업데이트 (새로고침 없이 상태 반영)
-				const parent = btnElement.parentElement;
-				parent.innerHTML = `
+					// ✅ 버튼 영역 즉시 업데이트 (새로고침 없이 상태 반영)
+					const parent = btnElement.parentElement;
+					parent.innerHTML = `
 					<button disabled>
 						<i class="fa-solid fa-clock-rotate-left"></i>
 						신청 대기중
 					</button>
 				`;
 
-				// ✅ 멤버 목록 다시 불러오기 (기존 코드 유지)
-				renderCrewMemberSection();
-			},
-			error: function (err) {
-				console.error("참가등록실패", err);
-			}
-		});
-	}
-</script>
+					// ✅ 멤버 목록 다시 불러오기 (기존 코드 유지)
+					renderCrewMemberSection();
+				},
+				error: function (err) {
+					console.error("참가등록실패", err);
+				}
+			});
+		}
+	</script>
 
 </body>
 
