@@ -13,6 +13,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Controller
@@ -59,5 +60,12 @@ public class PetHealthController {
         model.addAttribute("logsJson", logsJson);
 
         return "usr/pet/health";
+    }
+
+    @GetMapping("/usr/pet/health/logs")
+    @ResponseBody
+    public List<PetHealthLog> getLogsByDate(@RequestParam int petId, @RequestParam String date) {
+        LocalDate targetDate = LocalDate.parse(date);
+        return healthService.getLogsByPetIdAndDate(petId, targetDate);
     }
 }
