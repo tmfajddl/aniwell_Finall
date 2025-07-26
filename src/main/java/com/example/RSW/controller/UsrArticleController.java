@@ -110,6 +110,8 @@ public class UsrArticleController {
 		int loginedMemberId = rq.getLoginedMemberId();
 
 		String imageUrl = null;
+		
+		System.out.println("crewId: "+crewId);
 
 		// ✅ 이미지 업로드 처리 (Cloudinary)
 		if (imageFile != null && !imageFile.isEmpty()) {
