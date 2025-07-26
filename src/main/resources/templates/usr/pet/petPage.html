@@ -30,6 +30,57 @@
 					<canvas id="myChart" class="w-full h-full"></canvas>
 				</div>
 
+				<div id="feedingPanel"
+					 class="fixed top-0 right-0 w-[92%] h-full bg-white shadow-xl z-40 transform translate-x-full transition-transform duration-300 rounded-l-[40px] flex flex-col p-6 overflow-auto">
+
+					<!-- 닫기 버튼 -->
+					<button onclick="closeFeedingPanel()" class="absolute top-4 left-4 text-3xl text-gray-500 hover:text-black font-bold">×</button>
+
+					<h2 class="text-xl font-bold text-gray-700 text-center mb-6 mt-10"> 📝 하루 건강 리포트</h2>
+
+					<!-- 날짜 선택 -->
+					<div class="text-center mb-4">
+						<input type="date" id="datePicker" class="border rounded px-3 py-2 shadow-sm" />
+					</div>
+
+					<!-- 1. 사료 차트 -->
+					<div class="relative h-[300px] mb-10">
+						<h3 class="text-lg font-bold text-gray-800 mb-2">🍚 사료 무게 변화량</h3>
+						<div class="absolute inset-0">
+							<canvas id="weightChart" class="w-full h-full bg-white rounded-xl shadow max-w-5xl mx-auto"></canvas>
+						</div>
+					</div>
+
+					<!-- 2. 물 섭취량 차트 -->
+					<div class="relative h-[300px] mb-10">
+						<h3 class="text-lg font-bold text-gray-800 mb-2">💧 물 무게 변화량</h3>
+						<div class="absolute inset-0">
+							<canvas id="waterChart" class="w-full h-full bg-white rounded-xl shadow max-w-5xl mx-auto"></canvas>
+						</div>
+					</div>
+
+					<!-- 3. 배변 횟수 -->
+					<div class="h-[300px]">
+						<h3 class="text-lg font-bold text-gray-800 mb-2">🚽 배변 횟수</h3>
+						<div class="overflow-y-auto max-h-[250px]">
+							<table class="w-full max-w-2xl mx-auto text-sm border border-gray-300 rounded-lg">
+								<thead class="bg-gray-100">
+								<tr>
+									<th class="p-2 border">시간</th>
+									<th class="p-2 border">배변 종류</th>
+								</tr>
+								</thead>
+								<tbody id="poopTableBody">
+								<!-- JavaScript로 행 추가됨 -->
+								</tbody>
+							</table>
+						</div>
+					</div>
+
+				</div>
+
+
+
 				<!-- 감정분석 카드 -->
 				<div class="grid grid-cols-2 gap-4 h-3/5">
 					<!-- 분석 버튼 -->
@@ -101,7 +152,7 @@
 
 					<div class="bg-[#e0eadf] rounded-xl p-4 text-sm text-center">
 						어제보다 오늘 물을 <span class="font-bold">3ml</span> 더 먹었어요!<br>
-						<button class="text-blue-600 mt-2 underline">행동분석보기 &gt;</button>
+						<button class="text-blue-600 mt-2 underline" onclick="openFeedingPanel()">행동분석보기 &gt;</button>
 					</div>
 				</div>
 
@@ -321,6 +372,244 @@
 
 
 	</div>
+	<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+
+	<script th:inline="javascript">
+		const todayStr = new Date().toISOString().split("T")[0];
+		const dateInput = document.getElementById("datePicker");
+
+		// 사료용
+		const labels = [], deltas = [], bgColors = [], tooltipLabels = [], rawData = [];
+
+		// 물용
+		const waterLabels = [], waterDeltas = [], waterBgColors = [], waterTooltipLabels = [];
+
+		let weightChart = null;
+		let waterChart = null;
+		let stompClient = null;
+		let subscription = null;
+
+		function renderChart(data) {
+			labels.length = deltas.length = bgColors.length = tooltipLabels.length = 0;
+			waterLabels.length = waterDeltas.length = waterBgColors.length = waterTooltipLabels.length = 0;
+			rawData.length = 0;
+
+			if (!Array.isArray(data)) {
+				console.error("❌ 서버 응답이 배열이 아닙니다:", data);
+				alert("데이터 형식이 잘못되었습니다.");
+				return;
+			}
+
+			rawData.push(...data);
+			data.sort((a, b) => new Date(a.logDate) - new Date(b.logDate));
+
+			for (let i = 1; i < data.length; i++) {
+				const prev = data[i - 1], curr = data[i];
+				const label = new Date(curr.logDate).toTimeString().slice(0, 5);
+
+				// 사료
+				if (curr.foodWeight !== null && prev.foodWeight !== null) {
+					const foodDiff = parseFloat(curr.foodWeight) - parseFloat(prev.foodWeight);
+					const absFood = Math.abs(foodDiff).toFixed(2);
+					labels.push(label);
+					deltas.push(absFood);
+					bgColors.push(foodDiff < 0 ? 'rgba(76, 175, 80, 0.2)' : 'rgba(255, 165, 0, 0.2)');
+					tooltipLabels.push(foodDiff < 0 ? `섭취: ${absFood}g` : `급식: ${absFood}g`);
+				}
+
+				// 물
+				if (curr.waterWeight !== null && prev.waterWeight !== null) {
+					const waterDiff = parseFloat(curr.waterWeight) - parseFloat(prev.waterWeight);
+					const absWater = Math.abs(waterDiff).toFixed(2);
+					waterLabels.push(label);
+					waterDeltas.push(absWater);
+					waterBgColors.push(waterDiff < 0 ? 'rgba(0, 191, 255, 0.2)' : 'rgba(30, 144, 255, 0.2)');
+					waterTooltipLabels.push(waterDiff < 0 ? `섭취: ${absWater}g` : `물 공급: ${absWater}g`);
+				}
+			}
+
+			const showFoodXAxis = labels.length > 0;
+			const showWaterXAxis = waterLabels.length > 0;
+
+			// 사료 차트
+			const foodCtx = document.getElementById('weightChart').getContext('2d');
+			if (!weightChart) {
+				weightChart = new Chart(foodCtx, {
+					type: 'bar',
+					data: {
+						labels,
+						datasets: [{
+							label: '사료 변화량 (절대값)',
+							data: deltas,
+							backgroundColor: bgColors,
+							borderColor: bgColors.map(c => c.replace('0.2', '1')),
+							borderWidth: 1
+						}]
+					},
+					options: {
+						responsive: true,
+						maintainAspectRatio: false,
+						scales: {
+							y: { title: { display: true, text: 'g' }},
+							x: {
+								title: { display: true, text: '시간 (HH:MM)' },
+								display: showFoodXAxis
+							}
+						},
+						plugins: {
+							tooltip: {
+								callbacks: {
+									label: ctx => tooltipLabels[ctx.dataIndex]
+								}
+							}
+						}
+					}
+				});
+			} else {
+				weightChart.data.labels = labels;
+				weightChart.data.datasets[0].data = deltas;
+				weightChart.data.datasets[0].backgroundColor = bgColors;
+				weightChart.data.datasets[0].borderColor = bgColors.map(c => c.replace('0.2', '1'));
+				weightChart.options.scales.x.display = showFoodXAxis;
+				weightChart.update();
+			}
+
+			// 물 차트
+			const waterCtx = document.getElementById('waterChart').getContext('2d');
+			if (!waterChart) {
+				waterChart = new Chart(waterCtx, {
+					type: 'bar',
+					data: {
+						labels: waterLabels,
+						datasets: [{
+							label: '물 변화량 (절대값)',
+							data: waterDeltas,
+							backgroundColor: waterBgColors,
+							borderColor: waterBgColors.map(c => c.replace('0.2', '1')),
+							borderWidth: 1
+						}]
+					},
+					options: {
+						responsive: true,
+						maintainAspectRatio: false,
+						scales: {
+							y: { title: { display: true, text: 'g' }},
+							x: {
+								title: { display: true, text: '시간 (HH:MM)' },
+								display: showWaterXAxis
+							}
+						},
+						plugins: {
+							tooltip: {
+								callbacks: {
+									label: ctx => waterTooltipLabels[ctx.dataIndex]
+								}
+							}
+						}
+					}
+				});
+			} else {
+				waterChart.data.labels = waterLabels;
+				waterChart.data.datasets[0].data = waterDeltas;
+				waterChart.data.datasets[0].backgroundColor = waterBgColors;
+				waterChart.data.datasets[0].borderColor = waterBgColors.map(c => c.replace('0.2', '1'));
+				waterChart.options.scales.x.display = showWaterXAxis;
+				waterChart.update();
+			}
+		}
+
+		function connectWebSocket() {
+			const socket = new SockJS('/ws');
+			stompClient = Stomp.over(socket);
+			stompClient.connect({}, () => {
+				console.log('🔌 WebSocket 연결됨');
+				subscription = stompClient.subscribe(`/topic/health/${petId}`, (message) => {
+					const newLog = JSON.parse(message.body);
+					updateChartWithNewLog(newLog);
+				});
+			});
+		}
+
+		function disconnectWebSocket() {
+			if (subscription) subscription.unsubscribe();
+			if (stompClient) stompClient.disconnect();
+		}
+
+		function updateChartWithNewLog(newLog) {
+			const last = rawData[rawData.length - 1];
+			const timeLabel = new Date(newLog.logDate).toTimeString().slice(0, 5);
+
+			rawData.push(newLog);
+
+			if (newLog.foodWeight !== null && last.foodWeight !== null) {
+				const foodDiff = parseFloat(newLog.foodWeight) - parseFloat(last.foodWeight);
+				const absFood = Math.abs(foodDiff).toFixed(2);
+				const foodColor = foodDiff < 0 ? 'rgba(76, 175, 80, 0.2)' : 'rgba(255, 165, 0, 0.2)';
+				labels.push(timeLabel);
+				deltas.push(absFood);
+				bgColors.push(foodColor);
+				tooltipLabels.push(foodDiff < 0 ? `섭취: ${absFood}g` : `급식: ${absFood}g`);
+				weightChart.options.scales.x.display = true;
+				weightChart.update();
+			}
+
+			if (newLog.waterWeight !== null && last.waterWeight !== null) {
+				const waterDiff = parseFloat(newLog.waterWeight) - parseFloat(last.waterWeight);
+				const absWater = Math.abs(waterDiff).toFixed(2);
+				const waterColor = waterDiff < 0 ? 'rgba(0, 191, 255, 0.2)' : 'rgba(30, 144, 255, 0.2)';
+				waterLabels.push(timeLabel);
+				waterDeltas.push(absWater);
+				waterBgColors.push(waterColor);
+				waterTooltipLabels.push(waterDiff < 0 ? `섭취: ${absWater}g` : `물 공급: ${absWater}g`);
+				waterChart.options.scales.x.display = true;
+				waterChart.update();
+			}
+		}
+
+		function loadDataAndDraw(dateStr) {
+			if (!dateStr) dateStr = todayStr;
+
+			fetch(`/usr/pet/health/logs?petId=${petId}&date=${dateStr}`)
+					.then(res => {
+						if (!res.ok) throw new Error(`서버 응답 오류: ${res.status}`);
+						return res.json();
+					})
+					.then(data => {
+						renderChart(data);
+						if (dateStr === todayStr) connectWebSocket();
+						else disconnectWebSocket();
+					})
+					.catch(err => {
+						console.error("🚨 데이터 로딩 실패:", err);
+						if (!rawData || rawData.length === 0) {
+							alert("데이터를 불러올 수 없습니다.");
+						}
+					});
+		}
+
+		function openFeedingPanel() {
+			document.getElementById("feedingPanel").classList.remove("translate-x-full");
+			setTimeout(() => {
+				if (dateInput) {
+					dateInput.value = todayStr;
+					loadDataAndDraw(todayStr);
+					dateInput.addEventListener("change", () => {
+						disconnectWebSocket();
+						loadDataAndDraw(dateInput.value);
+					});
+				}
+			}, 100);
+		}
+
+		function closeFeedingPanel() {
+			document.getElementById("feedingPanel").classList.add("translate-x-full");
+			disconnectWebSocket();
+		}
+	</script>
+
+
+
 
 
 	<script th:inline="javascript">
