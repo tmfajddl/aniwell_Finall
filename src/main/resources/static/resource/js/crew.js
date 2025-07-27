@@ -626,7 +626,7 @@ function modal_btn() {
 	    </button>
 
 	    <!-- 내가 쓴 글 -->
-	    <button onclick="location.href='/usr/walkCrew/crewarticle'" class="w-full text-left text-sm font-medium text-gray-800 hover:text-yellow-500 transition">
+	    <button onclick=handleArticleList()" class="w-full text-left text-sm font-medium text-gray-800 hover:text-yellow-500 transition">
 	     내가 쓴 글
 	    </button>
 
@@ -696,6 +696,7 @@ function handleCrewJoin() {
 	closeSideModal(); // 사이드바 닫기
 	crewjoy();        // 참가 신청 로직 실행
 }
+
 
 // 신청자 정보 전역변수
 let applicants = [];
@@ -846,10 +847,11 @@ function crewMember() {
 	    <div id="memberDetail" class="space-y-2 bg-white p-4 rounded shadow">
 	      <p>좌측에서 회원을 선택하세요.</p>
 	    </div>
-
+		
 	    <div class="mt-6 space-x-4" id="memberActionButtons" style="display: none;">
 	      <button onclick="kickMember()" class="px-4 py-2 bg-red-200 rounded hover:bg-red-300 shadow">강퇴</button>
-	    </div>
+		  <button onclick="transLeader()" class="px-4 py-2 bg-yellow-200 rounded hover:bg-yellow-300 shadow">위임</button>
+		</div>
 	  </div>
 	</div>
 
@@ -895,8 +897,8 @@ function showMemberDetail(id) {
 		success: function(data) {
 			console.log(data);
 			detail.innerHTML = `
-				  <p>${data.photo}</p>
 				  <p>${data.nickname}</p>
+				  <p>${data.address}</p>
 				`;
 			detail.dataset.userId = member.id;
 			buttons.style.display = "block";
@@ -907,11 +909,61 @@ function showMemberDetail(id) {
 	});
 
 }
+//위임 처리
+function transLeader() {
+	const id = document.getElementById("memberDetail").dataset.userId;
+
+	if (!confirm(`정말로 ID ${id} 회원을 위임하시겠습니까?`)) return;
+	$.ajax({
+			url: "/usr/walkCrewMember/transferLeadership",
+			method: "POST",
+			data: {
+				crewId: crewId,
+				memberId: id
+			},
+			success: function(data) {
+				if (data.resultCode.startsWith("S-")) {
+					alert("위임 완료");
+					renderMemberList(); // 성공 후 목록 다시 렌더링
+					handleCrewMember()
+				} else {
+					alert(`❌ 실패: ${data.msg}`);
+				}
+			},
+			error: function(xhr, status, error) {
+				console.error("❌ 위 요청 실패", error);
+				alert("서버 오류로 위임에 실패했습니다.");
+			}
+		});
+
+}
 
 // 강퇴 처리
 function kickMember() {
 	const id = document.getElementById("memberDetail").dataset.userId;
-	alert(`❌ ID ${id} 회원 강퇴 처리`);
+
+	if (!confirm(`정말로 ID ${id} 회원을 강퇴하시겠습니까?`)) return;
+	$.ajax({
+		url: "/usr/walkCrewMember/expel",
+		method: "POST",
+		data: {
+			crewId: crewId,
+			memberId: id
+		},
+		success: function(data) {
+			if (data.resultCode.startsWith("S-")) {
+				alert("강퇴 완료");
+				renderMemberList(); // 성공 후 목록 다시 렌더링
+				handleCrewMember()
+			} else {
+				alert(`❌ 실패: ${data.msg}`);
+			}
+		},
+		error: function(xhr, status, error) {
+			console.error("❌ 강퇴 요청 실패", error);
+			alert("서버 오류로 강퇴에 실패했습니다.");
+		}
+	});
 
 }
 //////
@@ -935,4 +987,43 @@ function crewJoin(crewId) {
 			console.error("참가등록실패", err);
 		}
 	});
+}
+
+function handleArticleList() {
+	closeSideModal(); // 사이드바 닫기
+	myArticle();        // 참가 신청 로직 실행
+}
+
+//내가 쓴글
+function myArticle(){
+	const memberId = localStorage.getItem("loginedMember");
+	$.ajax({
+			type: "GET",
+			url: `/usr/article/list`,
+			data: { 
+				crewId: crewId,
+				boardId: 3
+			},
+			success: function(data) {
+
+				console.log(data.msg);
+				console.log(data.data1);
+				// ✅ 참가 수락 후 멤버 목록도 다시 렌더링
+				renderMemberList();
+				const html = `
+					<div class="flex">
+					 <!-- 작성된 글 리스 -->
+					</div>
+
+					
+					    `;
+					openComModal(html);
+
+					setTimeout(() => renderMemberList(), 0);
+			},
+			error: function(err) {
+				console.error("가져오기실패", err);
+			}
+		});
+
 }
