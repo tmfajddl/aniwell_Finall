@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>활동 일지</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.css" rel="stylesheet"/>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs/lib/stomp.min.js"></script>
+    <style>
+        body {
+            font-family: 'SUIT', sans-serif;
+            background: #f2fbf4;
+            margin: 0;
+            padding: 40px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .popup-container {
+            background: #ffffff;
+            border-radius: 30px;
+            box-shadow: 0 0 25px rgba(190, 220, 170, 0.4);
+            padding: 30px;
+            max-width: 900px;
+            width: 100%;
+        }
+
+        h2 {
+            margin: 0 0 20px 10px;
+            color: #4a6e4d;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+        }
+
+        h2::before {
+            content: "🐾";
+            margin-right: 8px;
+        }
+
+        #timeline {
+            height: 420px;
+        }
+
+        #datePicker {
+            margin-left: 10px;
+            margin-bottom: 20px;
+            padding: 6px 12px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="popup-container">
+    <h2>활동 일지
+        <input type="date" id="datePicker"/>
+    </h2>
+    <div id="timeline"></div>
+    <div id="noActivityMessage" style="display:none; margin-top:20px; text-align:center; color:#888; font-size:16px;">
+        오늘 활동이 없습니다 🐾
+    </div>
+</div>
+
+<script th:inline="javascript">
+    const petId = [[${petId}]];
+    let rawInitialData = [[${activitiesJson}]];
+    let initialData;
+
+    // 🔹 초기 데이터가 문자열이라면 JSON 파싱
+    try {
+        if (typeof rawInitialData === "string") {
+            initialData = JSON.parse(rawInitialData);
+        } else {
+            initialData = rawInitialData;
+        }
+    } catch (e) {
+        console.warn("초기 데이터 파싱 실패:", e);
+        initialData = [];
+    }
+
+    const todayStr = new Date().toISOString().split("T")[0];
+    const datePicker = document.getElementById("datePicker");
+    datePicker.value = todayStr;
+
+    let stompClient = null;
+    let timeline = null;
+    let items = new vis.DataSet();
+    const container = document.getElementById('timeline');
+
+    function getEmoji() {
+        const list = ["🐱"];
+        return list[Math.floor(Math.random() * list.length)];
+    }
+
+    function getColor(zoneName) {
+        if (zoneName.includes("거실")) return "#fff8b5";
+        if (zoneName.includes("침실")) return "#d3f8e2";
+        return "#e0eafc";
+    }
+
+    function addItem(data) {
+        if (!data.enteredAt || !data.exitedAt) return;
+
+        let start = new Date(data.enteredAt.replace('T', ' '));
+        let end = new Date(data.exitedAt.replace('T', ' '));
+
+        if ((end - start) < 10 * 1000) {
+            end = new Date(start.getTime() + 10 * 1000);
+        }
+
+        const color = getColor(data.zoneName);
+        const id = Date.now() + Math.random();
+
+        items.add({
+            id,
+            content: getEmoji(),
+            start,
+            end,
+            group: data.zoneName,
+            title: `${data.zoneName}에서 ${data.durationSec}초 동안 머물렀어요 🐾`,
+            style: `background-color: ${color}; border-radius: 16px; font-size:16px; padding:4px;`
+        });
+
+        return id;
+    }
+
+    function renderTimeline(data, dateStr) {
+        if (timeline) {
+            timeline.destroy();
+            container.innerHTML = '';
+        }
+        items.clear();
+        if (Array.isArray(data)) data.forEach(item => addItem(item));
+
+        const selectedDate = new Date(dateStr);
+        const startOfDay = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), 0, 0, 0);
+        const endOfDay = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), 23, 59, 59);
+
+        const groups = new vis.DataSet([
+            { id: "거실", content: "거실" },
+            { id: "침실", content: "침실" }
+        ]);
+
+
+        const options = {
+            stack: false,
+            orientation: 'top',
+            margin: { item: 12 },
+            showMajorLabels: true,
+            showCurrentTime: true,
+            min: startOfDay,
+            max: endOfDay,
+            tooltip: { followMouse: true },
+            zoomable: false,
+            moveable: true
+        };
+
+        timeline = new vis.Timeline(container, items, groups, options);
+
+        // ✅ 하루 전체 보기로 줌아웃
+        timeline.setWindow(startOfDay, endOfDay);
+    }
+
+    function connectWebSocket() {
+        const socket = new SockJS("/ws");
+        stompClient = Stomp.over(socket);
+        stompClient.connect({}, () => {
+            stompClient.subscribe(`/topic/activity/${petId}`, (msg) => {
+                const act = JSON.parse(msg.body);
+                console.log("📩 WebSocket 수신:", act);
+                const id = addItem(act);
+                if (id) {
+                    setTimeout(() => {
+                        timeline.focus(id);
+                    }, 300);
+                }
+            });
+        });
+    }
+
+    function disconnectWebSocket() {
+        if (stompClient) stompClient.disconnect();
+    }
+
+    function loadActivitiesByDate(dateStr) {
+        fetch(`/usr/pet/activity/list?petId=${petId}&date=${dateStr}`)
+            .then(res => res.json())
+            .then(data => {
+                renderTimeline(data, dateStr);
+                if (dateStr === todayStr) connectWebSocket();
+                else disconnectWebSocket();
+            });
+    }
+
+    // 🔹 초기 로딩
+    renderTimeline(initialData, todayStr);
+    connectWebSocket();
+
+    // 🔹 날짜 변경 시 새로 불러오기
+    datePicker.addEventListener("change", () => {
+        const selectedDate = datePicker.value;
+        disconnectWebSocket();
+        loadActivitiesByDate(selectedDate);
+    });
+</script>
+
+
+</body>
+</html>

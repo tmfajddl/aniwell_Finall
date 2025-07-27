@@ -33,5 +33,8 @@ public interface PetVaccinationRepository {
 
     Integer findIntervalMonthsByVaccine(String vaccineName);
 
-    void updateAllNextDueDates(int petId, String vaccineName, LocalDate nextDueDate);
+
+    void updateNextDueDateByInjectionDate(int petId, String vaccineName, LocalDate latestInjectionDate, LocalDate nextDueDate);
+
+    void invalidateOldNextDueDates(int petId, String vaccineName, LocalDate latestInjectionDate);
 }
