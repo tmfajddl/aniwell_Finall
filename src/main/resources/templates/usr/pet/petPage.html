@@ -9,12 +9,12 @@
 	<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 	<link rel="stylesheet" th:href="@{/resource/css/petPage.css}">
 	<link rel="stylesheet" th:href="@{/resource/css/common.css}">
+	<link rel="stylesheet" th:href="@{/resource/css/global.css}">
 	<script th:src="@{/resource/js/calendar.js}"></script>
-
 
 </head>
 
-<body class="bg-gradient-to-b from-[#e4f0b9] to-[#fcdca9] font-sans">
+<body class="bg-gradient-to-b from-[#e4f0b9] to-[#fcdca9]">
 	<div class="flex h-screen">
 		<!-- Sidebar -->
 		<div th:replace="common :: siteHeader"></div>
@@ -84,9 +84,13 @@
 				<!-- 감정분석 카드 -->
 				<div class="grid grid-cols-2 gap-4 h-3/5">
 					<!-- 분석 버튼 -->
-					<div class="bg-[#e0eadf] rounded-xl p-4 text-center font-semibold cursor-pointer"
+					<div class="relative bg-gradient-to-r from-[#DFF8E5] to-[#F4FBCC] rounded-xl p-4 text-center shadow-md hover:shadow-xl transition-shadow duration-300 font-semibold cursor-pointer"
 						 onclick="openEmotionPanel()">
-						우리아이 감정분석하기
+						 <div class="text-left text-3xl font-bold text-black leading-snug flex self-conter">
+						   우리아이<br />
+						   감정분석하기
+						 </div>
+
 					</div>
 
 					<!-- 슬라이드 감정 분석 패널 -->
@@ -150,7 +154,7 @@
 					</div>
 
 
-					<div class="bg-[#e0eadf] rounded-xl p-4 text-sm text-center">
+					<div class="relative bg-gradient-to-r from-[#DFF8E5] to-[#F4FBCC] rounded-xl p-4 text-center shadow-md hover:shadow-xl transition-shadow duration-300 font-semibold cursor-pointer">
 						어제보다 오늘 물을 <span class="font-bold">3ml</span> 더 먹었어요!<br>
 						<button class="text-blue-600 mt-2 underline" onclick="openFeedingPanel()">행동분석보기 &gt;</button>
 					</div>
@@ -165,7 +169,7 @@
 						<div class="flex justify-between items-center absoiute">
 							<span id="current-month-label" class="text-sm font-bold">JULY 5</span>
 							<button
-									class="w-6 h-6 rounded-full bg-[#fdf6c2] shadow flex items-center justify-center text-lg font-bold"
+									class="hover:shadow-xl transition-shadow duration-300 font-semibold cursor-pointer w-6 h-6 rounded-full bg-[#fdf6c2] shadow flex items-center justify-center text-lg font-bold"
 									onclick="openTodayVaccineModal()">+</button>
 
 						</div>
@@ -187,7 +191,7 @@
 					</div>
 
 					<!-- 오른쪽: 캘린더 -->
-					<div class="bg-[#fdf6c2] rounded-xl p-4 flex-1 shadow">
+					<div class="bg-gradient-to-r from-[#F4FBCC] to-[#fdf6c2] rounded-xl p-4 flex-1 shadow">
 						<div id="calendar-container" class="w-full"></div>
 					</div>
 
@@ -257,16 +261,16 @@
 
 				<!-- 주변 펫살 보기 -->
 				<div class="grid grid-row-3 gap-2 h-full">
-					<a th:href="@{/usr/pet/petPlace}" class="block bg-gray-300 rounded-xl p-3 text-sm text-center font-semibold transition">
+					<a th:href="@{/usr/pet/petPlace}" class="hover:shadow-md transition-shadow duration-300 font-semibold cursor-pointer shadow block bg-gradient-to-r from-[#EEE8CD] to-[#F4FBCC] rounded-xl p-3 text-sm text-center font-semibold transition">
 						주변 펫샵 알아보기
 					</a>
 					<a th:href="@{/usr/pet/gallery(petId=${pet.id})}"
-					   class="block bg-gray-300 rounded-xl p-3 text-sm text-center font-semibold transition">
+					   class="hover:shadow-md transition-shadow duration-300 font-semibold cursor-pointer shadow block bg-gradient-to-r from-[#EEE8CD] to-[#F4FBCC] rounded-xl p-3 text-sm text-center font-semibold transition">
 						감정 갤러리
 					</a>
 
 					<a th:href="@{/usr/pet/daily(petId=${pet.id})}"
-					   class="block bg-gray-300 rounded-xl p-3 text-sm text-center font-semibold transition">
+					   class="hover:shadow-md transition-shadow duration-300 font-semibold cursor-pointer shadow block bg-gradient-to-r from-[#EEE8CD] to-[#F4FBCC] rounded-xl p-3 text-sm text-center font-semibold transition">
 						감정 일기
 					</a>
 
