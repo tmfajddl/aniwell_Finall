@@ -121,27 +121,32 @@ public class UsrCrewCafeController {
 		return "usr/walkCrew/cafeHome";
 	}
 
-	// ✅ 내가 가입한 크루의 카페로 이동
-	@GetMapping("/myCrewCafe")
-	public String goToMyCrewCafe(HttpServletRequest req, Model model) {
-		Rq rq = (Rq) req.getAttribute("rq");
-		int memberId = rq.getLoginedMemberId();
+	@GetMapping("/usr/crew/myCrewCafe")
+	@ResponseBody
+	public ResultData<Map<String, Object>> getMyCrewCafe(HttpServletRequest req) {
+	    Rq rq = (Rq) req.getAttribute("rq");
+	    int memberId = rq.getLoginedMemberId();
 
-		WalkCrew myCrew = walkCrewService.getCrewByLeaderId(memberId);
-		if (myCrew == null) {
-			myCrew = walkCrewMemberService.getMyCrew(memberId);
-		}
+	    // 1. 내가 만든 크루 or 가입한 크루 조회
+	    WalkCrew myCrew = walkCrewService.getCrewByLeaderId(memberId);
+	    if (myCrew == null) {
+	        myCrew = walkCrewMemberService.getMyCrew(memberId);
+	    }
 
-		if (myCrew == null) {
-			return rq.historyBackOnView("가입된 크루가 없습니다.");
-		}
+	    if (myCrew == null) {
+	        return ResultData.from("F-1", "가입된 크루가 없습니다.");
+	    }
 
-		// ✅ 이렇게 수정!
-		model.addAttribute("crew", myCrew);
-		List<Article> articles = articleService.getArticlesByCrewId(myCrew.getId());
-		model.addAttribute("articles", articles);
+	    // 2. 크루 게시글도 같이 가져옴
+	    List<Article> articles = articleService.getArticlesByCrewId(myCrew.getId());
 
-		return "redirect:/usr/crewCafe/cafeHome?crewId=" + myCrew.getId(); // ✅ 요거만 바꾸면 됨
+	    // 3. Map으로 묶어서 전달
+	    Map<String, Object> data = new HashMap<>();
+	    data.put("crew", myCrew);
+	    data.put("articles", articles);
+
+	    return ResultData.from("S-1", "나의 크루와 게시글을 불러왔습니다.", data);
 	}
+
 
 }
