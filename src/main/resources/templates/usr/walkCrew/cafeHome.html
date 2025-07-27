@@ -136,15 +136,15 @@
 						class="text-center text-gray-500 px-5 py-10">
 						게시글 없습니다.</div>
 					<div th:if="${freeArticles != null and !freeArticles.isEmpty()}"
-						class="gap-4 px-4 h-[78%] flex overflow-x-auto">
+						class="gap-4 px-4 h-[80%] flex overflow-x-auto">
 						<div th:each="free : ${freeArticles}" th:attr="data-title=${free.title}, 
 						         data-body=${free.body},
 						         data-image-url=${free.imageUrl},
 						         data-writer=${free.extra__writer},
 						         data-reg-date=${free.regDate}" onclick="detailModal(this)"
 							class="z-10 w-1/4 aspect-[3/4] bg-white rounded shadow p-2 flex flex-col mb-1">
-							<img th:src="${free.imageUrl}" alt="사진" class="w-full flex-1 rounded" />
-							<div class="font-semibold mt-2 flex justify-between">
+							<img th:src="${free.imageUrl}" alt="사진" class="h-full rounded" />
+							<div class="font-semibold flex justify-between">
 								<div th:text="${free.title}" class="overflow-hidden">게시글 제목</div>
 								<div class="text-sm">🤍️</div>
 							</div>
@@ -169,8 +169,11 @@
 						일정 없습니다.</div>
 					<div th:if="${scheduleArticles != null and !scheduleArticles.isEmpty()}"
 						class="flex gap-5 overflow-x-auto px-4 pb-1">
-						<div th:each="schedule : ${scheduleArticles}" th:attr="data-url=${schedule}" onclick="scModal()"
-							class="w-12 text-center p-1 px-3 shadow">
+						<div th:each="schedule : ${scheduleArticles}" th:attr="data-title=${schedule.title}, 
+												         data-body=${schedule.body},
+												         data-scheduleDate=${schedule.scheduleDate},
+												         data-writer=${schedule.extra__writer},
+												         data-reg-date=${schedule.regDate}" onclick="scModal(this)" class="w-12 text-center p-1 px-3 shadow">
 							<div th:text="${#dates.format(schedule.scheduleDate, 'MM')}" class="text-sm font-bold">
 							</div>
 							<div th:text="${#dates.format(schedule.scheduleDate, 'dd')}" class="text-xs text-gray-500">
@@ -205,10 +208,11 @@
 	</div>
 	<!-- ✅ 그냥 팝업 (기존 유지) -->
 	<div id="comModal"></div>
+
 	<div id="comNobgModal"></div>
 	<!-- ✅ 사이드팝업창 -->
 	<div id="sideModal"
-		class="fixed top-0 right-0 h-full w-[400px] bg-white shadow-lg z-50 transform translate-x-full transition-transform duration-300 ease-in-out">
+		class="bg-white fixed top-0 right-0 h-full w-[400px] shadow-lg z-50 transform translate-x-full transition-transform duration-300 ease-in-out">
 		<!-- ✅ 이곳은 JS에서 Ajax 호출로 채워짐 -->
 	</div>
 
@@ -298,7 +302,7 @@
 
 					// 📌 멤버 리스트 동적 생성
 					container.innerHTML = members.map(m => `
-					<div onclick="memberModal()" class="h-full flex flex-col px-3 justify-center">
+					<div onclick="memberModal()" class="bg-white h-full flex flex-col px-3 justify-center">
 						<div class="w-12 h-12 bg-yellow-300 rounded-full">
 							<img src="${m.crew_member_photo ? m.crew_member_photo : '/img/default-pet.png'}"
 								alt="프로필" class="w-full h-full object-cover" />

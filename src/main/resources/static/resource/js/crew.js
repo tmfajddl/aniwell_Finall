@@ -178,19 +178,40 @@ function memberModal() {
 
 
 // 📅 일정 보기 모달
-function scModal() {
+function scModal(el) {
+	const schedule = {
+		title: el.dataset.title,
+		body: el.dataset.body,
+		scheduleDate: el.dataset.scheduledate, // ⚠️ 주의: HTML에서는 소문자로 바뀜!
+		writer: el.dataset.writer,
+		regDate: el.dataset.regDate
+	};
+
 	const html = `
-      <h2 class="text-lg font-bold mb-4">일정 정보</h2>
-      <p>7월 7일</p>
-      <p class="text-sm text-gray-500">오후 2시 / 장소: OO공원</p>
-	  <div class="flex justify-end">
-	  <button class="mt-4 px-6 py-2 text-black font-semibold rounded-xl shadow-md bg-gradient-to-r from-green-200 to-yellow-100 hover:shadow-lg transition">
-	    참가하기
-	  </button>
-	  </div>
-    `;
+		<h2 class="text-lg font-bold mb-4">일정 정보</h2>
+		<div>${schedule.scheduleDate}</div>
+		<p class="text-sm">${schedule.title}</p>
+		<p class="text-sm text-gray-500">${schedule.body}</p>
+		<div class="flex justify-end">
+			<button id="scJoinBtn" class="mt-4 px-6 py-2 text-black font-semibold rounded-xl shadow-md bg-gradient-to-r from-green-200 to-yellow-100 hover:shadow-lg transition">
+				참가하기
+			</button>
+		</div>
+	`;
+
 	openComModal(html);
+
+	setTimeout(() => {
+		$('#scJoinBtn').on('click', function() {
+			// ✅ 그림자 색을 노란색으로 변경
+			el.classList.remove('shadow');
+			el.classList.add('shadow-yellow-400');
+
+			alert('✅ 참가 완료!');
+		});
+	}, 0);
 }
+
 
 // 📸 사진 보기 
 // 모달
@@ -294,86 +315,202 @@ function noti_btn() {
 
 function crewArtAdd() {
 	const html = `
-	<div class="flex h-full">
-	<!-- 왼쪽 이미지 영역 (클릭 시 업로드) -->
-	  <label for="imageUpload" class="w-1/2 bg-gray-100 cursor-pointer">
-	    <img id="previewImage" src="https://via.placeholder.com/500" alt="preview"
-	      class="object-cover w-full h-full" />
-	    <input type="file" id="imageUpload" name="imageFile" accept="image/*" class="hidden" onchange="previewImage(event)" />
-	  </label>
+	<div>
+	  <div class="flex h-full">
+	    <!-- 숨겨진 입력들 -->
+	    <input type="hidden" id="crewIdInput" value="${crewId}">
+	    <input type="hidden" id="boardIdInput" value="3">
 
-	  <!-- 오른쪽 입력 영역 -->
-	  <div class="w-1/2 p-6 flex flex-col justify-between text-gray-800 space-y-4 relative">
-	    <!-- 게시글 입력 폼 -->
-	    <form action="/usr/article/doWrite" method="post" class="flex-1 flex flex-col justify-between shadow p-4 rounded bg-white">
-	      <!-- 제목 입력 -->
-	      <div class="mb-4">
-	        <label class="block text-sm font-bold mb-1">제목</label>
-	        <input type="text" name="title" placeholder="제목을 입력하세요"
-	          class="w-full border rounded px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring focus:border-yellow-300" required />
-	      </div>
+	    <!-- 왼쪽 이미지 영역 -->
+	    <label for="imageUpload" class="w-1/2 bg-gray-100 cursor-pointer">
+	      <img id="previewImage" src="https://via.placeholder.com/500" alt="preview"
+	        class="object-cover w-full h-full" />
+	      <input type="file" id="imageUpload" name="imageFile" accept="image/*"
+	        class="hidden" onchange="previewImage(event)" />
+	    </label>
 
-	      <!-- 내용 입력 -->
-	      <div class="mb-4 flex-1">
-	        <label class="block text-sm font-bold mb-1">내용</label>
-	        <textarea name="body" rows="20" placeholder="내용을 입력하세요"
-	          class="w-full border rounded px-3 py-2 text-sm shadow-sm resize-none focus:outline-none focus:ring focus:border-yellow-300" required></textarea>
-	      </div>
+	    <!-- 오른쪽 입력 영역 -->
+	    <div class="w-1/2 p-6 flex flex-col justify-between text-gray-800 space-y-4 relative">
+	      <div class="flex-1 flex flex-col justify-between shadow p-4 rounded bg-white">
+	        <!-- 제목 -->
+	        <div class="mb-4">
+	          <label class="block text-sm font-bold mb-1">제목</label>
+	          <input type="text" id="titleInput" placeholder="제목을 입력하세요"
+	            class="w-full border rounded px-3 py-2 text-sm shadow-sm" required />
+	        </div>
 
-	      <!-- 작성자 및 날짜 (예시) -->
-	      <div class="flex justify-between text-xs text-gray-500 mt-2">
-	        <span class="font-bold">admin</span>
-	        <span>2025.07.20</span>
-	      </div>
+	        <!-- 내용 -->
+	        <div class="mb-4 flex-1">
+	          <label class="block text-sm font-bold mb-1">내용</label>
+	          <textarea id="bodyInput" rows="20" placeholder="내용을 입력하세요"
+	            class="w-full border rounded px-3 py-2 text-sm shadow-sm resize-none" required></textarea>
+	        </div>
 
-	      <!-- 등록 버튼 -->
-	      <div class="text-right mt-4">
-	        <button type="submit"
-	          class="bg-gradient-to-r from-green-200 to-yellow-200 px-6 py-2 rounded-full shadow hover:shadow-md">등록</button>
+	        <!-- 등록 버튼 -->
+	        <div class="text-right mt-4">
+	          <button id="submitArticleBtn"
+	            class="bg-gradient-to-r from-green-200 to-yellow-200 px-6 py-2 rounded-full shadow hover:shadow-md">
+	            등록
+	          </button>
+	        </div>
 	      </div>
-	    </form>
+	    </div>
 	  </div>
 	</div>
+	`;
 
-	    `;
 	openModal(html);
+
+	setTimeout(() => {
+		$('#submitArticleBtn').on('click', function(e) {
+			e.preventDefault();
+
+			const crewId = parseInt($('#crewIdInput').val(), 10);
+			const boardId = parseInt($('#boardIdInput').val(), 10);
+			const title = $('#titleInput').val();
+			const body = $('#bodyInput').val();
+			const imageFile = $('#imageUpload')[0].files[0];
+
+			if (!title || !body) {
+				alert("제목과 내용을 모두 입력해주세요.");
+				return;
+			}
+
+			const formData = new FormData();
+			formData.append("crewId", crewId);
+			formData.append("boardId", boardId);
+			formData.append("title", title);
+			formData.append("body", body);
+			if (imageFile) {
+				formData.append("imageFile", imageFile);
+			}
+
+			$.ajax({
+				url: '/usr/article/doWrite',
+				type: 'POST',
+				data: formData,
+				contentType: false,
+				processData: false,
+				success: function(data) {
+					if (data.resultCode === "S-1") {
+						alert('게시글이 작성되었습니다.');
+						window.location.href = data.data.redirectUrl;
+					} else {
+						alert("⚠️ " + data.msg);
+					}
+				},
+				error: function(err) {
+					console.error("❌ 등록 실패:", err);
+					alert('등록 중 오류가 발생했습니다.');
+				}
+			});
+		});
+	}, 0);
+}
+
+//사진미리보기
+function previewImage(event) {
+	const input = event.target;
+	if (input.files && input.files[0]) {
+		const reader = new FileReader();
+		reader.onload = function(e) {
+			document.getElementById('previewImage').src = e.target.result;
+		};
+		reader.readAsDataURL(input.files[0]);
+	}
 }
 
 function scAdd() {
 	const html = `
-	<form action="/usr/schedule/doAdd" method="post" class="flex flex-col content-between bg-white p-6 rounded-2xl shadow-md w-[360px] h-[400px]">
-	<div class="flex-1">    
-	<!-- 캘린더 헤더 -->
-	    <div class="flex justify-between items-center mb-4">
-	      <button type="button" onclick="prevMonth()" class="text-2xl text-yellow-200 hover:scale-110">←</button>
-	      <div id="calendarHeader" class="font-semibold text-lg text-center">2025년 7월</div>
-	      <button type="button" onclick="nextMonth()" class="text-2xl text-yellow-200 hover:scale-110">→</button>
-	    </div>
+		<div class="w-full h-full">
+		  <div class="flex content-center bg-white p-6 rounded-2xl shadow-md w-full h-full">
+			<div class="flex-1 grid grid-cols-2 gap-4 w-full h-full flex content-center">   
+			<div class="span-col-1 shadow-xl p-3 w-[360px] h-[400px] flex flex-col text-base"> <!-- 높이 + 폰트 -->
+			  <!-- 📅 캘린더 헤더 -->
+			  <div class="flex justify-between items-center mb-4">
+			    <button type="button" onclick="prevMonth()" class="text-3xl text-yellow-200 hover:scale-110">←</button>
+			    <div id="calendarHeader" class="font-semibold text-lg text-center">2025년 7월</div>
+			    <button type="button" onclick="nextMonth()" class="text-3xl text-yellow-200 hover:scale-110">→</button>
+			  </div>
 
-	    <!-- 캘린더 본문 -->
-	    <table class="w-full text-sm">
-	      <thead>
-	        <tr class="text-gray-600">
-	          <th>일</th><th>월</th><th>화</th><th>수</th><th>목</th><th>금</th><th>토</th>
-	        </tr>
-	      </thead>
-	      <tbody id="calendarBody" class="text-black font-medium"></tbody>
-	    </table>
+			  <!-- 📆 캘린더 본문 -->
+			  <table class="w-full text-base"> <!-- 폰트 크게 -->
+			    <thead>
+			      <tr class="text-gray-600">
+			        <th>일</th><th>월</th><th>화</th><th>수</th><th>목</th><th>금</th><th>토</th>
+			      </tr>
+			    </thead>
+			    <tbody id="calendarBody" class="text-black font-medium"></tbody>
+			  </table>
 
-	    <!-- 숨겨진 날짜 필드 -->
-	    <input type="hidden" name="date" id="selectedDate" required />
+				<!-- 🕒 선택된 날짜 -->
+				<input type="hidden" id="selectedDate" />
+			  </div>
+
+			  <div class="span-col-1 space-y-2">
+				<label class="block text-sm font-bold">제목</label>
+				<input type="text" id="scheduleTitle" class="border rounded w-full p-1 text-sm" placeholder="일정 제목 입력" />
+
+				<label class="block text-sm font-bold mt-2">내용</label>
+				<textarea id="scheduleBody" rows="5" class="border rounded w-full p-1 text-sm" placeholder="간단한 메모"></textarea>
+
+				<div class="pt-2 text-center">
+				  <button id="submitScheduleBtn" class="bg-gradient-to-r from-green-200 to-yellow-200 px-4 py-2 rounded-full shadow hover:shadow-lg">
+					일정 등록
+				  </button>
+				</div>
+			  </div>
+			</div>
+		  </div>
 		</div>
-	    <!-- 제출 버튼 -->
-	    <div class="pt-6 text-center">
-	      <button type="submit" class="bg-gradient-to-r from-green-200 to-yellow-200 px-6 py-2 rounded-full shadow hover:shadow-lg">
-	        일정 등록
-	      </button>
-	    </div>
-	  </form>
-	`;
-	openComModal(html);
+		`;
+
+	openModal(html);
+
 	setTimeout(() => {
-		renderCalendar();
+		renderCalendar(); // 달력 렌더링
+
+		// 등록 버튼 클릭 이벤트
+		$('#submitScheduleBtn').on('click', function(e) {
+			e.preventDefault();
+
+			const scheduleDate = $('#selectedDate').val();  // yyyy-MM-dd
+			const scheduleTitle = $('#scheduleTitle').val();
+			const scheduleBody = $('#scheduleBody').val();
+
+			if (!scheduleDate) {
+				alert("📆 날짜를 선택해주세요.");
+				return;
+			}
+
+			if (!scheduleTitle) {
+				alert("📌 제목을 입력해주세요.");
+				return;
+			}
+
+			$.ajax({
+				url: '/usr/article/doWriteSchedule',
+				type: 'POST',
+				data: {
+					crewId: crewId,
+					scheduleDate: scheduleDate,
+					scheduleTitle: scheduleTitle,
+					scheduleBody: scheduleBody
+				},
+				success: function(data) {
+					console.log(data);
+					if (data.resultCode === "S-1") {
+						alert("✅ 일정이 등록되었습니다!");
+						window.location.href = data.data.redirectUrl;
+					} else {
+						alert("⚠️ " + data.msg);
+					}
+				},
+				error: function(err) {
+					console.error("❌ 일정 등록 실패", err);
+				}
+			});
+		});
 	}, 0);
 }
 
@@ -442,16 +579,16 @@ function renderCalendar() {
 function selectDate(dateStr, element) {
 	selectedDate = dateStr;
 
-	// hidden input에 값 세팅
-	const input = document.getElementById("selectedDate");
-	if (input) input.value = dateStr;
+	// hidden input에 값 설정
+	$('#selectedDate').val(dateStr);
 
-	// 기존 선택 스타일 제거
-	document.querySelectorAll("#calendarBody td").forEach(td => td.classList.remove("bg-yellow-300"));
+	// 모든 셀에서 강조 제거
+	$('#calendarBody td').removeClass('bg-yellow-300');
 
-	// 현재 선택된 날짜 강조
-	if (element) element.classList.add("bg-yellow-300");
+	// 현재 클릭한 셀 강조
+	$(element).addClass('bg-yellow-300');
 }
+
 
 // 🔁 이전/다음 달 이동
 function prevMonth() {
