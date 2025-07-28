@@ -330,7 +330,7 @@ public class PetController {
 			// 3. 종에 따라 파이썬 파일 선택
 			String scriptPath;
 			if ("강아지".equals(species)) {
-				scriptPath = "/Users/e-suul/Desktop/ESeul-main/dog_test.py";
+				scriptPath = "/Users/e-suul/Desktop/ESeul-main/dog_pickture.py";
 			} else {
 				scriptPath = "/Users/e-suul/Desktop/ESeul-main/cat_test.py";
 			}
