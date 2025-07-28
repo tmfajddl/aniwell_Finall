@@ -43,6 +43,11 @@ public class AdmArticleController {
 
         Rq rq = (Rq) req.getAttribute("rq"); // 로그인 정보 등 사용자 정보 객체 획득
 
+        Member loginedMember = rq.getLoginedMember();
+        if (loginedMember == null || loginedMember.getAuthLevel() != 7) {
+            return "redirect:/";
+        }
+
         int itemsInAPage = 10; // 한 페이지에 보여줄 게시글 수
         int articlesCount = articleService.getArticleCount(0, searchKeywordTypeCode, searchKeyword);
         // boardId = 0은 전체 게시판을 의미하며, 조건에 맞는 게시글 수를 가져옴
@@ -79,6 +84,15 @@ public class AdmArticleController {
             return Map.of(
                     "resultCode", "F-1",
                     "msg", id + "번 게시글은 존재하지 않습니다."
+            );
+        }
+
+        Member loginedMember = rq.getLoginedMember();
+
+        if (loginedMember == null || loginedMember.getAuthLevel() != 7) {
+            return Map.of(
+                    "resultCode", "F-2",
+                    "msg", "관리자만 게시글 삭제가 가능합니다."
             );
         }
 
