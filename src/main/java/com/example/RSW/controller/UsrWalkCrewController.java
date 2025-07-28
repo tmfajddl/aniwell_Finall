@@ -123,16 +123,17 @@ public class UsrWalkCrewController {
 		return ResultData.from("S-1", "크루 생성 완료", data);
 	}
 
-	// 크루 상세보기 페이지
 	// ✅ 크루 상세보기 페이지 (JSP 반환)
 	@GetMapping("/detail/{id}")
 	public String showCrewDetail(@PathVariable int id, HttpServletRequest req, Model model) {
 		Rq rq = (Rq) req.getAttribute("rq");
+		System.out.println("🔥 rq = " + rq);
+		System.out.println("🔥 isLogined = " + (rq != null ? rq.isLogined() : "rq가 null임"));
 
 		WalkCrew crew = walkCrewService.getCrewById(id);
 		if (crew == null) {
 			model.addAttribute("errorMsg", "해당 크루를 찾을 수 없습니다.");
-			return "common/error"; // 에러 페이지
+			return "common/error";
 		}
 
 		Date createdDate = Date.from(crew.getCreatedAt().atZone(ZoneId.systemDefault()).toInstant());
@@ -146,17 +147,29 @@ public class UsrWalkCrewController {
 		}
 
 		boolean isJoined = false;
+		boolean isLeader = false;
+		boolean isPending = false;
+
 		if (rq != null && rq.isLogined()) {
-			isJoined = walkCrewMemberService.isJoinedCrew(rq.getLoginedMemberId(), crew.getId());
+			int memberId = rq.getLoginedMemberId(); // ✅ 한 번만 선언
+			int crewId = crew.getId();
+
+			isJoined = walkCrewMemberService.isJoinedCrew(memberId, crewId);
+			isLeader = walkCrewMemberService.isCrewLeader(crewId, memberId);
+			isPending = walkCrewMemberService.isPending(crewId, memberId);
+
+			System.out.println("✅ isPending = " + isPending);
 		}
 
 		model.addAttribute("crew", crew);
 		model.addAttribute("createdDate", createdDate);
 		model.addAttribute("crewLocation", crewLocation);
 		model.addAttribute("isJoined", isJoined);
+		model.addAttribute("isLeader", isLeader);
+		model.addAttribute("isPending", isPending);
 		model.addAttribute("rq", rq);
 
-		return "usr/walkCrew/detail"; // JSP 경로
+		return "usr/walkCrew/detail";
 	}
 
 	// ✅ 크루 참가 처리
