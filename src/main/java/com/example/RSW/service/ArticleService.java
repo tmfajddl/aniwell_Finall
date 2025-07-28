@@ -1,5 +1,7 @@
 package com.example.RSW.service;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -206,7 +208,7 @@ public class ArticleService {
 	}
 
 	// 일정등록하기
-	public void writeSchedule(int crewId, int loginedMemberId, String scheduleDate, String scheduleTitle,
+	public void writeSchedule(int crewId, int loginedMemberId, LocalDate scheduleDate, String scheduleTitle,
 			String scheduleBody) {
 		articleRepository.writeSchedule(crewId, loginedMemberId, scheduleDate, scheduleTitle, scheduleBody);
 	}

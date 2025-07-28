@@ -47,7 +47,7 @@
 					<!-- 가입된 크루가 아닐경우 크루신청이미지가 보이도 -->
 					<!-- ✅ 채팅방 입장 (멤버 또는 리더) -->
 					<div th:if="${isLeader}"
-						class="w-[50%] p-2 m-1 flex justify-center items-center rounded-xl shadow font-semibold text-gray-700 bg-gradient-to-r from-[#e4f0b9] to-[#fcdca9] hover:brightness-105 transition duration-300 cursor-pointer">
+						class="w-[50%] m-1 flex justify-center items-center rounded-xl shadow font-semibold text-gray-700 bg-gradient-to-r from-[#e4f0b9] to-[#fcdca9] hover:brightness-105 transition duration-300 cursor-pointer">
 						<a th:href="@{/api/chat/room(crewId=${crew.id})}">
 							<i class="fa-solid fa-comment-dots"></i>
 							채팅방 입장
@@ -55,7 +55,7 @@
 					</div>
 
 					<div th:if="${isJoined and !isLeader}"
-						class="w-[100%] p-2 m-1 flex justify-center items-center rounded-xl shadow font-semibold text-gray-700 bg-gradient-to-r from-[#e4f0b9] to-[#fcdca9] hover:brightness-105 transition duration-300 cursor-pointer">
+						class="w-[100%] m-1 flex justify-center items-center rounded-xl shadow font-semibold text-gray-700 bg-gradient-to-r from-[#e4f0b9] to-[#fcdca9] hover:brightness-105 transition duration-300 cursor-pointer">
 						<a th:href="@{/api/chat/room(crewId=${crew.id})}">
 							<i class="fa-solid fa-comment-dots"></i>
 							채팅방 입장
@@ -63,6 +63,7 @@
 					</div>
 
 					<!-- ✅ 신청 대기 중인 경우 (리더는 제외) -->
+
 					<div th:if="${not isLeader and not isJoined and isPending == true}"
 						class="w-[100%] p-2 m-1 flex justify-center text-center rounded-xl shadow font-semibold text-gray-700 bg-gradient-to-r from-[#e4f0b9] to-[#fcdca9] hover:brightness-105 transition duration-300 cursor-pointer">
 
@@ -76,12 +77,13 @@
 							<!-- ✅ 신청 취소 버튼 (서버 렌더링에서도 표시되도록 추가) -->
 							<button th:onclick="|cancelJoin(${crew.id}, this)|" class="text-red-600 hover:underline text-sm">신청 취소</button>
 						</div>
+
 					</div>
 
 
 					<!-- ✅ 아직 신청하지 않은 경우 (리더는 제외) -->
 					<div th:if="${!isLeader and !isJoined and !isPending}"
-						class="w-[100%] p-2 m-1 flex justify-center text-center rounded-xl shadow font-semibold text-gray-700 bg-gradient-to-r from-[#e4f0b9] to-[#fcdca9] hover:brightness-105 transition duration-300 cursor-pointer">
+						class="w-[100%] m-1 flex justify-center text-center rounded-xl shadow font-semibold text-gray-700 bg-gradient-to-r from-[#e4f0b9] to-[#fcdca9] hover:brightness-105 transition duration-300 cursor-pointer">
 						<!-- ⛳ crewJoin 함수에 this 전달 -->
 						<button th:onclick="|crewJoin(this, ${crew.id})|">
 							<i class="fa-solid fa-dog"></i>
@@ -91,7 +93,7 @@
 
 					<!-- ✅ 리더 전용 -->
 					<div th:if="${isLeader}"
-						class="w-[50%] p-2 m-1 flex justify-center text-center rounded-xl shadow font-semibold text-gray-700 bg-gradient-to-r from-[#e4f0b9] to-[#fcdca9] hover:brightness-105 transition duration-300 cursor-pointer">
+						class="w-[50%] m-1 flex justify-center text-center rounded-xl shadow font-semibold text-gray-700 bg-gradient-to-r from-[#e4f0b9] to-[#fcdca9] hover:brightness-105 transition duration-300 cursor-pointer">
 						<button onclick="handleCrewMember()">
 							<i class="fa-solid fa-gear"></i>
 							크루 관리
