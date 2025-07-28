@@ -284,7 +284,7 @@ public class UsrWalkCrewMemberController {
 	public ResultData transferLeadership(@RequestParam int crewId, @RequestParam int newLeaderId,
 			HttpServletRequest req) {
 		Rq rq = (Rq) req.getAttribute("rq");
-
+System.out.println("newLeaderId"+newLeaderId);
 		// 로그인 확인
 		if (rq == null || !rq.isLogined()) {
 			return ResultData.from("F-1", "로그인 후 이용해주세요.");
