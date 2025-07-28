@@ -91,9 +91,16 @@ public class UsrWalkCrewMemberController {
 		}
 
 		int memberId = rq.getLoginedMemberId();
-		walkCrewMemberService.requestToJoinCrew(crewId, memberId);
 
-		// ✅ Java 8 호환: Map.of(...) → HashMap 사용
+		// ✅ 중복 신청 방지 로직을 포함한 서비스 호출
+		ResultData resultData = walkCrewMemberService.requestToJoinCrew(crewId, memberId);
+
+		// ✅ 실패 시 그대로 반환
+		if (resultData.isFail()) {
+			return resultData;
+		}
+
+		// ✅ 성공 시 응답 데이터 구성
 		Map<String, Object> data = new HashMap<>();
 		data.put("crewId", crewId);
 		data.put("memberId", memberId);
@@ -312,6 +319,24 @@ public class UsrWalkCrewMemberController {
 		data.put("newLeaderId", newLeaderId);
 
 		return ResultData.from("S-1", "크루장 권한이 성공적으로 위임되었습니다.", data);
+	}
+
+	// 크루가입 신청취소
+	@PostMapping("/cancelJoin")
+	@ResponseBody
+	public ResultData cancelJoin(@RequestParam int crewId, HttpServletRequest req) {
+		Rq rq = (Rq) req.getAttribute("rq");
+		if (rq == null || !rq.isLogined()) {
+			return ResultData.from("F-1", "로그인 후 이용해주세요.");
+		}
+
+		int memberId = rq.getLoginedMemberId();
+		boolean result = walkCrewMemberService.cancelJoin(crewId, memberId);
+		if (result) {
+			return ResultData.from("S-1", "신청이 취소되었습니다.");
+		} else {
+			return ResultData.from("F-2", "신청 취소에 실패했습니다.");
+		}
 	}
 
 }
