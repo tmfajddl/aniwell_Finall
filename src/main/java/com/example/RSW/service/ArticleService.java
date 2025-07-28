@@ -226,5 +226,11 @@ public class ArticleService {
 	public List<Map<String, Object>> getSchedulesByCrewId(int crewId) {
 		return articleRepository.getSchedulesByCrewId(crewId);
 	}
+	
+	// 내가쓴글 조회하기
+	public List<Article> getArticlesByCrewBoardAndMember(int crewId, int boardId, int memberId) {
+		return articleRepository.getArticlesByCrewBoardAndMember(crewId, boardId, memberId);
+	}
+
 
 }
