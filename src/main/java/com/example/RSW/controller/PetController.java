@@ -26,6 +26,8 @@ import java.util.stream.Collectors;
 @Controller
 public class PetController {
 
+	private static final Set<String> ALLOWED_TYPES = Set.of("병원","용품","애견용품","동물병원","애견카페","공원","펫호텔","미정");
+
 	@Autowired
 	Rq rq;
 
@@ -66,6 +68,9 @@ public class PetController {
 								 @RequestParam(required = false) String address,
 								 @RequestParam(required = false) String phone,
 								 @RequestParam(required = false) String mapUrl) {
+		if (type == null || !ALLOWED_TYPES.contains(type)) {
+			type = "미정";
+		}
 
 		boolean exists = petRecommendationService.isFavorited(memberId, name);
 		if (exists) {
@@ -144,6 +149,8 @@ public class PetController {
 	@RequestMapping("/usr/pet/list")
 	public String showPetList(@RequestParam("memberId") int memberId, Model model, HttpServletResponse resp) throws IOException {
 		int loginId = rq.getLoginedMemberId();
+		System.out.println(memberId);
+		System.out.println(loginId);
 		if (loginId != memberId) {
 			resp.setContentType("text/html; charset=UTF-8");
 			resp.getWriter().write(Ut.jsHistoryBack("F-1", "권한이 없습니다."));
