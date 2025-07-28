@@ -29,8 +29,12 @@ function closeCommentModal() {
 	modal.classList.add("translate-y-full");  // 아래로 다시 내려감
 }
 
+let articleId = null; // ✅ 전역 변수로 선언
+
 // 📝 게시글 상세보기모달
 function detailModal(e) {
+	articleId = e.dataset.id;  // ✅ 전역 변수에 할당
+
 	const free = {
 		title: e.dataset.title,
 		body: e.dataset.body,
@@ -39,57 +43,297 @@ function detailModal(e) {
 		regDate: e.dataset.regDate
 	};
 
-
 	const html = `
-	<div class="flex h-full">
-		  <!-- 왼쪽 이미지 영역 -->
-		  <div class="w-1/2 bg-gray-100">
-		    <img src=${free.imageUrl} alt="product" class="object-cover w-full h-full" />
-		  </div>
+  <div class="flex h-full">
+    <div class="w-1/2 bg-gray-100">
+      <img src="${free.imageUrl}" alt="product" class="object-cover w-full h-full" />
+    </div>
 
-		  <!-- 오른쪽 텍스트 영역 -->
-		  <div class="w-1/2 p-6 flex flex-col justify-between text-gray-800 space-y-4 relative">
-		    <!-- 게시글 본문 -->
-		    <div class="flex-1 flex flex-col justify-between shadow p-4 overflow-auto">
-		      <div class="overflow-y-auto h-[300px] text-sm leading-relaxed mb-4">
-					${free.body}
-		      </div>
-		      <div class="flex justify-between text-xs text-gray-500 mt-2">
-		        <span class="font-bold>${free.writer}</span>
-		        <span>${free.regDate}</span>
-		      </div>
-		    </div>
+    <div class="w-1/2 p-6 flex flex-col justify-between text-gray-800 space-y-4 relative">
+      <div class="flex-1 flex flex-col justify-between shadow p-4 overflow-auto">
+        <div class="overflow-y-auto h-[300px] text-sm leading-relaxed mb-4">
+          ${free.body}
+        </div>
+        <div class="flex justify-between text-xs text-gray-500 mt-2">
+          <span class="font-bold">${free.writer}</span>
+          <span>
+		  ${free.regDate}
+		  	<div>
+			<span 
+			  class="underline text-blue-600 cursor-pointer mr-2"
+			  onclick="openModifyModal(${articleId}, ${crewId}, 3, \`${free.title}\`, \`${free.body}\`, \`${free.imageUrl}\`)">
+			  수정
+			</span>
 
-		    <!-- 댓글 버튼 -->
-		    <div class="shadow w-[100%] p-4 text-sm rounded cursor-pointer hover:bg-gray-100" onclick="openCommentModal()">
-		      <p class="flex text-gray-500">여기누르기기</p>
-		    </div>
+		       <span class="underline text-red-500 cursor-pointer" onclick="deleteArticle(${articleId})">삭제</span>
+		     </div>
+		  </span>
+		  
+        </div>
+      </div>
 
-		    <!-- ✅ 오른쪽 영역 내부에서 슬라이드되는 댓글 모달 -->
-		    <div id="commentModal"
-		         class="absolute bottom-0 left-0 w-full bg-white		ease-in-out
-			            shadow-[0_-4px_10px_rgba(0,0,0,0.1)] rounded-t-2xl p-4 z-50 transform translate-y-full transition-transform duration-300 ease-in-out">
-		      <div class="flex justify-between items-center mb-2">
-		        <h2 class="text-lg font-semibold">댓글</h2>
-		        <button onclick="closeCommentModal()" class="text-gray-500 hover:text-black text-sm">닫기 ✕</button>
-		      </div>
+      <div class="shadow w-full p-4 text-sm rounded cursor-pointer hover:bg-gray-100"
+           onclick="openCommentModal(); loadReplies(${articleId});">
+        <p class="flex text-gray-500">여기누르기기</p>
+      </div>
 
-		      <div class="overflow-y-auto max-h-60 space-y-2">
-		        <div class="text-sm border-b pb-2">닉네임1: 123123</div>
-		        <div class="text-sm border-b pb-2">닉네임2: 123123123</div>
-		      </div>
+      <div id="commentModal"
+           class="absolute bottom-0 left-0 w-full bg-white ease-in-out
+                  shadow-[0_-4px_10px_rgba(0,0,0,0.1)] rounded-t-2xl p-4 z-50 transform translate-y-full transition-transform duration-300 ease-in-out">
 
-		      <div class="mt-4 flex gap-2">
-		        <input type="text" placeholder="댓글 입력..." class="flex-1 border px-3 py-2 rounded-md text-sm" />
-		        <button class="bg-green-200 px-4 py-2 rounded-md text-sm">작성</button>
-		      </div>
-		    </div>
-		  </div>
-		</div>
-    `;
+        <div class="flex justify-between items-center mb-2">
+          <h2 class="text-lg font-semibold text-green-700">댓글</h2>
+          <button onclick="closeCommentModal()" class="text-gray-500 hover:text-black text-sm">닫기 ✕</button>
+        </div>
+
+        <div class="overflow-y-auto max-h-60 space-y-2" id="replyList"></div>
+
+        <div class="mt-4 flex gap-2">
+          <input type="text" id="replyInput" placeholder="댓글 입력..." class="flex-1 border px-3 py-2 rounded-md text-sm" />
+          <button onclick="submitReply()" class="bg-green-200 px-4 py-2 rounded-md text-sm">작성</button>
+        </div>
+
+        <div class="text-gray-500 text-sm mt-2" id="noReplies" style="display:none;">댓글이 없습니다.</div>
+      </div>
+    </div>
+  </div>
+  `;
+
 	openModal(html);
 }
+////////댓글 폼 로직
+function loadReplies() {
+  fetch(`/usr/reply/list?relTypeCode=article&relId=${articleId}`)
+    .then(res => res.json())
+    .then(data => {
+      const replyList = document.getElementById("replyList");
+      const noReplies = document.getElementById("noReplies");
 
+      replyList.innerHTML = "";
+
+      if (!data || data.length === 0) {
+        noReplies.style.display = "block";
+        return;
+      }
+
+      noReplies.style.display = "none";
+
+	  data.forEach(reply => {
+	    const div = document.createElement("div");
+	    div.className = "text-sm border-b pb-2";
+
+	    const date = reply.regDate ? reply.regDate.substring(0, 10) : "";
+
+	    div.innerHTML = `
+	      <div class="flex justify-between items-center">
+	        <span class="font-semibold text-gray-800">${reply.extra__writer}</span>
+	        <span class="text-xs text-gray-400">${date}</span>
+	      </div>
+	      <div class="mt-1 text-gray-700">${reply.body}</div>
+	    `;
+
+	    replyList.appendChild(div);
+	  });
+
+    })
+    .catch(err => {
+      console.error("댓글 불러오기 실패:", err);
+    });
+}
+
+
+// ✅ 전송 함수는 전역 articleId 사용 가능
+function submitReply() {
+	const input = document.getElementById('replyInput');
+	const body = input.value.trim();
+
+	if (body.length < 2) {
+		alert("댓글을 2자 이상 입력하세요.");
+		return;
+	}
+
+	fetch('/usr/reply/doWrite', {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+		body: `relTypeCode=article&relId=${articleId}&body=${encodeURIComponent(body)}`
+	})
+		.then(res => {
+			if (!res.ok) throw new Error("댓글 등록 실패");
+			return res.text();
+		})
+		.then(() => {
+			input.value = "";
+			setTimeout(() => loadReplies(articleId), 300);
+		})
+		.catch(err => {
+			console.error("댓글 등록 에러:", err);
+		});
+}
+///////////
+
+
+////////게시글 수정폼
+function openModifyModal(articleId, crewId, boardId, title, body, imageUrl) {
+  const html = `
+  
+    <div class="flex h-full">
+      <!-- 숨겨진 입력들 -->
+      <input type="hidden" id="modifyArticleId" value="${articleId}">
+      <input type="hidden" id="modifyCrewIdInput" value="${crewId}">
+      <input type="hidden" id="modifyBoardIdInput" value="${boardId}">
+
+      <!-- 왼쪽 이미지 영역 -->
+      <label for="modifyImageUpload" class="w-1/2 bg-gray-100 cursor-pointer">
+        <img id="modifyPreviewImage" src="${imageUrl || 'https://via.placeholder.com/500'}" alt="preview"
+          class="object-cover w-full h-full" />
+        <input type="file" id="modifyImageUpload" name="imageFile" accept="image/*"
+          class="hidden" onchange="previewModifyImage(event)" />
+      </label>
+
+      <!-- 오른쪽 수정 영역 -->
+      <div class="w-1/2 p-6 flex flex-col justify-between text-gray-800 space-y-4 relative">
+        <div class="flex-1 flex flex-col justify-between shadow p-4 rounded bg-white">
+          <!-- 제목 -->
+          <div class="mb-4">
+            <label class="block text-sm font-bold mb-1">제목</label>
+            <input type="text" id="modifyTitleInput" value="${title}"
+              class="w-full border rounded px-3 py-2 text-sm shadow-sm" required />
+          </div>
+
+          <!-- 내용 -->
+          <div class="mb-4 flex-1">
+            <label class="block text-sm font-bold mb-1">내용</label>
+            <textarea id="modifyBodyInput" rows="20"
+              class="w-full border rounded px-3 py-2 text-sm shadow-sm resize-none" required>${body}</textarea>
+          </div>
+
+          <!-- 수정 버튼 -->
+          <div class="text-right mt-4">
+            <button id="submitModifyBtn"
+              class="bg-yellow-300 px-6 py-2 rounded-full shadow hover:shadow-md">
+              수정 완료
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  
+  `;
+
+  openModal(html);
+
+  setTimeout(() => {
+    document.getElementById('submitModifyBtn').onclick = submitModifiedArticle;
+  }, 0);
+}
+
+function previewModifyImage(event) {
+  const input = event.target;
+  if (input.files && input.files[0]) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      document.getElementById('modifyPreviewImage').src = e.target.result;
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+
+function submitModifiedArticle() {
+  const articleId = document.getElementById('modifyArticleId').value;
+  const crewId = document.getElementById('modifyCrewIdInput').value;
+  const boardId = document.getElementById('modifyBoardIdInput').value;
+  const title = document.getElementById('modifyTitleInput').value.trim();
+  const body = document.getElementById('modifyBodyInput').value.trim();
+  const imageFile = document.getElementById('modifyImageUpload').files[0];
+
+  if (!title || !body) {
+    alert("제목과 내용을 모두 입력해주세요.");
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append("id", articleId);
+  formData.append("crewId", crewId);
+  formData.append("boardId", boardId);
+  formData.append("title", title);
+  formData.append("body", body);
+  if (imageFile) {
+    formData.append("imageFile", imageFile);
+  }
+
+  $.ajax({
+    url: '/usr/article/doModify',
+    type: 'POST',
+    data: formData,
+    contentType: false,
+    processData: false,
+    success: function (data) {
+      if (data.resultCode === "S-1") {
+        alert("게시글이 수정되었습니다.");
+        window.location.href = data.data.redirectUrl;
+      } else {
+        alert("⚠️ " + data.msg);
+      }
+    },
+    error: function (err) {
+      console.error("❌ 수정 실패:", err);
+      alert('수정 중 오류가 발생했습니다.');
+    }
+  });
+}
+
+/////////////
+//////게시글 삭제
+function deleteArticle(articleId) {
+  if (!confirm("정말 이 게시글을 삭제하시겠습니까?")) return;
+
+  $.ajax({
+    url: `/usr/article/doDelete?id=${articleId}`,
+    type: 'POST',
+    success: function (data) {
+      if (data.resultCode === "S-1") {
+        alert("게시글이 삭제되었습니다.");
+        window.location.href = data.data.redirectUrl;
+      } else {
+        alert("⚠️ " + data.msg);
+      }
+    },
+    error: function (err) {
+      console.error("❌ 삭제 실패:", err);
+      alert("삭제 중 오류가 발생했습니다.");
+    }
+  });
+}
+
+///// 좋아요
+
+function doGoodReaction(articleId) {
+  const heart = document.getElementById(`heart-${articleId}`);
+  if (!heart) {
+    console.warn(`❗ heart-${articleId} element not found`);
+    return;
+  }
+  $.post('/usr/reactionPoint/doGoodReaction', {
+    relTypeCode: 'article',
+    relId: articleId
+  }).done(() => {
+    const isLiked = heart.classList.contains('text-red-500');
+
+    // UI 토글 처리만 수행
+    if (isLiked) {
+      heart.innerText = '🤍';
+      heart.classList.remove('text-red-500');
+      heart.classList.add('text-gray-400');
+    } else {
+      heart.innerText = '❤️';
+      heart.classList.remove('text-gray-400');
+      heart.classList.add('text-red-500');
+    }
+  });
+}
+
+
+////
 
 function openModal(contentHTML) {
 	const modal = document.getElementById('modal');
@@ -162,19 +406,25 @@ function closeComNobgModal() {
 	document.getElementById('comNobgModal').classList.add('hidden');
 }
 
-function memberModal() {
+function memberModal(el) {
+	const name = el.dataset.name;
+	const photo = el.dataset.photo || '/img/default-pet.png';
+
 	const html = `
-		<h2 class="text-lg font-bold mb-4">멤버 정보</h2>
-		<div class="flex items-center gap-4">
-			<div class="w-16 h-16 bg-gray-300 rounded-full"></div>
-			<div>
-				<p class="font-semibold">닉네임</p>
-				<p class="text-sm text-gray-500">간단한 소개</p>
-			</div>
-		</div>
-	`;
+    <h2 class="text-lg font-bold mb-4">멤버 정보</h2>
+    <div class="flex items-center gap-4">
+      <div class="w-16 h-16 bg-gray-300 rounded-full overflow-hidden">
+        <img src="${photo}" alt="프로필" class="w-full h-full object-cover" />
+      </div>
+      <div>
+        <p class="font-semibold">${name}</p>
+      </div>
+    </div>
+  `;
+
 	openComModal(html);
 }
+
 
 
 // 📅 일정 보기 모달
@@ -487,10 +737,10 @@ function scAdd() {
 				alert("📌 제목을 입력해주세요.");
 				return;
 			}
-				console.log(crewId);
-				console.log(scheduleDate);
-				console.log(scheduleTitle);
-				console.log(scheduleBody);
+			console.log(crewId);
+			console.log(scheduleDate);
+			console.log(scheduleTitle);
+			console.log(scheduleBody);
 
 			$.ajax({
 				url: '/usr/article/doWriteSchedule',
@@ -906,7 +1156,7 @@ function showMemberDetail(id) {
 				  <p>${data.address}</p>
 				`;
 
-			detail.dataset.usrId = member.memberId; 
+			detail.dataset.usrId = member.memberId;
 
 			buttons.style.display = "block";
 		},
