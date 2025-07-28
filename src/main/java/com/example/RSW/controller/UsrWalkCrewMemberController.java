@@ -321,4 +321,22 @@ System.out.println("newLeaderId"+newLeaderId);
 		return ResultData.from("S-1", "크루장 권한이 성공적으로 위임되었습니다.", data);
 	}
 
+	// 크루가입 신청취소
+	@PostMapping("/cancelJoin")
+	@ResponseBody
+	public ResultData cancelJoin(@RequestParam int crewId, HttpServletRequest req) {
+		Rq rq = (Rq) req.getAttribute("rq");
+		if (rq == null || !rq.isLogined()) {
+			return ResultData.from("F-1", "로그인 후 이용해주세요.");
+		}
+
+		int memberId = rq.getLoginedMemberId();
+		boolean result = walkCrewMemberService.cancelJoin(crewId, memberId);
+		if (result) {
+			return ResultData.from("S-1", "신청이 취소되었습니다.");
+		} else {
+			return ResultData.from("F-2", "신청 취소에 실패했습니다.");
+		}
+	}
+
 }

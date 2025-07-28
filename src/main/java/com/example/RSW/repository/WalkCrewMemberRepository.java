@@ -35,9 +35,8 @@ public interface WalkCrewMemberRepository {
 	// 멤버리스트 조회
 	List<WalkCrewMember> findMembersByCrewId(int crewId);
 
-	void updateRole(int currentLeaderId, int crewId, String string);
+	int updateRole(@Param("memberId") int memberId, @Param("crewId") int crewId, @Param("role") String role);
 
-	
 	String findRoleByMemberIdAndCrewId(@Param("memberId") int memberId, @Param("crewId") int crewId);
 
 	int countPendingRequest(int crewId, int memberId);
@@ -49,5 +48,8 @@ public interface WalkCrewMemberRepository {
 	void insert(WalkCrewMember leader);
 
 	void setPendingStatus(int id, int crewId, int memberId);
+
+	// 크루 신청 취소하기
+	int cancelJoin(@Param("crewId") int crewId, @Param("memberId") int memberId);
 
 }

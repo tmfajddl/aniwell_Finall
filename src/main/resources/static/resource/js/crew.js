@@ -905,7 +905,9 @@ function showMemberDetail(id) {
 				  <p>${data.nickname}</p>
 				  <p>${data.address}</p>
 				`;
+
 			detail.dataset.usrId = member.memberId; 
+
 			buttons.style.display = "block";
 		},
 		error: function(err) {
@@ -986,13 +988,13 @@ function crewJoin(crewId) {
 			console.log(data.msg);
 			// ✅ 참가 수락 후 멤버 목록도 다시 렌더링
 			renderMemberList();
-
 		},
 		error: function(err) {
 			console.error("참가등록실패", err);
 		}
 	});
 }
+
 
 function handleArticleList() {
 	closeSideModal(); // 사이드바 닫기
@@ -1030,5 +1032,5 @@ function myArticle() {
 			console.error("가져오기실패", err);
 		}
 	});
-
 }
+
