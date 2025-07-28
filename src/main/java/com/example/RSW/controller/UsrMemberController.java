@@ -253,29 +253,24 @@ public class UsrMemberController {
         return "usr/member/checkPw";
     }
 
-    @RequestMapping("/usr/member/doCheckPw")
-    public void doCheckPw(HttpServletRequest req, HttpServletResponse resp, String loginPw) throws IOException {
+    @PostMapping("/usr/member/doCheckPw")
+    @ResponseBody
+    public ResponseEntity<?> doCheckPw(@RequestParam String loginPw, HttpServletRequest req) {
         Rq rq = (Rq) req.getAttribute("rq");
 
-        // 소셜 로그인 회원은 비밀번호 확인 없이 바로 이동
         if (rq.getLoginedMember().isSocialMember()) {
-            resp.sendRedirect("modify");
-            return;
+            return ResponseEntity.ok().body("SOCIAL_OK");
         }
 
-        // 일반 로그인 회원은 비밀번호 확인
         if (Ut.isEmptyOrNull(loginPw)) {
-            rq.printHistoryBack("비밀번호를 입력해 주세요.");
-            return;
+            return ResponseEntity.badRequest().body("비밀번호를 입력해 주세요.");
         }
 
         if (!rq.getLoginedMember().getLoginPw().equals(Ut.sha256(loginPw))) {
-            rq.printHistoryBack("비밀번호가 일치하지 않습니다.");
-            return;
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("비밀번호가 일치하지 않습니다.");
         }
 
-        // 성공 시 수정 페이지로 리다이렉트
-        resp.sendRedirect("modify");
+        return ResponseEntity.ok().body("OK");
     }
 
 
