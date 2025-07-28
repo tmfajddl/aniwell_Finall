@@ -58,6 +58,9 @@ function e() {
 			if (authLevel === 7) {
 				$("#adminPage").removeClass("hidden");
 			}
+			if (authLevel === 3) {
+				$("#vetPage").removeClass("hidden");
+			}
 		},
 		error: function(err) {
 			console.error("getUsrInfo 실패", err);
@@ -91,6 +94,9 @@ document.querySelectorAll('.menu-item').forEach((item) => {
 				break
 			case 'admin':
 				url = `/adm/article/list`
+				break
+			case 'vet':
+				url = `/usr/vetAnswer/vetList`
 				break
 		}
 
