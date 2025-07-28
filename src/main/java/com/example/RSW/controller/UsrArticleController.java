@@ -313,6 +313,7 @@ public class UsrArticleController {
 
 	// ✅ 모임일정 등록 (JSON 응답)
 	@PostMapping("/usr/article/doWriteSchedule")
+	@ResponseBody
 	public ResultData doWriteSchedule(@RequestParam int crewId, @RequestParam String scheduleDate,
 			@RequestParam String scheduleTitle, @RequestParam(required = false) String scheduleBody,
 			HttpServletRequest req) {
