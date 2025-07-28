@@ -2,14 +2,14 @@
 <html>
 
 <head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<script src="https://cdn.tailwindcss.com"></script>
-	<!-- ✅ Font Awesome CDN 추가 -->
-	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
-	<link rel="stylesheet" th:href="@{/resource/css/common.css}">
-	<link rel="stylesheet" th:href="@{/resource/css/global.css}">
-	<title>크루 모집 목록</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://cdn.tailwindcss.com"></script>
+<!-- ✅ Font Awesome CDN 추가 -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+<link rel="stylesheet" th:href="@{/resource/css/common.css}">
+<link rel="stylesheet" th:href="@{/resource/css/global.css}">
+<title>크루 모집 목록</title>
 </head>
 
 <body class="bg-gradient-to-b from-[#e4f0b9] to-[#fcdca9]">
@@ -63,13 +63,23 @@
 					</div>
 
 					<!-- ✅ 신청 대기 중인 경우 (리더는 제외) -->
-					<div th:if="${!isLeader and !isJoined and isPending}"
-						class="w-[100%] m-1 flex justify-center text-center rounded-xl shadow font-semibold text-gray-700 bg-gradient-to-r from-[#e4f0b9] to-[#fcdca9] hover:brightness-105 transition duration-300 cursor-pointer">
-						<button disabled>
-							<i class="fa-solid fa-clock-rotate-left"></i>
-							신청 대기중
-						</button>
+
+					<div th:if="${not isLeader and not isJoined and isPending == true}"
+						class="w-[100%] p-2 m-1 flex justify-center text-center rounded-xl shadow font-semibold text-gray-700 bg-gradient-to-r from-[#e4f0b9] to-[#fcdca9] hover:brightness-105 transition duration-300 cursor-pointer">
+
+						<!-- 상태 표시 -->
+						<div class="flex gap-2 items-center">
+							<button disabled class="flex items-center gap-1">
+								<i class="fa-solid fa-clock-rotate-left"></i>
+								신청 대기중
+							</button>
+
+							<!-- ✅ 신청 취소 버튼 (서버 렌더링에서도 표시되도록 추가) -->
+							<button th:onclick="|cancelJoin(${crew.id}, this)|" class="text-red-600 hover:underline text-sm">신청 취소</button>
+						</div>
+
 					</div>
+
 
 					<!-- ✅ 아직 신청하지 않은 경우 (리더는 제외) -->
 					<div th:if="${!isLeader and !isJoined and !isPending}"
@@ -349,39 +359,72 @@
 			}
 		}
 	</script>
+
+	<!-- ✅ crewJoin 함수 -->
 	<script>
-		function crewJoin(btnElement, crewId) {
-			$.ajax({
-				type: "POST",
-				url: `/usr/walkCrewMember/doJoin`,
-				data: {crewId},
-				success: function (data) {
-					console.log(data.msg);
+  function crewJoin(btnElement, crewId) {
+    $.ajax({
+      type: "POST",
+      url: `/usr/walkCrewMember/doJoin`,
+      data: { crewId },
+      success: function (data) {
+        console.log(data.msg);
 
-					// ✅ 버튼 영역 즉시 업데이트 (새로고침 없이 상태 반영)
-					const parent = btnElement.parentElement;
-					parent.innerHTML = `
-						<div class="flex gap-2">
-						<button disabled class="flex items-center gap-1">
-							<i class="fa-solid fa-clock-rotate-left"></i>
-							신청 대기중
-						</button>
-						<!-- ✅ 신청 취소 버튼 -->
-						<button onclick="cancelJoin(${crewId}, this)" class="text-red-600 hover:underline text-sm">
-							신청 취소
-						</button>
-					</div>
-				`;
+        const parent = btnElement.parentElement;
+        parent.innerHTML = `
+          <div class="flex gap-2">
+            <button disabled class="flex items-center gap-1">
+              <i class="fa-solid fa-clock-rotate-left"></i>
+              신청 대기중
+            </button>
+            <button onclick="cancelJoin(${crewId}, this)" class="text-red-600 hover:underline text-sm">
+              신청 취소
+            </button>
+          </div>
+        `;
 
-					// ✅ 멤버 목록 다시 불러오기 (기존 코드 유지)
-					renderCrewMemberSection();
-				},
-				error: function (err) {
-					console.error("참가등록실패", err);
-				}
-			});
-		}
-	</script>
+        renderCrewMemberSection();
+      },
+      error: function (err) {
+        console.error("참가등록실패", err);
+      }
+    });
+  }
+</script>
+
+	<!-- ✅ cancelJoin 함수 (항상 전역에 있어야 함) -->
+	<script>
+  function cancelJoin(crewId, btnElement) {
+    if (!confirm("정말 신청을 취소하시겠습니까?")) return;
+
+    $.ajax({
+      type: "POST",
+      url: `/usr/walkCrewMember/cancelJoin`,
+      data: { crewId },
+      success: function (res) {
+        if (res.success) {
+          alert("신청이 취소되었습니다.");
+
+          const parent = btnElement.closest('.flex');
+          parent.innerHTML = `
+            <button onclick="crewJoin(this, ${crewId})" class="flex items-center gap-1">
+              <i class="fa-solid fa-dog"></i>
+              크루 신청
+            </button>
+          `;
+
+          renderCrewMemberSection();
+        } else {
+          alert(res.msg);
+        }
+      },
+      error: function (err) {
+        console.error("신청 취소 실패", err);
+      }
+    });
+  }
+</script>
+
 
 </body>
 
