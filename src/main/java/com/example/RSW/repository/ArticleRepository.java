@@ -73,7 +73,7 @@ public interface ArticleRepository {
 	// 일정등록하기
 	public void writeSchedule(@Param("crewId") int crewId, @Param("loginedMemberId") int loginedMemberId,
 			@Param("scheduleDate") String scheduleDate, @Param("scheduleTitle") String scheduleTitle,
-			String scheduleBody);
+			@Param("scheduleBody") String scheduleBody);
 
 	public List<Map<String, Object>> getSchedulesByCrewId(int crewId);
 

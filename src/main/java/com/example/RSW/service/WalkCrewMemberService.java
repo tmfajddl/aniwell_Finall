@@ -128,4 +128,14 @@ public class WalkCrewMemberService {
 		return walkCrewMemberRepository.cancelJoin(crewId, memberId) > 0;
 	}
 
+	public boolean isCrewLeader(int crewId, int memberId) {
+		String role = walkCrewMemberRepository.findRoleByMemberIdAndCrewId(memberId, crewId);
+		return "leader".equalsIgnoreCase(role); // 대소문자 무시 비교
+	}
+
+	public boolean isPending(int crewId, int memberId) {
+		String status = walkCrewMemberRepository.findStatusByMemberIdAndCrewId(crewId, memberId);
+		return "pending".equalsIgnoreCase(status); // 실제 DB 저장 상태값과 맞춰야 함
+	}
+
 }
