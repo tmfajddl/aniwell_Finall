@@ -37,6 +37,7 @@ public class ApiMemberController {
 	@GetMapping("/getUsrInfo")
 	public ResponseEntity<Member> getUsrInfo(HttpServletRequest req, int memberId) {
 
+		System.out.println(memberId);
 		Rq rq = (Rq) req.getAttribute("rq");
 		Member loginedMember = rq.getLoginedMember();
 
