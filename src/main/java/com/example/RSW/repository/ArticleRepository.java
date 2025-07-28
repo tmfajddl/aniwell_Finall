@@ -78,4 +78,8 @@ public interface ArticleRepository {
 
 	public List<Map<String, Object>> getSchedulesByCrewId(int crewId);
 
+	// 내가 쓴글 조회하기
+	List<Article> getArticlesByCrewBoardAndMember(@Param("crewId") int crewId, @Param("boardId") int boardId,
+			@Param("memberId") int memberId);
+
 }
