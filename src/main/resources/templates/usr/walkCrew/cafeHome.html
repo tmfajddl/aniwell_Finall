@@ -2,14 +2,14 @@
 <html>
 
 <head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<script src="https://cdn.tailwindcss.com"></script>
-	<!-- ✅ Font Awesome CDN 추가 -->
-	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
-	<link rel="stylesheet" th:href="@{/resource/css/common.css}">
-	<link rel="stylesheet" th:href="@{/resource/css/global.css}">
-	<title>크루 모집 목록</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://cdn.tailwindcss.com"></script>
+<!-- ✅ Font Awesome CDN 추가 -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+<link rel="stylesheet" th:href="@{/resource/css/common.css}">
+<link rel="stylesheet" th:href="@{/resource/css/global.css}">
+<title>크루 모집 목록</title>
 </head>
 
 <body class="bg-gradient-to-b from-[#e4f0b9] to-[#fcdca9]">
@@ -87,18 +87,6 @@
 							<i class="fa-solid fa-dog"></i>
 							크루 신청
 						</button>
-					</div>
-
-					<!-- 🐞 디버깅용 출력 -->
-					<div class="text-xs text-gray-400">
-						isPending:
-						<span th:text="${isPending}"></span>
-						<br>
-						isJoined:
-						<span th:text="${isJoined}"></span>
-						<br>
-						isLeader:
-						<span th:text="${isLeader}"></span>
 					</div>
 
 					<!-- ✅ 리더 전용 -->
