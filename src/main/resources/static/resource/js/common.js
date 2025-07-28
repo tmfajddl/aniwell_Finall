@@ -55,6 +55,10 @@ document.querySelectorAll('.menu-item').forEach((item) => {
 		const loginedMemberId = window.localStorage.getItem('loginedMember');
 		switch (page) {
 			case 'pet':
+				if (!petId) {
+					alert("🐾 반려동물을 등록해주세요!");
+					return; // 페이지 이동 중단
+				}
 				url = `/usr/pet/petPage?petId=${petId}` // 로그인 ID로 교체 가능
 				break
 			case 'my':
@@ -74,3 +78,28 @@ document.querySelectorAll('.menu-item').forEach((item) => {
 		window.parent.location.href = url
 	})
 })
+
+document.querySelectorAll('.menu-item').forEach((item) => {
+	const container = item.querySelector('#cat_hand');
+
+	if (container) {
+		container.innerHTML = `
+			<img src="https://res.cloudinary.com/decrm0hhf/image/upload/h_90,c_fill,q_auto,f_auto/v1752334976/cat_hand_w9zkku.png"
+			     alt="고양이 발"
+			     class="cat-paw w-full h-full object-contain rotate-90" />
+		`;
+
+		// 🌟 초기에는 왼쪽 바깥에 숨겨두고, group-hover 시 오른쪽으로 이동
+		container.classList.add(
+			"absolute", "top-[-27px]", "left-[-100px]",
+			"group-hover:left-[-20px]", // ← hover 시 햄버거 위로 슬라이드
+			"transition-all", "duration-500",
+			"z-20", "pointer-events-none"
+		);
+
+		// 메뉴 아이템 자체에도 group 역할 부여
+		item.classList.add("relative", "group");
+	}
+});
+
+

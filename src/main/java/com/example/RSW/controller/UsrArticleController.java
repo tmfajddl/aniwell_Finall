@@ -55,17 +55,16 @@ public class UsrArticleController {
 
 	@Autowired
 	private NotificationService notificationService;
-    @Autowired
-    private SpringResourceTemplateResolver springResourceTemplateResolver;
+	@Autowired
+	private SpringResourceTemplateResolver springResourceTemplateResolver;
 
 	UsrArticleController(BeforeActionInterceptor beforeActionInterceptor) {
 		this.beforeActionInterceptor = beforeActionInterceptor;
 	}
 
-
 	@GetMapping("/usr/article/write/check")
 	public ResultData checkWritePermission(HttpServletRequest req, @RequestParam(required = false) Integer boardId,
-										   @RequestParam(required = false) Integer crewId, @RequestParam(required = false) String type) {
+			@RequestParam(required = false) Integer crewId, @RequestParam(required = false) String type) {
 
 		Rq rq = (Rq) req.getAttribute("rq");
 
@@ -103,13 +102,15 @@ public class UsrArticleController {
 	@PostMapping("/usr/article/doWrite")
 	@ResponseBody
 	public ResultData doWrite(HttpServletRequest req, @RequestParam(required = false) Integer crewId,
-							  @RequestParam(required = false) Integer boardId, @RequestParam String title, @RequestParam String body,
-							  @RequestParam(required = false) MultipartFile imageFile) {
+			@RequestParam(required = false) Integer boardId, @RequestParam String title, @RequestParam String body,
+			@RequestParam(required = false) MultipartFile imageFile) {
 
 		Rq rq = (Rq) req.getAttribute("rq");
 		int loginedMemberId = rq.getLoginedMemberId();
 
 		String imageUrl = null;
+
+		System.out.println("crewId: " + crewId);
 
 		// ✅ 이미지 업로드 처리 (Cloudinary)
 		if (imageFile != null && !imageFile.isEmpty()) {
@@ -154,9 +155,7 @@ public class UsrArticleController {
 	// ✅ 게시글 수정 처리 (JSON 방식)
 	@PostMapping("/usr/article/doModify")
 	@ResponseBody
-	public ResultData doModify(@RequestParam int id,
-							   @RequestParam String title,
-							   @RequestParam String body) {
+	public ResultData doModify(@RequestParam int id, @RequestParam String title, @RequestParam String body) {
 
 		Article article = articleService.getArticleById(id);
 		if (article == null) {
@@ -174,7 +173,6 @@ public class UsrArticleController {
 		Article updated = articleService.getArticleById(id);
 		return ResultData.from("S-1", "게시글 수정 완료", "data1", updated);
 	}
-
 
 	@PostMapping("/usr/article/doDelete")
 	public ResultData doDelete(HttpServletRequest req, @RequestParam int id, @RequestParam int crewId) {
@@ -227,17 +225,19 @@ public class UsrArticleController {
 
 		model.addAttribute("article", article);
 		model.addAttribute("usersReaction", usersReactionRd.getData1());
-		model.addAttribute("isAlreadyAddGoodRp", reactionPointService.isAlreadyAddGoodRp(rq.getLoginedMemberId(), id, "article"));
-		model.addAttribute("isAlreadyAddBadRp", reactionPointService.isAlreadyAddBadRp(rq.getLoginedMemberId(), id, "article"));
+		model.addAttribute("isAlreadyAddGoodRp",
+				reactionPointService.isAlreadyAddGoodRp(rq.getLoginedMemberId(), id, "article"));
+		model.addAttribute("isAlreadyAddBadRp",
+				reactionPointService.isAlreadyAddBadRp(rq.getLoginedMemberId(), id, "article"));
 
 		return "usr/article/detail"; // 정상 진입 시 detail 페이지 이동
 	}
 
 	@GetMapping("/usr/article/list")
 	public ResultData showList(HttpServletRequest req, @RequestParam(required = false) Integer boardId,
-							   @RequestParam(required = false) Integer crewId, @RequestParam(defaultValue = "1") int page,
-							   @RequestParam(defaultValue = "title") String searchKeywordTypeCode,
-							   @RequestParam(defaultValue = "") String searchKeyword) throws IOException {
+			@RequestParam(required = false) Integer crewId, @RequestParam(defaultValue = "1") int page,
+			@RequestParam(defaultValue = "title") String searchKeywordTypeCode,
+			@RequestParam(defaultValue = "") String searchKeyword) throws IOException {
 
 		Rq rq = (Rq) req.getAttribute("rq");
 
@@ -314,14 +314,14 @@ public class UsrArticleController {
 	// ✅ 모임일정 등록 (JSON 응답)
 	@PostMapping("/usr/article/doWriteSchedule")
 	public ResultData doWriteSchedule(@RequestParam int crewId, @RequestParam String scheduleDate,
-									  @RequestParam String scheduleTitle, @RequestParam(required = false) String scheduleBody,
-									  HttpServletRequest req) {
+			@RequestParam String scheduleTitle, @RequestParam(required = false) String scheduleBody,
+			HttpServletRequest req) {
 		Rq rq = (Rq) req.getAttribute("rq");
 
 		if (rq == null || !rq.isLogined()) {
 			return ResultData.from("F-1", "로그인이 필요합니다.");
 		}
-
+		System.err.printf(scheduleDate, scheduleTitle, scheduleBody);
 		int loginedMemberId = rq.getLoginedMemberId();
 
 		// ✅ 기존과 동일하게 저장만 처리
@@ -352,6 +352,5 @@ public class UsrArticleController {
 		model.addAttribute("articles", articles);
 		return "adm/article/list :: post-list"; // ✅ fragment 이름으로 지정
 	}
-
 
 }
