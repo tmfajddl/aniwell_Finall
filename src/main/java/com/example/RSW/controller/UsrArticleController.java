@@ -317,6 +317,7 @@ public class UsrArticleController {
 	@PostMapping("/usr/article/doWriteSchedule")
 	@ResponseBody
 	public ResultData doWriteSchedule(@RequestParam int crewId, @RequestParam LocalDate scheduleDate,
+
 			@RequestParam String scheduleTitle, @RequestParam(required = false) String scheduleBody,
 			HttpServletRequest req) {
 		Rq rq = (Rq) req.getAttribute("rq");
