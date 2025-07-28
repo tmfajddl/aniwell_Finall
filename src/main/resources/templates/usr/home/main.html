@@ -40,14 +40,13 @@
 						<img src="https://imgur.com/2ZJPrGR.png" alt="join">
 					</button>
 					<div>
-						<button type="button" class="in-icon" th:if="${rq.isLogined and }"
-							th:onclick="'location.href=\'/usr/pet/list?memberId=' + ${rq.loginedMemberId} + '\';'">
-							<img src="https://imgur.com/2ZJPrGR.png" alt="petlist">
+						<button id="vetList" type="button" class="in-icon hidden">
+							vetlist
+							<img src="https://imgur.com/2ZJPrGR.png" alt="vetlist">
 						</button>
 					</div>
 					<div>
-						<button type="button" class="in-icon" th:if="${rq.isLogined}"
-							th:onclick="'location.href=\'/usr/pet/list?memberId=' + ${rq.loginedMemberId} + '\';'">
+						<button id="petlist" type="button" class="in-icon hidden">
 							petlist
 							<img src="https://imgur.com/2ZJPrGR.png" alt="petlist">
 						</button>
@@ -77,28 +76,63 @@
 	<div class="section section-bottom mx-auto">메인 세션3</div>
 
 
+	<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+	<script>
+		if (![[${rq.isLogined}]]) {
+			// 로그인 상태가 아니라면 localStorage 정리
+			localStorage.removeItem("loginedMember");
+			localStorage.removeItem("selectedPetId");
+		}
+	</script>
 
-
-	/
 	<script>
 
-		const memberAuthLevel = null;
-		function e() {
+		let memberId = null;
+		function ee() {
 			$.ajax({
 				type: "GET",
 				url: `/api/member/myPage`,
 				success: function (data) {
-					console.log(data.data1.authLevel);
+					console.log(data.id);
+					memberId = data.id;
+					localStorage.setItem("loginedMember", memberId);
+					e();
 				},
 				error: function (err) {
 					console.error("가져오기실패", err);
 				}
 			});
 		}
-		
-		e();
+		let authLevel = null;
+		function e() {
+			$.ajax({
+				type: "GET",
+				url: `/api/member/getUsrInfo`,
+				data: {memberId: memberId},
+				success: function (data) {
+					authLevel = data.authLevel;
+					if (authLevel === 3) {
+						// 수의사 버튼만 보여주기
+						$("#vetList").removeClass("hidden").on("click", function () {
+							location.href = "/usr/vetAnswer/vetList";
+						});
+					} else {
+						// 일반 사용자 버튼만 보여주기
+						$("#petlist").removeClass("hidden").on("click", function () {
+							location.href = `/usr/pet/list?memberId=${memberId}`;
+						});
+					}
+				},
+				error: function (err) {
+					console.error("getUsrInfo 실패", err);
+				}
+			});
+		}
 
+		ee();
 	</script>
+
+
 </body>
 
 </html>
