@@ -233,30 +233,51 @@ public class MemberService {
         if (uid == null || uid.trim().isEmpty()) {
             uid = UUID.randomUUID().toString();
             member.setUid(uid);
-            memberRepository.updateUidById(uid, member.getId()); // 🔧 Mapper에 존재해야 함
+            memberRepository.updateUidById(uid, member.getId());
             System.out.println("📌 [UID 생성 및 저장] " + uid);
         }
 
-        // 3. Firebase 사용자 존재 여부 확인
+        // 3. Firebase 사용자 이메일 기반 존재 여부 확인
         try {
-            FirebaseAuth.getInstance().getUser(uid); // 이미 존재하면 통과
-            System.out.println("✅ [Firebase] 기존 사용자 확인 완료: " + uid);
-        } catch (FirebaseAuthException e) {
-            if (e.getAuthErrorCode() == AuthErrorCode.USER_NOT_FOUND) {
-                UserRecord.CreateRequest request = new UserRecord.CreateRequest()
-                        .setUid(uid)
-                        .setEmail(member.getEmail())
-                        .setDisplayName(member.getNickname())
-                        .setEmailVerified(true);
+            // 먼저 이메일 기준 조회
+            UserRecord existingUser = FirebaseAuth.getInstance().getUserByEmail(member.getEmail());
+            uid = existingUser.getUid();
+            System.out.println("✅ [Firebase] 이메일 기반 기존 사용자 UID 확인: " + uid);
 
+            // DB UID와 다르면 동기화
+            if (!uid.equals(member.getUid())) {
+                member.setUid(uid);
+                memberRepository.updateUidById(uid, member.getId());
+                System.out.println("🔄 [DB] UID를 Firebase UID로 동기화");
+            }
+
+        } catch (FirebaseAuthException emailEx) {
+            if (emailEx.getAuthErrorCode() == AuthErrorCode.USER_NOT_FOUND) {
+                // 이메일도 없으면 UID 기준 조회 시도
                 try {
-                    FirebaseAuth.getInstance().createUser(request);
-                    System.out.println("✅ [Firebase] 새 사용자 등록 완료: " + uid);
-                } catch (FirebaseAuthException ex) {
-                    throw new RuntimeException("❌ Firebase 사용자 생성 실패: " + ex.getMessage());
+                    FirebaseAuth.getInstance().getUser(uid);
+                    System.out.println("✅ [Firebase] UID 기준 기존 사용자 확인: " + uid);
+                } catch (FirebaseAuthException uidEx) {
+                    if (uidEx.getAuthErrorCode() == AuthErrorCode.USER_NOT_FOUND) {
+                        // UID도 없으면 새 사용자 등록
+                        UserRecord.CreateRequest request = new UserRecord.CreateRequest()
+                                .setUid(uid)
+                                .setEmail(member.getEmail())
+                                .setDisplayName(member.getNickname())
+                                .setEmailVerified(true);
+
+                        try {
+                            FirebaseAuth.getInstance().createUser(request);
+                            System.out.println("✅ [Firebase] 새 사용자 등록 완료: " + uid);
+                        } catch (FirebaseAuthException ex) {
+                            throw new RuntimeException("❌ Firebase 사용자 생성 실패: " + ex.getMessage());
+                        }
+                    } else {
+                        throw new RuntimeException("❌ Firebase UID 조회 실패: " + uidEx.getMessage());
+                    }
                 }
             } else {
-                throw new RuntimeException("❌ Firebase 사용자 조회 실패: " + e.getMessage());
+                throw new RuntimeException("❌ Firebase 이메일 조회 실패: " + emailEx.getMessage());
             }
         }
 
@@ -278,5 +299,6 @@ public class MemberService {
 
         return customToken;
     }
+
 
 }
