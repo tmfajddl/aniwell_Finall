@@ -2,6 +2,8 @@ package com.example.RSW.controller;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -324,7 +326,8 @@ public class UsrArticleController {
 	// ✅ 모임일정 등록 (JSON 응답)
 	@PostMapping("/usr/article/doWriteSchedule")
 	@ResponseBody
-	public ResultData doWriteSchedule(@RequestParam int crewId, @RequestParam String scheduleDate,
+	public ResultData doWriteSchedule(@RequestParam int crewId, @RequestParam LocalDate scheduleDate,
+
 			@RequestParam String scheduleTitle, @RequestParam(required = false) String scheduleBody,
 			HttpServletRequest req) {
 		Rq rq = (Rq) req.getAttribute("rq");
@@ -332,7 +335,8 @@ public class UsrArticleController {
 		if (rq == null || !rq.isLogined()) {
 			return ResultData.from("F-1", "로그인이 필요합니다.");
 		}
-		System.err.printf(scheduleDate, scheduleTitle, scheduleBody);
+		System.err.print(scheduleDate);
+		System.err.printf("%s %s", scheduleTitle, scheduleBody);
 		int loginedMemberId = rq.getLoginedMemberId();
 
 		// ✅ 기존과 동일하게 저장만 처리

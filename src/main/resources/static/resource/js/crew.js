@@ -487,6 +487,10 @@ function scAdd() {
 				alert("📌 제목을 입력해주세요.");
 				return;
 			}
+				console.log(crewId);
+				console.log(scheduleDate);
+				console.log(scheduleTitle);
+				console.log(scheduleBody);
 
 			$.ajax({
 				url: '/usr/article/doWriteSchedule',
@@ -501,7 +505,8 @@ function scAdd() {
 					console.log(data);
 					if (data.resultCode === "S-1") {
 						alert("✅ 일정이 등록되었습니다!");
-						window.location.href = data.data.redirectUrl;
+						const redirectUrl = data.data1.redirectUrl;
+						window.location.href = redirectUrl
 					} else {
 						alert("⚠️ " + data.msg);
 					}
@@ -900,7 +905,9 @@ function showMemberDetail(id) {
 				  <p>${data.nickname}</p>
 				  <p>${data.address}</p>
 				`;
-			detail.dataset.userId = member.memberId;
+
+			detail.dataset.usrId = member.memberId; 
+
 			buttons.style.display = "block";
 		},
 		error: function(err) {
@@ -911,8 +918,8 @@ function showMemberDetail(id) {
 }
 //위임 처리
 function transLeader() {
-	const id = document.getElementById("memberDetail").dataset.userId;
-
+	const id = document.getElementById("memberDetail").dataset.usrId;
+	console.log(id);
 	if (!confirm(`정말로 ID ${id} 회원을 위임하시겠습니까?`)) return;
 	$.ajax({
 		url: "/usr/walkCrewMember/transferLeadership",
