@@ -149,8 +149,6 @@ public class PetController {
 	@RequestMapping("/usr/pet/list")
 	public String showPetList(@RequestParam("memberId") int memberId, Model model, HttpServletResponse resp) throws IOException {
 		int loginId = rq.getLoginedMemberId();
-		System.out.println(memberId);
-		System.out.println(loginId);
 		if (loginId != memberId) {
 			resp.setContentType("text/html; charset=UTF-8");
 			resp.getWriter().write(Ut.jsHistoryBack("F-1", "권한이 없습니다."));
