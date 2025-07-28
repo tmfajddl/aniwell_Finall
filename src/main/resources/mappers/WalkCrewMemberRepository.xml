@@ -110,7 +110,7 @@
 
 	<select id="findRoleByMemberIdAndCrewId" resultType="string">
 		SELECT
-		status
+		role
 		FROM walk_crew_member
 		WHERE memberId = #{memberId} AND crewId =
 		#{crewId}
