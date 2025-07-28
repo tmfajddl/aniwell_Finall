@@ -15,7 +15,8 @@
 	<div th:fragment="siteHeader" class="flex h-screen">
 		<!-- Sidebar -->
 		<aside class="w-20 flex flex-col items-center p-4">
-			<img src="https://i.imgur.com/rcOcaL6.png" alt="Logo" class="w-12 mb-6" onclick="window.location.href = 'http://localhost:8080/'">
+			<img src="https://i.imgur.com/rcOcaL6.png" alt="Logo" class="w-12 mb-6"
+				onclick="window.location.href = 'http://localhost:8080/'">
 
 			<!-- 프로필 원형 -->
 			<div class="w-14 h-14 bg-[#2e576d] rounded-full shrink-0 overflow-hidden"></div>
@@ -23,9 +24,10 @@
 			<!-- 메뉴 아이콘 -->
 			<div class="flex flex-col gap-10 justify-center h-4/5">
 
-				<img src="https://res.cloudinary.com/decrm0hhf/image/upload/h_90,c_fill,q_auto,f_auto/v1752334976/cat_hand_w9zkku.png"
-					alt="고양이 발" class="cat-paw absolute" id="cat-paw" />
 				<div class="menu-item relative group pet_page" data-page="pet">
+					<div id="cat_hand"
+						class="absolute top-0 left-[-90px] transition-all duration-500 z-10 pointer-events-none">
+					</div>
 					<button class="hamburger" id="hamburger-btn" aria-label="메뉴 열기">
 						<span class="bar"></span>
 						<span class="bar"></span>
@@ -35,6 +37,9 @@
 				</div>
 
 				<div class="menu-item relative group my_page" data-page="my">
+					<div id="cat_hand"
+						class="absolute top-0 left-[-90px] transition-all duration-500 z-10 pointer-events-none">
+					</div>
 					<button class="hamburger" id="hamburger-btn" aria-label="메뉴 열기">
 						<span class="bar"></span>
 						<span class="bar"></span>
@@ -44,6 +49,9 @@
 				</div>
 
 				<div class="menu-item relative group crew_page" data-page="crew">
+					<div id="cat_hand"
+						class="absolute top-0 left-[-90px] transition-all duration-500 z-10 pointer-events-none">
+					</div>
 					<button class="hamburger" id="hamburger-btn" aria-label="메뉴 열기">
 						<span class="bar"></span>
 						<span class="bar"></span>
@@ -53,6 +61,9 @@
 				</div>
 
 				<div class="menu-item relative group qna_page" data-page="qna">
+					<div id="cat_hand"
+						class="absolute top-0 left-[-90px] transition-all duration-500 z-10 pointer-events-none">
+					</div>
 					<button class="hamburger" id="hamburger-btn" aria-label="메뉴 열기">
 						<span class="bar"></span>
 						<span class="bar"></span>
@@ -62,6 +73,9 @@
 				</div>
 
 				<div class="menu-item relative group qna_page" data-page="admin">
+					<div id="cat_hand"
+						class="absolute top-0 left-[-90px] transition-all duration-500 z-10 pointer-events-none">
+					</div>
 					<button class="hamburger" id="hamburger-btn" aria-label="메뉴 열기">
 						<span class="bar"></span>
 						<span class="bar"></span>
