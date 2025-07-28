@@ -5,6 +5,7 @@
   <title>내 주변 펫 장소</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" th:href="@{/resource/css/common.css}">
+  <link rel="stylesheet" th:href="@{/resource/css/global.css}">
   <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=dfd275f49b78960a0458d6f6294cbde2&libraries=services"></script>
   <style>
     /* (CSS는 그대로 유지) */
@@ -166,7 +167,7 @@
   </style>
 </head>
 
-<body class="bg-gradient-to-b from-[#e4f0b9] to-[#fcdca9] font-sans">
+<body class="bg-gradient-to-b from-[#e4f0b9] to-[#fcdca9]">
 <div class="flex h-screen">
   <!-- Sidebar -->
   <div th:replace="common :: siteHeader"></div>
