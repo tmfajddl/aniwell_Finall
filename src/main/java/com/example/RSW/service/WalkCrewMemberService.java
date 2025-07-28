@@ -74,13 +74,15 @@ public class WalkCrewMemberService {
 			// 1. walk_crew 테이블의 leaderId 변경
 			walkCrewService.updateLeader(crewId, newLeaderId);
 
-			// 2. 기존 리더 → subleader
-			walkCrewMemberRepository.updateRole(currentLeaderId, crewId, "subleader");
+			// 2. 기존 리더 → subleader로 변경
+			int oldUpdate = walkCrewMemberRepository.updateRole(currentLeaderId, crewId, "subleader");
 
-			// 3. 새로운 리더 → leader
-			walkCrewMemberRepository.updateRole(newLeaderId, crewId, "leader");
+			// 3. 새로운 리더 → leader로 변경
+			int newUpdate = walkCrewMemberRepository.updateRole(newLeaderId, crewId, "leader");
 
-			return true;
+			// ✅ 둘 다 업데이트 성공해야 true 반환
+			return oldUpdate == 1 && newUpdate == 1;
+
 		} catch (Exception e) {
 			e.printStackTrace();
 			return false;
@@ -118,6 +120,12 @@ public class WalkCrewMemberService {
 	// ✅ 크루 멤버 상태를 PENDING으로 되돌리는 서비스 메서드
 	public void revertToPendingStatus(int id, int crewId, int memberId) {
 		walkCrewMemberRepository.setPendingStatus(id, crewId, memberId);
+	}
+
+	// 크루까페 신청취소
+	public boolean cancelJoin(int crewId, int memberId) {
+		// role을 'pending' → null 처리 또는 신청 row 삭제
+		return walkCrewMemberRepository.cancelJoin(crewId, memberId) > 0;
 	}
 
 }
