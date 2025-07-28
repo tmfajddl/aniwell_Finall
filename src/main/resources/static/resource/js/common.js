@@ -21,7 +21,6 @@ function App() {
 	const [loginedMember, setLoginedMember] = React.useState(null)
 	const [crew, setCrew] = React.useState(null)
 
-	window.localStorage.setItem("loginedMemberId", loginedMember?.id);
 
 	React.useEffect(() => {
 		fetch(`/usr/member/myPage`)
@@ -47,7 +46,27 @@ function App() {
 
 };
 
+let authLevel = null;
+const mId = localStorage.getItem("loginedMember");
+function e() {
+	$.ajax({
+		type: "GET",
+		url: `/api/member/getUsrInfo`,
+		data: { memberId: mId },
+		success: function(data) {
+			authLevel = data.authLevel;
+			if (authLevel === 7) {
+				$("#adminPage").removeClass("hidden");
+			}
+		},
+		error: function(err) {
+			console.error("getUsrInfo 실패", err);
+		}
+	});
+}
+
 document.querySelectorAll('.menu-item').forEach((item) => {
+	e();
 	item.addEventListener('click', () => {
 		const page = item.dataset.page
 		let url = ''

@@ -1,70 +1,138 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" th:href="@{/resource/css/main.css}">
-    <title>MAIN</title>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<script src="https://cdn.tailwindcss.com"></script>
+	<link rel="stylesheet" th:href="@{/resource/css/main.css}">
+	<title>MAIN</title>
 </head>
-<body class="bg-gradient-to-b from-[#E4F0B9] to-[#FCDCA9] font-sans">
-<div class="section section-top mx-auto">
-    <img class="logo mx-auto" src="https://imgur.com/rcOcaL6.png" alt="d">
-    <div class="bg-logo">
-        <img class="b-logo mx-auto" src="https://imgur.com/qYhSSXR.png" alt="aniwell_큰_로고">
-        <div class="char">
-            <img class="mx-auto" src="https://imgur.com/OJI4yzC.png" alt="dig_cat">
-        </div>
-        <div class="icon">
-            <div>
-                <!-- 로그인/로그아웃 버튼 -->
-                <button type="button" class="in-icon" th:if="${!rq.isLogined}"
-                        onclick="location.href='/usr/member/login'">
-                    로그인
-                    <img src="https://imgur.com/vTaaRnh.png" alt="login">
-                </button>
-                <button type="button" class="in-icon" th:if="${rq.isLogined}"
-                        onclick="location.href='/usr/member/doLogout'">
-                    로그아웃
-                    <img src="https://imgur.com/vTaaRnh.png" alt="logout">
-                </button>
-            </div>
 
-            <div class="up-icon">
-                <!-- 회원가입 / 펫 리스트 버튼 -->
-                <button type="button" class="in-icon" th:if="${!rq.isLogined}"
-                        onclick="location.href='/usr/member/join'">
-                    join
-                    <img src="https://imgur.com/2ZJPrGR.png" alt="join">
-                </button>
-                <button type="button" class="in-icon" th:if="${rq.isLogined}"
-                        th:onclick="'location.href=\'/usr/pet/list?memberId=' + ${rq.loginedMemberId} + '\';'">
-                    petlist
-                    <img src="https://imgur.com/2ZJPrGR.png" alt="petlist">
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
+<body class="bg-gradient-to-b from-[#E4F0B9] to-[#FCDCA9]">
+	<div class="section section-top mx-auto">
+		<img class="logo mx-auto" src="https://imgur.com/rcOcaL6.png" alt="d">
+		<div class="bg-logo">
+			<img class="b-logo mx-auto" src="https://imgur.com/qYhSSXR.png" alt="aniwell_큰_로고">
+			<div class="char">
+				<img class="mx-auto" src="https://imgur.com/OJI4yzC.png" alt="dig_cat">
+			</div>
+			<div class="icon">
+				<div>
+					<!-- 로그인/로그아웃 버튼 -->
+					<button type="button" class="in-icon" th:if="${!rq.isLogined}"
+						onclick="location.href='/usr/member/login'">
+						로그인
+						<img src="https://imgur.com/vTaaRnh.png" alt="login">
+					</button>
+					<button type="button" class="in-icon" th:if="${rq.isLogined}"
+						onclick="location.href='/usr/member/doLogout'">
+						로그아웃
+						<img src="https://imgur.com/vTaaRnh.png" alt="logout">
+					</button>
+				</div>
 
-<div class="relative section section-middle mx-auto">
-    <div class="wave"></div>
-	<div class="contain absolute mx-auto w-full h-[100%] bottom-8">
-	  <!-- 상단 박스 -->
-	  <div class="mb-2 h-[50%] bg-yellow-400 flex items-center justify-center text-2xl font-bold rounded shadow">
-	    상단 박스
-	  </div>
-
-	  <!-- 하단 박스 3개 -->
-	  <div class="grid grid-cols-3 gap-1 h-[80%]">
-	    <div class="bg-yellow-400 h-[50%] flex items-center justify-center rounded shadow">박스 1</div>
-	    <div class="bg-yellow-400 h-[50%] flex items-center justify-center rounded shadow">박스 2</div>
-	    <div class="bg-yellow-400 h-[50%] flex items-center justify-center rounded shadow">박스 3</div>
-	  </div>
+				<div class="up-icon">
+					<!-- 회원가입 / 펫 리스트 버튼 -->
+					<button type="button" class="in-icon" th:if="${!rq.isLogined}"
+						onclick="location.href='/usr/member/join'">
+						join
+						<img src="https://imgur.com/2ZJPrGR.png" alt="join">
+					</button>
+					<div>
+						<button id="vetList" type="button" class="in-icon hidden">
+							vetlist
+							<img src="https://imgur.com/2ZJPrGR.png" alt="vetlist">
+						</button>
+					</div>
+					<div>
+						<button id="petlist" type="button" class="in-icon hidden">
+							petlist
+							<img src="https://imgur.com/2ZJPrGR.png" alt="petlist">
+						</button>
+					</div>
+				</div>
+			</div>
+		</div>
 	</div>
-</div>
 
-<div class="section section-bottom mx-auto">메인 세션3</div>
+	<div class="relative section section-middle mx-auto">
+		<div class="wave"></div>
+		<div class="contain absolute mx-auto w-full h-[100%] bottom-8">
+			<!-- 상단 박스 -->
+			<div class="mb-2 h-[50%] bg-yellow-400 flex items-center justify-center text-2xl font-bold rounded shadow">
+				상단 박스
+			</div>
+
+			<!-- 하단 박스 3개 -->
+			<div class="grid grid-cols-3 gap-1 h-[80%]">
+				<div class="bg-yellow-400 h-[50%] flex items-center justify-center rounded shadow">박스 1</div>
+				<div class="bg-yellow-400 h-[50%] flex items-center justify-center rounded shadow">박스 2</div>
+				<div class="bg-yellow-400 h-[50%] flex items-center justify-center rounded shadow">박스 3</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="section section-bottom mx-auto">메인 세션3</div>
+
+
+	<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+	<script>
+		if (![[${rq.isLogined}]]) {
+			// 로그인 상태가 아니라면 localStorage 정리
+			localStorage.removeItem("loginedMember");
+			localStorage.removeItem("selectedPetId");
+		}
+	</script>
+
+	<script>
+
+		let memberId = null;
+		function ee() {
+			$.ajax({
+				type: "GET",
+				url: `/api/member/myPage`,
+				success: function (data) {
+					console.log(data.id);
+					memberId = data.id;
+					localStorage.setItem("loginedMember", memberId);
+					e();
+				},
+				error: function (err) {
+					console.error("가져오기실패", err);
+				}
+			});
+		}
+		let authLevel = null;
+		function e() {
+			$.ajax({
+				type: "GET",
+				url: `/api/member/getUsrInfo`,
+				data: {memberId: memberId},
+				success: function (data) {
+					authLevel = data.authLevel;
+					if (authLevel === 3) {
+						// 수의사 버튼만 보여주기
+						$("#vetList").removeClass("hidden").on("click", function () {
+							location.href = "/usr/vetAnswer/vetList";
+						});
+					} else {
+						// 일반 사용자 버튼만 보여주기
+						$("#petlist").removeClass("hidden").on("click", function () {
+							location.href = `/usr/pet/list?memberId=${memberId}`;
+						});
+					}
+				},
+				error: function (err) {
+					console.error("getUsrInfo 실패", err);
+				}
+			});
+		}
+
+		ee();
+	</script>
+
 
 </body>
+
 </html>
