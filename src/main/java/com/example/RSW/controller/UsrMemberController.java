@@ -903,68 +903,39 @@ public class UsrMemberController {
 
     @RequestMapping("/usr/member/firebase-token")
     @ResponseBody
-    public ResultData<Map<String, String>> generateFirebaseToken(HttpServletRequest req, HttpServletResponse resp) {
+    public ResultData<Map<String, String>> generateFirebaseToken(HttpServletRequest req) {
         Integer memberId = (Integer) req.getSession().getAttribute("loginedMemberId");
 
         System.out.println("📥 [로그] firebase-token 요청 도착");
         System.out.println("   - 로그인된 memberId: " + memberId);
 
-        if (memberId == null) return ResultData.from("F-1", "로그인 후 이용 가능합니다.");
+        if (memberId == null)
+            return ResultData.from("F-1", "로그인 후 이용 가능합니다.");
 
         Member loginedMember = memberService.getMemberById(memberId);
-        if (loginedMember == null) return ResultData.from("F-2", "회원 정보를 찾을 수 없습니다.");
+        if (loginedMember == null)
+            return ResultData.from("F-2", "회원 정보를 찾을 수 없습니다.");
 
         try {
-            String uid;
-            String email = loginedMember.getEmail();
-            String name = loginedMember.getNickname();
-            String provider = loginedMember.getSocialProvider();
-            if (provider == null || provider.trim().isEmpty()) provider = "email";
-
-            System.out.println("   - 이메일: " + email);
-
-            try {
-                // ✅ 이미 존재하는 사용자인지 먼저 확인
-                UserRecord existingUser = FirebaseAuth.getInstance().getUserByEmail(email);
-                uid = existingUser.getUid();
-                System.out.println("✅ [로그] 기존 Firebase 사용자 UID 조회 성공: " + uid);
-            } catch (FirebaseAuthException e) {
-                // ❗ 존재하지 않는 경우 → 새로 생성
-                if (e.getAuthErrorCode() == AuthErrorCode.USER_NOT_FOUND) {
-                    uid = UUID.randomUUID().toString();
-
-                    UserRecord.CreateRequest request = new UserRecord.CreateRequest()
-                            .setUid(uid)
-                            .setEmail(email)
-                            .setDisplayName(name)
-                            .setEmailVerified(true);
-
-                    FirebaseAuth.getInstance().createUser(request);
-                    System.out.println("✅ [로그] Firebase 새 사용자 등록 완료: " + uid);
-                } else {
-                    System.out.println("❌ [로그] Firebase 사용자 조회 실패: " + e.getMessage());
-                    return ResultData.from("F-4", "Firebase 사용자 조회 실패: " + e.getMessage());
-                }
-            }
-
-            // ✅ 커스텀 토큰 발급
-            String customToken = FirebaseAuth.getInstance().createCustomToken(uid);
-            System.out.println("✅ [로그] 커스텀 토큰 발급 완료");
+            // ✅ 서비스에서 모든 로직 처리 (Redis 캐싱 포함)
+            String customToken = memberService.getOrCreateFirebaseToken(loginedMember);
 
             Map<String, String> data = new HashMap<>();
             data.put("token", customToken);
-            data.put("provider", provider);
+            data.put("provider", loginedMember.getSocialProvider() != null ? loginedMember.getSocialProvider() : "email");
+
+            System.out.println("✅ [로그] Firebase 토큰 최종 발급 완료");
 
             return ResultData.from("S-1", "토큰 생성 성공", data);
 
         } catch (Exception e) {
+            System.out.println("❌ [로그] 토큰 생성 실패: " + e.getMessage());
             return ResultData.from("F-3", "토큰 생성 실패: " + e.getMessage());
-
         }
     }
 
 
-     @RequestMapping("/usr/member/firebase-session-login")
+    @RequestMapping("/usr/member/firebase-session-login")
     @ResponseBody
     public ResultData doFirebaseSessionLogin(@RequestBody Map<String, String> body, HttpServletRequest req) {
         String idToken = body.get("idToken");
