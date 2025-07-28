@@ -168,4 +168,13 @@
 		= #{id} AND crewId = #{crewId} AND memberId = #{memberId}
 	</update>
 
+	<!-- 크루신청 취소하기 -->
+	<delete id="cancelJoin">
+		DELETE FROM walk_crew_member
+		WHERE crewId = #{crewId}
+		AND memberId = #{memberId}
+		AND role = 'pending'
+	</delete>
+
+
 </mapper>
