@@ -236,12 +236,22 @@ public class UsrArticleController {
 	}
 
 	@GetMapping("/usr/article/list")
+	@ResponseBody
 	public ResultData showList(HttpServletRequest req, @RequestParam(required = false) Integer boardId,
-			@RequestParam(required = false) Integer crewId, @RequestParam(defaultValue = "1") int page,
+			@RequestParam(required = false) Integer crewId, @RequestParam(required = false) Integer memberId,
+			@RequestParam(defaultValue = "1") int page,
 			@RequestParam(defaultValue = "title") String searchKeywordTypeCode,
 			@RequestParam(defaultValue = "") String searchKeyword) throws IOException {
 
 		Rq rq = (Rq) req.getAttribute("rq");
+
+		// ✅ crewId, boardId, memberId 모두 있는 경우 → 내가 쓴 글 필터
+		if (crewId != null && boardId != null && memberId != null) {
+			List<Article> articles = articleService.getArticlesByCrewBoardAndMember(crewId, boardId, memberId);
+
+			return ResultData.from("S-0", "내가 쓴 글 목록 조회 성공",
+					Map.of("articles", articles, "crewId", crewId, "boardId", boardId, "memberId", memberId));
+		}
 
 		// ✅ crewId와 boardId 모두 존재하는 경우 (크루 게시판)
 		if (crewId != null && boardId != null) {

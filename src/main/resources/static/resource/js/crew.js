@@ -631,7 +631,7 @@ function modal_btn() {
 	    </button>
 
 	    <!-- 내가 쓴 글 -->
-	    <button onclick=handleArticleList()" class="w-full text-left text-sm font-medium text-gray-800 hover:text-yellow-500 transition">
+	    <button onclick="handleArticleList()" class="w-full text-left text-sm font-medium text-gray-800 hover:text-yellow-500 transition">
 	     내가 쓴 글
 	    </button>
 
@@ -1000,32 +1000,46 @@ function handleArticleList() {
 	closeSideModal(); // 사이드바 닫기
 	myArticle();        // 참가 신청 로직 실행
 }
-
-//내가 쓴글
+// 내가 쓴글
 function myArticle() {
 	const memberId = localStorage.getItem("loginedMember");
+
 	$.ajax({
 		type: "GET",
 		url: `/usr/article/list`,
 		data: {
 			crewId: crewId,
-			boardId: 3
+			boardId: 3,
+			memberId: memberId
 		},
 		success: function(data) {
-
 			console.log(data.msg);
 			console.log(data.data1);
-			// ✅ 참가 수락 후 멤버 목록도 다시 렌더링
-			renderMemberList();
-			const html = `
-					<div class="flex">
-					 <!-- 작성된 글 리스 -->
-					</div>
 
-					
-					    `;
+			// ✅ 기존 멤버 목록 다시 렌더링 유지
+			renderMemberList();
+
+			// ✅ article 리스트 출력 처리 추가
+			const articles = data.data1.articles || [];
+
+			const html = `
+				<div class="space-y-4 p-4 max-h-[500px] overflow-y-auto">
+					<h2 class="text-lg font-bold">📋 내가 쓴 글</h2>
+					${articles.length === 0
+					? `<p class="text-sm text-gray-500">작성한 글이 없습니다.</p>`
+					: articles.map(article => `
+							<div class="p-4 shadow rounded bg-white">
+								<h3 class="font-semibold text-base">${article.title}</h3>
+								<p class="text-sm text-gray-700">${article.body}</p>
+								<p class="text-xs text-right text-gray-400">${article.regDate}</p>
+							</div>
+						`).join('')}
+				</div>
+			`;
+
 			openComModal(html);
 
+			// ✅ 원래 있던 renderMemberList 재호출도 그대로 유지 (필요 시 제거 가능)
 			setTimeout(() => renderMemberList(), 0);
 		},
 		error: function(err) {
@@ -1033,4 +1047,5 @@ function myArticle() {
 		}
 	});
 }
+
 
