@@ -900,7 +900,7 @@ function showMemberDetail(id) {
 				  <p>${data.nickname}</p>
 				  <p>${data.address}</p>
 				`;
-			detail.dataset.userId = member.id;
+			detail.dataset.userId = member.memberId;
 			buttons.style.display = "block";
 		},
 		error: function(err) {
@@ -915,26 +915,26 @@ function transLeader() {
 
 	if (!confirm(`정말로 ID ${id} 회원을 위임하시겠습니까?`)) return;
 	$.ajax({
-			url: "/usr/walkCrewMember/transferLeadership",
-			method: "POST",
-			data: {
-				crewId: crewId,
-				memberId: id
-			},
-			success: function(data) {
-				if (data.resultCode.startsWith("S-")) {
-					alert("위임 완료");
-					renderMemberList(); // 성공 후 목록 다시 렌더링
-					handleCrewMember()
-				} else {
-					alert(`❌ 실패: ${data.msg}`);
-				}
-			},
-			error: function(xhr, status, error) {
-				console.error("❌ 위 요청 실패", error);
-				alert("서버 오류로 위임에 실패했습니다.");
+		url: "/usr/walkCrewMember/transferLeadership",
+		method: "POST",
+		data: {
+			crewId: crewId,
+			newLeaderId: id
+		},
+		success: function(data) {
+			if (data.resultCode.startsWith("S-")) {
+				alert("위임 완료");
+				renderMemberList(); // 성공 후 목록 다시 렌더링
+				handleCrewMember()
+			} else {
+				alert(`❌ 실패: ${data.msg}`);
 			}
-		});
+		},
+		error: function(xhr, status, error) {
+			console.error("❌ 위 요청 실패", error);
+			alert("서버 오류로 위임에 실패했습니다.");
+		}
+	});
 
 }
 
@@ -988,50 +988,43 @@ function crewJoin(crewId) {
 	});
 }
 
-<<<<<<< HEAD
 
-
-
-
-
-
-=======
 function handleArticleList() {
 	closeSideModal(); // 사이드바 닫기
 	myArticle();        // 참가 신청 로직 실행
 }
 
 //내가 쓴글
-function myArticle(){
+function myArticle() {
 	const memberId = localStorage.getItem("loginedMember");
 	$.ajax({
-			type: "GET",
-			url: `/usr/article/list`,
-			data: { 
-				crewId: crewId,
-				boardId: 3
-			},
-			success: function(data) {
+		type: "GET",
+		url: `/usr/article/list`,
+		data: {
+			crewId: crewId,
+			boardId: 3
+		},
+		success: function(data) {
 
-				console.log(data.msg);
-				console.log(data.data1);
-				// ✅ 참가 수락 후 멤버 목록도 다시 렌더링
-				renderMemberList();
-				const html = `
+			console.log(data.msg);
+			console.log(data.data1);
+			// ✅ 참가 수락 후 멤버 목록도 다시 렌더링
+			renderMemberList();
+			const html = `
 					<div class="flex">
 					 <!-- 작성된 글 리스 -->
 					</div>
 
 					
 					    `;
-					openComModal(html);
+			openComModal(html);
 
-					setTimeout(() => renderMemberList(), 0);
-			},
-			error: function(err) {
-				console.error("가져오기실패", err);
-			}
-		});
+			setTimeout(() => renderMemberList(), 0);
+		},
+		error: function(err) {
+			console.error("가져오기실패", err);
+		}
+	});
 
 }
->>>>>>> 0c155474d0c55fa5559807061e85ee49a2e3c95a
+
