@@ -58,68 +58,67 @@
 		<script type="text/babel">
 			const { createPortal } = ReactDOM;
 
-			// ✅ PetCard 컴포넌트 정의
-			function PetCard({pet}) {
-				const [isModalOpen, setIsModalOpen] = React.useState(false);
+			function PetCard({ pet }) {
+			  const handleClick = () => {
+			    window.modifyPet(pet); // 전역 JS 함수 호출
+			  };
 
-				const openModal = () => setIsModalOpen(true);
-				const closeModal = () => setIsModalOpen(false);
+			  return (
+			    <React.Fragment>
+			      <div
+			        className="ani-card bg-white aspect-[1/1.6] w-[420px] rounded-xl p-6 shadow"
+			        onClick={handleClick}
+			      >
+			        <h2 className="text-2xl font-bold flex items-center gap-1 mb-4 justify-center">
+			          <span className="text-3xl">🐾</span> 반려동물등록증
+			        </h2>
 
-				return (
-					<React.Fragment>
-						<div className="ani-card bg-white aspect-[1/1.6] w-[420px] rounded-xl p-6 shadow" onClick={openModal}>
-							<h2 className="text-2xl font-bold flex items-center gap-1 mb-4 justify-center">
-								<span className="text-3xl">🐾</span> 반려동물등록증
-							</h2>
-							<div className="grid grid-cols-3 ">
-								<div className="grid-rows-2">
-									<div className="row-auto text-start space-y-1 text-sm">
-										<div><span className="font-semibold mr-2">이름:</span> {pet.name}</div>
-										<div><span className="font-semibold mr-2">번호:</span> {pet.id}</div>
-										<div><span className="font-semibold mr-2">품종:</span> {pet.breed}</div>
-									</div>
-									<div className="row-auto text-sm text-start pt-1">
-										<span className=" font-semibold mr-2">특징:</span> {pet.species}
-									</div>
-								</div>
-								<div className="row-auto text-start space-y-1 text-sm">
-									<div><span className="font-semibold mr-2">성별:</span> {pet.gender}</div>
-									<div><span className="font-semibold mr-2">생일:</span> {pet.birthDate}</div>
-									<div><span className="font-semibold mr-2">중성화:</span> 완료</div>
-								</div>
-								<div className="space-y-1 flex justify-center items-start">
-									<img src={pet.photo} alt="cat" className="w-[100px] h-[100px] object-cover rounded-xl border" />
-								</div>
-							</div>
-							<div className="createdAt text-right text-xs text-gray-500 mt-2">{pet.createdAt}</div>
-							{isModalOpen && <Modal pet={pet} onClose={closeModal} />}
-						</div>
-						
-					</React.Fragment>
-				);
+			        <div className="grid grid-cols-3">
+			          <div className="grid-rows-2">
+			            <div className="row-auto text-start space-y-1 text-sm">
+			              <div>
+			                <span className="font-semibold mr-2">이름:</span> {pet.name}
+			              </div>
+			              <div>
+			                <span className="font-semibold mr-2">번호:</span> {pet.id}
+			              </div>
+			              <div>
+			                <span className="font-semibold mr-2">품종:</span> {pet.breed}
+			              </div>
+			            </div>
+			            <div className="row-auto text-sm text-start pt-1">
+			              <span className="font-semibold mr-2">특징:</span> {pet.species}
+			            </div>
+			          </div>
+
+			          <div className="row-auto text-start space-y-1 text-sm">
+			            <div>
+			              <span className="font-semibold mr-2">성별:</span> {pet.gender}
+			            </div>
+			            <div>
+			              <span className="font-semibold mr-2">생일:</span> {pet.birthDate}
+			            </div>
+			            <div>
+			              <span className="font-semibold mr-2">중성화:</span> 완료
+			            </div>
+			          </div>
+
+			          <div className="space-y-1 flex justify-center items-start">
+			            <img
+			             src={pet.photo && pet.photo.trim() !== '' ? pet.photo : '/img/default-pet.png'}
+			              alt="pet"
+			              className="w-[100px] h-[100px] object-cover rounded-xl border"
+			            />
+			          </div>
+			        </div>
+
+			        <div className="createdAt text-right text-xs text-gray-500 mt-2">
+			          {pet.createdAt}
+			        </div>
+			      </div>
+			    </React.Fragment>
+			  );
 			}
-			// Modal.js
-			const Modal = ({ pet, onClose }) => {
-				return ReactDOM.createPortal(
-					<div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-						<div className="bg-white p-6 rounded-lg w-[400px]">
-							<h2 className="text-lg font-bold mb-4">반려동물 정보 수정</h2>
-							<form className="space-y-3">
-								<input className="w-full border p-2 rounded" defaultValue={pet.name} placeholder="이름" />
-								<input className="w-full border p-2 rounded" defaultValue={pet.breed} placeholder="품종" />
-								<input className="w-full border p-2 rounded" defaultValue={pet.gender} placeholder="성별" />
-								<input className="w-full border p-2 rounded" defaultValue={pet.birthDate} placeholder="생일" />
-								<textarea className="w-full border p-2 rounded" defaultValue={pet.species} placeholder="특징" />
-								<div className="flex justify-end gap-2">
-									<button type="button" onClick={onClose} className="bg-gray-300 px-3 py-1 rounded">닫기</button>
-									<button type="submit" className="bg-blue-500 text-white px-3 py-1 rounded">저장</button>
-								</div>
-							</form>
-						</div>
-					</div>,
-					document.body // 💡 전체 페이지 body에 직접 렌더링
-				);
-			};
 
 
 			function App() {
