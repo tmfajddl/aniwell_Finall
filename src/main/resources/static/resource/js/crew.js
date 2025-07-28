@@ -487,6 +487,10 @@ function scAdd() {
 				alert("📌 제목을 입력해주세요.");
 				return;
 			}
+				console.log(crewId);
+				console.log(scheduleDate);
+				console.log(scheduleTitle);
+				console.log(scheduleBody);
 
 			$.ajax({
 				url: '/usr/article/doWriteSchedule',
@@ -501,7 +505,8 @@ function scAdd() {
 					console.log(data);
 					if (data.resultCode === "S-1") {
 						alert("✅ 일정이 등록되었습니다!");
-						window.location.href = data.data.redirectUrl;
+						const redirectUrl = data.data1.redirectUrl;
+						window.location.href = redirectUrl
 					} else {
 						alert("⚠️ " + data.msg);
 					}
