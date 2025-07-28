@@ -1,9 +1,13 @@
+
 package com.example.RSW.service;
 
+import com.google.firebase.auth.AuthErrorCode;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
+import com.google.firebase.auth.UserRecord;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import com.example.RSW.repository.MemberRepository;
@@ -11,7 +15,11 @@ import com.example.RSW.util.Ut;
 import com.example.RSW.vo.Member;
 import com.example.RSW.vo.ResultData;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class MemberService {
@@ -27,6 +35,10 @@ public class MemberService {
 
     @Autowired
     private MailService mailService;
+
+    @Autowired
+    private RedisTemplate<String, String> redisTemplate;
+
 
     public MemberService(MemberRepository memberRepository) {
         this.memberRepository = memberRepository;
@@ -187,7 +199,7 @@ public class MemberService {
         return member;
     }
 
- // ✅ Firebase 커스텀 토큰 생성
+    // ✅ Firebase 커스텀 토큰 생성
     public String createFirebaseCustomToken(String uid) {
         try {
             System.out.println("📌 [DEBUG] createFirebaseCustomToken() 진입, uid = " + uid);
@@ -206,5 +218,65 @@ public class MemberService {
         return memberRepository.findByEmail(email);
     }
 
+    public String getOrCreateFirebaseToken(Member member) {
+        String redisKey = "firebaseToken::" + member.getId();
+
+        // 1. Redis에서 캐시 확인
+        String cachedToken = redisTemplate.opsForValue().get(redisKey);
+        if (cachedToken != null) {
+            System.out.println("✅ [Redis] 캐시된 Firebase 토큰 반환");
+            return cachedToken;
+        }
+
+        // 2. UID 확인 → 없으면 UUID 생성 + DB 저장
+        String uid = member.getUid();
+        if (uid == null || uid.trim().isEmpty()) {
+            uid = UUID.randomUUID().toString();
+            member.setUid(uid);
+            memberRepository.updateUidById(uid, member.getId()); // 🔧 Mapper에 존재해야 함
+            System.out.println("📌 [UID 생성 및 저장] " + uid);
+        }
+
+        // 3. Firebase 사용자 존재 여부 확인
+        try {
+            FirebaseAuth.getInstance().getUser(uid); // 이미 존재하면 통과
+            System.out.println("✅ [Firebase] 기존 사용자 확인 완료: " + uid);
+        } catch (FirebaseAuthException e) {
+            if (e.getAuthErrorCode() == AuthErrorCode.USER_NOT_FOUND) {
+                UserRecord.CreateRequest request = new UserRecord.CreateRequest()
+                        .setUid(uid)
+                        .setEmail(member.getEmail())
+                        .setDisplayName(member.getNickname())
+                        .setEmailVerified(true);
+
+                try {
+                    FirebaseAuth.getInstance().createUser(request);
+                    System.out.println("✅ [Firebase] 새 사용자 등록 완료: " + uid);
+                } catch (FirebaseAuthException ex) {
+                    throw new RuntimeException("❌ Firebase 사용자 생성 실패: " + ex.getMessage());
+                }
+            } else {
+                throw new RuntimeException("❌ Firebase 사용자 조회 실패: " + e.getMessage());
+            }
+        }
+
+        // 4. Custom Token 발급 (❌ "uid"는 claims에 넣지 않음!)
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("provider", member.getSocialProvider() != null ? member.getSocialProvider() : "email");
+
+        String customToken;
+        try {
+            customToken = FirebaseAuth.getInstance().createCustomToken(uid, claims);
+            System.out.println("✅ [Firebase] 커스텀 토큰 발급 완료");
+        } catch (FirebaseAuthException e) {
+            throw new RuntimeException("❌ Firebase 토큰 생성 실패: " + e.getMessage());
+        }
+
+        // 5. Redis 캐싱 (TTL 1시간)
+        redisTemplate.opsForValue().set(redisKey, customToken, 1, TimeUnit.HOURS);
+        System.out.println("✅ [Redis] Firebase 토큰 캐싱 완료: " + redisKey);
+
+        return customToken;
+    }
 
 }
