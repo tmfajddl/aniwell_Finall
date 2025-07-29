@@ -284,23 +284,6 @@
 		LIMIT #{limit}
 	</select>
 
-	<!-- 일정을 등록하기 -->
-	<insert id="writeSchedule">
-		INSERT INTO article
-		SET
-		boardId = 5,
-		crewId = #{crewId},
-		memberId = #{loginedMemberId},
-		title = #{scheduleTitle},
-		body =
-		#{scheduleBody},
-		regDate = NOW(),
-		updateDate = NOW(),
-		scheduleDate =
-		#{scheduleDate}
-	</insert>
-
-
 	<!-- 일정 리스트 불러오기 -->
 	<select id="getSchedulesByCrewId" resultType="map">
 		SELECT
@@ -377,5 +360,45 @@
 		ORDER BY A.id DESC
 	</select>
 
+
+	<!-- 일정을 등록하기 -->
+	<insert id="writeSchedule">
+		INSERT INTO article
+		SET
+		boardId = 5,
+		crewId = #{crewId},
+		memberId = #{loginedMemberId},
+		title = #{scheduleTitle},
+		body =
+		#{scheduleBody},
+		regDate = NOW(),
+		updateDate = NOW(),
+		scheduleDate =
+		#{scheduleDate}
+	</insert>
+
+	<!-- 일정 참가자 조회 -->
+	<insert id="insertScheduleParticipant">
+		INSERT INTO schedule_participant (scheduleId,
+		memberId)
+		VALUES (#{scheduleId}, #{memberId})
+	</insert>
+
+	<select id="countScheduleParticipant" resultType="int">
+		SELECT COUNT(*)
+		FROM schedule_participant
+		WHERE scheduleId = #{scheduleId} AND memberId
+		= #{memberId}
+	</select>
+
+	<!-- 참가자 리스트 조회 -->
+	<select id="getScheduleParticipants" resultType="map">
+		SELECT SP.*,
+		M.nickname
+		FROM schedule_participant AS SP
+		INNER JOIN member AS M ON
+		SP.memberId = M.id
+		WHERE SP.scheduleId = #{scheduleId}
+	</select>
 
 </mapper>
