@@ -116,6 +116,7 @@ public class UsrCrewCafeController {
 		model.addAttribute("galleryArticles", galleryArticles);
 		model.addAttribute("scheduleArticles", scheduleArticles);
 		model.addAttribute("isJoined", isJoined);
+		System.out.println("✅ isPending = " + isPending);
 		model.addAttribute("isPending", isPending);
 		model.addAttribute("isLeader", isLeader);
 		return "usr/walkCrew/cafeHome";
@@ -124,29 +125,28 @@ public class UsrCrewCafeController {
 	@GetMapping("/usr/crew/myCrewCafe")
 	@ResponseBody
 	public ResultData<Map<String, Object>> getMyCrewCafe(HttpServletRequest req) {
-	    Rq rq = (Rq) req.getAttribute("rq");
-	    int memberId = rq.getLoginedMemberId();
+		Rq rq = (Rq) req.getAttribute("rq");
+		int memberId = rq.getLoginedMemberId();
 
-	    // 1. 내가 만든 크루 or 가입한 크루 조회
-	    WalkCrew myCrew = walkCrewService.getCrewByLeaderId(memberId);
-	    if (myCrew == null) {
-	        myCrew = walkCrewMemberService.getMyCrew(memberId);
-	    }
+		// 1. 내가 만든 크루 or 가입한 크루 조회
+		WalkCrew myCrew = walkCrewService.getCrewByLeaderId(memberId);
+		if (myCrew == null) {
+			myCrew = walkCrewMemberService.getMyCrew(memberId);
+		}
 
-	    if (myCrew == null) {
-	        return ResultData.from("F-1", "가입된 크루가 없습니다.");
-	    }
+		if (myCrew == null) {
+			return ResultData.from("F-1", "가입된 크루가 없습니다.");
+		}
 
-	    // 2. 크루 게시글도 같이 가져옴
-	    List<Article> articles = articleService.getArticlesByCrewId(myCrew.getId());
+		// 2. 크루 게시글도 같이 가져옴
+		List<Article> articles = articleService.getArticlesByCrewId(myCrew.getId());
 
-	    // 3. Map으로 묶어서 전달
-	    Map<String, Object> data = new HashMap<>();
-	    data.put("crew", myCrew);
-	    data.put("articles", articles);
+		// 3. Map으로 묶어서 전달
+		Map<String, Object> data = new HashMap<>();
+		data.put("crew", myCrew);
+		data.put("articles", articles);
 
-	    return ResultData.from("S-1", "나의 크루와 게시글을 불러왔습니다.", data);
+		return ResultData.from("S-1", "나의 크루와 게시글을 불러왔습니다.", data);
 	}
-
 
 }

@@ -2,6 +2,8 @@ package com.example.RSW.controller;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -234,12 +236,22 @@ public class UsrArticleController {
 	}
 
 	@GetMapping("/usr/article/list")
+	@ResponseBody
 	public ResultData showList(HttpServletRequest req, @RequestParam(required = false) Integer boardId,
-			@RequestParam(required = false) Integer crewId, @RequestParam(defaultValue = "1") int page,
+			@RequestParam(required = false) Integer crewId, @RequestParam(required = false) Integer memberId,
+			@RequestParam(defaultValue = "1") int page,
 			@RequestParam(defaultValue = "title") String searchKeywordTypeCode,
 			@RequestParam(defaultValue = "") String searchKeyword) throws IOException {
 
 		Rq rq = (Rq) req.getAttribute("rq");
+
+		// ✅ crewId, boardId, memberId 모두 있는 경우 → 내가 쓴 글 필터
+		if (crewId != null && boardId != null && memberId != null) {
+			List<Article> articles = articleService.getArticlesByCrewBoardAndMember(crewId, boardId, memberId);
+
+			return ResultData.from("S-0", "내가 쓴 글 목록 조회 성공",
+					Map.of("articles", articles, "crewId", crewId, "boardId", boardId, "memberId", memberId));
+		}
 
 		// ✅ crewId와 boardId 모두 존재하는 경우 (크루 게시판)
 		if (crewId != null && boardId != null) {
@@ -313,7 +325,9 @@ public class UsrArticleController {
 
 	// ✅ 모임일정 등록 (JSON 응답)
 	@PostMapping("/usr/article/doWriteSchedule")
-	public ResultData doWriteSchedule(@RequestParam int crewId, @RequestParam String scheduleDate,
+	@ResponseBody
+	public ResultData doWriteSchedule(@RequestParam int crewId, @RequestParam LocalDate scheduleDate,
+
 			@RequestParam String scheduleTitle, @RequestParam(required = false) String scheduleBody,
 			HttpServletRequest req) {
 		Rq rq = (Rq) req.getAttribute("rq");
@@ -321,7 +335,8 @@ public class UsrArticleController {
 		if (rq == null || !rq.isLogined()) {
 			return ResultData.from("F-1", "로그인이 필요합니다.");
 		}
-		System.err.printf(scheduleDate, scheduleTitle, scheduleBody);
+		System.err.print(scheduleDate);
+		System.err.printf("%s %s", scheduleTitle, scheduleBody);
 		int loginedMemberId = rq.getLoginedMemberId();
 
 		// ✅ 기존과 동일하게 저장만 처리
@@ -330,6 +345,34 @@ public class UsrArticleController {
 		// ✅ 성공 메시지 리턴 (articleId 없이)
 		return ResultData.from("S-1", "모임 일정이 등록되었습니다.",
 				Map.of("crewId", crewId, "redirectUrl", "/usr/crewCafe/cafeHome?crewId=" + crewId));
+	}
+
+	// ✅ 일정 참가 처리
+	@PostMapping("/usr/article/doJoinSchedule")
+	@ResponseBody
+	public ResultData doJoinSchedule(@RequestParam int scheduleId, HttpServletRequest req) {
+		Rq rq = (Rq) req.getAttribute("rq");
+
+		if (rq == null || !rq.isLogined()) {
+			return ResultData.from("F-1", "로그인 후 이용해주세요.");
+		}
+
+		int memberId = rq.getLoginedMemberId();
+
+		if (articleService.isAlreadyJoinedSchedule(scheduleId, memberId)) {
+			return ResultData.from("F-2", "이미 참가한 일정입니다.");
+		}
+
+		articleService.joinSchedule(scheduleId, memberId);
+		return ResultData.from("S-1", "일정 참가 완료");
+	}
+
+// 참가자 리스트 조회
+	@GetMapping("/usr/article/getParticipants")
+	@ResponseBody
+	public ResultData getScheduleParticipants(@RequestParam int scheduleId) {
+		List<Map<String, Object>> participants = articleService.getScheduleParticipants(scheduleId);
+		return ResultData.from("S-1", "참가자 목록", participants);
 	}
 
 	// ✅ JSON 응답 방식으로 변경

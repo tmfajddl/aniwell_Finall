@@ -5,6 +5,15 @@
 
 <mapper namespace="com.example.RSW.repository.PetVaccinationRepository">
 
+    <resultMap id="VaccinationWithPetNameMap" type="com.example.RSW.vo.PetVaccination">
+        <id property="id" column="id"/>
+        <result property="petId" column="petId"/>
+        <result property="vaccineName" column="vaccineName"/>
+        <result property="nextDueDate" column="nextDueDate"/>
+        <result property="memberId" column="memberId"/>
+        <result property="petName" column="petName"/>
+    </resultMap>
+
     <!-- 펫 ID로 접종 이력 조회 -->
     <select id="getVaccinationByPetId" parameterType="int" resultType="com.example.RSW.vo.PetVaccination">
         SELECT
@@ -117,5 +126,16 @@
           AND vaccineName = #{vaccineName}
           AND injectionDate != #{latestInjectionDate}
     </update>
+
+    <select id="findNextDueInDays" resultMap="VaccinationWithPetNameMap">
+        SELECT pv.*, p.name AS petName
+        FROM pet_vaccination pv
+                 JOIN pet p ON p.id = pv.petId
+        WHERE pv.nextDueDate IN (
+                                 CURDATE(),
+                                 DATE_ADD(CURDATE(), INTERVAL 3 DAY),
+                                 DATE_ADD(CURDATE(), INTERVAL 7 DAY)
+            )
+    </select>
 
 </mapper>

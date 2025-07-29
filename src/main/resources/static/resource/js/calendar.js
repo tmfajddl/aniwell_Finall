@@ -52,7 +52,7 @@ function renderMiniCalendar(targetId, events, date = new Date()) {
 	container.appendChild(header);
 
 	const weekRow = document.createElement('div');
-	weekRow.className = 'grid grid-cols-7 text-center text-sm font-semibold text-gray-700 mb-2';
+	weekRow.className = 'grid grid-cols-7 text-center text-base font-semibold text-gray-700 mb-4';
 	['일', '월', '화', '수', '목', '금', '토'].forEach(function (day) {
 		const div = document.createElement('div');
 		div.textContent = day;
@@ -61,7 +61,7 @@ function renderMiniCalendar(targetId, events, date = new Date()) {
 	container.appendChild(weekRow);
 
 	const grid = document.createElement('div');
-	grid.className = 'grid grid-cols-7 grid-rows-6 gap-y-1 text-center';
+	grid.className = 'grid grid-cols-7 grid-rows-6 gap-y-4 text-center';
 
 	for (let i = firstDay - 1; i >= 0; i--) {
 		const d = prevLastDate - i;
