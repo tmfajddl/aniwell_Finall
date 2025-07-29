@@ -48,6 +48,9 @@ function App() {
 
 let authLevel = null;
 const mId = localStorage.getItem("loginedMember");
+const memberPhotoDiv = document.getElementById('memberPhoto');
+const defaultPhoto = "/img/default-pet.png";
+
 function e() {
 	$.ajax({
 		type: "GET",
@@ -61,6 +64,20 @@ function e() {
 			if (authLevel === 3) {
 				$("#vetPage").removeClass("hidden");
 			}
+			
+			const photoUrl = typeof data.photo === 'string' && data.photo.trim() !== ""
+			  ? data.photo
+			  : defaultPhoto;
+
+
+			const img = document.createElement('img');
+			img.src = photoUrl;
+			img.alt = "프로필";
+			img.className = "w-full h-full object-cover";
+
+			// 이전 내용 초기화 후 삽입
+			memberPhotoDiv.innerHTML = "";
+			memberPhotoDiv.appendChild(img);
 		},
 		error: function(err) {
 			console.error("getUsrInfo 실패", err);
@@ -126,5 +143,6 @@ document.querySelectorAll('.menu-item').forEach((item) => {
 		item.classList.add("relative", "group");
 	}
 });
+
 
 
