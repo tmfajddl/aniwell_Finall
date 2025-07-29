@@ -2,6 +2,7 @@ package com.example.RSW.controller;
 
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
+import com.example.RSW.service.FirebaseService;
 import com.example.RSW.service.NotificationService;
 import com.example.RSW.service.VetCertificateService;
 import com.example.RSW.vo.VetCertificate;
@@ -9,6 +10,7 @@ import com.google.firebase.auth.*;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.*;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -33,6 +35,7 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 @Controller
 public class UsrMemberController {
@@ -63,6 +66,11 @@ public class UsrMemberController {
     @Autowired
     private NotificationService notificationService;
 
+    @Autowired
+    private FirebaseService firebaseService;
+
+    @Autowired
+    private RedisTemplate<String, String> redisTemplate;
 
     @RequestMapping("/usr/member/doLogout")
     public String doLogout(HttpServletRequest req) {
@@ -625,12 +633,12 @@ public class UsrMemberController {
         String firebaseToken = memberService.createFirebaseCustomToken(uid);
         req.getSession().setAttribute("firebaseToken", firebaseToken);
 
-        // ✅ 팝업 닫고 부모 창에 Firebase 연동 메시지 전송
+        // ✅ 부모창으로 이메일 전달
         resp.setContentType("text/html; charset=UTF-8");
         PrintWriter out = resp.getWriter();
         out.println("<script>");
         out.println("localStorage.setItem('kakaoAccessToken', '" + accessToken + "');");
-        out.println("window.opener.postMessage('socialLoginSuccess', '*');");
+        out.println("window.opener.postMessage({ email: '" + email + "' }, '*');"); // ✅ 이메일 전달
         out.println("window.close();");
         out.println("</script>");
     }
@@ -885,13 +893,12 @@ public class UsrMemberController {
             String firebaseToken = memberService.createFirebaseCustomToken(uid);
             req.getSession().setAttribute("firebaseToken", firebaseToken);
 
-            // ✅ 팝업 방식 Firebase 연동용 JS 리턴
-            return """
-                    <script>
-                        window.opener.postMessage("socialLoginSuccess", "*");
-                        window.close();
-                    </script>
-                    """;
+            // ✅ 부모창으로 이메일 전달
+            return "<script>" +
+                    "window.opener.postMessage({ email: '" + email + "' }, '*');" +
+                    "window.close();" +
+                    "</script>";
+
 
         } catch (Exception e) {
             // ⚠ 예외 처리 (토큰 요청 실패, 사용자 정보 오류 등)
@@ -993,5 +1000,33 @@ public class UsrMemberController {
             System.out.println("❌ [로그] Firebase 인증 실패: " + e.getMessage());
             return ResultData.from("F-1", "Firebase 인증 실패: " + e.getMessage());
         }
+    }
+
+    // ✅ 소셜 로그인 후 Redis 캐싱 및 Firebase Custom Token 발급
+    @RequestMapping("/usr/member/social-login")
+    @ResponseBody
+    public ResultData socialLogin(@RequestParam String email, Rq rq) {
+        // 이메일로 회원 조회
+        Member member = memberService.findByEmail(email);
+        if (member == null) {
+            return ResultData.from("F-1", "회원 정보가 존재하지 않습니다.");
+        }
+
+        // Redis 캐시 확인
+        String redisKey = "firebase:token:" + member.getId();
+        String cachedToken = redisTemplate.opsForValue().get(redisKey);
+
+        if (cachedToken != null) {
+            // 캐시 토큰 즉시 반환
+            return ResultData.from("S-1", "캐시된 토큰 사용", "token", cachedToken, "provider", member.getSocialProvider());
+        }
+
+        // Firebase Custom Token 생성
+        String firebaseToken = firebaseService.createCustomToken(member);
+
+        // Redis에 토큰 저장 (30분 유효)
+        redisTemplate.opsForValue().set(redisKey, firebaseToken, 30, TimeUnit.MINUTES);
+
+        return ResultData.from("S-1", "새 토큰 발급", "token", firebaseToken, "provider", member.getSocialProvider());
     }
 }
