@@ -763,8 +763,8 @@ public class UsrMemberController {
             // 1. 토큰 요청
             MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
             params.add("code", code);
-            params.add("client_id", "구글 클라이언트 키");
-            params.add("client_secret", "구글 시크릿 키");
+            params.add("client_id", "");
+            params.add("client_secret", "");
 
             params.add("redirect_uri", "http://localhost:8080/usr/member/google");
             params.add("grant_type", "authorization_code");
