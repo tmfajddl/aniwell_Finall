@@ -53,4 +53,14 @@
         WHERE p.id = #{petId}
     </select>
 
+    <select id="findPetsWithBirthdayInDays" resultType="com.example.RSW.vo.Pet">
+        SELECT *
+        FROM pet
+        WHERE DATE_FORMAT(birthDate, '%m-%d') IN (
+                                                 DATE_FORMAT(DATE_ADD(NOW(), INTERVAL 0 DAY), '%m-%d'),
+                                                 DATE_FORMAT(DATE_ADD(NOW(), INTERVAL 3 DAY), '%m-%d'),
+                                                 DATE_FORMAT(DATE_ADD(NOW(), INTERVAL 7 DAY), '%m-%d')
+            )
+    </select>
+
 </mapper>

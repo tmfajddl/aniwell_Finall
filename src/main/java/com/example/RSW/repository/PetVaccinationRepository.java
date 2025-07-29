@@ -37,4 +37,6 @@ public interface PetVaccinationRepository {
     void updateNextDueDateByInjectionDate(int petId, String vaccineName, LocalDate latestInjectionDate, LocalDate nextDueDate);
 
     void invalidateOldNextDueDates(int petId, String vaccineName, LocalDate latestInjectionDate);
+
+    List<PetVaccination> findNextDueInDays(List<Integer> integers);
 }
