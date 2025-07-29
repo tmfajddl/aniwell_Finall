@@ -4,7 +4,6 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<script src="https://cdn.tailwindcss.com"></script>
 	<link rel="stylesheet" th:href="@{/resource/css/common.css}">
 	<script th:src="@{/resource/js/common.js}"></script>
 
@@ -111,7 +110,7 @@
 				</div>
 
 				<div id="alLamModal"
-					class="absolute h-[500px] aspect-[3/4] bg-white bottom-1 shadow-xl left-[100%] rounded-3xl 
+					class="absolute h-[600px] aspect-[3/4] bg-white bottom-1 shadow-xl left-[200%] rounded-3xl 
 					       opacity-0 scale-95 transition-all duration-300 translate-y-0 pointer-events-none ease-out overflow-y-auto p-6">
 					<!-- 알림 내용이 여기에 동적으로 삽입됨 -->
 				</div>
@@ -127,6 +126,7 @@
 		<script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
 
 
+		
 		<script th:inline="javascript">
 			const cp = [[${contextPath}]];
 
@@ -166,16 +166,16 @@
 						fetch('/usr/notifications/markAsRead?notificationId=' + id, {
 							method: 'POST'
 						}).then(() => {
-								item.classList.replace('bg-yellow-100', 'bg-white');
-								item.classList.add('opacity-70');
+							item.classList.replace('bg-yellow-100', 'bg-white');
+							item.classList.add('opacity-70');
 
-								updateNotificationBadge();
-								window.location.href = url;
-							});
+							updateNotificationBadge();
+							window.location.href = url;
+						});
 					});
 				});
 
-				
+
 			});
 
 			function initNotificationEvents() {
@@ -193,7 +193,7 @@
 									item.classList.replace('bg-yellow-100', 'bg-white');
 									item.classList.add('opacity-70');
 								});
-								
+
 								updateNotificationBadge();
 							} else {
 								alert(json.msg || '처리에 실패했습니다.');
@@ -285,11 +285,11 @@
 					initNotificationEvents()
 				});
 		</script>
-		
+
 
 		<script>
 			function move(el) {
-				console.log('clicked'); 
+				console.log('clicked');
 				const link = el.querySelector('a');
 				const item = el.closest('[data-id]');
 				const id = item?.dataset?.id;
@@ -310,6 +310,7 @@
 				}
 			}
 		</script>
+		
 	</div>
 
 
