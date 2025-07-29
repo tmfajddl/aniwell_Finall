@@ -43,6 +43,8 @@ public interface WalkCrewMemberRepository {
 	// 특정 크루에서 해당 멤버의 신청 상태(status)를 조회합니다.
 	String findStatusByMemberIdAndCrewId(@Param("crewId") int crewId, @Param("memberId") int memberId);
 
+
+
 	int countPendingRequest(int crewId, int memberId);
 
 	void approveMember(int crewId, int memberId);

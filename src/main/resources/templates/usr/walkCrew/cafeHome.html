@@ -177,11 +177,12 @@
 					<div th:if="${scheduleArticles != null and !scheduleArticles.isEmpty()}"
 						class="flex gap-5 overflow-x-auto px-4 pb-1">
 						<div th:each="schedule : ${scheduleArticles}"
-							th:attr="data-title=${schedule.title}, 
-												         data-body=${schedule.body},
-												         data-scheduleDate=${schedule.scheduleDate},
-												         data-writer=${schedule.extra__writer},
-												         data-reg-date=${schedule.regDate}"
+							th:attr="data-schedule-id=${schedule.id},
+                                     data-title=${schedule.title}, 
+                                    data-body=${schedule.body},
+                                    data-scheduleDate=${schedule.scheduleDate},
+                                    data-writer=${schedule.extra__writer},
+                                    data-reg-date=${schedule.regDate}"
 							onclick="scModal(this)" class="w-12 text-center p-1 px-3 shadow">
 							<div th:text="${#dates.format(schedule.scheduleDate, 'MM')}" class="text-sm font-bold"></div>
 							<div th:text="${#dates.format(schedule.scheduleDate, 'dd')}" class="text-xs text-gray-500"></div>
