@@ -16,8 +16,11 @@ spring:
     google:
     client-id: "구글 클라이언트 키"
     client-secret: "구글 시크릿 키"
-
     redirect-uri: "http://localhost:8080/usr/member/google"
+  data:
+    redis:    # 로그인 딜레이 줄이기 위해 redis 추가
+      host: localhost
+      port: 6379
   thymeleaf:
    prefix: classpath:/templates/        # HTML 파일의 기본 경로
    suffix: .html                        # HTML 확장자
