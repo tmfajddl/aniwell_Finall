@@ -72,7 +72,23 @@ public class UsrNotificationController {
 
         return "usr/notification/list";
     }
+  
+    
+    // 모달용
+    @GetMapping("/modal")
+    public String getNotificationModalFragment(HttpServletRequest request, Model model) {
+        if (!rq.isLogined()) {
+            return "common/needLogin"; // 로그인 필요 안내용 fragment 또는 에러 처리
+        }
 
+        int memberId = rq.getLoginedMemberId();
+        List<Notification> notifications = notificationService.getNotificationsByMemberId(memberId);
+
+        model.addAttribute("notifications", notifications);
+        model.addAttribute("contextPath", request.getContextPath());
+
+        return "fragments/notificationModal :: alarmModalContent"; // fragment만 반환
+    }
 
 
 //    개별 알림 읽음 처리

@@ -23,78 +23,47 @@
 
 		<!-- Main content -->
 		<main class="main_page min-h-screen flex-1 p-6 space-y-6">
-
-			<div class="flex justify-between items-center">
-				<h2 class="text-3xl font-bold text-gray-800">📢 알림함</h2>
-				<div>
-					<button id="markAllAsRead"
-						class="bg-yellow-400 hover:bg-yellow-300 text-white font-semibold px-4 py-2 rounded shadow">
-						모두 읽음
-					</button>
-					<button id="deleteAll"
-						class="bg-red-400 hover:bg-red-300 text-white font-semibold px-4 py-2 rounded shadow">
-						모두 삭제
-					</button>
+			<div th:fragment="alarmModalContent">
+				<div class="flex justify-between items-center">
+					<h2 class="text-3xl font-bold text-gray-800">📢 알림함</h2>
+					<div>
+						<button id="markAllAsRead"
+							class="bg-yellow-400 hover:bg-yellow-300 text-white font-semibold px-4 py-2 rounded shadow">
+							모두 읽음
+						</button>
+						<button id="deleteAll"
+							class="bg-red-400 hover:bg-red-300 text-white font-semibold px-4 py-2 rounded shadow">
+							모두 삭제
+						</button>
+					</div>
 				</div>
-			</div>
-			<hr class="border-t border-yellow-400 mb-4" />
+				<hr class="border-t border-yellow-400 mb-4" />
 
-			<div class="notification-list space-y-5 scroll-box">
-				<div th:if="${#lists.isEmpty(notifications)}" class="text-center text-gray-500">
-					📭 알림이 없습니다.
-				</div>
-
-				<div th:each="noti : ${notifications}"
-					th:class="'flex justify-between items-start p-4 rounded-lg shadow-md transition ' + (${noti.read} ? 'bg-white opacity-70' : 'bg-yellow-100')"
-					th:attr="data-id=${noti.id}">
-
-					<!-- 알림 내용 -->
-					<div class="flex-1 space-y-1" onclick="move(this)">
-						<a th:href="${noti.link}" th:text="${noti.title}"
-							class="notification-link block text-lg font-semibold text-gray-800 hover:text-yellow-600 transition"></a>
-						<div class="text-sm text-gray-500 flex justify-between items-center">
-							<span class="time-ago" th:attr="data-time=${noti.regDate.time}">방금 전</span>
-						</div>
+				<div class="notification-list space-y-5 scroll-box">
+					<div th:if="${#lists.isEmpty(notifications)}" class="text-center text-gray-500">
+						📭 알림이 없습니다.
 					</div>
 
-					<!-- 삭제 버튼 -->
-					<button type="button" class="delete-btn ml-4 text-gray-400 hover:text-red-500 text-xl" title="삭제">
-						&times;
-					</button>
+					<div th:each="noti : ${notifications}"
+						th:class="'flex justify-between items-start p-4 rounded-lg shadow-md transition ' + (${noti.read} ? 'bg-white opacity-70' : 'bg-yellow-100')"
+						th:attr="data-id=${noti.id}">
+
+						<!-- 알림 내용 -->
+						<div class="flex-1 space-y-1">
+							<a th:href="${noti.link}" th:text="${noti.title}"
+								class="notification-link block text-lg font-semibold text-gray-800 hover:text-yellow-600 transition"></a>
+							<div class="text-sm text-gray-500 flex justify-between items-center">
+								<span class="time-ago" th:attr="data-time=${noti.regDate.time}">방금 전</span>
+							</div>
+						</div>
+
+						<!-- 삭제 버튼 -->
+						<button type="button" class="delete-btn ml-4 text-gray-400 hover:text-red-500 text-xl"
+							title="삭제">
+							&times;
+						</button>
+					</div>
 				</div>
-
-				<script>
-					function move(el) {
-						const link = el.querySelector('a');
-						const item = el.closest('[data-id]');
-						const id = item?.dataset?.id;
-
-						if (link && link.href) {
-							if (id) {
-								// 알림 읽음 처리
-								fetch('/usr/notifications/markAsRead?notificationId=' + id, {
-									method: 'POST'
-								}).then(() => {
-									item.classList.replace('bg-yellow-100', 'bg-white');
-									item.classList.add('opacity-70');
-									updateNotificationBadge(); // ✅ 뱃지 줄이기
-									window.location.href = link.href;
-								});
-							} else {
-								window.location.href = link.href;
-							}
-						}
-					}
-
-				</script>
-
-
-
-
-
-
-
-
 			</div>
 		</main>
 	</div>

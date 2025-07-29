@@ -20,7 +20,7 @@
 
 			<!-- 프로필 원형 -->
 			<div class="w-14 h-14 bg-white rounded-full shrink-0 overflow-hidden" id="memberPhoto">
-				
+
 			</div>
 
 			<!-- 메뉴 아이콘 -->
@@ -101,13 +101,18 @@
 			<!-- 추가 여백 -->
 
 			<div id="alLamWrap" class="mt-auto cursor-pointer relative" onclick="alLamBtn()">
-				<img src="https://i.imgur.com/OJI4yzC.png" alt="paw" class="w-8">
-				<span id="notiCountBadge"
-					class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center hidden">
-					0
-				</span>
-				<div id="alLamModal" class="absolute h-[500px] aspect-[3/4] bg-white bottom-1 shadow-xl left-[200%] rounded-3xl 
-					       opacity-0 scale-95 transition-all duration-300 pointer-events-none">
+				<div class="relative w-fit">
+					<img src="https://i.imgur.com/OJI4yzC.png" alt="paw" class="w-8" />
+
+					<span id="notiCountBadge"
+						class="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center hidden z-10">
+						0
+					</span>
+				</div>
+
+				<div id="alLamModal"
+					class="absolute h-[500px] aspect-[3/4] bg-white bottom-1 shadow-xl left-[100%] rounded-3xl 
+					       opacity-0 scale-95 transition-all duration-300 translate-y-0 pointer-events-none ease-out overflow-y-auto p-6">
 					<!-- 알림 내용이 여기에 동적으로 삽입됨 -->
 				</div>
 			</div>
@@ -118,94 +123,12 @@
 		</aside>
 		<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 		<script th:src="@{/resource/js/common.js}"></script>
-		<script>
-			function alLamBtn() {
-				const modal = document.getElementById("alLamModal");
-				const badge = document.getElementById("notiCountBadge");
+		<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
 
-				const isOpen = modal.classList.contains("opacity-100");
 
-				if (isOpen) {
-					modal.classList.remove("opacity-100", "scale-100");
-					modal.classList.add("opacity-0", "scale-95", "pointer-events-none");
-					return;
-				}
-
-				// 모달 열기 애니메이션
-				modal.classList.remove("opacity-0", "scale-95", "pointer-events-none");
-				modal.classList.add("opacity-100", "scale-100");
-
-				// fetch 실행
-				fetch("/adm/notification/list")
-					.then(res => res.json())
-					.then(data => {
-						// ✅ 여기서 data를 안전하게 사용할 수 있음
-						if (!Array.isArray(data.notifications) || data.notifications.length === 0) {
-							modal.innerHTML = `<div class="p-4 text-gray-500">📭 알림이 없습니다.</div>`;
-							badge.classList.add("hidden");
-							return;
-						}
-
-						// ✅ 읽지 않은 알림 개수 표시
-						const unreadCount = data.notifications.filter(n => !n.read).length;
-						if (unreadCount > 0) {
-							badge.innerText = unreadCount;
-							badge.classList.remove("hidden");
-						} else {
-							badge.classList.add("hidden");
-						}
-
-						let html = `<div class="p-4 space-y-2 overflow-y-auto h-full">`;
-						data.notifications.forEach(noti => {
-							const timeAgo = calcTimeAgo(noti.regDate.time);
-							html += `
-								<div class="relative border rounded-lg p-3 shadow hover:bg-gray-50 transition">
-									<a href="${noti.link}" data-id="${noti.id}" class="block text-black noti-link">
-										<div class="font-semibold">${noti.title}</div>
-										<div class="text-sm text-gray-400 mt-1">${timeAgo}</div>
-									</a>
-									<button data-id="${noti.id}" class="absolute top-2 right-2 text-gray-400 hover:text-red-500 delete-btn">&times;</button>
-								</div>`;
-						});
-						html += `</div>`;
-						modal.innerHTML = html;
-
-						// 삭제 처리
-						document.querySelectorAll('.delete-btn').forEach(btn => {
-							btn.addEventListener('click', e => {
-								e.stopPropagation();
-								const id = btn.dataset.id;
-								if (!confirm('삭제하시겠습니까?')) return;
-
-								fetch(`/usr/notifications/delete`, {
-									method: 'POST',
-									headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-									body: new URLSearchParams({id})
-								})
-									.then(res => res.json())
-									.then(json => {
-										if (json.success) {
-											btn.closest('div').remove();
-										} else {
-											alert('삭제 실패');
-										}
-									});
-							});
-						});
-
-						// 읽음 처리
-						document.querySelectorAll('.noti-link').forEach(link => {
-							link.addEventListener('click', e => {
-								e.preventDefault();
-								const id = link.dataset.id;
-								const url = link.href;
-								fetch(`/usr/notifications/markAsRead?id=${id}`, {method: 'POST'})
-									.then(() => window.location.href = url);
-							});
-						});
-					});
-			}
-
+		<script th:inline="javascript">
+			const cp = [[${contextPath}]];
 
 			function calcTimeAgo(ms) {
 				const diff = Date.now() - ms;
@@ -213,53 +136,179 @@
 				const min = Math.floor(sec / 60);
 				const hr = Math.floor(min / 60);
 				const day = Math.floor(hr / 24);
-
-				if (day > 0) return `${day}일 전`;
-				if (hr > 0) return `${hr}시간 전`;
-				if (min > 0) return `${min}분 전`;
-				if (sec > 5) return `${sec}초 전`;
+				if (day > 0) return day + '일 전';
+				if (hr > 0) return hr + '시간 전';
+				if (min > 0) return min + '분 전';
+				if (sec > 5) return sec + '초 전';
 				return '방금 전';
 			}
-			// 주기적으로 알림 수 가져오는 함수
-			function updateNotiBadge() {
-				const badge = document.getElementById("notiCountBadge");
 
-				fetch("/adm/notification/list")
-					.then(res => res.json())
-					.then(data => {
-						if (!Array.isArray(data.notifications)) return;
-
-						const unreadCount = data.notifications.filter(n => !n.read).length;
-
-						if (unreadCount > 0) {
-							badge.innerText = unreadCount;
-							badge.classList.remove("hidden");
-						} else {
-							badge.classList.add("hidden");
-						}
-					})
-					.catch(err => {
-						console.error("알림 뱃지 업데이트 실패", err);
-					});
+			function updateTimeAgo() {
+				document.querySelectorAll('.time-ago').forEach(el => {
+					const ms = parseInt(el.dataset.time, 10);
+					if (!isNaN(ms)) {
+						el.textContent = calcTimeAgo(ms);
+					}
+				});
 			}
 
-			// ✅ 최초 실행
-			updateNotiBadge();
+			document.addEventListener('DOMContentLoaded', () => {
+				updateTimeAgo();
+				setInterval(updateTimeAgo, 60 * 1000);
 
-			// ✅ 이후 60초마다 자동 실행
-			setInterval(updateNotiBadge, 60000);
+				document.querySelectorAll('.notification-link').forEach(link => {
+					link.addEventListener('click', e => {
+						e.preventDefault();
+						const item = link.closest('[data-id]');
+						const id = item.dataset.id;
+						const url = link.href;
+
+						fetch('/usr/notifications/markAsRead?notificationId=' + id, {
+							method: 'POST'
+						}).then(() => {
+								item.classList.replace('bg-yellow-100', 'bg-white');
+								item.classList.add('opacity-70');
+
+								updateNotificationBadge();
+								window.location.href = url;
+							});
+					});
+				});
+
+				document.querySelectorAll('.delete-btn').forEach(btn => {
+					btn.addEventListener('click', e => {
+						e.stopPropagation();
+						const item = btn.closest('[data-id]');
+						const id = item.dataset.id;
+
+						if (!confirm('알림을 삭제하시겠습니까?')) return;
+
+						fetch(`${cp}/usr/notifications/delete`, {
+							method: 'POST',
+							headers: {'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'},
+							body: new URLSearchParams({id})
+						})
+							.then(res => res.json())
+							.then(json => {
+								if (json.success) {
+									item.remove();
+								} else {
+									alert(json.msg || '삭제에 실패했습니다.');
+								}
+							})
+							.catch(() => {
+								alert('서버 에러로 삭제에 실패했습니다.');
+							});
+					});
+				});
+			});
+
+			function initNotificationEvents() {
+				// 모두 읽음 버튼 이벤트
+				document.getElementById('markAllAsRead')?.addEventListener('click', () => {
+					if (!confirm('모든 알림을 읽음 처리하시겠습니까?')) return;
+
+					fetch('/usr/notifications/markAllAsRead', {
+						method: 'POST'
+					})
+						.then(res => res.json())
+						.then(json => {
+							if (json.resultCode && json.resultCode.startsWith('S-')) {
+								document.querySelectorAll('.notification-list [data-id]').forEach(item => {
+									item.classList.replace('bg-yellow-100', 'bg-white');
+									item.classList.add('opacity-70');
+								});
+								
+								updateNotificationBadge();
+							} else {
+								alert(json.msg || '처리에 실패했습니다.');
+							}
+						})
+						.catch(() => {
+							alert('서버 오류로 처리에 실패했습니다.');
+						});
+				});
+
+				// 모두 삭제 버튼 이벤트
+				document.getElementById('deleteAll')?.addEventListener('click', () => {
+					if (!confirm('모든 알림을 삭제하시겠습니까?')) return;
+
+					fetch('/usr/notifications/deleteAll', {
+						method: 'POST'
+					})
+						.then(res => res.json())
+						.then(json => {
+							if (json.resultCode && json.resultCode.startsWith('S-')) {
+								document.querySelectorAll('.notification-list [data-id]').forEach(item => item.remove());
+								const emptyMessage = document.querySelector('.notification-list > div.text-center');
+								if (emptyMessage) emptyMessage.style.display = 'block';
+							} else {
+								alert(json.msg || '삭제에 실패했습니다.');
+							}
+						})
+						.catch(() => alert('서버 오류로 삭제에 실패했습니다.'));
+				});
+			}
+
 		</script>
 
 		<script>
+			function alLamBtn() {
+				const modal = document.getElementById('alLamModal');
+
+				// 모달이 열려 있으면 닫고, 닫혀 있으면 열기 (toggle)
+				const isOpen = modal.classList.contains('opacity-100');
+
+				if (isOpen) {
+					modal.classList.remove("opacity-100", "pointer-events-auto", "scale-100", "translate-y-0");
+					modal.classList.add("opacity-0", "pointer-events-none", "scale-95", "translate-y-6");
+				} else {
+					modal.classList.remove("opacity-0", "pointer-events-none", "scale-95", "translate-y-6");
+					modal.classList.add("opacity-100", "pointer-events-auto", "scale-100", "translate-y-0");
+				}
+			}
+
+			// ✅ 모달 외부 클릭 시 닫기
 			document.addEventListener('click', function (e) {
 				const modal = document.getElementById('alLamModal');
 				const trigger = document.getElementById('alLamWrap');
 
+				// 클릭한 요소가 모달이나 버튼 내부가 아니라면 닫기
 				if (!trigger.contains(e.target)) {
-					modal.classList.remove("opacity-100", "scale-100");
-					modal.classList.add("opacity-0", "scale-95", "pointer-events-none");
+					if (modal.classList.contains("opacity-100")) {
+						modal.classList.remove("opacity-100", "pointer-events-auto", "scale-100", "translate-y-0");
+						modal.classList.add("opacity-0", "pointer-events-none", "scale-95", "translate-y-6");
+					}
 				}
 			});
+		</script>
+
+		<script>
+			fetch("/usr/notifications/modal")
+				.then(res => res.text())
+				.then(html => {
+					const modal = document.getElementById("alLamModal");
+					modal.innerHTML = html;
+
+					// ✅ 알림 개수 세기
+					const unreadCount = modal.querySelectorAll('.notification-list [data-id]:not(.opacity-70)').length;
+
+					// ✅ 뱃지 업데이트
+					const badge = document.getElementById("notiCountBadge");
+					if (unreadCount > 0) {
+						badge.textContent = unreadCount;
+						badge.classList.remove("hidden");
+					} else {
+						badge.classList.add("hidden");
+					}
+
+					// 아래 디버깅용 패치 후 바로 알림창 여는 거
+					/*
+										modal.classList.remove('opacity-0', 'pointer-events-none');
+										modal.classList.add('opacity-100', 'pointer-events-auto');
+					*/
+					initNotificationEvents()
+				});
 		</script>
 	</div>
 
