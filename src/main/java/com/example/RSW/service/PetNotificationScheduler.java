@@ -33,7 +33,7 @@ public class PetNotificationScheduler {
     private void sendBirthdayNotifications() {
         List<Pet> upcomingBirthdays = petRepository.findPetsWithBirthdayInDays(List.of(0, 3, 7));
         for (Pet pet : upcomingBirthdays) {
-            String title = "🎉 " + pet.getName() + "의 생일이 " + getDday(pet.getBirthDate()) + "일 남았어요!";
+            String title = "🎉 " + pet.getName() + "의 생일이 " + formatDdayText(getDday(pet.getBirthDate()));
             String link = "/usr/pet/list";
             int loginMemberId = rq.getLoginedMemberId();
             int petId = pet.getId();
@@ -44,8 +44,8 @@ public class PetNotificationScheduler {
     private void sendVaccineNotifications() {
         List<PetVaccination> dueVaccines = vaccinationRepository.findNextDueInDays(List.of(0, 3, 7));
         for (PetVaccination vac : dueVaccines) {
-            String title = "💉 " + vac.getPetName() + "의 " + vac.getVaccineName() + " 백신 접종일이 " +
-                    getDday(vac.getNextDueDate()) + "일 남았어요!";
+            String title = "💉 " + vac.getPetName() + "의 " + vac.getVaccineName()
+                    + " 백신 접종일이 " + formatDdayText(getDday(vac.getNextDueDate()));
             String link = "/usr/pet/petPage";
             int loginMemberId = rq.getLoginedMemberId();
             int petId = vac.getPetId();
@@ -56,5 +56,10 @@ public class PetNotificationScheduler {
     private int getDday(Date date) {
         long diff = date.getTime() - System.currentTimeMillis();
         return (int)(diff / (1000 * 60 * 60 * 24));
+    }
+
+    private String formatDdayText(int dday) {
+        if (dday == 0) return "오늘이에요!";
+        else return dday + "일 남았어요!";
     }
 }
