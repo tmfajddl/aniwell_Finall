@@ -46,10 +46,10 @@
 
 				<div th:each="noti : ${notifications}"
 					th:class="'flex justify-between items-start p-4 rounded-lg shadow-md transition ' + (${noti.read} ? 'bg-white opacity-70' : 'bg-yellow-100')"
-					th:attr="data-id=${noti.id}">
+					th:attr="data-id=${noti.id}" onclick="move()">
 
 					<!-- 알림 내용 -->
-					<div class="flex-1 space-y-1" onclick="move(this)">
+					<div class="flex-1 space-y-1 cursor-pointer" >
 						<a th:href="${noti.link}" th:text="${noti.title}"
 							class="notification-link block text-lg font-semibold text-gray-800 hover:text-yellow-600 transition"></a>
 						<div class="text-sm text-gray-500 flex justify-between items-center">
@@ -62,39 +62,6 @@
 						&times;
 					</button>
 				</div>
-
-				<script>
-					function move(el) {
-						const link = el.querySelector('a');
-						const item = el.closest('[data-id]');
-						const id = item?.dataset?.id;
-
-						if (link && link.href) {
-							if (id) {
-								// 알림 읽음 처리
-								fetch('/usr/notifications/markAsRead?notificationId=' + id, {
-									method: 'POST'
-								}).then(() => {
-									item.classList.replace('bg-yellow-100', 'bg-white');
-									item.classList.add('opacity-70');
-									updateNotificationBadge(); // ✅ 뱃지 줄이기
-									window.location.href = link.href;
-								});
-							} else {
-								window.location.href = link.href;
-							}
-						}
-					}
-
-				</script>
-
-
-
-
-
-
-
-
 			</div>
 		</main>
 	</div>
@@ -147,32 +114,7 @@
 				});
 			});
 
-			document.querySelectorAll('.delete-btn').forEach(btn => {
-				btn.addEventListener('click', e => {
-					e.stopPropagation();
-					const item = btn.closest('[data-id]');
-					const id = item.dataset.id;
-
-					if (!confirm('알림을 삭제하시겠습니까?')) return;
-
-					fetch(`${cp}/usr/notifications/delete`, {
-						method: 'POST',
-						headers: {'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'},
-						body: new URLSearchParams({id})
-					})
-						.then(res => res.json())
-						.then(json => {
-							if (json.success) {
-								item.remove();
-							} else {
-								alert(json.msg || '삭제에 실패했습니다.');
-							}
-						})
-						.catch(() => {
-							alert('서버 에러로 삭제에 실패했습니다.');
-						});
-				});
-			});
+			
 		});
 
 		document.getElementById('markAllAsRead')?.addEventListener('click', () => {
@@ -220,6 +162,32 @@
 
 
 	</script>
+	
+
+	<script>
+		function move(el) {
+			console.log('clicked'); 
+			const link = el.querySelector('a');
+			const item = el.closest('[data-id]');
+			const id = item?.dataset?.id;
+
+			if (link && link.href) {
+				if (id) {
+					fetch('/usr/notifications/markAsRead?notificationId=' + id, {
+						method: 'POST'
+					}).then(() => {
+						item.classList.replace('bg-yellow-100', 'bg-white');
+						item.classList.add('opacity-70');
+						updateNotificationBadge();
+						window.location.href = link.href;
+					});
+				} else {
+					window.location.href = link.href;
+				}
+			}
+		}
+	</script>
+
 </body>
 
 </html>
