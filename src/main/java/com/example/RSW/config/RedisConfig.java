@@ -12,7 +12,13 @@ public class RedisConfig {
 
     @Bean
     public RedisConnectionFactory redisConnectionFactory() {
-        return new LettuceConnectionFactory();
+        // 호스트와 포트 설정
+        LettuceConnectionFactory factory = new LettuceConnectionFactory("localhost", 6379);
+
+        // 🔑 Redis 비밀번호 설정
+        factory.setPassword("aniwell1234");
+
+        return factory;
     }
 
     @Bean
@@ -20,7 +26,7 @@ public class RedisConfig {
         RedisTemplate<String, String> redisTemplate = new RedisTemplate<>();
         redisTemplate.setConnectionFactory(redisConnectionFactory());
 
-        // (선택) 문자열로 직렬화 설정
+        // 직렬화 설정 (선택)
         redisTemplate.setKeySerializer(new StringRedisSerializer());
         redisTemplate.setValueSerializer(new StringRedisSerializer());
 

@@ -385,12 +385,26 @@
             const provider = new firebase.auth.GoogleAuthProvider();
             provider.setCustomParameters({ prompt: 'select_account' });
 
+            // ✅ Firebase가 직접 Google 인증 처리
             const result = await firebase.auth().signInWithPopup(provider);
-            const email = result.user.email;
+            const user = result.user;
 
-            await firebase.auth().signOut();
-            await firebaseLoginWithServerToken(email);
+            // 이메일과 UID는 Firebase가 자동 관리
+            console.log("✅ Google 로그인 성공:", user.email, user.uid);
+
+            // ID 토큰 발급 및 서버 세션 설정
+            const idToken = await user.getIdToken();
+            await fetch("/usr/member/firebase-session-login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ idToken }),
+                credentials: "include"
+            });
+
+            // ✅ 로그인 후 메인 화면 이동
+            window.location.href = "/";
         } catch {
+            console.error("Google 로그인 오류:", err);
             alert("Google 로그인 중 오류 발생");
         } finally {
             isGooglePopupInProgress = false;
@@ -402,6 +416,7 @@
         try {
             console.time("🔄 [일반] 전체 로그인 시간");
 
+            // 1️⃣ 서버로 Firebase Custom Token 요청
             const response = await fetch('/usr/member/firebase-token', { method: 'POST' });
             const result = await response.json();
 
@@ -410,36 +425,45 @@
                 return;
             }
 
-            const customToken = result.data1;
+            // ✅ 커스텀 토큰 추출 (서버 응답 구조 호환)
+            const customToken = result.data?.token || result.data1?.token || result.data1;
+
+            // 2️⃣ Firebase 커스텀 토큰 로그인
             const userCredential = await firebase.auth().signInWithCustomToken(customToken);
             const user = userCredential.user;
 
-            // ✅ 로그인 성공 → 메인 화면 즉시 이동
-            window.location.replace("/");
-
-            // ✅ Firestore 저장 & 세션 설정은 백그라운드 실행
+            // 3️⃣ Firestore 저장 & ID 토큰 발급
             const db = firebase.firestore();
-            const idTokenPromise = user.getIdToken();
-
-            Promise.all([
+            const [_, idToken] = await Promise.all([
                 db.collection("users").doc(user.uid).set({
                     uid: user.uid,
                     email: user.email || '',
                     displayName: user.displayName || '',
-                    provider: result.data1.provider || "email",
+                    provider: result.data?.provider || result.data1?.provider || "email",
                     lastLogin: new Date().toISOString()
                 }, { merge: true }),
-                idTokenPromise.then((idToken) => fetch("/usr/member/firebase-session-login", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ idToken }),
-                    credentials: "include"
-                }))
+                user.getIdToken()
             ]);
 
+            // 4️⃣ 서버 세션 설정
+            const sessionResponse = await fetch("/usr/member/firebase-session-login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ idToken }),
+                credentials: "include"
+            });
+            const sessionResult = await sessionResponse.json();
+
             console.timeEnd("🔄 [일반] 전체 로그인 시간");
-        } catch {
+
+            if (sessionResult.resultCode === "S-1") {
+                window.location.replace("/");
+            } else {
+                alert("서버 세션 설정 실패");
+            }
+        } catch (error) {
             alert("Firebase 로그인 중 오류 발생");
+            console.error(error);
         }
     }
 
