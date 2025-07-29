@@ -103,28 +103,28 @@ function detailModal(e) {
 }
 ////////댓글 폼 로직
 function loadReplies() {
-  fetch(`/usr/reply/list?relTypeCode=article&relId=${articleId}`)
-    .then(res => res.json())
-    .then(data => {
-      const replyList = document.getElementById("replyList");
-      const noReplies = document.getElementById("noReplies");
+	fetch(`/usr/reply/list?relTypeCode=article&relId=${articleId}`)
+		.then(res => res.json())
+		.then(data => {
+			const replyList = document.getElementById("replyList");
+			const noReplies = document.getElementById("noReplies");
 
-      replyList.innerHTML = "";
+			replyList.innerHTML = "";
 
-      if (!data || data.length === 0) {
-        noReplies.style.display = "block";
-        return;
-      }
+			if (!data || data.length === 0) {
+				noReplies.style.display = "block";
+				return;
+			}
 
-      noReplies.style.display = "none";
+			noReplies.style.display = "none";
 
-	  data.forEach(reply => {
-	    const div = document.createElement("div");
-	    div.className = "text-sm border-b pb-2";
+			data.forEach(reply => {
+				const div = document.createElement("div");
+				div.className = "text-sm border-b pb-2";
 
-	    const date = reply.regDate ? reply.regDate.substring(0, 10) : "";
+				const date = reply.regDate ? reply.regDate.substring(0, 10) : "";
 
-	    div.innerHTML = `
+				div.innerHTML = `
 	      <div class="flex justify-between items-center">
 	        <span class="font-semibold text-gray-800">${reply.extra__writer}</span>
 	        <span class="text-xs text-gray-400">${date}</span>
@@ -132,13 +132,13 @@ function loadReplies() {
 	      <div class="mt-1 text-gray-700">${reply.body}</div>
 	    `;
 
-	    replyList.appendChild(div);
-	  });
+				replyList.appendChild(div);
+			});
 
-    })
-    .catch(err => {
-      console.error("댓글 불러오기 실패:", err);
-    });
+		})
+		.catch(err => {
+			console.error("댓글 불러오기 실패:", err);
+		});
 }
 
 
@@ -174,7 +174,7 @@ function submitReply() {
 
 ////////게시글 수정폼
 function openModifyModal(articleId, crewId, boardId, title, body, imageUrl) {
-  const html = `
+	const html = `
   
     <div class="flex h-full">
       <!-- 숨겨진 입력들 -->
@@ -220,116 +220,116 @@ function openModifyModal(articleId, crewId, boardId, title, body, imageUrl) {
   
   `;
 
-  openModal(html);
+	openModal(html);
 
-  setTimeout(() => {
-    document.getElementById('submitModifyBtn').onclick = submitModifiedArticle;
-  }, 0);
+	setTimeout(() => {
+		document.getElementById('submitModifyBtn').onclick = submitModifiedArticle;
+	}, 0);
 }
 
 function previewModifyImage(event) {
-  const input = event.target;
-  if (input.files && input.files[0]) {
-    const reader = new FileReader();
-    reader.onload = function(e) {
-      document.getElementById('modifyPreviewImage').src = e.target.result;
-    };
-    reader.readAsDataURL(input.files[0]);
-  }
+	const input = event.target;
+	if (input.files && input.files[0]) {
+		const reader = new FileReader();
+		reader.onload = function(e) {
+			document.getElementById('modifyPreviewImage').src = e.target.result;
+		};
+		reader.readAsDataURL(input.files[0]);
+	}
 }
 
 function submitModifiedArticle() {
-  const articleId = document.getElementById('modifyArticleId').value;
-  const crewId = document.getElementById('modifyCrewIdInput').value;
-  const boardId = document.getElementById('modifyBoardIdInput').value;
-  const title = document.getElementById('modifyTitleInput').value.trim();
-  const body = document.getElementById('modifyBodyInput').value.trim();
-  const imageFile = document.getElementById('modifyImageUpload').files[0];
+	const articleId = document.getElementById('modifyArticleId').value;
+	const crewId = document.getElementById('modifyCrewIdInput').value;
+	const boardId = document.getElementById('modifyBoardIdInput').value;
+	const title = document.getElementById('modifyTitleInput').value.trim();
+	const body = document.getElementById('modifyBodyInput').value.trim();
+	const imageFile = document.getElementById('modifyImageUpload').files[0];
 
-  if (!title || !body) {
-    alert("제목과 내용을 모두 입력해주세요.");
-    return;
-  }
+	if (!title || !body) {
+		alert("제목과 내용을 모두 입력해주세요.");
+		return;
+	}
 
-  const formData = new FormData();
-  formData.append("id", articleId);
-  formData.append("crewId", crewId);
-  formData.append("boardId", boardId);
-  formData.append("title", title);
-  formData.append("body", body);
-  if (imageFile) {
-    formData.append("imageFile", imageFile);
-  }
+	const formData = new FormData();
+	formData.append("id", articleId);
+	formData.append("crewId", crewId);
+	formData.append("boardId", boardId);
+	formData.append("title", title);
+	formData.append("body", body);
+	if (imageFile) {
+		formData.append("imageFile", imageFile);
+	}
 
-  $.ajax({
-    url: '/usr/article/doModify',
-    type: 'POST',
-    data: formData,
-    contentType: false,
-    processData: false,
-    success: function (data) {
-      if (data.resultCode === "S-1") {
-        alert("게시글이 수정되었습니다.");
-        window.location.href = data.data.redirectUrl;
-      } else {
-        alert("⚠️ " + data.msg);
-      }
-    },
-    error: function (err) {
-      console.error("❌ 수정 실패:", err);
-      alert('수정 중 오류가 발생했습니다.');
-    }
-  });
+	$.ajax({
+		url: '/usr/article/doModify',
+		type: 'POST',
+		data: formData,
+		contentType: false,
+		processData: false,
+		success: function(data) {
+			if (data.resultCode === "S-1") {
+				alert("게시글이 수정되었습니다.");
+				window.location.href = data.data.redirectUrl;
+			} else {
+				alert("⚠️ " + data.msg);
+			}
+		},
+		error: function(err) {
+			console.error("❌ 수정 실패:", err);
+			alert('수정 중 오류가 발생했습니다.');
+		}
+	});
 }
 
 /////////////
 //////게시글 삭제
 function deleteArticle(articleId) {
-  if (!confirm("정말 이 게시글을 삭제하시겠습니까?")) return;
+	if (!confirm("정말 이 게시글을 삭제하시겠습니까?")) return;
 
-  $.ajax({
-    url: `/usr/article/doDelete?id=${articleId}`,
-    type: 'POST',
-    success: function (data) {
-      if (data.resultCode === "S-1") {
-        alert("게시글이 삭제되었습니다.");
-        window.location.href = data.data.redirectUrl;
-      } else {
-        alert("⚠️ " + data.msg);
-      }
-    },
-    error: function (err) {
-      console.error("❌ 삭제 실패:", err);
-      alert("삭제 중 오류가 발생했습니다.");
-    }
-  });
+	$.ajax({
+		url: `/usr/article/doDelete?id=${articleId}`,
+		type: 'POST',
+		success: function(data) {
+			if (data.resultCode === "S-1") {
+				alert("게시글이 삭제되었습니다.");
+				window.location.href = data.data.redirectUrl;
+			} else {
+				alert("⚠️ " + data.msg);
+			}
+		},
+		error: function(err) {
+			console.error("❌ 삭제 실패:", err);
+			alert("삭제 중 오류가 발생했습니다.");
+		}
+	});
 }
 
 ///// 좋아요
 
 function doGoodReaction(articleId) {
-  const heart = document.getElementById(`heart-${articleId}`);
-  if (!heart) {
-    console.warn(`❗ heart-${articleId} element not found`);
-    return;
-  }
-  $.post('/usr/reactionPoint/doGoodReaction', {
-    relTypeCode: 'article',
-    relId: articleId
-  }).done(() => {
-    const isLiked = heart.classList.contains('text-red-500');
+	const heart = document.getElementById(`heart-${articleId}`);
+	if (!heart) {
+		console.warn(`❗ heart-${articleId} element not found`);
+		return;
+	}
+	$.post('/usr/reactionPoint/doGoodReaction', {
+		relTypeCode: 'article',
+		relId: articleId
+	}).done(() => {
+		const isLiked = heart.classList.contains('text-red-500');
 
-    // UI 토글 처리만 수행
-    if (isLiked) {
-      heart.innerText = '🤍';
-      heart.classList.remove('text-red-500');
-      heart.classList.add('text-gray-400');
-    } else {
-      heart.innerText = '❤️';
-      heart.classList.remove('text-gray-400');
-      heart.classList.add('text-red-500');
-    }
-  });
+		// UI 토글 처리만 수행
+		if (isLiked) {
+			heart.innerText = '🤍';
+			heart.classList.remove('text-red-500');
+			heart.classList.add('text-gray-400');
+		} else {
+			heart.innerText = '❤️';
+			heart.classList.remove('text-gray-400');
+			heart.classList.add('text-red-500');
+		}
+	});
 }
 
 
@@ -933,6 +933,11 @@ function modal_btn() {
 	  </div>
 	</div>
 
+	<!-- ✅ 크루 탈퇴 버튼 (사이드 모달 하단 고정) -->
+	<button onclick="leaveCrew(crewId)"
+	  class="absolute bottom-4 left-1/2 transform -translate-x-1/2 w-[80%] bg-red-500 hover:bg-red-600 text-white text-sm font-semibold py-2 px-4 rounded-xl shadow">
+	  🚪 크루 탈퇴
+	</button>
 
   `;
 	modal.innerHTML = contentHtml;
@@ -949,6 +954,21 @@ function closeSideModal() {
 	const modal = document.getElementById("sideModal");
 	modal.classList.remove("translate-x-0");
 	modal.classList.add("translate-x-full");
+}
+
+
+function leaveCrew(crewId) {
+	if (!confirm("정말 이 크루에서 탈퇴하시겠습니까?")) return;
+	if (!confirm("탈퇴 시 게시판 접근이 제한됩니다.\n정말로 탈퇴하시겠습니까?")) return;
+
+	$.post("/usr/walkCrewMember/leave", { crewId }, function(res) {
+		if (res.success) {
+			alert("크루에서 탈퇴되었습니다.");
+			location.href = "/usr/walkCrew/list";
+		} else {
+			alert(res.msg);
+		}
+	});
 }
 
 
