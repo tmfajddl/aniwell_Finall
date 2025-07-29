@@ -104,7 +104,9 @@ public class WalkCrewMemberService {
 	// ① 크루 가입 여부 확인
 	public boolean isJoinedCrew(int crewId, int memberId) {
 		String role = walkCrewMemberRepository.findRoleByMemberIdAndCrewId(memberId, crewId);
-		return role != null && (role.equals("leader") || role.equals("subleader") || role.equals("member"));
+		return role != null
+				&& (role.equals("leader") || role.equals("subleader") || role.equals("member") || role.equals("pending")
+				);
 	}
 
 	// ② 신청 대기 여부 확인
