@@ -338,9 +338,10 @@
 					<p><b>비고:</b> <span id="detailNotes"></span></p>
 
 					<div class="flex justify-between mt-4">
-						<button onclick="enterEditMode()" class="bg-yellow-400 px-3 py-2 rounded text-white">✏ 수정</button>
-						<button onclick="deleteVaccination()" class="bg-red-400 px-3 py-2 rounded text-white">🗑 삭제</button>
+						<button id="editBtn" onclick="enterEditMode()" class="bg-yellow-400 px-3 py-2 rounded text-white">✏ 수정</button>
+						<button id="deleteBtn" onclick="deleteVaccination()" class="bg-red-400 px-3 py-2 rounded text-white">🗑 삭제</button>
 					</div>
+
 				</div>
 
 				<form id="vaccineEditForm" class="hidden mt-4">
@@ -669,7 +670,20 @@
 			form.vaccineName.value = data.title.replace(' 접종', '');
 			form.injectionDate.value = data.start;
 			form.notes.value = data.notes || '';
+
+			// 🔽 수정/삭제 버튼 처리
+			const editBtn = document.getElementById('editBtn');
+			const deleteBtn = document.getElementById('deleteBtn');
+
+			if (data.title.includes("예정")) {
+				editBtn.classList.add('hidden');
+				deleteBtn.classList.add('hidden');
+			} else {
+				editBtn.classList.remove('hidden');
+				deleteBtn.classList.remove('hidden');
+			}
 		}
+
 
 		function closeVaccineDetailModal() {
 			document.getElementById('vaccineDetailModal').classList.add('hidden');

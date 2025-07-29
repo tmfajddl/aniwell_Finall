@@ -20,4 +20,6 @@ public interface PetRepository {
     void updatePet(int petId, String name, String species, String breed, String gender, String birthDate, double weight, String photo);
 
     Pet getPetsById(int petId);
+
+    List<Pet> findPetsWithBirthdayInDays(List<Integer> integers);
 }
