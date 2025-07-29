@@ -328,7 +328,7 @@ public class PetController {
 			// 3. 종에 따라 파이썬 파일 선택
 			String scriptPath;
 			if ("강아지".equals(species)) {
-				scriptPath = "/Users/e-suul/Desktop/ESeul-main/dog_test.py";
+				scriptPath = "/Users/e-suul/Desktop/ESeul-main/dog_pickture.py";
 			} else {
 				scriptPath = "/Users/e-suul/Desktop/ESeul-main/cat_test.py";
 			}
@@ -501,7 +501,7 @@ public class PetController {
 			if (pv.getNextDueDate() != null) {
 				Map<String, Object> nextEvent = new HashMap<>();
 				nextEvent.put("id", pv.getId());
-				nextEvent.put("title", pv.getVaccineName() + " 다음 예정");
+				nextEvent.put("title", pv.getVaccineName() + "예정");
 				nextEvent.put("start", pv.getNextDueDate().toString());
 				nextEvent.put("notes", pv.getNotes());
 				events.add(nextEvent);

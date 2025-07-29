@@ -13,8 +13,10 @@
 		crewId = #{crewId},
 		memberId = #{memberId},
 		status = 'PENDING',
+		role = 'pending',
 		joinedAt
-		= NOW()
+		=
+		NOW()
 	</insert>
 
 	<select id="findMyCrewByMemberId" resultType="WalkCrew">
@@ -71,7 +73,7 @@
 		SELECT COUNT(*) FROM
 		walk_crew_member
 		WHERE crewId = #{crewId} AND memberId = #{memberId}
-		AND status = 'pending'
+		AND status = 'PENDING'
 	</select>
 
 	<!-- ✅ 강퇴 & 탈퇴 처리 -->
@@ -173,7 +175,7 @@
 		DELETE FROM walk_crew_member
 		WHERE crewId = #{crewId}
 		AND memberId = #{memberId}
-		AND role = 'pending'
+		AND role = 'PENDING'
 	</delete>
 
 

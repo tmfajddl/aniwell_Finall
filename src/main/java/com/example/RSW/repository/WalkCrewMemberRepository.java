@@ -37,7 +37,13 @@ public interface WalkCrewMemberRepository {
 
 	int updateRole(@Param("memberId") int memberId, @Param("crewId") int crewId, @Param("role") String role);
 
+	// 특정 크루에서 해당 멤버의 역할(role)을 조회합니다.
 	String findRoleByMemberIdAndCrewId(@Param("memberId") int memberId, @Param("crewId") int crewId);
+
+	// 특정 크루에서 해당 멤버의 신청 상태(status)를 조회합니다.
+	String findStatusByMemberIdAndCrewId(@Param("crewId") int crewId, @Param("memberId") int memberId);
+
+
 
 	int countPendingRequest(int crewId, int memberId);
 

@@ -1,5 +1,7 @@
 package com.example.RSW.service;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -206,7 +208,7 @@ public class ArticleService {
 	}
 
 	// 일정등록하기
-	public void writeSchedule(int crewId, int loginedMemberId, String scheduleDate, String scheduleTitle,
+	public void writeSchedule(int crewId, int loginedMemberId, LocalDate scheduleDate, String scheduleTitle,
 			String scheduleBody) {
 		articleRepository.writeSchedule(crewId, loginedMemberId, scheduleDate, scheduleTitle, scheduleBody);
 	}
@@ -222,9 +224,28 @@ public class ArticleService {
 				searchKeyword);
 	}
 
+	// 내가쓴글 조회하기
+	public List<Article> getArticlesByCrewBoardAndMember(int crewId, int boardId, int memberId) {
+		return articleRepository.getArticlesByCrewBoardAndMember(crewId, boardId, memberId);
+	}
+
 	// 모임일정리스트불러오기
 	public List<Map<String, Object>> getSchedulesByCrewId(int crewId) {
 		return articleRepository.getSchedulesByCrewId(crewId);
+	}
+
+	// 모임일정 조회
+	public void joinSchedule(int scheduleId, int memberId) {
+		articleRepository.insertScheduleParticipant(scheduleId, memberId);
+	}
+
+	// ✅ 일정 참가자 목록 조회
+	public List<Map<String, Object>> getScheduleParticipants(int scheduleId) {
+		return articleRepository.getScheduleParticipants(scheduleId);
+	}
+
+	public boolean isAlreadyJoinedSchedule(int scheduleId, int memberId) {
+		return articleRepository.countScheduleParticipant(scheduleId, memberId) > 0;
 	}
 
 }
