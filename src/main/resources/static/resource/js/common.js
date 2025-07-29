@@ -164,7 +164,7 @@ function updateNotificationBadge() {
 				console.warn("❗ 알림 수 조회 실패", json.msg);
 				return;
 			}
-			console.log("📦 서버 응답:", json);
+			
 			const badge = document.getElementById('notiCountBadge');
 			const count = json.data1 ?? 0;
 

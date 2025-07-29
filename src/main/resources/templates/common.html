@@ -175,32 +175,7 @@
 					});
 				});
 
-				document.querySelectorAll('.delete-btn').forEach(btn => {
-					btn.addEventListener('click', e => {
-						e.stopPropagation();
-						const item = btn.closest('[data-id]');
-						const id = item.dataset.id;
-
-						if (!confirm('알림을 삭제하시겠습니까?')) return;
-
-						fetch(`${cp}/usr/notifications/delete`, {
-							method: 'POST',
-							headers: {'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'},
-							body: new URLSearchParams({id})
-						})
-							.then(res => res.json())
-							.then(json => {
-								if (json.success) {
-									item.remove();
-								} else {
-									alert(json.msg || '삭제에 실패했습니다.');
-								}
-							})
-							.catch(() => {
-								alert('서버 에러로 삭제에 실패했습니다.');
-							});
-					});
-				});
+				
 			});
 
 			function initNotificationEvents() {
@@ -309,6 +284,31 @@
 					*/
 					initNotificationEvents()
 				});
+		</script>
+		
+
+		<script>
+			function move(el) {
+				console.log('clicked'); 
+				const link = el.querySelector('a');
+				const item = el.closest('[data-id]');
+				const id = item?.dataset?.id;
+
+				if (link && link.href) {
+					if (id) {
+						fetch('/usr/notifications/markAsRead?notificationId=' + id, {
+							method: 'POST'
+						}).then(() => {
+							item.classList.replace('bg-yellow-100', 'bg-white');
+							item.classList.add('opacity-70');
+							updateNotificationBadge();
+							window.location.href = link.href;
+						});
+					} else {
+						window.location.href = link.href;
+					}
+				}
+			}
 		</script>
 	</div>
 
