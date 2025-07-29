@@ -501,7 +501,7 @@ public class PetController {
 			if (pv.getNextDueDate() != null) {
 				Map<String, Object> nextEvent = new HashMap<>();
 				nextEvent.put("id", pv.getId());
-				nextEvent.put("title", pv.getVaccineName() + " 다음 예정");
+				nextEvent.put("title", pv.getVaccineName() + "예정");
 				nextEvent.put("start", pv.getNextDueDate().toString());
 				nextEvent.put("notes", pv.getNotes());
 				events.add(nextEvent);

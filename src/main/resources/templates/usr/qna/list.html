@@ -76,7 +76,7 @@ data-member-id=${qna.memberId}">
             <!-- 오른쪽: 내 질문 목록 + 버튼 -->
             <div class="w-1/3 bg-white/90 p-6 rounded-2xl shadow-lg h-[97%] overflow-y-auto">
                 <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-lg font-bold text-lime-800">🙋 내 질문 목록</h2>
+                    <h2 class="text-lg font-bold text-lime-800">내 질문</h2>
                     <button id="askBtn"
                             type="button"
                             class="text-xs bg-yellow-400 hover:bg-yellow-500 text-white px-3 py-1 rounded-full shadow">
@@ -109,7 +109,7 @@ data-member-id=${qna.memberId}">
             <div class="bg-white p-6 rounded-xl w-full max-w-lg relative shadow-lg">
                 <button class="absolute top-2 right-2 text-gray-500 hover:text-black text-xl font-bold"
                         onclick="hideAskModal()">&times;</button>
-                <h2 class="text-xl font-bold mb-4">🙋 질문 등록</h2>
+                <h2 class="text-xl font-bold mb-4">질문 등록</h2>
 
                 <form id="askForm">
 
@@ -139,7 +139,6 @@ data-member-id=${qna.memberId}">
         <div id="qnaDetailModal" class="fixed inset-0 bg-black bg-opacity-40 hidden items-center justify-center z-50">
             <div class="bg-white p-6 rounded-xl w-full max-w-lg relative shadow-lg">
                 <button class="absolute top-2 right-2 text-gray-500 hover:text-black text-xl font-bold" onclick="hideQnaModal()">&times;</button>
-                <h2 class="text-xl font-bold mb-4">🙋 질문 상세</h2>
 
                 <form id="modifyQnaForm">
                     <input type="hidden" id="modalQnaId" name="id">
