@@ -164,7 +164,7 @@
 				<div class="flex gap-4 h-full">
 
 					<!-- 왼쪽: 일정/버튼 -->
-					<div class="flex flex-col gap-4 w-[500px] relative">
+					<div class="flex flex-col gap-4 w-2/3 relative">
 						<!-- 상단 + 버튼 포함한 헤더 -->
 						<div class="flex justify-between items-center absoiute">
 							<span id="current-month-label" class="text-sm font-bold">JULY 5</span>
@@ -191,8 +191,8 @@
 					</div>
 
 					<!-- 오른쪽: 캘린더 -->
-					<div class="bg-gradient-to-r from-[#F4FBCC] to-[#fdf6c2] rounded-xl p-4 flex-1 shadow">
-						<div id="calendar-container" class="w-full"></div>
+					<div class="min-w-[400px] bg-gradient-to-r from-[#F4FBCC] to-[#fdf6c2] rounded-xl p-4 flex-1 shadow">
+						<div id="calendar-container" class="w-full h-full"></div>
 					</div>
 
 				</div>
@@ -201,7 +201,7 @@
 			</section>
 
 			<!-- 오른쪽 4칸: 고양이 정보 + 주변 펫살 -->
-			<aside class="col-span-4 flex flex-col gap-4">
+			<aside class="min-w-[450px] col-span-4 flex flex-col gap-4">
 
 				<!-- 고양이 일러스트 -->
 				<div class="tD_ani bg-white rounded-xl p-4 flex flex-col items-center shadow h-full">
@@ -210,17 +210,17 @@
 				</div>
 
 				<!-- 등록증 -->
-				<div class="ani-card bg-white rounded-xl max-w-md min-w-full p-6 shadow">
+				<div class="ani-card bg-white rounded-xl max-w-md min-w-full aspect-[1/1.6] p-6 shadow">
 					<!-- 제목 -->
 					<h2 class="text-2xl font-bold flex items-center gap-1 mb-4 justify-center">
 						<span class="text-3xl">🐾</span> 반려동물등록증
 					</h2>
 
 					<!-- 3열 Grid -->
-					<div class="grid grid-cols-3">
+					<div class="grid grid-cols-3 grid-rows-3 w-full h-full">
 
 						<!-- 1열 -->
-						<div>
+						<div class="">
 							<div class="space-y-1 text-sm">
 								<div><span class="font-semibold mr-2">이름:</span> <span th:text="${pet.name}">떡걸룩</span>
 								</div>
@@ -248,9 +248,9 @@
 						</div>
 
 						<!-- 3열: 사진 -->
-						<div class="flex justify-center items-start">
-							<img src="https://i.imgur.com/vTaaRnh.png" alt="cat"
-								class="w-30 h-30 object-cover rounded-xl border" />
+						<div class="overflow-hidden rounded-xl border flex justify-center items-start w-30 h-30">
+							<img src="/img/default-pet.png" alt="cat"
+								class="object-cover w-full h-full" />
 						</div>
 					</div>
 
