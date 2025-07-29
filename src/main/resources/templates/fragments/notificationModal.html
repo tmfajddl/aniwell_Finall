@@ -7,6 +7,7 @@
 	<script src="https://cdn.tailwindcss.com"></script>
 	<link rel="stylesheet" th:href="@{/resource/css/common.css}">
 	<link rel="stylesheet" th:href="@{/resource/css/global.css}">
+
 	<style>
 		.scroll-box {
 			max-height: 80%;
@@ -25,45 +26,53 @@
 		<main class="main_page min-h-screen flex-1 p-6 space-y-6">
 			<div th:fragment="alarmModalContent">
 				<div class="flex justify-between items-center">
-					<h2 class="text-3xl font-bold text-gray-800">📢 알림함</h2>
+					<h2 class="text-2xl font-bold text-gray-800">📢 알림함</h2>
 					<div>
-						<button id="markAllAsRead"
-							class="bg-yellow-400 hover:bg-yellow-300 text-white font-semibold px-4 py-2 rounded shadow">
+						<button id="markAllAsRead" class="px-2 py-1 rounded font-semibold
+						         bg-transparent text-black 
+						         hover:bg-[#bdd1c6] hover:text-white 
+						         transition-colors duration-300">
 							모두 읽음
 						</button>
-						<button id="deleteAll"
-							class="bg-red-400 hover:bg-red-300 text-white font-semibold px-4 py-2 rounded shadow">
+						<button id="deleteAll" class="px-2 py-1 rounded font-semibold
+								bg-transparent text-black 
+								hover:bg-[#1B475D] hover:text-white 
+								transition-colors duration-300">
 							모두 삭제
 						</button>
 					</div>
 				</div>
-				<hr class="border-t border-yellow-400 mb-4" />
+				<hr class="border-t border-yellow-400 mb-4 mt-2" />
 
-				<div class="notification-list space-y-5 scroll-box">
-					<div th:if="${#lists.isEmpty(notifications)}" class="text-center text-gray-500">
+				<div class="notification-list space-y-4">
+					<div class="text-center text-gray-500" th:if="${#lists.isEmpty(notifications)}">
 						📭 알림이 없습니다.
 					</div>
 
 					<div th:each="noti : ${notifications}"
-						th:class="'flex justify-between items-start p-4 rounded-lg shadow-md transition ' + (${noti.read} ? 'bg-white opacity-70' : 'bg-yellow-100')"
+						th:class="'flex gap-3 p-4 rounded-2xl shadow-sm hover:shadow-md border transition-all group cursor-pointer ' + (${noti.read} ? 'bg-white opacity-70' : 'bg-[#FFFBE8]')"
 						th:attr="data-id=${noti.id}">
 
-						<!-- 알림 내용 -->
-						<div class="flex-1 space-y-1">
-							<a th:href="${noti.link}" th:text="${noti.title}"
-								class="notification-link block text-lg font-semibold text-gray-800 hover:text-yellow-600 transition"></a>
-							<div class="text-sm text-gray-500 flex justify-between items-center">
-								<span class="time-ago" th:attr="data-time=${noti.regDate.time}">방금 전</span>
-							</div>
+						<!-- 아이콘 -->
+						<div class="flex-shrink-0 w-8 h-8">
+							<img th:src="@{/img/default-pet.png}" class="w-full h-full object-contain" />
 						</div>
 
-						<!-- 삭제 버튼 -->
-						<button type="button" class="delete-btn ml-4 text-gray-400 hover:text-red-500 text-xl"
-							title="삭제">
-							&times;
-						</button>
+						<!-- 본문 -->
+						<div class="flex-1">
+							<a th:href="${noti.link}">
+								<p class="text-sm text-gray-500 font-medium" th:text="${noti.title}">제목</p>
+								<p class="text-xs text-gray-400 mt-2"
+									th:text="${#dates.format(noti.regDate, 'yyyy.MM.dd HH:mm')}">1분 전</p>
+								<p class="text-xs text-gray-400 mt-2 time-ago" th:attr="data-time=${noti.regDate.time}"></p>
+							</a>
+						</div>
+
+						<!-- 빨간 점 (안 읽었을 경우만 표시) -->
+						<div th:if="${!noti.read}" class="w-2 h-2 bg-red-500 rounded-full mt-1"></div>
 					</div>
 				</div>
+
 			</div>
 		</main>
 	</div>
@@ -189,6 +198,7 @@
 
 
 	</script>
+
 </body>
 
 </html>
