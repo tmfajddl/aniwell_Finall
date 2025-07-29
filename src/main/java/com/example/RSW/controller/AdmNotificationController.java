@@ -28,17 +28,15 @@ public class AdmNotificationController {
     @Autowired
     private Rq rq;
 
+ // 관리자용 알림 리스트
     @GetMapping("/list")
-    @ResponseBody
-    public Map<String, Object> getNotificationList() {
+    public String showNotificationList(Model model) {
         int adminId = rq.getLoginedMemberId();
+
         List<Notification> notifications = notificationService.findByMemberId(adminId);
 
-        Map<String, Object> result = new HashMap<>();
-        result.put("success", true);
-        result.put("notifications", notifications);
-
-        return result;
+        model.addAttribute("notifications", notifications);
+        return "adm/notification/list";
     }
 
 
