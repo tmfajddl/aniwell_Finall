@@ -154,7 +154,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 
-let stompClient = null;
+let comStompClient = null;
 
 function updateNotificationBadge() {
 	fetch('/usr/notifications/unreadCount')
@@ -183,10 +183,10 @@ function updateNotificationBadge() {
 
 function connectWebSocket() {
 	const socket = new SockJS('/ws');
-	stompClient = Stomp.over(socket);
+	comStompClient = Stomp.over(socket);
 
-	stompClient.connect({}, function() {
-		stompClient.subscribe('/topic/notifications/' + mId, function(msg) {
+	comStompClient.connect({}, function() {
+		comStompClient.subscribe('/topic/notifications/' + mId, function(msg) {
 			// 실시간 알림 수신
 			console.log("실시간 알림 도착:", msg.body);
 			updateNotificationBadge();  // ✅ 뱃지 숫자만 갱신
