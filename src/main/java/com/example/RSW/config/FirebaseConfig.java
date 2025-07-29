@@ -20,6 +20,7 @@ public class FirebaseConfig {
 
             FirebaseOptions options = FirebaseOptions.builder()
                     .setCredentials(GoogleCredentials.fromStream(serviceAccount))
+                    .setProjectId("aniwell-2a90b") // 🔥 명시적으로 추가
                     .build();
 
             if (FirebaseApp.getApps().isEmpty()) {

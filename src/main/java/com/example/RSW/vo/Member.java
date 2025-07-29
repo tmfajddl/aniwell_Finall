@@ -35,6 +35,9 @@ public class Member {
 	private String socialProvider; // 예: kakao, google, naver
 	private String socialId;       // 소셜 플랫폼 제공 고유 ID
 
+	private String uid;	// Firebase 토큰
+
+
 	public boolean isSocialMember() {
 
 		return this.socialProvider != null && !this.socialProvider.isBlank();

@@ -67,4 +67,5 @@ public interface MemberRepository {
 
     List<Integer> getAllMemberIds();
 
+    void updateUidById(String uid, int id);
 }

@@ -197,4 +197,11 @@
     <select id="getAllMemberIds" resultType="int">
         SELECT id FROM member WHERE delStatus = 0
     </select>
+
+    <update id="updateUidById">
+        UPDATE member
+        SET uid = #{uid}
+        WHERE id = #{id}
+    </update>
+
 </mapper>
