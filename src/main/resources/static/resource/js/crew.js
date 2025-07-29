@@ -184,7 +184,8 @@ function scModal(el) {
 		body: el.dataset.body,
 		scheduleDate: el.dataset.scheduledate, // ⚠️ 주의: HTML에서는 소문자로 바뀜!
 		writer: el.dataset.writer,
-		regDate: el.dataset.regDate
+		regDate: el.dataset.regDate,
+		id: el.dataset.scheduleId  // data-schedule-id 속성 사용
 	};
 
 	const html = `
@@ -196,6 +197,10 @@ function scModal(el) {
 			<button id="scJoinBtn" class="mt-4 px-6 py-2 text-black font-semibold rounded-xl shadow-md bg-gradient-to-r from-green-200 to-yellow-100 hover:shadow-lg transition">
 				참가하기
 			</button>
+			<button id="scViewParticipantsBtn"
+				class="mt-4 px-6 py-2 text-black font-semibold rounded-xl shadow-md bg-gradient-to-r from-green-200 to-yellow-100 hover:shadow-lg transition">
+				참가자 보기
+			</button>
 		</div>
 	`;
 
@@ -203,13 +208,46 @@ function scModal(el) {
 
 	setTimeout(() => {
 		$('#scJoinBtn').on('click', function() {
-			// ✅ 그림자 색을 노란색으로 변경
-			el.classList.remove('shadow');
-			el.classList.add('shadow-yellow-400');
+			const scheduleId = schedule.id;
 
-			alert('✅ 참가 완료!');
+			$.post("/usr/article/doJoinSchedule", { scheduleId }, function(res) {
+				if (res.success) {
+					alert("✅ 참가 완료!");
+					el.classList.remove('shadow');
+					el.classList.add('shadow-yellow-400');
+
+					// 필요시 참가 버튼 숨기기 or 참가자 수 갱신 등 추가
+				} else {
+					alert(res.msg);
+				}
+			});
+		});
+
+		// ✅ 참가자 보기 버튼 클릭 이벤트 추가
+		$('#scViewParticipantsBtn').on('click', function() {
+			viewParticipants(schedule.id); // 👈 참가자 목록 요청
 		});
 	}, 0);
+}
+
+// ✅ 일정 참가자 목록 불러오기 함수 (전역에 위치)
+function viewParticipants(scheduleId) {
+	$.get("/usr/article/getParticipants", { scheduleId }, function(res) {
+		if (res.success) {
+			const participants = res.data1;
+
+			let html = `
+				<h2 class="text-lg font-bold mb-2">👥 참가자 목록</h2>
+				<ul class="list-disc pl-5 space-y-1 text-sm">
+					${participants.map(p => `<li>${p.nickname}</li>`).join('')}
+				</ul>
+			`;
+
+			openComModal(html); // ✅ 기존 공용 모달 사용
+		} else {
+			alert("⚠ 참가자 목록 불러오기 실패");
+		}
+	});
 }
 
 
@@ -487,10 +525,10 @@ function scAdd() {
 				alert("📌 제목을 입력해주세요.");
 				return;
 			}
-				console.log(crewId);
-				console.log(scheduleDate);
-				console.log(scheduleTitle);
-				console.log(scheduleBody);
+			console.log(crewId);
+			console.log(scheduleDate);
+			console.log(scheduleTitle);
+			console.log(scheduleBody);
 
 			$.ajax({
 				url: '/usr/article/doWriteSchedule',
@@ -906,7 +944,7 @@ function showMemberDetail(id) {
 				  <p>${data.address}</p>
 				`;
 
-			detail.dataset.usrId = member.memberId; 
+			detail.dataset.usrId = member.memberId;
 
 			buttons.style.display = "block";
 		},
