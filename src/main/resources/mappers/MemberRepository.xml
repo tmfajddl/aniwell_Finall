@@ -203,5 +203,8 @@
         SET uid = #{uid}
         WHERE id = #{id}
     </update>
+    <select id="findByUid" parameterType="string" resultType="com.example.RSW.vo.Member">
+        SELECT * FROM member WHERE uid = #{uid}
+    </select>
 
 </mapper>
