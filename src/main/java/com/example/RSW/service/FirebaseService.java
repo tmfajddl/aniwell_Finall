@@ -5,6 +5,9 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @Service
 public class FirebaseService {
 
@@ -15,13 +18,20 @@ public class FirebaseService {
      */
     public String createCustomToken(Member member) {
         try {
-            // UID는 member 테이블의 uid 컬럼을 사용 (없다면 ID 기반 생성 가능)
+            // UID 생성 (member.uid가 없으면 ID 기반 생성)
             String uid = (member.getUid() != null && !member.getUid().isEmpty())
                     ? member.getUid()
                     : "member-" + member.getId();
 
-            // Firebase Custom Token 생성
-            return FirebaseAuth.getInstance().createCustomToken(uid);
+            // 이메일 클레임 추가
+            Map<String, Object> additionalClaims = new HashMap<>();
+            if (member.getEmail() != null && !member.getEmail().isEmpty()) {
+                additionalClaims.put("email", member.getEmail());
+            }
+
+            // Firebase Custom Token 생성 (이메일 포함)
+            return FirebaseAuth.getInstance().createCustomToken(uid, additionalClaims);
+
         } catch (FirebaseAuthException e) {
             throw new RuntimeException("❌ Firebase Custom Token 생성 실패", e);
         }
