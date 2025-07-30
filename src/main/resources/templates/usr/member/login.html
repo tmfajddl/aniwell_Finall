@@ -18,56 +18,73 @@
 			width: 100%;
 			padding: 1rem;
 		}
+
+		@keyframes slide-up {
+		  0% {
+		    opacity: 0;
+		    transform: translateY(30px); /* 살짝만 내려온 상태에서 */
+		  }
+		  100% {
+		    opacity: 1;
+		    transform: translateY(0);
+		  }
+		}
+
+		.animate-slide-up {
+		  animation: slide-up 0.3s ease-out forwards;
+		}
+
 	</style>
+
 </head>
 
 <body class="bg-white">
 
-	<div class="form-wrapper flex-row overflow-hidden min-w-content relative" id="form-wrapper">
+	<div class="opacity-0 animate-slide-up form-wrapper flex-row overflow-hidden min-w-content relative" id="form-wrapper">
 
 		<div class="form-slider w-[200%]  flex transition-transform duration-300">
 			<!-- 로그인 화면 -->
 			<div class="sign-in flex w-full relative">
 				<!-- 로그인 폼 -->
 				<form class="left-panel w-3/5 p-6 gap-3" th:action="@{/usr/member/doLogin}" method="post">
-						<h1><img class="logo-img mt-4" th:src="@{/img/logo.png}" alt="Aniwell Logo"></h1>
-						<div class="w-[75%] mx-auto space-y-4">
-							<input type="text" name="loginId" placeholder="아이디" required th:value="${param.loginId}"
-								class="w-full text-center py-2 focus:border-yellow-400" />
+					<h1><img class="logo-img mt-4" th:src="@{/img/logo.png}" alt="Aniwell Logo"></h1>
+					<div class="w-[75%] mx-auto space-y-4">
+						<input type="text" name="loginId" placeholder="아이디" required th:value="${param.loginId}"
+							class="w-full text-center py-2 focus:border-yellow-400" />
 
-							<input type="password" name="loginPw" placeholder="비밀번호" required
-								class="w-full text-center py-2 focus:border-yellow-400" />
-						</div>
+						<input type="password" name="loginPw" placeholder="비밀번호" required
+							class="w-full text-center py-2 focus:border-yellow-400" />
+					</div>
 
-						<div class="flex justify-center items-center mt-3 space-x-4 text-gray-700 text-sm font-medium">
-							<a href="/find-id">아이디 찾기</a>
-							<span class="text-gray-400">|</span>
-							<a href="/find-password">비밀번호 찾기</a>
-						</div>
+					<div class="flex justify-center items-center mt-3 space-x-4 text-gray-700 text-sm font-medium">
+						<a href="/find-id">아이디 찾기</a>
+						<span class="text-gray-400">|</span>
+						<a href="/find-password">비밀번호 찾기</a>
+					</div>
 
-						<button class="w-[75%] min-w-[100px] sign-in-button" type="submit">sign in</button>
-						<!-- 소셜 로그인 버튼 영역 -->
-						<div class="social-login-buttons flex flex-col gap-1 mt-4">
-							<a href="javascript:loginWithGoogle()"
-								class="flex items-center border px-4 py-2 rounded-xl shadow hover:shadow-md bg-white">
-								<img src="https://developers.google.com/identity/images/g-logo.png" alt="Google Logo"
-									class="w-8 h-8" />
-								<span class="text-sm font-medium text-gray-700 w-full text-center">구글 로그인</span>
-							</a>
+					<button class="w-[75%] min-w-[100px] sign-in-button" type="submit">sign in</button>
+					<!-- 소셜 로그인 버튼 영역 -->
+					<div class="social-login-buttons flex flex-col gap-1 mt-4">
+						<a href="javascript:loginWithGoogle()"
+							class="flex items-center border px-4 py-2 rounded-xl shadow hover:shadow-md bg-white">
+							<img src="https://developers.google.com/identity/images/g-logo.png" alt="Google Logo"
+								class="w-8 h-8" />
+							<span class="text-sm font-medium text-gray-700 w-full text-center">구글 로그인</span>
+						</a>
 
-							<!-- 네이버  -->
-							<a href="javascript:loginWithGoogle()"
-								class="flex items-center border px-4 py-2 rounded-xl shadow hover:shadow-md bg-white">
-								<img th:src="@{/img.socialLogin/btnG_아이콘사각.png}" alt="네이버 로그인" class="w-8 h-8" />
-								<span class="text-sm font-medium text-gray-700 w-full text-center">네이버 로그인</span>
-							</a>
+						<!-- 네이버  -->
+						<a href="javascript:loginWithGoogle()"
+							class="flex items-center border px-4 py-2 rounded-xl shadow hover:shadow-md bg-white">
+							<img th:src="@{/img.socialLogin/btnG_아이콘사각.png}" alt="네이버 로그인" class="w-8 h-8" />
+							<span class="text-sm font-medium text-gray-700 w-full text-center">네이버 로그인</span>
+						</a>
 
-							<!-- 카카오 (팝업 방식) -->
-							<a href="javascript:openKakaoPopup()">
-								<img th:src="@{/img.socialLogin/kakao_login_medium_wide.png}" alt="카카오 로그인"
-									class="flex items-center border rounded-xl shadow hover:shadow-md bg-white h-[50px]" />
-							</a>
-						</div>
+						<!-- 카카오 (팝업 방식) -->
+						<a href="javascript:openKakaoPopup()">
+							<img th:src="@{/img.socialLogin/kakao_login_medium_wide.png}" alt="카카오 로그인"
+								class="flex items-center border rounded-xl shadow hover:shadow-md bg-white h-[50px]" />
+						</a>
+					</div>
 				</form>
 
 				<!-- 회원가입 버튼 -->
