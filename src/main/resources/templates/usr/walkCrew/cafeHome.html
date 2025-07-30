@@ -447,20 +447,25 @@
 	</script>
 	
 	<script>
-	  // 외부 클릭 시 모달 닫기
-	  document.addEventListener('click', function (event) {
+	  // 모달 외부 클릭 시 닫기
+	  document.addEventListener('DOMContentLoaded', () => {
 	    const modal = document.getElementById('modal');
 	    const content = document.getElementById('modalContent');
 
-	    // 모달이 안 떠있으면 무시
-	    if (!modal || modal.classList.contains('hidden')) return;
+	    if (modal && content) {
+	      modal.addEventListener('click', function (event) {
+	        if (!content.contains(event.target)) {
+	          closeModal();
+	        }
+	      });
 
-	    // content 바깥 클릭 시 모달 닫기
-	    if (!content.contains(event.target)) {
-	      closeModal();
+	      content.addEventListener('click', function (event) {
+	        event.stopPropagation(); // 내부 클릭 시 모달 닫힘 방지
+	      });
 	    }
 	  });
 	</script>
+
 
 
 
