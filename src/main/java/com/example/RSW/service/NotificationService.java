@@ -32,7 +32,6 @@ public class NotificationService {
 	public NotificationService(NotificationRepository notificationRepository) {
 		this.notificationRepository = notificationRepository;
 	}
-	
 
 	// 알림 추가 메서드
 	public void addNotification(int memberId, int senderId, String type, String title, String link) {
@@ -183,7 +182,7 @@ public class NotificationService {
 			notificationRepository
 					.insert(new Notification(0, memberId, title, link, new Date(), false, null, type, senderId));
 			System.out.println("🔔 알림 전송: /topic/notifications/" + memberId + " -> new");
-			messagingTemplate.convertAndSend("/topic/notifications/" + memberId, "new" );
+			messagingTemplate.convertAndSend("/topic/notifications/" + memberId, "new");
 		}
 	}
 
@@ -194,4 +193,5 @@ public class NotificationService {
 	public void deleteByLink(String link) {
 		notificationRepository.deleteByLink(link);
 	}
+
 }

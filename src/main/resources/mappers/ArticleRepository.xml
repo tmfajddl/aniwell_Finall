@@ -242,15 +242,17 @@
 	<!-- @formatter:off -->
 	<select id="getRecentArticlesByCrewAndBoardId"
 		resultType="com.example.RSW.vo.Article">
-		SELECT *
-		FROM article
-		WHERE crewId = #{crewId}
-		AND boardId =
-		#{boardId}
-		AND delStatus = 0
-		ORDER BY id DESC
-		LIMIT #{limit}
+		SELECT A.*, M.nickname AS extra__writer
+		FROM article AS A
+		INNER JOIN member AS M ON A.memberId = M.id
+		WHERE A.crewId = #{crewId}
+		AND A.boardId = #{boardId}
+		AND A.delStatus = 0
+		ORDER BY A.id DESC
+		LIMIT
+		#{limit}
 	</select>
+
 	<!-- @formatter:on -->
 
 	<!-- ✅ 특정 크루 ID와 게시판 ID에 해당하는 게시글 목록 조회 -->
@@ -327,6 +329,8 @@
 		FROM article
 		WHERE boardId = #{boardId}
 		AND delStatus = 0
+		AND
+		crewId IS NULL   <!-- ✅ 크루 공지 제외 필터 -->
 		AND
 		memberId IN (
 		SELECT id FROM member WHERE authLevel = 7

@@ -144,15 +144,23 @@ public class UsrArticleController {
 		String redirectUrl = crewId != null ? "/usr/article/detail?id=" + articleId + "&crewId=" + crewId
 				: "/usr/article/detail?id=" + articleId + "&boardId=" + boardId;
 
-		System.out.println("redirectUrl: " + redirectUrl);
-
 // ✅ 🔔 전체 알림 발송 (공지사항일 때만)
 		if (boardId != null && boardId == 1 ) {
-			String link = redirectUrl;
-			String notiTitle = "[공지사항] " + title;
-			notificationService.sendNotificationToAll(notiTitle, link, "NOTICE", loginedMemberId);
-		}
 
+			String link = redirectUrl;
+
+			if (crewId != null) {
+				// ✅ 크루공지로 간주
+				String notiTitle = "[크루공지] " + title;
+				// 기존 전체 전송 대신 크루용으로 커스텀 분기
+				notificationService.sendNotificationToAll(notiTitle, link, "CREW_NOTICE", loginedMemberId);
+				// 실제 크루 멤버에게만 보내고 싶으면 위 메서드만 수정
+			} else {
+				// ✅ 전체 공지
+				String notiTitle = "[공지사항] " + title;
+				notificationService.sendNotificationToAll(notiTitle, link, "NOTICE", loginedMemberId);
+			}
+		}
 		return ResultData.from("S-1", "게시글이 성공적으로 작성되었습니다.",
 				Map.of("articleId", articleId, "redirectUrl", redirectUrl));
 	}

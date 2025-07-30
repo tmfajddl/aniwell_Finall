@@ -39,7 +39,7 @@ function detailModal(e) {
 		title: e.dataset.title,
 		body: e.dataset.body,
 		imageUrl: e.dataset.imageUrl,
-		writer: e.dataset.extra__writer,
+		writer: e.dataset.writer,
 		regDate: e.dataset.regDate
 	};
 
