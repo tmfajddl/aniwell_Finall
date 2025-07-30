@@ -1355,5 +1355,3 @@ function myArticle() {
 		}
 	});
 }
-
-
