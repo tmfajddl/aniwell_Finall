@@ -56,68 +56,68 @@
 
 
 		<script type="text/babel">
-			const { createPortal } = ReactDOM;
+			const {createPortal} = ReactDOM;
 
-			function PetCard({ pet }) {
-			  const handleClick = () => {
-			    window.modifyPet(pet); // 전역 JS 함수 호출
-			  };
+			function PetCard({pet}) {
+				const handleClick = () => {
+					window.modifyPet(pet); // 전역 JS 함수 호출
+				};
 
-			  return (
-			    <React.Fragment>
-			      <div
-			        className="ani-card bg-white aspect-[1/1.6] w-[420px] rounded-xl p-6 shadow"
-			        onClick={handleClick}
-			      >
-			        <h2 className="text-2xl font-bold flex items-center gap-1 mb-4 justify-center">
-			          <span className="text-3xl">🐾</span> 반려동물등록증
-			        </h2>
+				return (
+					<React.Fragment>
+						<div
+							className="ani-card bg-white aspect-[1/1.6] w-[420px] rounded-xl p-6 shadow"
+							onClick={handleClick}
+						>
+							<h2 className="text-2xl font-bold flex items-center gap-1 mb-4 justify-center">
+								<span className="text-3xl">🐾</span> 반려동물등록증
+							</h2>
 
-			        <div className="grid grid-cols-3">
-			          <div className="grid-rows-2">
-			            <div className="row-auto text-start space-y-1 text-sm">
-			              <div>
-			                <span className="font-semibold mr-2">이름:</span> {pet.name}
-			              </div>
-			              <div>
-			                <span className="font-semibold mr-2">번호:</span> {pet.id}
-			              </div>
-			              <div>
-			                <span className="font-semibold mr-2">품종:</span> {pet.breed}
-			              </div>
-			            </div>
-			            <div className="row-auto text-sm text-start pt-1">
-			              <span className="font-semibold mr-2">특징:</span> {pet.species}
-			            </div>
-			          </div>
+							<div className="grid grid-cols-3">
+								<div className="grid-rows-2">
+									<div className="row-auto text-start space-y-1 text-sm">
+										<div>
+											<span className="font-semibold mr-2">이름:</span> {pet.name}
+										</div>
+										<div>
+											<span className="font-semibold mr-2">번호:</span> {pet.id}
+										</div>
+										<div>
+											<span className="font-semibold mr-2">품종:</span> {pet.breed}
+										</div>
+									</div>
+									<div className="row-auto text-sm text-start pt-1">
+										<span className="font-semibold mr-2">특징:</span> {pet.species}
+									</div>
+								</div>
 
-			          <div className="row-auto text-start space-y-1 text-sm">
-			            <div>
-			              <span className="font-semibold mr-2">성별:</span> {pet.gender}
-			            </div>
-			            <div>
-			              <span className="font-semibold mr-2">생일:</span> {pet.birthDate}
-			            </div>
-			            <div>
-			              <span className="font-semibold mr-2">중성화:</span> 완료
-			            </div>
-			          </div>
+								<div className="row-auto text-start space-y-1 text-sm">
+									<div>
+										<span className="font-semibold mr-2">성별:</span> {pet.gender}
+									</div>
+									<div>
+										<span className="font-semibold mr-2">생일:</span> {pet.birthDate}
+									</div>
+									<div>
+										<span className="font-semibold mr-2">중성화:</span> 완료
+									</div>
+								</div>
 
-			          <div className="space-y-1 flex justify-center items-start">
-			            <img
-			             src={pet.photo && pet.photo.trim() !== '' ? pet.photo : '/img/default-pet.png'}
-			              alt="pet"
-			              className="w-[100px] h-[100px] object-cover rounded-xl border"
-			            />
-			          </div>
-			        </div>
+								<div className="space-y-1 flex justify-center items-start">
+									<img
+										src={pet.photo && pet.photo.trim() !== '' ? pet.photo : '/img/default-pet.png'}
+										alt="pet"
+										className="w-[100px] h-[100px] object-cover rounded-xl border"
+									/>
+								</div>
+							</div>
 
-			        <div className="createdAt text-right text-xs text-gray-500 mt-2">
-			          {pet.createdAt}
-			        </div>
-			      </div>
-			    </React.Fragment>
-			  );
+							<div className="createdAt text-right text-xs text-gray-500 mt-2">
+								{pet.createdAt}
+							</div>
+						</div>
+					</React.Fragment>
+				);
 			}
 
 
@@ -163,7 +163,7 @@
 						centeredSlides: true,
 						spaceBetween: -30,
 						effect: 'fade',
-						fadeEffect: { crossFade: true },
+						fadeEffect: {crossFade: true},
 						loop: false,
 						grabCursor: true,
 						effect: 'slide',
@@ -171,17 +171,17 @@
 						on: {
 
 							progress(swiper) {
-							  swiper.slides.forEach(slide => {
-							    const progress = slide.progress;
-							    const scale = 1 - Math.abs(progress) * 0.1;
-							    const blur = Math.min(Math.abs(progress) * 5, 5);
-							    const opacity = 1 - Math.abs(progress) * 0.5;
+								swiper.slides.forEach(slide => {
+									const progress = slide.progress;
+									const scale = 1 - Math.abs(progress) * 0.1;
+									const blur = Math.min(Math.abs(progress) * 5, 5);
+									const opacity = 1 - Math.abs(progress) * 0.5;
 
-							    slide.style.transform = `scale(${scale})`;
-							    slide.style.filter = `blur(${blur}px) brightness(${1 - Math.abs(progress) * 0.2})`;
-							    slide.style.opacity = opacity;
-							    slide.style.zIndex = `${100 - Math.floor(Math.abs(progress) * 100)}`;
-							  });
+									slide.style.transform = `scale(${scale})`;
+									slide.style.filter = `blur(${blur}px) brightness(${1 - Math.abs(progress) * 0.2})`;
+									slide.style.opacity = opacity;
+									slide.style.zIndex = `${100 - Math.floor(Math.abs(progress) * 100)}`;
+								});
 							},
 							slideChangeTransitionEnd() {
 								const allSlides = document.querySelectorAll('.swiper-slide');
@@ -262,54 +262,58 @@
 
 				return (
 					<div className="w-full flex justify-center overflow-visible">
-					  <div className="swiper mySwiper max-w-[800px] overflow-visible">
-					    <div className="swiper-wrapper">
-					      {petList.map((pet, idx) =>
-					        pet ? (
-					          <div
-					            className="swiper-slide w-[420px]"
-					            key={pet.id}
-					            data-pet-id={pet.id}
-					          >
-					            <PetCard pet={pet} />
-					          </div>
-					        ) : (
-					          <div
-					            className="swiper-slide w-[420px] opacity-30 flex justify-center"
-					            key={`empty-${idx}`}
-					          >
-					            <div className="ani-card bg-gray-100 aspect-[1/1.6] w-[400px] rounded-xl p-6 shadow flex items-center justify-center text-gray-500">
-					              등록된 펫이 없습니다
-					            </div>
-					          </div>
-					        )
-					      )}
-					    </div>
-					  </div>
+						<div className="swiper mySwiper max-w-[800px] overflow-visible">
+							<div className="swiper-wrapper">
+								{petList.map((pet, idx) =>
+									pet ? (
+										<div
+											className="swiper-slide w-[420px]"
+											key={pet.id}
+											data-pet-id={pet.id}
+										>
+											<PetCard pet={pet} />
+										</div>
+									) : (
+										<div
+											className="swiper-slide w-[420px] opacity-30 flex justify-center"
+											key={`empty-${idx}`}
+										>
+											<div className="ani-card bg-gray-100 w-[400px] rounded-xl shadow flex items-center justify-center text-gray-500">
+												<img
+													src="/img/default-card.png" // ✅ 여기에 이미지 경로 넣기
+													alt="등록된 펫 없음"
+													className="w-full h-hull opacity-60"
+												/>
+											</div>
+										</div>
+									)
+								)}
+							</div>
+						</div>
 					</div>
 
 				);
 			}
-			
+
 			const swiper = new Swiper('.mySwiper', {
-			  slidesPerView: 'auto',
-			  centeredSlides: true,
-			  spaceBetween: -30,
-			  loop: false,
-			  grabCursor: true,
-			  speed: 800,
+				slidesPerView: 'auto',
+				centeredSlides: true,
+				spaceBetween: -30,
+				loop: false,
+				grabCursor: true,
+				speed: 800,
 
-			  // ✅ 실시간 진행률 감지를 위한 옵션
-			  watchSlidesProgress: true,
+				// ✅ 실시간 진행률 감지를 위한 옵션
+				watchSlidesProgress: true,
 
-			  on: {
-			    progress() {
-			      // 아래에 정의할 progress 기반 스타일 적용
-			    },
-			  },
+				on: {
+					progress() {
+						// 아래에 정의할 progress 기반 스타일 적용
+					},
+				},
 			});
 
-			
+
 
 			const root = ReactDOM.createRoot(document.getElementById("root"));
 			root.render(<App />);
