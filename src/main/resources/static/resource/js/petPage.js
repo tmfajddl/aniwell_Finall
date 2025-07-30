@@ -1,10 +1,10 @@
 
 function openComModal(contentHTML) {
-  const modal = document.getElementById('comModal');
+	const modal = document.getElementById('comModal');
 
-  modal.innerHTML = `
-    <div class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-      <div class="bg-white p-8 rounded-2xl shadow-xl relative w-[600px] max-w-full">
+	modal.innerHTML = `
+    <div onclick="closeCommentModal()" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+      <div onclick="event.stopPropagation()" class="bg-white p-8 rounded-2xl shadow-xl relative w-[600px] max-w-full">
         <!-- 닫기 버튼 -->
         <button id="closeModalBtn" class="absolute top-3 right-4 text-2xl text-gray-400 hover:text-gray-700">&times;</button>
         ${contentHTML}
@@ -12,25 +12,24 @@ function openComModal(contentHTML) {
     </div>
   `;
 
-  modal.classList.remove("hidden");
-  modal.classList.remove("translate-y-full");
+	modal.classList.remove("hidden");
+	modal.classList.remove("translate-y-full");
 
-  // 이벤트 핸들러도 다시 바인딩
-  document.getElementById("closeModalBtn").addEventListener("click", closeCommentModal);
+	// 이벤트 핸들러도 다시 바인딩
+	document.getElementById("closeModalBtn").addEventListener("click", closeCommentModal);
 }
 
 
 function closeCommentModal() {
-  const modal = document.getElementById("comModal");
+	const modal = document.getElementById("comModal");
 
-  // 이동 효과 제거
-  modal.classList.add("translate-y-full");
-
-  // ⭐ 살짝 delay 후 hidden 처리
-  setTimeout(() => {
-    modal.classList.add("hidden");
-    modal.innerHTML = ''; // 내용도 제거 (선택)
-  }, 300); // 애니메이션 시간에 맞게 설정 (Tailwind 기본은 300ms)
+	// 이동 효과 제거
+	modal.classList.add("translate-y-full");
+	// ⭐ 살짝 delay 후 hidden 처리
+	setTimeout(() => {
+		modal.classList.add("hidden");
+		modal.innerHTML = ''; // 내용도 제거 (선택)
+	}, 300); // 애니메이션 시간에 맞게 설정 (Tailwind 기본은 300ms)
 }
 
 function addPet() {
@@ -42,7 +41,7 @@ function addPet() {
 		   </h2>
 
 		   <!-- 등록 폼 -->
-		   <form action="/usr/pet/doJoin" method="post" enctype="multipart/form-data" class="space-y-6">
+		   <form id="addPetForm" onsubmit="submitPetForm(e)" action="/usr/pet/doJoin" method="post" enctype="multipart/form-data" class="space-y-6">
 		     <div class="flex gap-6">
 		       <!-- 🐶 사진 업로드 -->
 		       <div class="flex flex-col items-center space-y-3">
@@ -106,16 +105,15 @@ function addPet() {
 }
 
 
-
 function modifyPet(pet) {
-	
-  const html = `
+
+	const html = `
     <div>
       <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
         🐾 <span>반려동물 정보 수정</span>
       </h2>
 
-      <form action="/usr/pet/doModify" method="post" enctype="multipart/form-data" class="space-y-6">
+      <form id="modifyPetForm" onsubmit="submitModifyForm(e)" action="/usr/pet/doModify" method="post" enctype="multipart/form-data" class="space-y-6">
         <input type="hidden" name="petId" value="${pet.id}" />
 
         <div class="flex gap-6">
@@ -172,5 +170,31 @@ function modifyPet(pet) {
       </form>
     </div>
   `;
-  openComModal(html);
+	openComModal(html);
+
 }
+
+function submitModifyForm(e) {
+	e.preventDefault();
+
+	const form = document.getElementById('modifyPetForm');
+	const formData = new FormData(form);
+
+	fetch('/usr/pet/doModify', {
+		method: 'POST',
+		body: formData
+	})
+		.then(res => res.json())
+		.then(data => {
+			if (data.resultCode?.startsWith("S-")) {
+				closeCommentModal(); // 모달 닫기
+			} else {
+				alert("수정실패에요!");
+			}
+		})
+		.catch(err => {
+			console.error("❌ 수정 중 오류:", err);
+		
+		});
+}
+
