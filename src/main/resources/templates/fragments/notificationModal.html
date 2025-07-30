@@ -62,9 +62,12 @@
 						<div class="flex-1">
 							<a th:href="${noti.link}">
 								<p class="text-sm text-gray-500 font-medium" th:text="${noti.title}">제목</p>
-								<p class="text-xs text-gray-400 mt-2"
-									th:text="${#dates.format(noti.regDate, 'yyyy.MM.dd HH:mm')}">1분 전</p>
-								<p class="text-xs text-gray-400 mt-2 time-ago" th:attr="data-time=${noti.regDate.time}"></p>
+								<div class="flex justify-between">
+									<div class="text-xs text-gray-400 mt-2"
+										th:text="${#dates.format(noti.regDate, 'yyyy.MM.dd HH:mm')}">1분 전</div>
+									<div class="text-xs text-gray-400 mt-2 time-ago"
+										th:attr="data-time=${noti.regDate.time}"></div>
+								</div>
 							</a>
 						</div>
 
