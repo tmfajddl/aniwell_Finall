@@ -6,7 +6,8 @@ import com.example.RSW.vo.Pet;
 import com.example.RSW.vo.PetVaccination;
 import com.example.RSW.vo.Rq;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -17,14 +18,11 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PetNotificationScheduler {
 
-    @Autowired
-    Rq rq;
-
     private final PetRepository petRepository;
     private final PetVaccinationRepository vaccinationRepository;
     private final NotificationService notificationService;
 
-    @Scheduled(cron = "0 0 11 * * *") // 매일 오전 8시
+    @Scheduled(cron = "0 0 8 * * *") // 매일 오전 8시
     public void run() {
         sendBirthdayNotifications();
         sendVaccineNotifications();
@@ -33,12 +31,13 @@ public class PetNotificationScheduler {
     private void sendBirthdayNotifications() {
         List<Pet> upcomingBirthdays = petRepository.findPetsWithBirthdayInDays(List.of(0, 3, 7));
         for (Pet pet : upcomingBirthdays) {
-            String title = "🎉 " + pet.getName() + "의 생일이 " + formatDdayText(getDday(pet.getBirthDate()));
+            String title = "🎉 " + pet.getName() + "의 생일이 " + formatDdayText(getBirthdayDday(pet.getBirthDate()));
             String link = "/usr/pet/list";
-            int loginMemberId = rq.getLoginedMemberId();
+            int loginMemberId = pet.getMemberId();
             int petId = pet.getId();
             notificationService.addNotification(loginMemberId, petId, "birthday", title, link);
         }
+        System.out.println("[알림 스케줄러] 생일 대상 수: " + upcomingBirthdays.size());
     }
 
     private void sendVaccineNotifications() {
@@ -46,12 +45,27 @@ public class PetNotificationScheduler {
         for (PetVaccination vac : dueVaccines) {
             String title = "💉 " + vac.getPetName() + "의 " + vac.getVaccineName()
                     + " 백신 접종일이 " + formatDdayText(getDday(vac.getNextDueDate()));
-            String link = "/usr/pet/petPage";
-            int loginMemberId = rq.getLoginedMemberId();
+            String link = "";
+            Pet pet = petRepository.getPetsById(vac.getPetId());
+            int loginMemberId = pet.getMemberId();
             int petId = vac.getPetId();
             notificationService.addNotification(loginMemberId, petId, "vaccine", title, link);
         }
+        System.out.println("[알림 스케줄러] 백신 대상 수: " + dueVaccines.size());
     }
+
+    private int getBirthdayDday(Date birthDate) {
+        LocalDate today = LocalDate.now();
+        LocalDate birthday = LocalDate.of(today.getYear(), birthDate.getMonth() + 1, birthDate.getDate());
+
+        if (birthday.isBefore(today)) {
+            birthday = birthday.plusYears(1);
+        }
+
+        return (int) ChronoUnit.DAYS.between(today, birthday);
+    }
+
+
 
     private int getDday(Date date) {
         long diff = date.getTime() - System.currentTimeMillis();
