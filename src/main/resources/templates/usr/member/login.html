@@ -312,9 +312,7 @@
 <!-- ✅ Firebase 초기화 -->
 <script>
 
-
     firebase.initializeApp(firebaseConfig);
-    console.log("🔥 Firebase 초기화 완료:", firebase.apps.length);
 
     // 전역 오류 감지
     window.addEventListener('error', function (e) {
@@ -322,7 +320,7 @@
     });
 </script>
 
-<<script>
+<script>
     let isGooglePopupInProgress = false;
 
     // ✅ Firebase Custom Token 로그인 공통 함수
@@ -389,8 +387,6 @@
             const result = await firebase.auth().signInWithPopup(provider);
             const user = result.user;
 
-            // 이메일과 UID는 Firebase가 자동 관리
-            console.log("✅ Google 로그인 성공:", user.email, user.uid);
 
             // ID 토큰 발급 및 서버 세션 설정
             const idToken = await user.getIdToken();
@@ -414,10 +410,9 @@
     // ✅ 일반 로그인 + Firebase 커스텀 토큰 로그인
     async function handleFirebaseLogin() {
         try {
-            console.time("🔄 [일반] 전체 로그인 시간");
 
             // 1️⃣ 서버로 Firebase Custom Token 요청
-            const response = await fetch('/usr/member/firebase-token', { method: 'POST' });
+            const response = await fetch('/usr/member/firebase-token', { method: 'POST', credentials: 'include' });
             const result = await response.json();
 
             if (result.resultCode !== 'S-1') {
@@ -454,7 +449,6 @@
             });
             const sessionResult = await sessionResponse.json();
 
-            console.timeEnd("🔄 [일반] 전체 로그인 시간");
 
             if (sessionResult.resultCode === "S-1") {
                 window.location.replace("/");
@@ -503,6 +497,5 @@
         if (event.data && event.data.email) firebaseLoginWithServerToken(event.data.email);
     });
 </script>
-
 </body>
 </html>

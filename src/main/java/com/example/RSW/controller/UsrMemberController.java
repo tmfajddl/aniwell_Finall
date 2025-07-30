@@ -177,7 +177,6 @@ public class UsrMemberController {
         String firebaseToken = memberService.createFirebaseCustomToken(uid);
         req.getSession().setAttribute("firebaseToken", firebaseToken);
 
-
         // 성공 응답 (JSON)
         Map<String, Object> data = new HashMap<>();
         data.put("token", firebaseToken);
@@ -954,20 +953,26 @@ public class UsrMemberController {
             FirebaseToken decodedToken = FirebaseAuth.getInstance().verifyIdToken(idToken);
             String email = decodedToken.getEmail();
             String uid = decodedToken.getUid();
-            String name = decodedToken.getName(); // ✅ 이름 정보 추가
+            String name = decodedToken.getName();
 
             System.out.println("✅ [로그] Firebase 인증 성공");
             System.out.println("   - UID: " + uid);
             System.out.println("   - 이메일: " + email);
 
+            // ✅ 이메일 null일 경우 UID 기반 조회 fallback
             if (Ut.isEmpty(email)) {
-                return ResultData.from("F-2", "이메일 정보 없음");
+                System.out.println("⚠️ 이메일 없음 → UID 기반 회원 조회 시도");
+                Member uidMember = memberService.findByUid(uid); // 새 메서드 필요
+                if (uidMember == null) {
+                    return ResultData.from("F-2", "이메일 정보 없음 & UID 기반 회원 없음");
+                }
+                email = uidMember.getEmail();
             }
 
             // ✅ 기존 회원 조회
             Member member = memberService.findByEmail(email);
 
-            // ❗ 없으면 자동 가입
+            // ❗ 회원 없으면 자동 가입
             if (member == null) {
                 System.out.println("📌 [로그] 회원 정보 없음 → 자동 가입 시도");
 
@@ -1001,6 +1006,7 @@ public class UsrMemberController {
             return ResultData.from("F-1", "Firebase 인증 실패: " + e.getMessage());
         }
     }
+
 
     // ✅ 소셜 로그인 후 Redis 캐싱 및 Firebase Custom Token 발급
     @RequestMapping("/usr/member/social-login")
