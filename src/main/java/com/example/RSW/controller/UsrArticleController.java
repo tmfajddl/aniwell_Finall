@@ -57,6 +57,7 @@ public class UsrArticleController {
 
 	@Autowired
 	private NotificationService notificationService;
+
 	@Autowired
 	private SpringResourceTemplateResolver springResourceTemplateResolver;
 
@@ -143,6 +144,8 @@ public class UsrArticleController {
 		String redirectUrl = crewId != null ? "/usr/article/detail?id=" + articleId + "&crewId=" + crewId
 				: "/usr/article/detail?id=" + articleId + "&boardId=" + boardId;
 
+		System.out.println("redirectUrl: " + redirectUrl);
+
 // ✅ 🔔 전체 알림 발송 (공지사항일 때만)
 		if (boardId != null && boardId == 1 ) {
 			String link = redirectUrl;
@@ -193,6 +196,13 @@ public class UsrArticleController {
 		if (userCanDeleteRd.isFail()) {
 			return ResultData.from(userCanDeleteRd.getResultCode(), userCanDeleteRd.getMsg());
 		}
+
+		String redirectUrl = article.getCrewId() != null ? "/usr/article/detail?id=" + id + "&crewId=" + article.getCrewId()
+				: "/usr/article/detail?id=" + id + "&boardId=" + article.getBoardId();
+
+		System.out.println("redirectUrl: " + redirectUrl);
+
+		notificationService.deleteByLink(redirectUrl);
 
 		articleService.deleteArticle(id);
 
