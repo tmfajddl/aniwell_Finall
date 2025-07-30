@@ -32,31 +32,20 @@
 				<form class="left-panel h-full w-3/5 p-6 gap-3" th:action="@{/usr/member/doLogin}" method="post">
 					<h1><img class="logo-img mt-4" th:src="@{/img/logo.png}" alt="Aniwell Logo"></h1>
 					<div class="w-[75%] mx-auto space-y-4">
-					  <input
-					    type="text"
-					    name="loginId"
-					    placeholder="아이디"
-					    required
-					    th:value="${param.loginId}"
-					    class="w-full text-center py-2 focus:border-yellow-400"
-					  />
+						<input type="text" name="loginId" placeholder="아이디" required th:value="${param.loginId}"
+							class="w-full text-center py-2 focus:border-yellow-400" />
 
-					  <input
-					    type="password"
-					    name="loginPw"
-					    placeholder="비밀번호"
-					    required
-					    class="w-full text-center py-2 focus:border-yellow-400"
-					  />
+						<input type="password" name="loginPw" placeholder="비밀번호" required
+							class="w-full text-center py-2 focus:border-yellow-400" />
 					</div>
 
 					<div class="flex justify-center items-center mt-3 space-x-4 text-gray-700 text-sm font-medium">
-					  <a href="/find-id">아이디 찾기</a>
-					  <span class="text-gray-400">|</span>
-					  <a href="/find-password">비밀번호 찾기</a>
+						<a href="/find-id">아이디 찾기</a>
+						<span class="text-gray-400">|</span>
+						<a href="/find-password">비밀번호 찾기</a>
 					</div>
 
-					<button class="w-[75%] sign-in-button" type="submit">sign in</button>
+					<button class="w-[75%] min-w-[100px] sign-in-button" type="submit">sign in</button>
 					<!-- 소셜 로그인 버튼 영역 -->
 					<div class="social-login-buttons flex flex-col gap-1 mt-4">
 						<a href="javascript:loginWithGoogle()"
@@ -78,12 +67,7 @@
 							<img th:src="@{/img.socialLogin/kakao_login_medium_wide.png}" alt="카카오 로그인"
 								class="flex items-center border rounded-xl shadow hover:shadow-md bg-white h-[50px]" />
 						</a>
-
-
 					</div>
-
-
-					
 				</form>
 
 				<!-- 회원가입 버튼 -->
