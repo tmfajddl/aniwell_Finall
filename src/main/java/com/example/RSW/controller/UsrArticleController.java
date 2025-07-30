@@ -347,6 +347,34 @@ public class UsrArticleController {
 				Map.of("crewId", crewId, "redirectUrl", "/usr/crewCafe/cafeHome?crewId=" + crewId));
 	}
 
+	// ✅ 일정 참가 처리
+	@PostMapping("/usr/article/doJoinSchedule")
+	@ResponseBody
+	public ResultData doJoinSchedule(@RequestParam int scheduleId, HttpServletRequest req) {
+		Rq rq = (Rq) req.getAttribute("rq");
+
+		if (rq == null || !rq.isLogined()) {
+			return ResultData.from("F-1", "로그인 후 이용해주세요.");
+		}
+
+		int memberId = rq.getLoginedMemberId();
+
+		if (articleService.isAlreadyJoinedSchedule(scheduleId, memberId)) {
+			return ResultData.from("F-2", "이미 참가한 일정입니다.");
+		}
+
+		articleService.joinSchedule(scheduleId, memberId);
+		return ResultData.from("S-1", "일정 참가 완료");
+	}
+
+// 참가자 리스트 조회
+	@GetMapping("/usr/article/getParticipants")
+	@ResponseBody
+	public ResultData getScheduleParticipants(@RequestParam int scheduleId) {
+		List<Map<String, Object>> participants = articleService.getScheduleParticipants(scheduleId);
+		return ResultData.from("S-1", "참가자 목록", participants);
+	}
+
 	// ✅ JSON 응답 방식으로 변경
 	@GetMapping("/usr/article/schedule")
 

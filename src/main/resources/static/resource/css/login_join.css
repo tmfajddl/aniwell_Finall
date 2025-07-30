@@ -28,10 +28,6 @@ body {
 
 /* sign-in form	               -----------------------------*/
 
-.sign-in {
-	width: 50%;
-	height: 100%;
-}
 
 .sign-in>.left-panel {
 	padding: 40px 30px;
@@ -43,19 +39,9 @@ body {
 }
 
 .sign-in>.left-panel h1 {
-	margin-bottom: 30px;
 	font-size: 28px;
 }
 
-.sign-in>.left-panel input {
-	width: 100%;
-	margin-bottom: 15px;
-	padding: 8px;
-	border: none;
-	border-bottom: 1px solid #aaa;
-	outline: none;
-	background: transparent;
-}
 
 .sign-in-button {
 	margin-top: 10px;
@@ -73,7 +59,9 @@ body {
 
 .sign-in>.right-panel {
 	padding: 40px 30px;
-	background: linear-gradient(135deg, #c0d9c9, #f2eb99);
+	background: linear-gradient(268deg, #c0d9c9, #f2eb99);
+	border-top-left-radius: 3rem;
+	border-bottom-left-radius: 3rem;
 	display: flex;
 	justify-content: center;
 	align-items: center;
@@ -111,7 +99,9 @@ body {
 
 .sign-up>.left-panel {
 	padding: 40px 30px;
-	background: linear-gradient(135deg, #f0eb94, #bdd1c6);
+	background: linear-gradient(268deg, #f0eb94, #bdd1c6);
+	border-top-right-radius: 3rem;
+	border-bottom-right-radius: 3rem;
 	display: flex;
 	justify-content: center;
 	align-items: center;
@@ -137,14 +127,15 @@ body {
 	align-items: center;
 	display: flex;
 }
+
 .form-step {
-  width: 100%;
-  height: 100%;
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
+	width: 100%;
+	height: 100%;
+	flex-shrink: 0;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
 }
 
 
@@ -153,7 +144,7 @@ input,
 select {
 	width: 80%;
 	border: none;
-	border-bottom: 1px solid #aaa;
+	border-bottom: 2px solid #aaa;
 	background: transparent;
 	padding: 8px;
 	outline: none;
@@ -173,7 +164,6 @@ button.submit-button {
 
 .logo-img {
 	width: 80px;
-	margin-top: 20px;
 	margin-left: auto;
 	margin-right: auto;
 }
@@ -181,4 +171,3 @@ button.submit-button {
 .timeline {
 	bottom: 20px;
 }
-

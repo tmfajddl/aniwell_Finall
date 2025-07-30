@@ -239,29 +239,32 @@ public class UsrWalkCrewMemberController {
 		return ResultData.from("S-1", "크루 멤버가 성공적으로 강퇴되었습니다.", data);
 	}
 
-	// ✅ 크루 탈퇴 (멤버 본인 요청)
 	@PostMapping("/leave")
 	@ResponseBody
 	public ResultData leaveCrew(@RequestParam int crewId, HttpServletRequest req) {
 		Rq rq = (Rq) req.getAttribute("rq");
 
-		// ✅ 로그인 확인
 		if (rq == null || !rq.isLogined()) {
 			return ResultData.from("F-1", "로그인이 필요합니다.");
 		}
 
 		int memberId = rq.getLoginedMemberId();
 
-		// ✅ 이미 크루에 없는 경우 예외 처리
-		boolean isMember = walkCrewMemberService.isJoinedCrew(memberId, crewId);
-		if (!isMember) {
+		// ✅ 현재 역할 확인
+		String role = walkCrewMemberService.getRole(memberId, crewId);
+		if (role == null) {
 			return ResultData.from("F-2", "해당 크루에 가입되어 있지 않습니다.");
 		}
 
-		// ✅ 탈퇴 처리 (삭제)
+		// ✅ 크루장은 탈퇴 불가 (위임 후 가능)
+		if (role.equals("leader")) {
+			return ResultData.from("F-3", "크루장은 위임 후에만 탈퇴할 수 있습니다.");
+		}
+
+		// ✅ 탈퇴 처리
 		boolean result = walkCrewMemberService.expelMemberFromCrew(crewId, memberId);
 		if (!result) {
-			return ResultData.from("F-3", "탈퇴 처리 중 오류가 발생했습니다.");
+			return ResultData.from("F-4", "탈퇴 처리 중 오류가 발생했습니다.");
 		}
 
 		Map<String, Object> data = new HashMap<>();
@@ -284,7 +287,7 @@ public class UsrWalkCrewMemberController {
 	public ResultData transferLeadership(@RequestParam int crewId, @RequestParam int newLeaderId,
 			HttpServletRequest req) {
 		Rq rq = (Rq) req.getAttribute("rq");
-System.out.println("newLeaderId"+newLeaderId);
+		System.out.println("newLeaderId" + newLeaderId);
 		// 로그인 확인
 		if (rq == null || !rq.isLogined()) {
 			return ResultData.from("F-1", "로그인 후 이용해주세요.");

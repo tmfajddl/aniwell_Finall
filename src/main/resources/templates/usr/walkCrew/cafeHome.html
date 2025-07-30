@@ -2,14 +2,14 @@
 <html>
 
 <head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<script src="https://cdn.tailwindcss.com"></script>
-	<!-- ✅ Font Awesome CDN 추가 -->
-	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
-	<link rel="stylesheet" th:href="@{/resource/css/common.css}">
-	<link rel="stylesheet" th:href="@{/resource/css/global.css}">
-	<title>크루 모집 목록</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://cdn.tailwindcss.com"></script>
+<!-- ✅ Font Awesome CDN 추가 -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+<link rel="stylesheet" th:href="@{/resource/css/common.css}">
+<link rel="stylesheet" th:href="@{/resource/css/global.css}">
+<title>크루 모집 목록</title>
 </head>
 
 <body class="bg-gradient-to-b from-[#e4f0b9] to-[#fcdca9]">
@@ -39,8 +39,7 @@
 						</div>
 					</div>
 
-					<div class="text-sm text-gray-700 mt-4" th:text="${crew.description}">Lorem ipsum dolor, sit amet
-						consectetur
+					<div class="text-sm text-gray-700 mt-4" th:text="${crew.description}">Lorem ipsum dolor, sit amet consectetur
 						adipisicing elit...</div>
 				</div>
 
@@ -75,8 +74,7 @@
 								신청 대기중
 							</button>
 							<!-- ✅ 신청 취소 버튼 (서버 렌더링에서도 표시되도록 추가) -->
-							<button th:onclick="|cancelJoin(${crew.id}, this)|"
-								class="text-red-600 hover:underline text-sm">신청 취소</button>
+							<button th:onclick="|cancelJoin(${crew.id}, this)|" class="text-red-600 hover:underline text-sm">신청 취소</button>
 						</div>
 
 					</div>
@@ -127,12 +125,11 @@
 					<div class="flex justify-between items-center mb-2 px-5">
 						<h3 class="font-bold text-lg">앨범</h3>
 					</div>
-					<div th:if="${galleryArticles.isEmpty()}" class="h-full text-center text-gray-500 px-5 py-10">사진이
-						없습니다.</div>
+					<div th:if="${galleryArticles.isEmpty()}" class="h-full text-center text-gray-500 px-5 py-10">사진이 없습니다.</div>
 					<div class="gap-3 px-1 h-[80%] aspect-[4/1] flex overflow-x-auto">
 						<div th:each="photo : ${galleryArticles}"
-							class="aspect-square ml-5 span-row-1 bg-gray-300 rounded-lg cursor-pointer"
-							th:attr="data-url=${photo.imageUrl}" onclick="photoModal(this)">
+							class="aspect-square ml-5 span-row-1 bg-gray-300 rounded-lg cursor-pointer" th:attr="data-url=${photo.imageUrl}"
+							onclick="photoModal(this)">
 							<img th:src="${photo.imageUrl}" alt="사진" class="object-cover w-full h-full rounded-lg" />
 						</div>
 					</div>
@@ -144,21 +141,23 @@
 						<h3 class="font-bold">게시글</h3>
 						<button onclick="crewArtAdd()" class="p-1 shadow text-gray-600 hover:text-black">추가 ＋</button>
 					</div>
-					<div th:if="${freeArticles == null or freeArticles.isEmpty()}"
-						class="text-center text-gray-500 px-5 py-10">
+					<div th:if="${freeArticles == null or freeArticles.isEmpty()}" class="text-center text-gray-500 px-5 py-10">
 						게시글 없습니다.</div>
 					<div th:if="${freeArticles != null and !freeArticles.isEmpty()}"
 						class="gap-4 px-4 h-[80%] w-[100%] flex overflow-x-auto aspect-[3/1] z-5">
-						<div th:each="free : ${freeArticles}" th:attr="data-title=${free.title}, 
+						<div th:each="free : ${freeArticles}"
+							th:attr="data-title=${free.title}, 
 						         data-body=${free.body},
 						         data-image-url=${free.imageUrl},
 						         data-writer=${free.extra__writer},
 								 data-id=${free.id},
-						         data-reg-date=${free.regDate}" onclick="detailModal(this)" class="bg-white rounded shadow p-2 mb-1">
+						         data-reg-date=${free.regDate}"
+							onclick="detailModal(this)" class="bg-white rounded shadow p-2 mb-1">
 							<img th:src="${free.imageUrl}" alt="사진" class="h-3/4 rounded" />
 							<div class="font-semibold flex h-1/4 justify-between items-center">
 								<div th:text="${free.title}" class="overflow-hidden">게시글 제목</div>
-								<div th:onclick="|event.stopPropagation(); doGoodReaction(${free.id})|" class="text-sm z-10" th:attr="id='heart-' + ${free.id}" >🤍️</div>
+								<div th:onclick="|event.stopPropagation(); doGoodReaction(${free.id})|" class="text-sm z-10"
+									th:attr="id='heart-' + ${free.id}">🤍️</div>
 
 							</div>
 						</div>
@@ -178,20 +177,21 @@
 						<h3 class="font-bold text-lg">일정</h3>
 						<button onclick="scAdd()" class="p-1 shadow text-gray-600 hover:text-black">추가 ＋</button>
 					</div>
-					<div th:if="${scheduleArticles.isEmpty()}" class="text-center text-gray-500 px-5 py-3">일정 없습니다.
-					</div>
+					<div th:if="${scheduleArticles.isEmpty()}" class="text-center text-gray-500 px-5 py-3">일정 없습니다.</div>
 					<div th:if="${scheduleArticles != null and !scheduleArticles.isEmpty()}"
 						class="flex gap-5 overflow-x-auto px-4 pb-1">
-						<div th:each="schedule : ${scheduleArticles}" th:attr="data-title=${schedule.title}, 
-												         data-body=${schedule.body},
-												         data-scheduleDate=${schedule.scheduleDate},
-												         data-writer=${schedule.extra__writer},
-												         data-reg-date=${schedule.regDate}" onclick="scModal(this)"
-							class="w-12 text-center p-1 px-3 shadow">
-							<div th:text="${#dates.format(schedule.scheduleDate, 'MM')}" class="text-sm font-bold">
-							</div>
-							<div th:text="${#dates.format(schedule.scheduleDate, 'dd')}" class="text-xs text-gray-500">
-							</div>
+
+						<div th:each="schedule : ${scheduleArticles}"
+							th:attr="data-schedule-id=${schedule.id},
+                                     data-title=${schedule.title}, 
+                                    data-body=${schedule.body},
+                                    data-scheduleDate=${schedule.scheduleDate},
+                                    data-writer=${schedule.extra__writer},
+                                    data-reg-date=${schedule.regDate}"
+							onclick="scModal(this)" class="w-12 text-center p-1 px-3 shadow">
+							<div th:text="${#dates.format(schedule.scheduleDate, 'MM')}" class="text-sm font-bold"></div>
+							<div th:text="${#dates.format(schedule.scheduleDate, 'dd')}" class="text-xs text-gray-500"></div>
+
 							<div class="text-xs text-gray-500">모임</div>
 						</div>
 					</div>
@@ -209,12 +209,10 @@
 	</div>
 	<!--기본팝업창-->
 	<div id="modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-		<div
-			class="relative w-[90%] max-w-[1000px] h-[700px] bg-transparent flex rounded-2xl overflow-hidden shadow-2xl">
+		<div class="relative w-[90%] max-w-[1000px] h-[700px] bg-transparent flex rounded-2xl overflow-hidden shadow-2xl">
 			<div class="w-full h-full flex bg-gradient-to-b from-[#FCE9A3] to-[#E0C878]">
 				<div class="w-[5%] text-center">
-					<button onclick="closeModal()"
-						class="text-3xl font-light text-gray-600 hover:text-black">&times;</button>
+					<button onclick="closeModal()" class="text-3xl font-light text-gray-600 hover:text-black">&times;</button>
 				</div>
 				<div id="modalContent" class="relative flex-1 bg-white rounded-l-3xl"></div>
 			</div>
