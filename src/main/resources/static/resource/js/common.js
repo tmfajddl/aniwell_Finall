@@ -16,7 +16,7 @@ btn.addEventListener('click', () => {
 
 
 
-function App() {
+function App_app() {
 	const [pets, setPets] = React.useState([null])
 	const [loginedMember, setLoginedMember] = React.useState(null)
 	const [crew, setCrew] = React.useState(null)
@@ -64,10 +64,10 @@ function e() {
 			if (authLevel === 3) {
 				$("#vetPage").removeClass("hidden");
 			}
-			
+
 			const photoUrl = typeof data.photo === 'string' && data.photo.trim() !== ""
-			  ? data.photo
-			  : defaultPhoto;
+				? data.photo
+				: defaultPhoto;
 
 
 			const img = document.createElement('img');
@@ -85,64 +85,112 @@ function e() {
 	});
 }
 
-document.querySelectorAll('.menu-item').forEach((item) => {
+document.addEventListener('DOMContentLoaded', () => {
+	// 🔹 사용자 정보 불러오기
 	e();
-	item.addEventListener('click', () => {
-		const page = item.dataset.page
-		let url = ''
-		const petId = window.localStorage.getItem('selectedPetId');
-		const loginedMemberId = window.localStorage.getItem('loginedMember');
-		switch (page) {
-			case 'pet':
-				if (!petId) {
-					alert("🐾 반려동물을 등록해주세요!");
-					return; // 페이지 이동 중단
-				}
-				url = `/usr/pet/petPage?petId=${petId}` // 로그인 ID로 교체 가능
-				break
-			case 'my':
-				url = `/usr/pet/list?memberId=${loginedMemberId}`
-				break
-			case 'crew':
-				url = `/usr/walkCrew/list`
-				break
-			case 'qna':
-				url = `/usr/qna/list`
-				break
-			case 'admin':
-				url = `/adm/article/list`
-				break
-			case 'vet':
-				url = `/usr/vetAnswer/vetList`
-				break
-		}
-
-		window.parent.location.href = url
-	})
-})
-
-document.querySelectorAll('.menu-item').forEach((item) => {
-	const container = item.querySelector('#cat_hand');
-
-	if (container) {
-		container.innerHTML = `
-			<img src="https://res.cloudinary.com/decrm0hhf/image/upload/h_90,c_fill,q_auto,f_auto/v1752334976/cat_hand_w9zkku.png"
-			     alt="고양이 발"
-			     class="cat-paw w-full h-full object-contain rotate-90" />
-		`;
-
-		// 🌟 초기에는 왼쪽 바깥에 숨겨두고, group-hover 시 오른쪽으로 이동
-		container.classList.add(
-			"absolute", "top-[-27px]", "left-[-100px]",
-			"group-hover:left-[-20px]", // ← hover 시 햄버거 위로 슬라이드
-			"transition-all", "duration-500",
-			"z-20", "pointer-events-none"
-		);
-
-		// 메뉴 아이템 자체에도 group 역할 부여
-		item.classList.add("relative", "group");
+	if (mId > 0) {
+		connectWebSocket(mId);
+		updateNotificationBadge();  // ✅ 초기에 숫자 표시
 	}
+
+	// 🔹 메뉴 클릭 이벤트
+	document.querySelectorAll('.menu-item').forEach((item) => {
+		item.addEventListener('click', () => {
+			const page = item.dataset.page;
+			let url = '';
+			const petId = window.localStorage.getItem('selectedPetId');
+			const loginedMemberId = window.localStorage.getItem('loginedMember');
+
+			switch (page) {
+				case 'pet':
+					if (!petId) {
+						alert("🐾 반려동물을 등록해주세요!");
+						return;
+					}
+					url = `/usr/pet/petPage?petId=${petId}`;
+					break;
+				case 'my':
+					url = `/usr/pet/list?memberId=${loginedMemberId}`;
+					break;
+				case 'crew':
+					url = `/usr/walkCrew/list`;
+					break;
+				case 'qna':
+					url = `/usr/qna/list`;
+					break;
+				case 'admin':
+					url = `/adm/article/list`;
+					break;
+				case 'vet':
+					url = `/usr/vetAnswer/vetList`;
+					break;
+			}
+			window.parent.location.href = url;
+		});
+	});
+
+	// 🔹 고양이 발 이미지 슬라이드 설정
+	document.querySelectorAll('.menu-item').forEach((item) => {
+		const container = item.querySelector('#cat_hand');
+
+		if (container) {
+			container.innerHTML = `
+				<img src="https://res.cloudinary.com/decrm0hhf/image/upload/h_90,c_fill,q_auto,f_auto/v1752334976/cat_hand_w9zkku.png"
+					 alt="고양이 발"
+					 class="cat-paw w-full h-full object-contain rotate-90" />
+			`;
+
+			container.classList.add(
+				"absolute", "top-[-27px]", "left-[-100px]",
+				"group-hover:left-[-20px]",
+				"transition-all", "duration-500",
+				"z-20", "pointer-events-none"
+			);
+
+			item.classList.add("relative", "group");
+		}
+	});
+
 });
 
 
+let comStompClient = null;
+
+function updateNotificationBadge() {
+	fetch('/usr/notifications/unreadCount')
+		.then(res => res.json())
+		.then(json => {
+			if (json.resultCode !== "S-1") {
+				console.warn("❗ 알림 수 조회 실패", json.msg);
+				return;
+			}
+			
+			const badge = document.getElementById('notiCountBadge');
+			const count = json.data1 ?? 0;
+
+			if (count > 0) {
+				badge.textContent = count;
+				badge.classList.remove('hidden');
+			} else {
+				badge.classList.add('hidden');
+			}
+		})
+		.catch(err => {
+			console.error("❌ 알림 수 가져오기 실패", err);
+		});
+
+}
+
+function connectWebSocket() {
+	const socket = new SockJS('/ws');
+	comStompClient = Stomp.over(socket);
+
+	comStompClient.connect({}, function() {
+		comStompClient.subscribe('/topic/notifications/' + mId, function(msg) {
+			// 실시간 알림 수신
+			console.log("실시간 알림 도착:", msg.body);
+			updateNotificationBadge();  // ✅ 뱃지 숫자만 갱신
+		});
+	});
+}
 
