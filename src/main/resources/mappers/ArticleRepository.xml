@@ -249,7 +249,8 @@
 		AND A.boardId = #{boardId}
 		AND A.delStatus = 0
 		ORDER BY A.id DESC
-		LIMIT #{limit}
+		LIMIT
+		#{limit}
 	</select>
 
 	<!-- @formatter:on -->
@@ -328,6 +329,8 @@
 		FROM article
 		WHERE boardId = #{boardId}
 		AND delStatus = 0
+		AND
+		crewId IS NULL   <!-- ✅ 크루 공지 제외 필터 -->
 		AND
 		memberId IN (
 		SELECT id FROM member WHERE authLevel = 7
