@@ -112,11 +112,17 @@
 					</div>
 					<div class="h-full overflow-x-auto pb-10">
 						<div th:each="article : ${noticeArticles}" class="p-4 border-b">
+<<<<<<< HEAD
 							<a th:href="@{'/usr/article/detail'(id=${article.id}, crewId=${crew.id})}" class="block">
 								<div class="text-sm text-gray-500" th:text="'작성자 ID: ' + ${article.memberId}"></div>
 								<div class="text-[15px] font-bold text-gray-800" th:text="${article.title}">제목</div>
 								<div class="text-[10px] text-gray-700 mt-1" th:text="${article.body}">내용</div>
 							</a>
+=======
+							<div class="text-sm text-gray-500" th:text="크루장"></div>
+							<div class="text-[15px] font-bold text-gray-800" th:text="${article.title}">제목</div>
+							<div class="text-[10px] text-gray-700 mt-1" th:text="${article.body}">내용</div>
+>>>>>>> good/Develop
 						</div>
 
 					</div>
