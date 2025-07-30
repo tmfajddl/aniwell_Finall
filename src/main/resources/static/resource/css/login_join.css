@@ -10,11 +10,11 @@ body {
 
 .form-wrapper {
 	width: 800px;
-	height: 70vh;
+	height: 80vh;
 	max-height: 90vh;
 	/* ✅ 높이 제한 */
 	background: white;
-	border-radius: 15px;
+	border-radius: 70px;
 	overflow: hidden;
 	box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
 }
@@ -30,7 +30,7 @@ body {
 
 
 .sign-in>.left-panel {
-	padding: 40px 30px;
+	padding: 20px 30px;
 	background-color: white;
 	display: flex;
 	flex-direction: column;
