@@ -14,16 +14,16 @@
 
 </head>
 
-<body class="bg-gradient-to-b from-[#e4f0b9] to-[#fcdca9]">
+<body class="bg-gradient-to-b from-[#e4f0b9] to-[#fcdca9] min-h-[720px]">
 	<div class="flex h-screen">
 		<!-- Sidebar -->
-		<div th:replace="common :: siteHeader"></div>
+		<div th:replace="common :: siteHeader" class=""></div>
 
 		<!-- Main content -->
-		<main class="main_page min-h-screen flex-1 p-6 grid grid-cols-12 gap-4">
+		<main class="main_page min-h-[720px] flex-1 p-6 grid grid-cols-12 gap-4">
 
 			<!-- 왼쪽 8칸: 차트 + 감정분석 + 캘린더 -->
-			<section class="col-span-8 flex flex-col gap-4 h-full">
+			<section class="col-span-8 flex flex-col gap-2 h-full">
 
 				<!-- 차트 -->
 				<div class="bg-white p-4 rounded-xl shadow h-52">
@@ -83,7 +83,7 @@
 
 
 				<!-- 감정분석 카드 -->
-				<div class="grid grid-cols-2 gap-4 h-full">
+				<div class="grid grid-cols-2 gap-2 h-full">
 					<!-- 분석 버튼 -->
 					<div class="relative bg-gradient-to-r from-[#DFF8E5] to-[#F4FBCC] rounded-xl p-4 text-center shadow hover:shadow-md transition-shadow duration-300 font-semibold cursor-pointer"
 						onclick="openEmotionPanel()">
@@ -170,6 +170,11 @@
 					<!-- 왼쪽: 일정/버튼 -->
 					<div class="flex flex-col gap-2 w-2/3 relative">
 						<!-- 상단 + 버튼 포함한 헤더 -->
+
+						<!-- 일정 목록 -->
+						<div class="bg-[#fdf6c2] rounded-xl shadow text-sm h-full py-3">
+							<!-- 🐾 리스트 헤더 -->
+							<div class="px-4 py-2 font-bold text-gray-700">
 						<div class="flex justify-between items-center absoiute">
 							<span id="current-month-label" class="pl-6 text-lg font-bold">JULY 5</span>
 							<button
@@ -177,11 +182,6 @@
 								onclick="openTodayVaccineModal()">+</button>
 
 						</div>
-
-						<!-- 일정 목록 -->
-						<div class="bg-[#fdf6c2] rounded-xl shadow text-sm h-full py-3">
-							<!-- 🐾 리스트 헤더 -->
-							<div class="px-4 py-2 font-bold text-gray-700">
 								예방접종 리스트
 							</div>
 							<!-- ✅ 실제 리스트가 여기에 동적으로 들어감 -->

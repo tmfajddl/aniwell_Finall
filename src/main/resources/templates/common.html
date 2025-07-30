@@ -11,9 +11,9 @@
 </head>
 
 <body class="bg-gradient-to-b from-[#e4f0b9] to-[#fcdca9] font-sans">
-	<div th:fragment="siteHeader" class="flex h-screen">
+	<div th:fragment="siteHeader" class="flex">
 		<!-- Sidebar -->
-		<aside class="w-20 flex flex-col items-center p-4">
+		<aside class="w-20 flex flex-col items-center p-4 min-h-[720px]">
 			<img src="https://i.imgur.com/rcOcaL6.png" alt="Logo" class="w-12 mb-6"
 				onclick="window.location.href = 'http://localhost:8080/'">
 
@@ -110,7 +110,7 @@
 				</div>
 
 				<div id="alLamModal"
-					class="absolute h-[600px] aspect-[3/4] bg-white bottom-1 shadow-xl left-[200%] rounded-3xl 
+					class="border-2 border-gray-100 absolute h-[600px] aspect-[3/4] bg-white bottom-1 shadow-md left-[200%] rounded-3xl 
 					       opacity-0 scale-95 transition-all duration-300 translate-y-0 pointer-events-none ease-out overflow-y-auto p-6">
 					<!-- 알림 내용이 여기에 동적으로 삽입됨 -->
 				</div>
