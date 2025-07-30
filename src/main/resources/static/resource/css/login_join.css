@@ -14,7 +14,7 @@ body {
 	max-height: 90vh;
 	/* ✅ 높이 제한 */
 	background: white;
-	border-radius: 15px;
+	border-radius: 70px;
 	overflow: hidden;
 	box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
 }
