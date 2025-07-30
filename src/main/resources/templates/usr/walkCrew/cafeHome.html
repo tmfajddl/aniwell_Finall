@@ -22,7 +22,7 @@
 
 
 			<!-- 왼쪽: 정보 섹션 -->
-			<aside class="w-1/4 space-y-1 p-3 grid grid-rows-12 h-[100%] ">
+			<aside class="w-1/4 space-y-1 p-3 grid grid-rows-12 h-[100%] min-w-[300px]">
 				<div class="row-span-6">
 					<a href="/usr/walkCrew/list" class="back-link">← 목록으로 돌아가기</a>
 					<div class="flex space-y-2 items-center gap-3 mt-2">
@@ -112,17 +112,11 @@
 					</div>
 					<div class="h-full overflow-x-auto pb-10">
 						<div th:each="article : ${noticeArticles}" class="p-4 border-b">
-<<<<<<< HEAD
 							<a th:href="@{'/usr/article/detail'(id=${article.id}, crewId=${crew.id})}" class="block">
 								<div class="text-sm text-gray-500" th:text="'작성자 ID: ' + ${article.memberId}"></div>
 								<div class="text-[15px] font-bold text-gray-800" th:text="${article.title}">제목</div>
 								<div class="text-[10px] text-gray-700 mt-1" th:text="${article.body}">내용</div>
 							</a>
-=======
-							<div class="text-sm text-gray-500" th:text="크루장"></div>
-							<div class="text-[15px] font-bold text-gray-800" th:text="${article.title}">제목</div>
-							<div class="text-[10px] text-gray-700 mt-1" th:text="${article.body}">내용</div>
->>>>>>> good/Develop
 						</div>
 
 					</div>
@@ -130,7 +124,7 @@
 			</aside>
 
 			<!-- 오른쪽: 콘텐츠 섹션 -->
-			<div class="flex-1 w-3/4 space-y-3 h-[100%] grid grid-rows-12 p-2 overflow-x-auto gap-2">
+			<div class="flex-1 w-3/4 space-y-3 h-[100%] grid grid-rows-12 p-2 gap-2">
 				<!-- 앨범 -->
 				<div class="row-span-4 flex flex-col shadow overflow-x-auto h-full w-full">
 					<div class="flex justify-between items-center mb-2 px-5">
@@ -147,7 +141,7 @@
 					</div>
 				</div>
 				<!-- 게시글 -->
-				<div class="row-span-4 shadow relative w-full h-full overflow-x-auto">
+				<div class="row-span-4 shadow relative w-full h-full">
 
 					<div class="flex justify-between px-5 items-center mb-1">
 						<h3 class="font-bold">게시글</h3>
@@ -156,15 +150,15 @@
 					<div th:if="${freeArticles == null or freeArticles.isEmpty()}"
 						class="text-center text-gray-500 px-5 py-10">
 						게시글 없습니다.</div>
-					<div th:if="${freeArticles != null and !freeArticles.isEmpty()}" class="h-full">
-						<div class="gap-1 h-[80%] aspect-[4/1] flex overflow-x-auto">
+					<div th:if="${freeArticles != null and !freeArticles.isEmpty()}" class="h-full p-1 overflow-x-auto">
+						<div class="gap-2 h-[80%] aspect-[4/1] flex">
 							<div th:each="free : ${freeArticles}" th:attr="data-title=${free.title}, 
 						         data-body=${free.body},
 						         data-image-url=${free.imageUrl},
 						         data-writer=${free.extra__writer},
 								 data-id=${free.id},
 						         data-reg-date=${free.regDate}" onclick="detailModal(this)"
-								class="h-full aspect-[4/1] bg-white rounded shadow p-2 mb-1 overflow-x-auto">
+								class="h-full min-w-[150px] bg-white rounded shadow p-2 mb-1 overflow-x-auto">
 								<div class="h-3/4 rounded over-cover">
 									<img th:src="${free.imageUrl ?: '/img/default-pet.png'}" alt="사진"
 										class="h-full w-full over-cover" />
@@ -179,7 +173,7 @@
 					</div>
 				</div>
 				<!-- 멤버 -->
-				<div class="row-span-2 shadow w-full overflow-x-auto h-full">
+				<div class="row-span-2 shadow w-full flex flex-col flex-justify overflow-x-auto h-full">
 					<div class="flex justify-between items-center mb-1 px-5">
 						<h3 class="font-bold text-lg">멤버</h3>
 					</div>
@@ -451,6 +445,23 @@
 			});
 		}
 	</script>
+	
+	<script>
+	  // 외부 클릭 시 모달 닫기
+	  document.addEventListener('click', function (event) {
+	    const modal = document.getElementById('modal');
+	    const content = document.getElementById('modalContent');
+
+	    // 모달이 안 떠있으면 무시
+	    if (!modal || modal.classList.contains('hidden')) return;
+
+	    // content 바깥 클릭 시 모달 닫기
+	    if (!content.contains(event.target)) {
+	      closeModal();
+	    }
+	  });
+	</script>
+
 
 
 </body>
