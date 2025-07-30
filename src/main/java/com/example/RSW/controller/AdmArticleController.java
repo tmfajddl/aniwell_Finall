@@ -2,6 +2,7 @@ package com.example.RSW.controller;
 
 import com.example.RSW.service.ArticleService;
 import com.example.RSW.service.MemberService;
+import com.example.RSW.service.NotificationService;
 import com.example.RSW.service.QnaService;
 import com.example.RSW.util.Ut;
 import com.example.RSW.vo.Article;
@@ -32,6 +33,9 @@ public class AdmArticleController {
 
     @Autowired
     private MemberService memberService;
+
+    @Autowired
+    private NotificationService notificationService;
 
     // 게시글 리스트 페이지 요청 처리
     @RequestMapping("/list")
@@ -86,6 +90,13 @@ public class AdmArticleController {
                     "msg", id + "번 게시글은 존재하지 않습니다."
             );
         }
+
+        String redirectUrl = article.getCrewId() != null ? "/usr/article/detail?id=" + id + "&crewId=" + article.getCrewId()
+                : "/usr/article/detail?id=" + id + "&boardId=" + article.getBoardId();
+
+        System.out.println("redirectUrl: " + redirectUrl);
+
+        notificationService.deleteByLink(redirectUrl);
 
         Member loginedMember = rq.getLoginedMember();
 
