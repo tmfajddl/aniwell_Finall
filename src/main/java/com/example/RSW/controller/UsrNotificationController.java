@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.Collections;
 import java.util.List;
 
 @Controller
@@ -194,6 +195,21 @@ public class UsrNotificationController {
         notificationService.deleteAllByMemberId(rq.getLoginedMemberId());
         return ResultData.from("S-1", "모든 알림을 삭제했습니다.");
     }
+
+    @GetMapping("/list/json")
+    @ResponseBody
+    public List<Notification> getNotificationListJson() {
+        if (!rq.isLogined()) {
+            return Collections.emptyList(); // 또는 401 에러 처리 가능
+        }
+
+        int memberId = rq.getLoginedMemberId();
+
+        List<Notification> notifications = notificationService.getNotificationsByMemberId(memberId);
+
+        return notifications;
+    }
+
 
 
 }
