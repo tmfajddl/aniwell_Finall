@@ -190,4 +190,8 @@ public class NotificationService {
 	public void deleteAllByMemberId(int loginedMemberId) {
 		notificationRepository.deleteAllByMemberId(loginedMemberId);
 	}
+
+	public void deleteByLink(String link) {
+		notificationRepository.deleteByLink(link);
+	}
 }
