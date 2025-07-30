@@ -20,27 +20,33 @@
 		}
 
 		@keyframes slide-up {
-		  0% {
-		    opacity: 0;
-		    transform: translateY(30px); /* 살짝만 내려온 상태에서 */
-		  }
-		  100% {
-		    opacity: 1;
-		    transform: translateY(0);
-		  }
+			0% {
+				opacity: 0;
+				transform: translateY(30px);
+				/* 살짝만 내려온 상태에서 */
+			}
+
+			100% {
+				opacity: 1;
+				transform: translateY(0);
+			}
 		}
 
 		.animate-slide-up {
-		  animation: slide-up 0.3s ease-out forwards;
+			animation: slide-up 0.3s ease-out forwards;
 		}
 
+		.animate-slide-up {
+			animation: slide-up 0.3s ease-out forwards;
+		}
 	</style>
 
 </head>
 
 <body class="bg-white">
 
-	<div class="opacity-0 animate-slide-up form-wrapper flex-row overflow-hidden min-w-content relative" id="form-wrapper">
+	<div class="opacity-0 animate-slide-up form-wrapper flex-row overflow-hidden min-w-content relative"
+		id="form-wrapper">
 
 		<div class="form-slider w-[200%]  flex transition-transform duration-300">
 			<!-- 로그인 화면 -->
