@@ -184,7 +184,7 @@ function openModifyModal(articleId, crewId, boardId, title, body, imageUrl) {
 
       <!-- 왼쪽 이미지 영역 -->
       <label for="modifyImageUpload" class="w-1/2 bg-gray-100 cursor-pointer">
-        <img id="modifyPreviewImage" src="${imageUrl || 'https://via.placeholder.com/500'}" alt="preview"
+        <img id="modifyPreviewImage" src="${imageUrl || ''}" alt="preview"
           class="object-cover w-full h-full" />
         <input type="file" id="modifyImageUpload" name="imageFile" accept="image/*"
           class="hidden" onchange="previewModifyImage(event)" />
@@ -269,8 +269,8 @@ function submitModifiedArticle() {
 		processData: false,
 		success: function(data) {
 			if (data.resultCode === "S-1") {
-				alert("게시글이 수정되었습니다.");
-				window.location.href = data.data.redirectUrl;
+				window.location.reload();  // 캐시 고려
+
 			} else {
 				alert("⚠️ " + data.msg);
 			}
@@ -293,7 +293,8 @@ function deleteArticle(articleId) {
 		success: function(data) {
 			if (data.resultCode === "S-1") {
 				alert("게시글이 삭제되었습니다.");
-				window.location.href = data.data.redirectUrl;
+				window.location.reload();
+			
 			} else {
 				alert("⚠️ " + data.msg);
 			}
@@ -585,8 +586,7 @@ function noti_btn() {
 				processData: false,
 				success: function(data) {
 					if (data.resultCode === "S-1") {
-						alert('게시글이 작성되었습니다.');
-						window.location.href = data.data.redirectUrl;
+						window.location.reload();
 					} else {
 						alert("⚠️ " + data.msg);
 					}
@@ -611,7 +611,7 @@ function crewArtAdd() {
 
 	    <!-- 왼쪽 이미지 영역 -->
 	    <label for="imageUpload" class="w-1/2 bg-gray-100 cursor-pointer">
-	      <img id="previewImage" src="https://via.placeholder.com/500" alt="preview"
+	      <img id="previewImage" src="" alt="preview"
 	        class="object-cover w-full h-full" />
 	      <input type="file" id="imageUpload" name="imageFile" accept="image/*"
 	        class="hidden" onchange="previewImage(event)" />
@@ -620,16 +620,17 @@ function crewArtAdd() {
 	    <!-- 오른쪽 입력 영역 -->
 	    <div class="w-1/2 p-6 flex flex-col justify-between text-gray-800 space-y-4 relative">
 	      <div class="flex-1 flex flex-col justify-between shadow p-4 rounded bg-white">
+	        
 	        <!-- 제목 -->
 	        <div class="mb-4">
-	          <label class="block text-sm font-bold mb-1">제목</label>
+	          <label for="titleInput" class="block text-sm font-bold mb-1">제목</label>
 	          <input type="text" id="titleInput" placeholder="제목을 입력하세요"
 	            class="w-full border rounded px-3 py-2 text-sm shadow-sm" required />
 	        </div>
 
 	        <!-- 내용 -->
 	        <div class="mb-4 flex-1">
-	          <label class="block text-sm font-bold mb-1">내용</label>
+	          <label for="bodyInput" class="block text-sm font-bold mb-1">내용</label>
 	          <textarea id="bodyInput" rows="20" placeholder="내용을 입력하세요"
 	            class="w-full border rounded px-3 py-2 text-sm shadow-sm resize-none" required></textarea>
 	        </div>
@@ -645,6 +646,7 @@ function crewArtAdd() {
 	    </div>
 	  </div>
 	</div>
+
 	`;
 
 	openModal(html);
@@ -681,8 +683,7 @@ function crewArtAdd() {
 				processData: false,
 				success: function(data) {
 					if (data.resultCode === "S-1") {
-						alert('게시글이 작성되었습니다.');
-						window.location.href = data.data.redirectUrl;
+						window.location.reload();
 					} else {
 						alert("⚠️ " + data.msg);
 					}
@@ -736,11 +737,11 @@ function scAdd() {
 			  </div>
 
 			  <div class="span-col-1 space-y-2">
-				<label class="block text-sm font-bold">제목</label>
-				<input type="text" id="scheduleTitle" class="border rounded w-full p-1 text-sm" placeholder="일정 제목 입력" />
+			  <label for="scheduleTitle" class="block text-sm font-bold">제목</label>
+			  <input type="text" id="scheduleTitle" class="border rounded w-full p-1 text-sm" placeholder="일정 제목 입력" />
 
-				<label class="block text-sm font-bold mt-2">내용</label>
-				<textarea id="scheduleBody" rows="5" class="border rounded w-full p-1 text-sm" placeholder="간단한 메모"></textarea>
+			  <label for="scheduleBody" class="block text-sm font-bold mt-2">내용</label>
+			  <textarea id="scheduleBody" rows="5" class="border rounded w-full p-1 text-sm" placeholder="간단한 메모"></textarea>
 
 				<div class="pt-2 text-center">
 				  <button id="submitScheduleBtn" class="bg-gradient-to-r from-green-200 to-yellow-200 px-4 py-2 rounded-full shadow hover:shadow-lg">
@@ -792,7 +793,7 @@ function scAdd() {
 				success: function(data) {
 					console.log(data);
 					if (data.resultCode === "S-1") {
-						alert("✅ 일정이 등록되었습니다!");
+						
 						const redirectUrl = data.data1.redirectUrl;
 						window.location.href = redirectUrl
 					} else {
@@ -1238,7 +1239,6 @@ function transLeader() {
 		},
 		success: function(data) {
 			if (data.resultCode.startsWith("S-")) {
-				alert("위임 완료");
 				renderMemberList(); // 성공 후 목록 다시 렌더링
 				handleCrewMember()
 			} else {
@@ -1355,5 +1355,3 @@ function myArticle() {
 		}
 	});
 }
-
-
