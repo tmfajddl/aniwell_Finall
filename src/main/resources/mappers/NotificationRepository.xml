@@ -107,4 +107,9 @@
         DELETE FROM notification
         WHERE memberId = #{memberId}
     </delete>
+
+    <delete id="deleteByLink">
+        DELETE FROM notification
+        WHERE link = #{link}
+    </delete>
 </mapper>
