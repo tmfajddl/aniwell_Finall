@@ -144,7 +144,7 @@ public class UsrArticleController {
 				: "/usr/article/detail?id=" + articleId + "&boardId=" + boardId;
 
 // ✅ 🔔 전체 알림 발송 (공지사항일 때만)
-		if (boardId != null && boardId == 1) {
+		if (boardId != null && boardId == 1 ) {
 			String link = redirectUrl;
 			String notiTitle = "[공지사항] " + title;
 			notificationService.sendNotificationToAll(notiTitle, link, "NOTICE", loginedMemberId);
