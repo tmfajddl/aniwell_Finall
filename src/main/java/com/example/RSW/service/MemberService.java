@@ -281,14 +281,15 @@ public class MemberService {
             }
         }
 
-        // 4. Custom Token 발급 (❌ "uid"는 claims에 넣지 않음!)
+        // 4. Custom Token 발급 (이메일 추가)
         Map<String, Object> claims = new HashMap<>();
         claims.put("provider", member.getSocialProvider() != null ? member.getSocialProvider() : "email");
+        claims.put("email", member.getEmail()); // ✅ 이메일 추가
 
         String customToken;
         try {
             customToken = FirebaseAuth.getInstance().createCustomToken(uid, claims);
-            System.out.println("✅ [Firebase] 커스텀 토큰 발급 완료");
+            System.out.println("✅ [Firebase] 커스텀 토큰 발급 완료 (이메일 포함)");
         } catch (FirebaseAuthException e) {
             throw new RuntimeException("❌ Firebase 토큰 생성 실패: " + e.getMessage());
         }
@@ -300,5 +301,8 @@ public class MemberService {
         return customToken;
     }
 
+    public Member findByUid(String uid) {
+        return memberRepository.findByUid(uid);
+    }
 
 }
