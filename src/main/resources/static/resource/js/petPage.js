@@ -1,4 +1,5 @@
 
+
 function openComModal(contentHTML) {
 	const modal = document.getElementById('comModal');
 
@@ -33,6 +34,7 @@ function closeCommentModal() {
 }
 
 function addPet() {
+
 	const html = `
 		<div>
 		<!-- 제목 -->
@@ -41,7 +43,7 @@ function addPet() {
 		   </h2>
 
 		   <!-- 등록 폼 -->
-		   <form id="addPetForm" onsubmit="submitPetForm(e)" action="/usr/pet/doJoin" method="post" enctype="multipart/form-data" class="space-y-6">
+		   <form id="addPetForm" enctype="multipart/form-data" class="space-y-6">
 		     <div class="flex gap-6">
 		       <!-- 🐶 사진 업로드 -->
 		       <div class="flex flex-col items-center space-y-3">
@@ -102,6 +104,13 @@ function addPet() {
 		</div>
 		`;
 	openComModal(html);
+
+	setTimeout(() => {
+		const form = document.getElementById("addPetForm");
+		if (form) {
+			form.addEventListener("submit", submitPetForm);
+		}
+	}, 0);
 }
 
 
@@ -113,7 +122,7 @@ function modifyPet(pet) {
         🐾 <span>반려동물 정보 수정</span>
       </h2>
 
-      <form id="modifyPetForm" onsubmit="submitModifyForm(e)" action="/usr/pet/doModify" method="post" enctype="multipart/form-data" class="space-y-6">
+      <form id="modifyPetForm" enctype="multipart/form-data" class="space-y-6">
         <input type="hidden" name="petId" value="${pet.id}" />
 
         <div class="flex gap-6">
@@ -163,6 +172,9 @@ function modifyPet(pet) {
         </div>
 
         <div class="text-center">
+		<button onclick="petDelete()" class="bg-yellow-400 hover:bg-yellow-500 text-white font-semibold px-6 py-2 rounded shadow">
+		          삭제
+		         </button>
           <button type="submit" class="bg-yellow-400 hover:bg-yellow-500 text-white font-semibold px-6 py-2 rounded shadow">
             수정 완료
           </button>
@@ -172,29 +184,106 @@ function modifyPet(pet) {
   `;
 	openComModal(html);
 
+	setTimeout(() => {
+		const form = document.getElementById("modifyPetForm");
+		if (form) {
+			form.addEventListener("submit", submitModifyForm);
+		}
+	}, 0);
 }
 
-function submitModifyForm(e) {
-	e.preventDefault();
+function submitPetForm(e) {
+	e.preventDefault(); // 기본 form 제출 막기
 
-	const form = document.getElementById('modifyPetForm');
+	const form = e.target;
 	const formData = new FormData(form);
 
-	fetch('/usr/pet/doModify', {
-		method: 'POST',
+	fetch("/usr/pet/doJoin", {
+		method: "POST",
 		body: formData
 	})
-		.then(res => res.json())
-		.then(data => {
-			if (data.resultCode?.startsWith("S-")) {
-				closeCommentModal(); // 모달 닫기
+		.then(res => res.text())
+		.then(result => {
+			const [resultCode, msg] = result.split(",");
+
+			if (resultCode === "S-1") {
+				Toast.fire({
+					icon: "success",
+					title: msg
+				});
+
+				closeCommentModal?.(); // ⛳ 모달 닫기
+				setTimeout(() => location.reload(), 1000);
 			} else {
-				alert("수정실패에요!");
+				Toast.fire({
+					icon: "error",
+					title: "등록 실패!"
+				});
 			}
 		})
 		.catch(err => {
-			console.error("❌ 수정 중 오류:", err);
-		
+			console.error("❌ 서버 오류:", err);
+			Toast.fire({
+				icon: "error",
+				title: "⚠️ 오류가 발생했습니다. 다시 시도해주세요."
+			});
 		});
 }
 
+
+
+
+function submitModifyForm(e) {
+  e.preventDefault();
+  console.log("Toast 상태:", typeof Toast);
+
+  const form = document.getElementById('modifyPetForm');
+  const formData = new FormData(form);
+
+  fetch('/usr/pet/doModify', {
+    method: 'POST',
+    body: formData
+  })
+    .then(res => res.text())  // 응답이 문자열 형태 "S-1,수정되었습니다!"
+    .then(data => {
+      const [resultCode, msg] = data.split(",");
+
+      if (resultCode === "S-1") {
+        // ✅ 성공 시 알림 메시지 요청
+        fetch('/toast/doModify', {
+          method: 'POST'
+        })
+          .then(res => res.json())  // 이미 JSON 파싱됨
+          .then(toastData => {
+            Toast.fire({
+              icon: 'success',
+              title: toastData.msg || '수정 성공!'
+            });
+
+            closeCommentModal?.();
+            setTimeout(() => location.reload(), 1000);
+          })
+          .catch(err => {
+            console.warn('⚠️ 응답 JSON 파싱 실패:', err);
+            Toast.fire({
+              icon: 'success',
+              title: '수정되었습니다!'
+            });
+            setTimeout(() => location.reload(), 1000);
+          });
+      } else {
+        Toast.fire({
+          icon: 'error',
+          title: msg || '수정 실패!'
+        });
+      }
+    })
+    .catch(err => {
+      console.error("❌ 수정 중 오류:", err);
+      Toast.fire({
+        icon: 'error',
+        title: '에러 발생',
+        text: '서버 오류가 발생했습니다.'
+      });
+    });
+}
