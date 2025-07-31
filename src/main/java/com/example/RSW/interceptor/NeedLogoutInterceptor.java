@@ -18,7 +18,6 @@ public class NeedLogoutInterceptor implements HandlerInterceptor {
     @Override
     public boolean preHandle(HttpServletRequest req, HttpServletResponse resp, Object handler) throws Exception {
         String uri = req.getRequestURI();
-        System.out.println("[NeedLogoutInterceptor] 요청 URI: " + uri);
 
         // ✅ 로그아웃 URL 예외 처리
         if (uri.equals("/usr/member/logout")) {
