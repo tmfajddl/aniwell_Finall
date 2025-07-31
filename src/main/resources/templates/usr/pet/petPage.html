@@ -84,13 +84,20 @@
 
 				<!-- 감정분석 카드 -->
 				<div class="grid grid-cols-2 gap-2 h-full">
-					<!-- 분석 버튼 -->
-					<div class="relative overflow-hidden bg-gradient-to-r from-[#DFF8E5] to-[#F4FBCC] rounded-xl p-4 text-center shadow hover:shadow-md transition-shadow duration-300 font-semibold cursor-pointer w-full"
+					<div class="relative group overflow-hidden bg-gradient-to-r from-[#DFF8E5] to-[#F4FBCC] rounded-xl p-4 text-center shadow hover:shadow-md transition-shadow duration-300 font-semibold cursor-pointer w-full"
 						onclick="openEmotionPanel()">
-						<div class="text-left text-3xl font-bold text-black leading-snug flex self-conter z-10">
+
+						<!-- ✅ 배경 이미지 -->
+						<div
+							class="absolute p-3 pr-6 inset-0 z-0 flex justify-end items-end pointer-events-none transition-all duration-300 group-hover:opacity-60 group-hover:scale-95">
+							<img src="/img/emo-cat.png" alt="감정 아이콘"
+								class="h-32 select-none transition-all duration-300 transform" />
+						</div>
+
+						<!-- ✅ 텍스트 -->
+						<div class="relative z-10 text-left text-3xl font-bold text-black leading-snug">
 							우리아이<br />
 							감정분석하기
-							<img src="/img/emo-cat.png" alt="감정 아이콘" class="over-cover h-32 absolute right-6 z-0" />
 						</div>
 
 					</div>
@@ -169,25 +176,24 @@
 				<div class="flex gap-2 h-full">
 
 					<!-- 왼쪽: 일정/버튼 -->
-					<div class="flex flex-col gap-2 w-2/3 relative">
+					<div class="flex flex-col gap-2 w-2/3 relative  bg-gradient-to-b from-[#FFFFFF] to-[#FFFCEF]">
 						<!-- 상단 + 버튼 포함한 헤더 -->
 
 						<!-- 일정 목록 -->
-						<div class="bg-[#fdf6c2] rounded-xl shadow h-full py-3">
+						<div class=" rounded-xl shadow h-full py-3">
 							<!-- 🐾 리스트 헤더 -->
-							<div class="px-4 py-2 font-bold text-gray-700">
-						<div class="flex justify-between items-center absoiute">
-							<span id="current-month-label" class="pl-6 text-lg font-bold"></span>
-							<button
-								class="mr-3 shadow hover:shadow-md transition-shadow duration-300 font-semibold cursor-pointer w-8 h-6 rounded-full bg-[#fdf6c2] shadow flex items-center justify-center text-lg font-bold"
-								onclick="openTodayVaccineModal()">+</button>
+							<div class="px-4 py-1 font-bold text-gray-700 h-1/5">
+								<div class="flex pb-1 mb-1 justify-between items-center border-b-2 border-gray-200">
+									<span id="current-month-label" class="pl-6 text-lg font-bold"></span>
+									<button
+										class="mr-3 shadow hover:shadow-md transition-shadow duration-300 font-semibold cursor-pointer w-8 h-6 rounded-full bg-[#fdf6c2] shadow flex items-center justify-center text-lg font-bold"
+										onclick="openTodayVaccineModal()">+</button>
 
-						</div>
+								</div>
 								예방접종 리스트
 							</div>
 							<!-- ✅ 실제 리스트가 여기에 동적으로 들어감 -->
-							<div id="monthly-vaccine-list" class="px-4 pt-2 space-y-2 overflow-y-auto"
-								style="height: 200px;">
+							<div id="monthly-vaccine-list" class="px-4 pt-2 space-y-2 overflow-y-auto h-4/5">
 								<!-- 자바스크립트에서 appendChild로 추가됨 -->
 							</div>
 						</div>
@@ -196,7 +202,7 @@
 
 					<!-- 오른쪽: 캘린더 -->
 					<div
-						class="min-w-[400px] bg-gradient-to-r from-[#F4FBCC] to-[#fdf6c2] rounded-xl p-4 flex-1 shadow">
+						class="min-w-[400px] bg-gradient-to-r from-[#F4FBCC] to-[#FDF7DA] rounded-xl p-4 flex-1 shadow">
 						<div id="calendar-container" class="w-full h-full"></div>
 					</div>
 
@@ -244,8 +250,8 @@
 
 						<!-- 2열 -->
 						<div class="col-span-1 space-y-1 ">
-							<div><span class="font-semibold mr-2">생일:</span> <span
-									th:text="${pet.birthDate}" class="text-sm">2020.01.01</span></div>
+							<div><span class="font-semibold mr-2">생일:</span> <span th:text="${pet.birthDate}"
+									class="text-sm">2020.01.01</span></div>
 							<div><span class="font-semibold mr-2">중성화:</span> <span>완료</span>
 							</div>
 							<div><span class="font-semibold mr-2">성별:</span> <span th:text="${pet.gender}">암컷</span>
