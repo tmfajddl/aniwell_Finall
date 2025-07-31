@@ -4,6 +4,8 @@ import com.example.RSW.repository.MemberRepository;
 import com.example.RSW.repository.NotificationRepository;
 import com.example.RSW.vo.Member;
 import com.example.RSW.vo.Notification;
+import com.example.RSW.vo.WalkCrew;
+import com.example.RSW.vo.WalkCrewMember;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
@@ -21,6 +23,12 @@ public class NotificationService {
 
 	@Autowired
 	private MemberService memberService;
+
+	@Autowired
+	private WalkCrewMemberService walkCrewMemberService;
+
+	@Autowired
+	private WalkCrewService walkCrewService;
 
 	@Autowired
 	private MemberRepository memberRepository;
@@ -194,4 +202,13 @@ public class NotificationService {
 		notificationRepository.deleteByLink(link);
 	}
 
+	public void sendNotificationToMember(String title, String link, String type, Integer senderId, Integer crewId) {
+		List<WalkCrewMember> memberIds = walkCrewMemberService.getMembersByCrewId(crewId);
+		for (WalkCrewMember member : memberIds) {
+			notificationRepository
+					.insert(new Notification(0, member.getMemberId(), title, link, new Date(), false, null, type, senderId));
+			System.out.println("🔔 알림 전송: /topic/notifications/" +member.getMemberId() + " -> new");
+			messagingTemplate.convertAndSend("/topic/notifications/" + member.getMemberId(), "new");
+		}
+	}
 }
