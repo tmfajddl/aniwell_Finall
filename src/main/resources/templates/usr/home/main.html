@@ -34,19 +34,23 @@
 
 				<div class="up-icon">
 					<!-- 회원가입 / 펫 리스트 버튼 -->
+					<!-- 로그인 아닐 때: join 버튼 -->
 					<button type="button" class="in-icon" th:if="${!rq.isLogined}"
-						onclick="location.href='/usr/member/join'">
+							onclick="location.href='/usr/member/join'">
 						join
 						<img src="https://imgur.com/2ZJPrGR.png" alt="join">
 					</button>
 					<div>
-						<button id="vetList" type="button" class="in-icon hidden">
+						<!-- 로그인 상태 유지 시: 수의사 버튼 -->
+						<button id="vetList" type="button" class="in-icon hidden" th:if="${rq.isLogined}">
 							vetlist
 							<img src="https://imgur.com/2ZJPrGR.png" alt="vetlist">
 						</button>
 					</div>
 					<div>
-						<button id="petlist" type="button" class="in-icon hidden">
+						<!-- 로그인일 때: petlist 버튼 -->
+						<button id="petlist" type="button" class="in-icon" th:if="${rq.isLogined}"
+								onclick="location.href='/usr/pet/list?memberId=[[${rq.loginedMember.id}]]'">
 							petlist
 							<img src="https://imgur.com/2ZJPrGR.png" alt="petlist">
 						</button>
