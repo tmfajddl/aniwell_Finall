@@ -2,6 +2,7 @@ package com.example.RSW.service;
 
 import com.example.RSW.repository.MemberRepository;
 import com.example.RSW.repository.NotificationRepository;
+import com.example.RSW.repository.WalkCrewMemberRepository;
 import com.example.RSW.vo.Member;
 import com.example.RSW.vo.Notification;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +19,9 @@ import java.util.List;
 public class NotificationService {
 
 	private final NotificationRepository notificationRepository;
+
+	@Autowired
+	WalkCrewMemberRepository walkCrewMemberRepository;
 
 	@Autowired
 	private MemberService memberService;
@@ -176,14 +180,30 @@ public class NotificationService {
 		notificationRepository.deleteByMemberId(memberId);
 	}
 
-	public void sendNotificationToAll(String title, String link, String type, Integer senderId) {
-		List<Integer> memberIds = memberRepository.getAllMemberIds();
-		for (Integer memberId : memberIds) {
-			notificationRepository
-					.insert(new Notification(0, memberId, title, link, new Date(), false, null, type, senderId));
-			System.out.println("🔔 알림 전송: /topic/notifications/" + memberId + " -> new");
-			messagingTemplate.convertAndSend("/topic/notifications/" + memberId, "new");
+	public void sendNotificationToAll(String title, String link, String type, Integer senderId, Integer crewId) {
+		if (crewId != null && crewId > 0) {
+		    // 크루 멤버에게만 전송
+		    List<Integer> crewMemberIds = walkCrewMemberRepository.intFindMembersByCrewId(crewId);
+		    for (Integer crewMemberId : crewMemberIds) {
+		        notificationRepository.insert(
+		            new Notification(0, crewMemberId, title, link, new Date(), false, null, type, senderId)
+		        );
+		        System.out.println("🔔 크루 알림 전송: /topic/notifications/" + crewMemberId + " -> new");
+		        messagingTemplate.convertAndSend("/topic/notifications/" + crewMemberId, "new");
+		    }
+		} else {
+		    // 전체 회원에게 전송
+		    List<Integer> memberIds = memberRepository.getAllMemberIds();
+		    for (Integer memberId : memberIds) {
+		        notificationRepository.insert(
+		            new Notification(0, memberId, title, link, new Date(), false, null, type, senderId)
+		        );
+		        System.out.println("🔔 전체 알림 전송: /topic/notifications/" + memberId + " -> new");
+		        messagingTemplate.convertAndSend("/topic/notifications/" + memberId, "new");
+		    }
 		}
+
+
 	}
 
 	public void deleteAllByMemberId(int loginedMemberId) {
