@@ -153,12 +153,12 @@ public class UsrArticleController {
 				// ✅ 크루공지로 간주
 				String notiTitle = "[크루공지] " + title;
 				// 기존 전체 전송 대신 크루용으로 커스텀 분기
-				notificationService.sendNotificationToAll(notiTitle, link, "CREW_NOTICE", loginedMemberId);
+				notificationService.sendNotificationToAll(notiTitle, link, "CREW_NOTICE", loginedMemberId, crewId);
 				// 실제 크루 멤버에게만 보내고 싶으면 위 메서드만 수정
 			} else {
 				// ✅ 전체 공지
 				String notiTitle = "[공지사항] " + title;
-				notificationService.sendNotificationToAll(notiTitle, link, "NOTICE", loginedMemberId);
+				notificationService.sendNotificationToAll(notiTitle, link, "NOTICE", loginedMemberId, crewId);
 			}
 		}
 		return ResultData.from("S-1", "게시글이 성공적으로 작성되었습니다.",
