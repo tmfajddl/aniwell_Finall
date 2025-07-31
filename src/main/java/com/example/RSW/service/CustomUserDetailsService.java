@@ -38,4 +38,6 @@ public class CustomUserDetailsService implements UserDetailsService {
                 .roles(member.getAuthName()) // 권한(Role) 매핑
                 .build();
     }
+
+
 }

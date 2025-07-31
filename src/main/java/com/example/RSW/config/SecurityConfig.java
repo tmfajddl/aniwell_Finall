@@ -22,6 +22,7 @@ public class SecurityConfig {
                                 "/usr/member/join", "/usr/member/doJoin",
                                 "/css/**", "/js/**", "/img/**", "/resource/**"
                         ).permitAll()
+                        .requestMatchers("/usr/pet/**").authenticated()  // ✅ 로그인 후만 접근 가능
                         .anyRequest().authenticated() // 그 외는 인증 필요
                 )
                 .formLogin(login -> login
