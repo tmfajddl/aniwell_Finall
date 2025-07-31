@@ -15,7 +15,13 @@
 	<script src="https://unpkg.com/react@18/umd/react.development.js"></script>
 	<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
 	<script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+	<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 	<script th:src="@{/resource/js/petPage.js}"></script>
+	<!-- HEAD 태그 내부에 추가 -->
+	<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+	<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+	
+
 
 </head>
 
@@ -326,9 +332,25 @@
 					const crewId = event.data.data.crewId;
 					location.href = `/usr/crewCafe/cafeHome?crewId=${crewId}`;
 				}
-			});
+			});	
+		</script>
+		
+		<!-- Toast 먼저 정의 -->
+		<script>
+		  const Toast = Swal.mixin({
+		    toast: true,
+		    position: "top-end",
+		    showConfirmButton: false,
+		    timer: 2500,
+		    timerProgressBar: true,
+		    didOpen: (toast) => {
+		      toast.onmouseenter = Swal.stopTimer;
+		      toast.onmouseleave = Swal.resumeTimer;
+		    }
+		  });
 		</script>
 
+		
 
 
 </body>
