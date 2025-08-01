@@ -112,8 +112,11 @@
 		</div>
 
 		<!-- 🔙 버튼 -->
-		<div class="flex gap-2 mt-12">
+		<div class="flex gap-2 mt-12"
+			 th:if="${rq.isLogined() and article.memberId == rq.loginedMember.id}">
+
 			<button class="btn btn-rounded btn-outline px-4 py-2" type="button" onclick="history.back()">⬅ 뒤로가기</button>
+
 			<!-- 수정 버튼 -->
 			<button type="button"
 					class="btn btn-rounded btn-yellow px-4 py-2"
@@ -121,11 +124,11 @@
 				✏ 수정
 			</button>
 
+			<!-- 삭제 버튼 -->
 			<button type="button" class="btn btn-rounded btn-yellow px-4 py-2"
 					th:onclick="|handleDeleteArticle(${article.id})|">
 				🗑 삭제
 			</button>
-
 		</div>
 	</div>
 
