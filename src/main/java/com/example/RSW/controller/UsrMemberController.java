@@ -582,71 +582,86 @@ public class UsrMemberController {
     public void kakaoPopupCallback(@RequestParam("code") String code,
                                    HttpServletRequest req, HttpServletResponse resp) throws IOException {
 
-        String tokenUrl = "https://kauth.kakao.com/oauth/token";
+        try {
+            String tokenUrl = "https://kauth.kakao.com/oauth/token";
+            RestTemplate restTemplate = new RestTemplate();
 
-        RestTemplate restTemplate = new RestTemplate();
+            // 1️⃣ Access Token 발급
+            HttpHeaders tokenHeaders = new HttpHeaders();
+            tokenHeaders.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
-        HttpHeaders tokenHeaders = new HttpHeaders();
-        tokenHeaders.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+            MultiValueMap<String, String> tokenParams = new LinkedMultiValueMap<>();
+            tokenParams.add("grant_type", "authorization_code");
+            tokenParams.add("client_id", kakaoRestApiKey);
+            tokenParams.add("redirect_uri", kakaoRedirectUri);
+            tokenParams.add("client_secret", kakaoClientSecret);
+            tokenParams.add("code", code);
 
-        MultiValueMap<String, String> tokenParams = new LinkedMultiValueMap<>();
-        tokenParams.add("grant_type", "authorization_code");
-        tokenParams.add("client_id", kakaoRestApiKey);
-        tokenParams.add("redirect_uri", "http://localhost:8080/usr/member/kakao");
-        tokenParams.add("client_secret", kakaoClientSecret);
-        tokenParams.add("code", code);
+            HttpEntity<MultiValueMap<String, String>> tokenRequest = new HttpEntity<>(tokenParams, tokenHeaders);
+            ResponseEntity<Map> tokenResponse = restTemplate.postForEntity(tokenUrl, tokenRequest, Map.class);
 
-        HttpEntity<MultiValueMap<String, String>> tokenRequest = new HttpEntity<>(tokenParams, tokenHeaders);
-        ResponseEntity<Map> tokenResponse = restTemplate.postForEntity(tokenUrl, tokenRequest, Map.class);
+            String accessToken = (String) tokenResponse.getBody().get("access_token");
 
-        String accessToken = (String) tokenResponse.getBody().get("access_token");
+            // 2️⃣ 사용자 정보 요청
+            HttpHeaders profileHeaders = new HttpHeaders();
+            profileHeaders.set("Authorization", "Bearer " + accessToken);
+            HttpEntity<?> profileRequest = new HttpEntity<>(profileHeaders);
 
-        HttpHeaders profileHeaders = new HttpHeaders();
-        profileHeaders.set("Authorization", "Bearer " + accessToken);
-        HttpEntity<?> profileRequest = new HttpEntity<>(profileHeaders);
+            ResponseEntity<Map> profileResponse = restTemplate.exchange(
+                    "https://kapi.kakao.com/v2/user/me",
+                    HttpMethod.GET,
+                    profileRequest,
+                    Map.class
+            );
 
-        ResponseEntity<Map> profileResponse = restTemplate.exchange(
-                "https://kapi.kakao.com/v2/user/me",
-                HttpMethod.GET,
-                profileRequest,
-                Map.class
-        );
+            Map body = profileResponse.getBody();
+            Map properties = (Map) body.get("properties");
+            String socialId = String.valueOf(body.get("id"));
+            String name = (String) properties.get("nickname");
+            String provider = "kakao";
 
-        Map body = profileResponse.getBody();
-        Map properties = (Map) body.get("properties");
-        Map kakaoAccount = (Map) body.get("kakao_account");
+            // ✅ 이메일 강제 생성
+            String email = provider + "_" + socialId + "@noemail.kakao";
 
-        String socialId = String.valueOf(body.get("id"));
-        String name = (String) properties.get("nickname");
-        String provider = "kakao";
+            // 3️⃣ DB 등록/로그인
+            Member member = memberService.getOrCreateSocialMember(provider, socialId, email, name);
 
-        // ✅ 이메일 강제 생성
-        String email = provider + "_" + socialId + "@noemail.kakao";
+            // 4️⃣ 세션 등록
+            Rq rq = new Rq(req, resp, memberService);
+            rq.login(member);
+            req.getSession().setAttribute("rq", rq);
+            req.getSession().setAttribute("kakaoAccessToken", accessToken);
 
+            // ✅ Spring Security 인증 등록
+            CustomUserDetails userDetails = new CustomUserDetails(member);
+            UsernamePasswordAuthenticationToken authentication =
+                    new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            req.getSession().setAttribute("SPRING_SECURITY_CONTEXT", SecurityContextHolder.getContext());
 
-        // 기존 사용자 조회 또는 새로 생성
-        Member member = memberService.getOrCreateSocialMember(provider, socialId, email, name);
+            // 5️⃣ Firebase 토큰 생성 및 세션 저장
+            String uid = member.getSocialProvider() + "_" + member.getSocialId();
+            String firebaseToken = memberService.createFirebaseCustomToken(uid);
+            req.getSession().setAttribute("firebaseToken", firebaseToken);
 
-        // 세션 등록
-        Rq rq = new Rq(req, resp, memberService);
-        rq.login(member);
-        req.getSession().setAttribute("rq", rq);
-        req.getSession().setAttribute("kakaoAccessToken", accessToken);
+            // 6️⃣ 부모창으로 이메일 전달
+            resp.setContentType("text/html; charset=UTF-8");
+            PrintWriter out = resp.getWriter();
+            out.println("<script>");
+            out.println("localStorage.setItem('kakaoAccessToken', '" + accessToken + "');");
+            out.println("window.opener.postMessage({ email: '" + email + "' }, '*');");
+            out.println("window.close();");
+            out.println("</script>");
 
-        // ✅ Firebase 토큰 생성 및 세션 저장
-        String uid = member.getSocialProvider() + "_" + member.getSocialId();
-        String firebaseToken = memberService.createFirebaseCustomToken(uid);
-        req.getSession().setAttribute("firebaseToken", firebaseToken);
-
-        // ✅ 부모창으로 이메일 전달
-        resp.setContentType("text/html; charset=UTF-8");
-        PrintWriter out = resp.getWriter();
-        out.println("<script>");
-        out.println("localStorage.setItem('kakaoAccessToken', '" + accessToken + "');");
-        out.println("window.opener.postMessage({ email: '" + email + "' }, '*');"); // ✅ 이메일 전달
-        out.println("window.close();");
-        out.println("</script>");
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("❌ [ERROR] kakaoPopupCallback 예외 발생: " + e.getMessage());
+            resp.setContentType("text/html; charset=UTF-8");
+            PrintWriter out = resp.getWriter();
+            out.println("<script>alert('카카오 로그인 중 오류 발생'); window.close();</script>");
+        }
     }
+
 
     // 카카오 팝업 로그인 처리용 REST API 컨트롤러 메서드
     @PostMapping("/usr/member/social-login")
@@ -838,80 +853,71 @@ public class UsrMemberController {
     public String naverCallback(@RequestParam("code") String code,
                                 @RequestParam("state") String state,
                                 HttpServletRequest req, HttpServletResponse resp) {
-
         try {
-
             RestTemplate restTemplate = new RestTemplate();
 
-            // 네이버 애플리케이션 등록 정보
-            String clientId = "ZdyW5GGtNSgCCaduup7_";          // 네이버 Client ID
-            String clientSecret = "pJh4IlGi2_";  // 네이버 Client Secret
-            String redirectUri = "http://localhost:8080/usr/member/naver";  // 콜백 URI
+            // 1️⃣ Access Token 발급
+            String tokenUrl = "https://nid.naver.com/oauth2.0/token"
+                    + "?grant_type=authorization_code"
+                    + "&client_id=" + "ZdyW5GGtNSgCCaduup7_"
+                    + "&client_secret=" + "pJh4IlGi2_"
+                    + "&code=" + code
+                    + "&state=" + state;
 
-            // 1️⃣ access_token 요청 URL 구성
-            String tokenUrl = "https://nid.naver.com/oauth2.0/token" +
-                    "?grant_type=authorization_code" +
-                    "&client_id=" + clientId +
-                    "&client_secret=" + clientSecret +
-                    "&code=" + code +
-                    "&state=" + state;
-
-
-            // 2️⃣ 토큰 요청 (GET 방식)
             ResponseEntity<Map> tokenResponse = restTemplate.getForEntity(tokenUrl, Map.class);
-
             String accessToken = (String) tokenResponse.getBody().get("access_token");
 
-            // 3️⃣ 사용자 정보 요청을 위한 헤더 설정
+            // 2️⃣ 사용자 정보 요청
             HttpHeaders headers = new HttpHeaders();
             headers.set("Authorization", "Bearer " + accessToken);
-            HttpEntity<?> entity = new HttpEntity<>(headers);
-
-            // 4️⃣ 네이버 사용자 정보 요청
             ResponseEntity<Map> userInfoResponse = restTemplate.exchange(
-                    "https://openapi.naver.com/v1/nid/me",
-                    HttpMethod.GET,
-                    entity,
-                    Map.class
-            );
+                    "https://openapi.naver.com/v1/nid/me", HttpMethod.GET,
+                    new HttpEntity<>(headers), Map.class);
 
-            // 5️⃣ 응답 파싱
-            Map<String, Object> body = userInfoResponse.getBody();
-            Map<String, Object> response = (Map<String, Object>) body.get("response");
+            Map<String, Object> response = (Map<String, Object>) userInfoResponse.getBody().get("response");
+            String socialId = String.valueOf(response.get("id"));
+            String name = (String) response.get("name");
+            String email = (String) response.get("email");
 
-            // 6️⃣ 사용자 정보 추출
-            String socialId = String.valueOf(response.get("id"));  // 네이버 고유 ID
-            String name = (String) response.get("name");           // 이름
-            String email = (String) response.get("email");         // 이메일
-
-
-            // 7️⃣ 회원 DB에 등록 또는 기존 회원 로그인 처리
+            // 3️⃣ DB 등록/로그인
             Member member = memberService.getOrCreateSocialMember("naver", socialId, email, name);
 
-            // 8️⃣ 세션 등록 (RQ 객체를 이용한 로그인 처리)
+            // 4️⃣ 세션 등록 (RQ 객체)
             Rq rq = new Rq(req, resp, memberService);
             rq.login(member);
             req.getSession().setAttribute("rq", rq);
 
-            // 🔥 Firebase 토큰 추가
+            // ✅ Spring Security 인증 등록
+            CustomUserDetails userDetails = new CustomUserDetails(member);
+            UsernamePasswordAuthenticationToken authentication =
+                    new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            req.getSession().setAttribute("SPRING_SECURITY_CONTEXT", SecurityContextHolder.getContext());
+
+            // 5️⃣ Firebase 토큰 생성 및 세션 저장
             String uid = member.getSocialProvider() + "_" + member.getSocialId();
             String firebaseToken = memberService.createFirebaseCustomToken(uid);
             req.getSession().setAttribute("firebaseToken", firebaseToken);
 
-            // ✅ 부모창으로 이메일 전달
-            return "<script>" +
-                    "window.opener.postMessage({ email: '" + email + "' }, '*');" +
-                    "window.close();" +
-                    "</script>";
 
+            // 세션에 저장된 값들 출력
+            req.getSession().getAttributeNames().asIterator()
+                    .forEachRemaining(attr -> System.out.println("   - " + attr + " = " + req.getSession().getAttribute(attr)));
+
+            // 6️⃣ 팝업창 → 부모창 메시지 전달
+            return "<script>"
+                    + "window.opener.postMessage({ email: '" + email + "' }, '*');"
+                    + "window.close();"
+                    + "</script>";
 
         } catch (Exception e) {
-            // ⚠ 예외 처리 (토큰 요청 실패, 사용자 정보 오류 등)
             e.printStackTrace();
             System.out.println("❌ [ERROR] naverCallback 예외 발생: " + e.getMessage());
             return "redirect:/usr/member/login?error=naver";
         }
     }
+
+
 
     @RequestMapping("/usr/member/firebase-token")
     @ResponseBody
