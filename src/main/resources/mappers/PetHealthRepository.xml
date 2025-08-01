@@ -27,5 +27,17 @@
         ORDER BY logDate
     </select>
 
+    <!-- FoodLogMapper.xml -->
+    <select id="getWeeklyStats" resultType="map">
+        SELECT
+            DAYOFWEEK(logDate) AS dayOfWeek, -- 1(일) ~ 7(토)
+            SUM(foodWeight) AS foodTotal,
+            SUM(waterWeight) AS waterTotal
+        FROM pet__health_log
+        WHERE petId = #{petId}
+        GROUP BY DAYOFWEEK(logDate)
+    </select>
+
+
 
 </mapper>
