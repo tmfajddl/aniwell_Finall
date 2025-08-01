@@ -298,7 +298,7 @@ function deleteArticle(articleId, crewId) {
 		success: function(data) {
 			if (data.resultCode === "S-1") {
 				// ✅ 성공 시 알림 메시지 요청
-				fetch('/toast/doModify', {
+				fetch('/toast/doDelete', {
 					method: 'POST'
 				})
 					.then(res => res.json())  // 이미 JSON 파싱됨
@@ -315,7 +315,7 @@ function deleteArticle(articleId, crewId) {
 						console.warn('⚠️ 응답 JSON 파싱 실패:', err);
 						Toast.fire({
 							icon: 'success',
-							title: '수정되었습니다!'
+							title: '!'
 						});
 						setTimeout(() => location.reload(), 1000);
 					});
@@ -822,7 +822,7 @@ function scAdd() {
 					if (data.resultCode === "S-1") {
 
 						// ✅ 성공 시 알림 메시지 요청
-						fetch('/toast/doDelete', {
+						fetch('/toast/doSave', {
 							method: 'POST'
 						})
 							.then(res => res.json())  // 이미 JSON 파싱됨
