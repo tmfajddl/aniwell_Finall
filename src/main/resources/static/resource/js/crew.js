@@ -65,7 +65,7 @@ function detailModal(e) {
 			  수정
 			</span>
 
-		       <span class="underline text-red-500 cursor-pointer" onclick="deleteArticle(${articleId})">삭제</span>
+		       <span class="underline text-red-500 cursor-pointer" onclick="deleteArticle(${articleId},crewId)">삭제</span>
 		     </div>
 		  </span>
 		  
@@ -284,26 +284,47 @@ function submitModifiedArticle() {
 
 /////////////
 //////게시글 삭제
-function deleteArticle(articleId) {
+function deleteArticle(articleId, crewId) {
 	if (!confirm("정말 이 게시글을 삭제하시겠습니까?")) return;
 
 	$.ajax({
-		url: `/usr/article/doDelete?id=${articleId}`,
+		url: `/usr/article/doDelete?id=${articleId}&crewId=${crewId}`,
 		type: 'POST',
 		success: function(data) {
 			if (data.resultCode === "S-1") {
-				alert("게시글이 삭제되었습니다.");
-				window.location.reload();
-			
-			} else {
-				alert("⚠️ " + data.msg);
+				if (resultCode === "S-1") {
+					// ✅ 성공 시 알림 메시지 요청
+					fetch('/toast/doModify', {
+						method: 'POST'
+					})
+						.then(res => res.json())  // 이미 JSON 파싱됨
+						.then(toastData => {
+							Toast.fire({
+								icon: 'success',
+								title: toastData.msg || '수정 성공!'
+							});
+
+							closeCommentModal?.();
+							setTimeout(() => location.reload(), 1000);
+						})
+						.catch(err => {
+							console.warn('⚠️ 응답 JSON 파싱 실패:', err);
+							Toast.fire({
+								icon: 'success',
+								title: '수정되었습니다!'
+							});
+							setTimeout(() => location.reload(), 1000);
+						});
+
+				} else {
+					alert("⚠️ " + data.msg);
+				}
+			},
+			error: function(err) {
+				console.error("❌ 삭제 실패:", err);
+				alert("삭제 중 오류가 발생했습니다.");
 			}
-		},
-		error: function(err) {
-			console.error("❌ 삭제 실패:", err);
-			alert("삭제 중 오류가 발생했습니다.");
-		}
-	});
+		});
 }
 
 ///// 좋아요
@@ -793,7 +814,28 @@ function scAdd() {
 				success: function(data) {
 					console.log(data);
 					if (data.resultCode === "S-1") {
-						
+						// ✅ 성공 시 알림 메시지 요청
+						fetch('/toast/doDelete', {
+							method: 'POST'
+						})
+							.then(res => res.json())  // 이미 JSON 파싱됨
+							.then(toastData => {
+								Toast.fire({
+									icon: 'success',
+									title: toastData.msg
+								});
+
+								closeCommentModal?.();
+								setTimeout(() => location.reload(), 1000);
+							})
+							.catch(err => {
+								console.warn('⚠️ 응답 JSON 파싱 실패:', err);
+								Toast.fire({
+									icon: 'success',
+									title: '!'
+								});
+								setTimeout(() => location.reload(), 1000);
+							});
 						const redirectUrl = data.data1.redirectUrl;
 						window.location.href = redirectUrl
 					} else {
