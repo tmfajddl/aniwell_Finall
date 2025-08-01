@@ -297,47 +297,40 @@ function deleteArticle(articleId, crewId) {
 		type: 'POST',
 		success: function(data) {
 			if (data.resultCode === "S-1") {
-<<<<<<< HEAD
-				if (resultCode === "S-1") {
-					// ✅ 성공 시 알림 메시지 요청
-					fetch('/toast/doModify', {
-						method: 'POST'
-					})
-						.then(res => res.json())  // 이미 JSON 파싱됨
-						.then(toastData => {
-							Toast.fire({
-								icon: 'success',
-								title: toastData.msg || '수정 성공!'
-							});
-
-							closeCommentModal?.();
-							setTimeout(() => location.reload(), 1000);
-						})
-						.catch(err => {
-							console.warn('⚠️ 응답 JSON 파싱 실패:', err);
-							Toast.fire({
-								icon: 'success',
-								title: '수정되었습니다!'
-							});
-							setTimeout(() => location.reload(), 1000);
+				// ✅ 성공 시 알림 메시지 요청
+				fetch('/toast/doModify', {
+					method: 'POST'
+				})
+					.then(res => res.json())  // 이미 JSON 파싱됨
+					.then(toastData => {
+						Toast.fire({
+							icon: 'success',
+							title: toastData.msg || '수정 성공!'
 						});
 
-				} else {
-					alert("⚠️ " + data.msg);
-				}
-			},
-			error: function(err) {
-				console.error("❌ 삭제 실패:", err);
-				alert("삭제 중 오류가 발생했습니다.");
-=======
-				alert("게시글이 삭제되었습니다.");
-				window.location.reload();
+						closeCommentModal?.();
+						setTimeout(() => location.reload(), 1000);
+					})
+					.catch(err => {
+						console.warn('⚠️ 응답 JSON 파싱 실패:', err);
+						Toast.fire({
+							icon: 'success',
+							title: '수정되었습니다!'
+						});
+						setTimeout(() => location.reload(), 1000);
+					});
 
 			} else {
 				alert("⚠️ " + data.msg);
->>>>>>> good/Develop
 			}
-		});
+		},
+		error: function(err) {
+			console.error("❌ 삭제 실패:", err);
+			alert("삭제 중 오류가 발생했습니다.");
+			window.location.reload();
+
+		}
+	});
 }
 
 ///// 좋아요
@@ -827,7 +820,7 @@ function scAdd() {
 				success: function(data) {
 					console.log(data);
 					if (data.resultCode === "S-1") {
-<<<<<<< HEAD
+
 						// ✅ 성공 시 알림 메시지 요청
 						fetch('/toast/doDelete', {
 							method: 'POST'
@@ -850,9 +843,7 @@ function scAdd() {
 								});
 								setTimeout(() => location.reload(), 1000);
 							});
-=======
 
->>>>>>> good/Develop
 						const redirectUrl = data.data1.redirectUrl;
 						window.location.href = redirectUrl
 					} else {
