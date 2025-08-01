@@ -190,27 +190,24 @@ public class NotificationService {
 
 	public void sendNotificationToAll(String title, String link, String type, Integer senderId, Integer crewId) {
 		if (crewId != null && crewId > 0) {
-		    // 크루 멤버에게만 전송
-		    List<Integer> crewMemberIds = walkCrewMemberRepository.intFindMembersByCrewId(crewId);
-		    for (Integer crewMemberId : crewMemberIds) {
-		        notificationRepository.insert(
-		            new Notification(0, crewMemberId, title, link, new Date(), false, null, type, senderId)
-		        );
-		        System.out.println("🔔 크루 알림 전송: /topic/notifications/" + crewMemberId + " -> new");
-		        messagingTemplate.convertAndSend("/topic/notifications/" + crewMemberId, "new");
-		    }
+			// 크루 멤버에게만 전송
+			List<Integer> crewMemberIds = walkCrewMemberRepository.intFindMembersByCrewId(crewId);
+			for (Integer crewMemberId : crewMemberIds) {
+				notificationRepository.insert(
+						new Notification(0, crewMemberId, title, link, new Date(), false, null, type, senderId));
+				System.out.println("🔔 크루 알림 전송: /topic/notifications/" + crewMemberId + " -> new");
+				messagingTemplate.convertAndSend("/topic/notifications/" + crewMemberId, "new");
+			}
 		} else {
-		    // 전체 회원에게 전송
-		    List<Integer> memberIds = memberRepository.getAllMemberIds();
-		    for (Integer memberId : memberIds) {
-		        notificationRepository.insert(
-		            new Notification(0, memberId, title, link, new Date(), false, null, type, senderId)
-		        );
-		        System.out.println("🔔 전체 알림 전송: /topic/notifications/" + memberId + " -> new");
-		        messagingTemplate.convertAndSend("/topic/notifications/" + memberId, "new");
-		    }
+			// 전체 회원에게 전송
+			List<Integer> memberIds = memberRepository.getAllMemberIds();
+			for (Integer memberId : memberIds) {
+				notificationRepository
+						.insert(new Notification(0, memberId, title, link, new Date(), false, null, type, senderId));
+				System.out.println("🔔 전체 알림 전송: /topic/notifications/" + memberId + " -> new");
+				messagingTemplate.convertAndSend("/topic/notifications/" + memberId, "new");
+			}
 		}
-
 
 	}
 
@@ -225,10 +222,39 @@ public class NotificationService {
 	public void sendNotificationToMember(String title, String link, String type, Integer senderId, Integer crewId) {
 		List<WalkCrewMember> memberIds = walkCrewMemberService.getMembersByCrewId(crewId);
 		for (WalkCrewMember member : memberIds) {
-			notificationRepository
-					.insert(new Notification(0, member.getMemberId(), title, link, new Date(), false, null, type, senderId));
-			System.out.println("🔔 알림 전송: /topic/notifications/" +member.getMemberId() + " -> new");
+			notificationRepository.insert(
+					new Notification(0, member.getMemberId(), title, link, new Date(), false, null, type, senderId));
+			System.out.println("🔔 알림 전송: /topic/notifications/" + member.getMemberId() + " -> new");
 			messagingTemplate.convertAndSend("/topic/notifications/" + member.getMemberId(), "new");
 		}
 	}
+
+	// 크루장 알림
+	public void notifyCrewLeaderOnRequest(int crewId, int requesterId) {
+		WalkCrew crew = walkCrewService.getCrewById(crewId);
+		if (crew == null)
+			return;
+
+		int leaderId = crew.getLeaderId();
+		Member requester = memberService.getMemberById(requesterId);
+		String title = requester.getNickname() + "님이 크루 참가를 신청했습니다.";
+		String link = "/usr/walkCrew/requestList?crewId=" + crewId;
+
+		addNotification(leaderId, requesterId, "CREW_JOIN_REQUEST", title, link);
+		messagingTemplate.convertAndSend("/topic/notifications/" + leaderId, "new");
+	}
+
+	// 청자 알림
+	public void notifyMemberOnCrewAccepted(int crewId, int memberId) {
+		WalkCrew crew = walkCrewService.getCrewById(crewId);
+		if (crew == null)
+			return;
+
+		String title = "신청하신 크루 [" + crew.getTitle() + "]에 수락되었습니다.";
+		String link = "/usr/walkCrew/detail?id=" + crewId;
+
+		addNotification(memberId, crew.getLeaderId(), "CREW_JOIN_ACCEPTED", title, link);
+		messagingTemplate.convertAndSend("/topic/notifications/" + memberId, "new");
+	}
+
 }
