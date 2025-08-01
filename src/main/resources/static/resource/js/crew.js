@@ -34,6 +34,10 @@ let articleId = null; // ✅ 전역 변수로 선언
 // 📝 게시글 상세보기모달
 function detailModal(e) {
 	articleId = e.dataset.id;  // ✅ 전역 변수에 할당
+	crewId = e.dataset.crewid;      // ✅ 크루 ID 저장
+	boardId = e.dataset.boardid;    // ✅ 게시판 ID 저장
+
+	console.log("🧪 boardId:", boardId, "crewId:", crewId);
 
 	const free = {
 		title: e.dataset.title,
@@ -155,8 +159,9 @@ function submitReply() {
 	fetch('/usr/reply/doWrite', {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-		body: `relTypeCode=article&relId=${articleId}&body=${encodeURIComponent(body)}`
+		body: `relTypeCode=article&relId=${articleId}&body=${encodeURIComponent(body)}&crewId=${crewId}&boardId=${boardId}`
 	})
+
 		.then(res => {
 			if (!res.ok) throw new Error("댓글 등록 실패");
 			return res.text();
@@ -294,7 +299,7 @@ function deleteArticle(articleId) {
 			if (data.resultCode === "S-1") {
 				alert("게시글이 삭제되었습니다.");
 				window.location.reload();
-			
+
 			} else {
 				alert("⚠️ " + data.msg);
 			}
@@ -793,7 +798,7 @@ function scAdd() {
 				success: function(data) {
 					console.log(data);
 					if (data.resultCode === "S-1") {
-						
+
 						const redirectUrl = data.data1.redirectUrl;
 						window.location.href = redirectUrl
 					} else {
