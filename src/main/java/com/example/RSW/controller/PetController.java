@@ -554,6 +554,7 @@ public class PetController {
 		List<CalendarEvent> events = calendarEventService.getEventsByPetId(petId);
 		model.addAttribute("events", events); // 감정일기에 등록된 이벤트들
 		model.addAttribute("petId", petId); // 해당 펫의 ID
+		model.addAttribute("petBirthDate", pet.getBirthDate());
 		return "usr/pet/daily";
 	}
 
