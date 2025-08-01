@@ -1,3 +1,8 @@
+button:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
 @font-face {
 	font-family: 'Ownglyph_ParkDaHyun';
 	src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/2411-3@1.0/Ownglyph_ParkDaHyun.woff2') format('woff2');
@@ -14,18 +19,34 @@
 	font-style: normal;
 }
 
-/*
+@font-face {
+    font-family: 'MaplestoryOTFBold';
+    src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_20-04@2.1/MaplestoryOTFBold.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+}
+
+
+
 body {
   font-family: 'Ownglyph_ParkDaHyun', sans-serif;
   font-size: 20px;
 }
+
+
+/*
+body {
+  font-family: 'MaplestoryOTFBold', sans-serif;
+  font-size: 20px;
+}
+
 */
 
-
+/*
 body {
 	font-family: 'Nanum Gothic', sans-serif;
 }
-
+*/
 
 /*
 body {
