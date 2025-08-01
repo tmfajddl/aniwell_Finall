@@ -290,7 +290,7 @@ function submitModifiedArticle() {
 						console.warn('⚠️ 응답 JSON 파싱 실패:', err);
 						Toast.fire({
 							icon: 'success',
-							title: '삭제 완료'
+							title: '수정되었습니다!'
 						});
 						setTimeout(() => location.reload(), 1000);
 					});
