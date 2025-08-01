@@ -150,9 +150,17 @@
 		.calendar-event-icon {
 			position: absolute;
 			top: 4px;
-			left: 4px;
+			left:30px;
 			width: 20px;
 			height: 20px;
+		}
+
+		.calendar-birthday-icon{
+			position: absolute;
+			top: -5px;
+			left:30px;
+			width: 25px;
+			height: 25px;
 		}
 
 		.fc-daygrid-event {
@@ -433,6 +441,7 @@
 	</div>
 	<script th:inline="javascript">
 		const petId = /*[[${petId}]]*/ 0;
+		const petBirthDate = /*[[${petBirthDate}]]*/ null; // "2020-08-01"
 		const emotionIcons = {happy: '😊', surprised: '😮', sad: '😿', relaxed: '😌'};
 		let currentDiaryData = null;
 		let calendar = null;
@@ -455,9 +464,26 @@
 					return {html: '<div>' + arg.date.getDate() + '</div>'};
 				},
 				eventContent: function (arg) {
-					return {
-						html: '<img src="/img/paw_active.png" class="calendar-event-icon" alt="고양이">'
-					};
+					const eventDateStr = arg.event.startStr;
+
+					// 생일인지 판별
+					const isBirthday = (() => {
+						if (!petBirthDate) return false;
+						const birth = new Date(petBirthDate);
+						const date = new Date(eventDateStr);
+						return birth.getMonth() === date.getMonth() && birth.getDate() === date.getDate();
+					})();
+
+					// 🎂 생일이면 케이크 이미지, 아니면 발바닥 이미지
+					if (isBirthday) {
+						return {
+							html: '<img src="/img/cake.png" class="calendar-birthday-icon" alt="생일">'
+						};
+					} else {
+						return {
+							html: '<img src="/img/paw_active.png" class="calendar-event-icon" alt="감정일기">'
+						};
+					}
 				},
 				dateClick: function (info) {
 					const dateStr = info.dateStr;
