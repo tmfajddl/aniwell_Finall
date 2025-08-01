@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.example.RSW.service.*;
+import com.example.RSW.vo.*;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -19,12 +20,6 @@ import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 import com.example.RSW.interceptor.BeforeActionInterceptor;
 import com.example.RSW.util.Ut;
-import com.example.RSW.vo.Article;
-import com.example.RSW.vo.Board;
-import com.example.RSW.vo.Reply;
-import com.example.RSW.vo.ResultData;
-import com.example.RSW.vo.Rq;
-import com.example.RSW.vo.WalkCrew;
 
 import jakarta.servlet.http.HttpServletRequest;
 import org.thymeleaf.spring6.templateresolver.SpringResourceTemplateResolver;
@@ -60,6 +55,8 @@ public class UsrArticleController {
 
 	@Autowired
 	private SpringResourceTemplateResolver springResourceTemplateResolver;
+    @Autowired
+    private WalkCrewMemberService walkCrewMemberService;
 
 	UsrArticleController(BeforeActionInterceptor beforeActionInterceptor) {
 		this.beforeActionInterceptor = beforeActionInterceptor;
@@ -253,6 +250,22 @@ System.out.println(id+" / "+crewId);
 	public String showDetail(HttpServletRequest req, HttpServletResponse resp, Model model, int id) throws IOException {
 		Rq rq = (Rq) req.getAttribute("rq");
 		Article article = articleService.getForPrintArticle(rq.getLoginedMemberId(), id);
+
+		boolean canWriteReply = false;
+		int loginMemberId = rq.getLoginedMemberId();
+
+		if (rq.isLogined()) {
+			if (article.getCrewId() == null) {
+				canWriteReply = true;
+			} else {
+				List<WalkCrewMember> crewMembers = walkCrewMemberService.getMembersByCrewId(article.getCrewId());
+				canWriteReply = crewMembers.stream()
+						.anyMatch(cm -> cm.getMemberId() == loginMemberId);
+				model.addAttribute("crewMembers", crewMembers); // 필요하면 계속 넘김
+			}
+		}
+
+		model.addAttribute("canWriteReply", canWriteReply);
 
 		if (article == null) {
 			resp.setContentType("text/html; charset=UTF-8");
