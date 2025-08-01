@@ -136,6 +136,8 @@
 			<form id="replyForm" onsubmit="handleReplySubmit(event)">
 				<input type="hidden" name="relTypeCode" value="article">
 				<input type="hidden" name="relId" th:value="${article.id}" id="relId">
+				<input type="hidden" name="crewId" th:value="${article.crewId}" id="crewId">
+				<input type="hidden" name="boardId" th:value="${article.boardId}" id="boardId">
 				<textarea name="body" placeholder="내용을 입력하세요" class="border w-full rounded-lg p-3 mb-3" rows="2"></textarea>
 				<button class="btn btn-yellow btn-rounded px-6 py-2">작성</button>
 			</form>
