@@ -273,8 +273,27 @@ function submitModifiedArticle() {
 		contentType: false,
 		processData: false,
 		success: function(data) {
-			if (data.resultCode === "S-1") {
-				window.location.reload();  // 캐시 고려
+			if (data.resultCode === "S-1") {			// ✅ 성공 시 알림 메시지 요청
+				fetch('/toast/doModify', {
+					method: 'POST'
+				})
+					.then(res => res.json())
+					.then(toastData => {
+						Toast.fire({
+							icon: 'success',
+							title: toastData.msg || '수정 성공!'
+						});
+						closeCommentModal?.();
+						setTimeout(() => location.reload(), 1000);
+					})
+					.catch(err => {
+						console.warn('⚠️ 응답 JSON 파싱 실패:', err);
+						Toast.fire({
+							icon: 'success',
+							title: '삭제 완료'
+						});
+						setTimeout(() => location.reload(), 1000);
+					});
 
 			} else {
 				alert("⚠️ " + data.msg);
@@ -291,11 +310,11 @@ function submitModifiedArticle() {
 //////게시글 삭제
 function deleteArticle(articleId, crewId) {
 	const swalWithGradientHover = Swal.mixin({
-	  customClass: {
-	    confirmButton: "bg-gradient-to-r from-red-500 to-orange-500 text-white font-bold py-2 px-4 rounded transition-all duration-500 hover:from-pink-500 hover:to-yellow-500",
-	    cancelButton: "bg-gradient-to-r from-gray-300 to-gray-400 text-black font-bold py-2 px-4 rounded transition-all duration-500 hover:from-gray-400 hover:to-gray-500"
-	  },
-	  buttonsStyling: false
+		customClass: {
+			confirmButton: "outline-none focus:outline-none border-none bg-gradient-to-r from-red-500 to-orange-500 text-white font-bold py-2 px-4 rounded transition-all duration-500 hover:from-pink-500 hover:to-yellow-500",
+			cancelButton: "bg-gray-300 text-black font-bold py-2 px-4 rounded transition-all duration-500 hover:bg-gray-400 hover:to-gray-500"
+		},
+		buttonsStyling: false
 	});
 
 
@@ -312,7 +331,7 @@ function deleteArticle(articleId, crewId) {
 			$.ajax({
 				url: `/usr/article/doDelete?id=${articleId}&crewId=${crewId}`,
 				type: 'POST',
-				success: function (data) {
+				success: function(data) {
 					if (data.resultCode === "S-1") {
 						// ✅ 성공 시 알림 메시지 요청
 						fetch('/toast/doDelete', {
@@ -343,7 +362,7 @@ function deleteArticle(articleId, crewId) {
 						});
 					}
 				},
-				error: function (err) {
+				error: function(err) {
 					console.error("❌ 삭제 실패:", err);
 					swalWithGradientHover.fire({
 						title: "오류 발생",
