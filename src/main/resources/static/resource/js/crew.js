@@ -273,8 +273,27 @@ function submitModifiedArticle() {
 		contentType: false,
 		processData: false,
 		success: function(data) {
-			if (data.resultCode === "S-1") {
-				window.location.reload();  // 캐시 고려
+			if (data.resultCode === "S-1") {			// ✅ 성공 시 알림 메시지 요청
+				fetch('/toast/doModify', {
+					method: 'POST'
+				})
+					.then(res => res.json())
+					.then(toastData => {
+						Toast.fire({
+							icon: 'success',
+							title: toastData.msg || '수정 성공!'
+						});
+						closeCommentModal?.();
+						setTimeout(() => location.reload(), 1000);
+					})
+					.catch(err => {
+						console.warn('⚠️ 응답 JSON 파싱 실패:', err);
+						Toast.fire({
+							icon: 'success',
+							title: '삭제 완료'
+						});
+						setTimeout(() => location.reload(), 1000);
+					});
 
 			} else {
 				alert("⚠️ " + data.msg);
@@ -290,45 +309,74 @@ function submitModifiedArticle() {
 /////////////
 //////게시글 삭제
 function deleteArticle(articleId, crewId) {
-	if (!confirm("정말 이 게시글을 삭제하시겠습니까?")) return;
-
-	$.ajax({
-		url: `/usr/article/doDelete?id=${articleId}&crewId=${crewId}`,
-		type: 'POST',
-		success: function(data) {
-			if (data.resultCode === "S-1") {
-				// ✅ 성공 시 알림 메시지 요청
-				fetch('/toast/doModify', {
-					method: 'POST'
-				})
-					.then(res => res.json())  // 이미 JSON 파싱됨
-					.then(toastData => {
-						Toast.fire({
-							icon: 'success',
-							title: toastData.msg || '수정 성공!'
-						});
-
-						closeCommentModal?.();
-						setTimeout(() => location.reload(), 1000);
-					})
-					.catch(err => {
-						console.warn('⚠️ 응답 JSON 파싱 실패:', err);
-						Toast.fire({
-							icon: 'success',
-							title: '수정되었습니다!'
-						});
-						setTimeout(() => location.reload(), 1000);
-					});
-
-			} else {
-				alert("⚠️ " + data.msg);
-			}
+	const swalWithGradientHover = Swal.mixin({
+		customClass: {
+			confirmButton: "outline-none focus:outline-none border-none bg-gradient-to-r from-red-500 to-orange-500 text-white font-bold py-2 px-4 rounded transition-all duration-500 hover:from-pink-500 hover:to-yellow-500",
+			cancelButton: "bg-gray-300 text-black font-bold py-2 px-4 rounded transition-all duration-500 hover:bg-gray-400 hover:to-gray-500"
 		},
-		error: function(err) {
-			console.error("❌ 삭제 실패:", err);
-			alert("삭제 중 오류가 발생했습니다.");
-			window.location.reload();
+		buttonsStyling: false
+	});
 
+
+	swalWithGradientHover.fire({
+		title: "정말 삭제하시겠습니까?",
+		text: "삭제한 게시글은 복구할 수 없습니다.",
+		icon: "warning",
+		showCancelButton: true,
+		confirmButtonText: "삭제할게요!",
+		cancelButtonText: "취소할래요!",
+		reverseButtons: true
+	}).then((result) => {
+		if (result.isConfirmed) {
+			$.ajax({
+				url: `/usr/article/doDelete?id=${articleId}&crewId=${crewId}`,
+				type: 'POST',
+				success: function(data) {
+					if (data.resultCode === "S-1") {
+						// ✅ 성공 시 알림 메시지 요청
+						fetch('/toast/doDelete', {
+							method: 'POST'
+						})
+							.then(res => res.json())
+							.then(toastData => {
+								Toast.fire({
+									icon: 'success',
+									title: toastData.msg || '삭제 성공!'
+								});
+								closeCommentModal?.();
+								setTimeout(() => location.reload(), 1000);
+							})
+							.catch(err => {
+								console.warn('⚠️ 응답 JSON 파싱 실패:', err);
+								Toast.fire({
+									icon: 'success',
+									title: '삭제 완료'
+								});
+								setTimeout(() => location.reload(), 1000);
+							});
+					} else {
+						swalWithGradientHover.fire({
+							title: "실패",
+							text: data.msg || "삭제에 실패했습니다.",
+							icon: "error"
+						});
+					}
+				},
+				error: function(err) {
+					console.error("❌ 삭제 실패:", err);
+					swalWithGradientHover.fire({
+						title: "오류 발생",
+						text: "삭제 중 문제가 발생했습니다.",
+						icon: "error"
+					});
+				}
+			});
+		} else if (result.dismiss === Swal.DismissReason.cancel) {
+			swalWithGradientHover.fire({
+				title: "취소됨",
+				text: "게시글 삭제가 취소되었습니다.",
+				icon: "info"
+			});
 		}
 	});
 }
@@ -822,7 +870,7 @@ function scAdd() {
 					if (data.resultCode === "S-1") {
 
 						// ✅ 성공 시 알림 메시지 요청
-						fetch('/toast/doDelete', {
+						fetch('/toast/doSave', {
 							method: 'POST'
 						})
 							.then(res => res.json())  // 이미 JSON 파싱됨
