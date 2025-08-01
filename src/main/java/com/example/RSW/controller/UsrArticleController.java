@@ -71,20 +71,22 @@ public class UsrArticleController {
 
 		Rq rq = (Rq) req.getAttribute("rq");
 
+		int loginedMemberId = rq.getLoginedMemberId(); // ✅ 이거 선언 꼭 필요
+
+		// ✅ 크루 관련 권한 체크는 여기서도 반드시 수행
 		if (crewId != null) {
 			WalkCrew crew = walkCrewService.getCrewById(crewId);
-
 			if (crew == null) {
 				return ResultData.from("F-1", "존재하지 않는 크루입니다.");
 			}
 
-			boolean isApproved = walkCrewService.isApprovedMember(crewId, rq.getLoginedMemberId());
+			boolean isApproved = walkCrewService.isApprovedMember(crewId, loginedMemberId);
 			if (!isApproved) {
 				return ResultData.from("F-2", "승인된 크루 멤버만 글쓰기 가능합니다.");
 			}
 
 			if (boardId != null && boardId == 1) {
-				boolean isLeader = walkCrewService.isCrewLeader(crewId, rq.getLoginedMemberId());
+				boolean isLeader = walkCrewService.isCrewLeader(crewId, loginedMemberId);
 				if (!isLeader) {
 					return ResultData.from("F-3", "공지사항은 크루장만 작성할 수 있습니다.");
 				}
@@ -95,7 +97,9 @@ public class UsrArticleController {
 		}
 
 		// 일반 게시판인 경우 기본 boardId 할당
-		if (boardId == null) {
+		if (boardId == null)
+
+		{
 			boardId = 2;
 		}
 
@@ -127,6 +131,29 @@ public class UsrArticleController {
 			}
 		}
 
+		// ✅✳️✳️✳️ [여기]에서 크루 권한 검사를 반드시 선행해야 함 ✳️✳️✳️
+		if (crewId != null) {
+			// ✅ 1. 크루 유효성 검사
+			WalkCrew crew = walkCrewService.getCrewById(crewId);
+			if (crew == null) {
+				return ResultData.from("F-1", "존재하지 않는 크루입니다.");
+			}
+
+			// ✅ 2. 승인된 멤버인지 확인
+			boolean isApproved = walkCrewService.isApprovedMember(crewId, loginedMemberId);
+			if (!isApproved) {
+				return ResultData.from("F-2", "승인된 크루 멤버만 글을 작성할 수 있습니다.");
+			}
+
+			// ✅ 3. 공지사항이라면 크루장만 가능
+			if (boardId != null && boardId == 1) {
+				boolean isLeader = walkCrewService.isCrewLeader(crewId, loginedMemberId);
+				if (!isLeader) {
+					return ResultData.from("F-3", "공지사항은 크루장만 작성할 수 있습니다.");
+				}
+			}
+		}
+
 		// ✅ 게시글 작성 처리
 		ResultData rd;
 		if (crewId != null) {
@@ -145,7 +172,7 @@ public class UsrArticleController {
 				: "/usr/article/detail?id=" + articleId + "&boardId=" + boardId;
 
 // ✅ 🔔 전체 알림 발송 (공지사항일 때만)
-		if (boardId != null && boardId == 1 ) {
+		if (boardId != null && boardId == 1) {
 
 			String link = redirectUrl;
 
@@ -153,7 +180,8 @@ public class UsrArticleController {
 				// ✅ 크루공지로 간주
 				String notiTitle = "[크루공지] " + title;
 				// 기존 전체 전송 대신 크루용으로 커스텀 분기
-				notificationService.sendNotificationToAll(notiTitle, link, "CREW_NOTICE", loginedMemberId, crewId);
+				notificationService.sendNotificationToMember(notiTitle, link, "CREW_NOTICE", loginedMemberId, crewId);
+
 				// 실제 크루 멤버에게만 보내고 싶으면 위 메서드만 수정
 			} else {
 				// ✅ 전체 공지
@@ -187,10 +215,11 @@ public class UsrArticleController {
 		return ResultData.from("S-1", "게시글 수정 완료", "data1", updated);
 	}
 
+	@ResponseBody
 	@PostMapping("/usr/article/doDelete")
 	public ResultData doDelete(HttpServletRequest req, @RequestParam int id, @RequestParam int crewId) {
 		Rq rq = (Rq) req.getAttribute("rq");
-
+System.out.println(id+" / "+crewId);
 		if (rq == null || !rq.isLogined()) {
 			return ResultData.from("F-0", "로그인 후 이용해주세요.");
 		}
@@ -205,7 +234,8 @@ public class UsrArticleController {
 			return ResultData.from(userCanDeleteRd.getResultCode(), userCanDeleteRd.getMsg());
 		}
 
-		String redirectUrl = article.getCrewId() != null ? "/usr/article/detail?id=" + id + "&crewId=" + article.getCrewId()
+		String redirectUrl = article.getCrewId() != null
+				? "/usr/article/detail?id=" + id + "&crewId=" + article.getCrewId()
 				: "/usr/article/detail?id=" + id + "&boardId=" + article.getBoardId();
 
 		System.out.println("redirectUrl: " + redirectUrl);

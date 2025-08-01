@@ -222,7 +222,7 @@ public class PetController {
 				weight, imagePath);
 
 		int id = rq.getLoginedMemberId();
-		return Ut.jsReplace(joinRd.getResultCode(), joinRd.getMsg(), "../pet/list?memberId=" + id);
+		return Ut.rd("S-1", "등록되었습니다!");
 	}
 
 	// 펫 정보 수정 페이지로 이동
@@ -286,7 +286,7 @@ public class PetController {
 		}
 
 		int id = rq.getLoginedMemberId();
-		return Ut.jsReplace(modifyRd.getResultCode(), modifyRd.getMsg(), "../pet/list?memberId=" + id);
+		return Ut.rd("S-1", "수정되었습니다!");
 	}
 
 	// 감정 갤러리 이동

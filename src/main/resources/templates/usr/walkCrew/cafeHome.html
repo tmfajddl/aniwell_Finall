@@ -9,16 +9,27 @@
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
 	<link rel="stylesheet" th:href="@{/resource/css/common.css}">
 	<link rel="stylesheet" th:href="@{/resource/css/global.css}">
+	<!-- HEAD 태그 내부에 추가 -->
+	<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+	<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+
 	<title>크루 모집 목록</title>
 </head>
 
-<body class="bg-gradient-to-b from-[#e4f0b9] to-[#fcdca9]">
+<body class="bg-gradient-to-b from-[#e4f0b9] to-[#fcdca9] min-h-[770px]">
+
+	<!-- ✅ jQuery & 외부 JS 불러오기 -->
+	<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+	<script src="/resource/js/crew.js"></script>
+
+
+
 	<div class="flex h-screen">
 		<!-- Sidebar -->
 		<div th:replace="common :: siteHeader"></div>
 
 		<!-- Main content -->
-		<main class="main_page min-h-screen flex-1 p-3 flex contect-around w-screen">
+		<main class="main_page min-h-[770px] flex-1 p-3 flex contect-around min-w-content">
 
 
 			<!-- 왼쪽: 정보 섹션 -->
@@ -156,6 +167,7 @@
 						         data-body=${free.body},
 						         data-image-url=${free.imageUrl},
 						         data-writer=${free.extra__writer},
+								 data-boardid=${free.boardId},
 								 data-id=${free.id},
 						         data-reg-date=${free.regDate}" onclick="detailModal(this)"
 								class="h-full min-w-[150px] bg-white rounded shadow p-2 mb-1 overflow-x-auto">
@@ -287,6 +299,82 @@
 				}
 			});
 		}
+
+
+
+		// 📝 게시글 상세보기모달
+		function detailModal(e) {
+			articleId = e.dataset.id;  // ✅ 전역 변수에 할당
+			boardId = e.dataset.boardid;    // ✅ 게시판 ID 저장
+
+			console.log("🧪 boardId:", boardId, "crewId:", crewId);
+
+			const free = {
+				title: e.dataset.title,
+				body: e.dataset.body,
+				imageUrl: e.dataset.imageUrl,
+				writer: e.dataset.writer,
+				regDate: e.dataset.regDate
+			};
+
+			const html = `
+		  <div class="flex h-full">
+		    <div class="w-1/2 bg-gray-100">
+		      <img src="${free.imageUrl}" alt="product" class="object-cover w-full h-full" />
+		    </div>
+
+		    <div class="w-1/2 p-6 flex flex-col justify-between text-gray-800 space-y-4 relative">
+		      <div class="flex-1 flex flex-col justify-between shadow p-4 overflow-auto">
+		        <div class="overflow-y-auto h-[300px] text-sm leading-relaxed mb-4">
+		          ${free.body}
+		        </div>
+		        <div class="flex justify-between text-xs text-gray-500 mt-2">
+		          <span class="font-bold">${free.writer}</span>
+		          <span>
+				  ${free.regDate}
+				  	<div>
+					<span 
+					  class="underline text-blue-600 cursor-pointer mr-2"
+					  onclick="openModifyModal(${articleId}, ${crewId}, 3, \`${free.title}\`, \`${free.body}\`, \`${free.imageUrl}\`)">
+					  수정
+					</span>
+
+				       <span class="underline text-red-500 cursor-pointer" onclick="deleteArticle(${articleId},crewId)">삭제</span>
+				     </div>
+				  </span>
+				  
+		        </div>
+		      </div>
+
+		      <div class="shadow w-full p-4 text-sm rounded cursor-pointer hover:bg-gray-100"
+		           onclick="openCommentModal(); loadReplies(${articleId});">
+		        <p class="flex text-gray-500">여기누르기기</p>
+		      </div>
+
+		      <div id="commentModal"
+		           class="absolute bottom-0 left-0 w-full bg-white ease-in-out
+		                  shadow-[0_-4px_10px_rgba(0,0,0,0.1)] rounded-t-2xl p-4 z-50 transform translate-y-full transition-transform duration-300 ease-in-out">
+
+		        <div class="flex justify-between items-center mb-2">
+		          <h2 class="text-lg font-semibold text-green-700">댓글</h2>
+		          <button onclick="closeCommentModal()" class="text-gray-500 hover:text-black text-sm">닫기 ✕</button>
+		        </div>
+
+		        <div class="overflow-y-auto max-h-60 space-y-2" id="replyList"></div>
+
+		        <div class="mt-4 flex gap-2">
+		          <input type="text" id="replyInput" placeholder="댓글 입력..." class="flex-1 border px-3 py-2 rounded-md text-sm" />
+		          <button onclick="submitReply(${crewId}, ${boardId})" class="bg-green-200 px-4 py-2 rounded-md text-sm">작성</button>
+		        </div>
+
+		        <div class="text-gray-500 text-sm mt-2" id="noReplies" style="display:none;">댓글이 없습니다.</div>
+		      </div>
+		    </div>
+		  </div>
+		  `;
+
+			openModal(html);
+		}
 	</script>
 
 
@@ -307,10 +395,6 @@
 			return `${month}-${day}`;
 		}
 	</script>
-
-	<!-- ✅ jQuery & 외부 JS 불러오기 -->
-	<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-	<script th:src="@{/resource/js/crew.js}"></script>
 
 	<!-- ✅ 멤버 섹션 렌더링 함수 (메인 우측 '멤버' 목록에 출력) -->
 	<script>
@@ -445,25 +529,39 @@
 			});
 		}
 	</script>
-	
+
 	<script>
-	  // 모달 외부 클릭 시 닫기
-	  document.addEventListener('DOMContentLoaded', () => {
-	    const modal = document.getElementById('modal');
-	    const content = document.getElementById('modalContent');
+		// 모달 외부 클릭 시 닫기
+		document.addEventListener('DOMContentLoaded', () => {
+			const modal = document.getElementById('modal');
+			const content = document.getElementById('modalContent');
 
-	    if (modal && content) {
-	      modal.addEventListener('click', function (event) {
-	        if (!content.contains(event.target)) {
-	          closeModal();
-	        }
-	      });
+			if (modal && content) {
+				modal.addEventListener('click', function (event) {
+					if (!content.contains(event.target)) {
+						closeModal();
+					}
+				});
 
-	      content.addEventListener('click', function (event) {
-	        event.stopPropagation(); // 내부 클릭 시 모달 닫힘 방지
-	      });
-	    }
-	  });
+				content.addEventListener('click', function (event) {
+					event.stopPropagation(); // 내부 클릭 시 모달 닫힘 방지
+				});
+			}
+		});
+	</script>
+
+	<script>
+		const Toast = Swal.mixin({
+			toast: true,
+			position: "top-end",
+			showConfirmButton: true,
+			timer: 2500,
+			timerProgressBar: true,
+			didOpen: (toast) => {
+				toast.onmouseenter = Swal.stopTimer;
+				toast.onmouseleave = Swal.resumeTimer;
+			}
+		});
 	</script>
 
 
