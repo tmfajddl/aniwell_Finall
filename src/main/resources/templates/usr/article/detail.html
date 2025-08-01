@@ -136,8 +136,8 @@
 	<!-- 📝 댓글 -->
 	<div class="right-panel">
 		<h2 class="text-xl font-bold mb-2 text-green-700">댓글 작성</h2>
-		<div th:if="${rq.isLogined()}">
-			<form id="replyForm" onsubmit="handleReplySubmit(event)">
+		<div th:if="${canWriteReply}">
+		<form id="replyForm" onsubmit="handleReplySubmit(event)">
 				<input type="hidden" name="relTypeCode" value="article">
 				<input type="hidden" name="relId" th:value="${article.id}" id="relId">
 				<input type="hidden" name="crewId" th:value="${article.crewId}" id="crewId">
@@ -146,7 +146,8 @@
 				<button class="btn btn-yellow btn-rounded px-6 py-2">작성</button>
 			</form>
 		</div>
-		<div th:if="${!rq.isLogined()}">
+
+		<div th:if="${!canWriteReply}">
 			<p class="text-gray-600">댓글을 작성하려면 <a class="underline text-blue-700" href="/usr/member/login">로그인</a>이 필요합니다.</p>
 		</div>
 
@@ -289,10 +290,13 @@
 
 </script>
 
+		<script th:inline="javascript">
+			const articleId = [[${article.id}]];
+			const crewId = [[${article.crewId}]];
+			const boardId = [[${article.boardId}]];
+		</script>
+
 		<script>
-			const articleId = document.getElementById("relId").value;
-			const crewId = document.getElementById("crewId").value;
-			const boardId = document.getElementById("boardId").value;
 
 			function handleReplySubmit(e) {
 				e.preventDefault();
