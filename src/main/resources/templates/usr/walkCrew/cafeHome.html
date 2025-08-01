@@ -9,6 +9,10 @@
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
 	<link rel="stylesheet" th:href="@{/resource/css/common.css}">
 	<link rel="stylesheet" th:href="@{/resource/css/global.css}">
+	<!-- HEAD 태그 내부에 추가 -->
+	<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+	<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+
 	<title>크루 모집 목록</title>
 </head>
 
@@ -18,7 +22,7 @@
 		<div th:replace="common :: siteHeader"></div>
 
 		<!-- Main content -->
-		<main class="main_page min-h-[770px] flex-1 p-3 flex contect-around w-screen">
+		<main class="main_page min-h-[770px] flex-1 p-3 flex contect-around min-w-content">
 
 
 			<!-- 왼쪽: 정보 섹션 -->
@@ -445,25 +449,39 @@
 			});
 		}
 	</script>
-	
+
 	<script>
-	  // 모달 외부 클릭 시 닫기
-	  document.addEventListener('DOMContentLoaded', () => {
-	    const modal = document.getElementById('modal');
-	    const content = document.getElementById('modalContent');
+		// 모달 외부 클릭 시 닫기
+		document.addEventListener('DOMContentLoaded', () => {
+			const modal = document.getElementById('modal');
+			const content = document.getElementById('modalContent');
 
-	    if (modal && content) {
-	      modal.addEventListener('click', function (event) {
-	        if (!content.contains(event.target)) {
-	          closeModal();
-	        }
-	      });
+			if (modal && content) {
+				modal.addEventListener('click', function (event) {
+					if (!content.contains(event.target)) {
+						closeModal();
+					}
+				});
 
-	      content.addEventListener('click', function (event) {
-	        event.stopPropagation(); // 내부 클릭 시 모달 닫힘 방지
-	      });
-	    }
-	  });
+				content.addEventListener('click', function (event) {
+					event.stopPropagation(); // 내부 클릭 시 모달 닫힘 방지
+				});
+			}
+		});
+	</script>
+
+	<script>
+		const Toast = Swal.mixin({
+			toast: true,
+			position: "top-end",
+			showConfirmButton: true,
+			timer: 2500,
+			timerProgressBar: true,
+			didOpen: (toast) => {
+				toast.onmouseenter = Swal.stopTimer;
+				toast.onmouseleave = Swal.resumeTimer;
+			}
+		});
 	</script>
 
 

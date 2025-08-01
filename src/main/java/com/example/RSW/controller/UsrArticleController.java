@@ -215,10 +215,11 @@ public class UsrArticleController {
 		return ResultData.from("S-1", "게시글 수정 완료", "data1", updated);
 	}
 
+	@ResponseBody
 	@PostMapping("/usr/article/doDelete")
 	public ResultData doDelete(HttpServletRequest req, @RequestParam int id, @RequestParam int crewId) {
 		Rq rq = (Rq) req.getAttribute("rq");
-
+System.out.println(id+" / "+crewId);
 		if (rq == null || !rq.isLogined()) {
 			return ResultData.from("F-0", "로그인 후 이용해주세요.");
 		}
