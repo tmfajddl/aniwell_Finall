@@ -287,6 +287,8 @@
 
 		<script>
 			const articleId = document.getElementById("relId").value;
+			const crewId = document.getElementById("crewId").value;
+			const boardId = document.getElementById("boardId").value;
 
 			function handleReplySubmit(e) {
 				e.preventDefault();
@@ -301,7 +303,7 @@
 				fetch('/usr/reply/doWrite', {
 					method: 'POST',
 					headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-					body: `relTypeCode=article&relId=${articleId}&body=${encodeURIComponent(body)}`
+					body: `relTypeCode=article&relId=${articleId}&crewId=${crewId}&boardId=${boardId}&body=${encodeURIComponent(body)}`
 				}).then(res => res.text())
 						.then(js => {
 							form.body.value = "";
