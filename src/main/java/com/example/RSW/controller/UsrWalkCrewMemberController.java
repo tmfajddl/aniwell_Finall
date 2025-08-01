@@ -11,6 +11,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import com.example.RSW.service.ArticleService;
+import com.example.RSW.service.NotificationService;
 import com.example.RSW.service.WalkCrewMemberService;
 import com.example.RSW.service.WalkCrewService;
 import com.example.RSW.vo.Article;
@@ -28,6 +29,9 @@ public class UsrWalkCrewMemberController {
 
 	@Autowired
 	ArticleService articleService;
+
+	@Autowired
+	NotificationService notificationService;
 
 	private final WalkCrewService walkCrewService;
 	private final WalkCrewMemberService walkCrewMemberService;
@@ -99,6 +103,9 @@ public class UsrWalkCrewMemberController {
 		if (resultData.isFail()) {
 			return resultData;
 		}
+
+		// ✅ 크루장에게 알림 전송
+		notificationService.notifyCrewLeaderOnRequest(crewId, memberId);
 
 		// ✅ 성공 시 응답 데이터 구성
 		Map<String, Object> data = new HashMap<>();
@@ -193,6 +200,9 @@ public class UsrWalkCrewMemberController {
 
 		// ✅ 수락 처리
 		walkCrewService.approveMember(crewId, memberId);
+
+		// ✅ 수락된 신청자에게 알림 전송
+		notificationService.notifyMemberOnCrewAccepted(crewId, memberId);
 
 		// ✅ Java 8 호환: Map.of(...) → HashMap
 		Map<String, Object> data = new HashMap<>();
