@@ -1034,43 +1034,35 @@
 
 	<script>
 		const ctx = document.getElementById('myChart').getContext('2d');
+
 		const myChart = new Chart(ctx, {
 			type: 'bar',
 			data: {
-				labels: ['월', '화', '수', '목', '금', '토', '일'],
+				labels: ['월', '화', '수', '목', '금', '토', '일'], // 초기값
 				datasets: [
 					{
 						label: '식사량',
-						data: [4, 5, 3, 4.5, 5, 6, 4.8],
+						data: [], // 서버에서 채움
 						backgroundColor: 'rgba(244, 211, 94, 0.8)',
-						borderRadius: {
-							topLeft: 100,
-							bottomRight: 40
-						},
+						borderRadius: { topLeft: 100, bottomRight: 40 },
 						barPercentage: 0.6,
 						borderSkipped: false,
 						categoryPercentage: 0.7
 					},
 					{
 						label: '물 섭취량',
-						data: [3, 2.5, 4, 3.5, 4, 5, 4.2],
+						data: [],
 						backgroundColor: 'rgba(127, 176, 105, 0.8)',
-						borderRadius: {
-							topLeft: 100,
-							bottomRight: 40
-						},
+						borderRadius: { topLeft: 100, bottomRight: 40 },
 						barPercentage: 0.6,
 						borderSkipped: false,
 						categoryPercentage: 0.7
 					},
 					{
 						label: '최종 점수',
-						data: [7, 7.5, 7, 8, 9, 10, 9],
+						data: [],
 						backgroundColor: 'rgba(79, 109, 122, 0.8)',
-						borderRadius: {
-							topLeft: 100,
-							bottomRight: 40
-						},
+						borderRadius: { topLeft: 100, bottomRight: 40 },
 						borderSkipped: false,
 						barPercentage: 0.6,
 						categoryPercentage: 0.7
@@ -1081,12 +1073,8 @@
 				responsive: true,
 				maintainAspectRatio: false,
 				plugins: {
-					legend: {
-						position: 'top'
-					},
-					title: {
-						display: false
-					}
+					legend: { position: 'top' },
+					title: { display: false }
 				},
 				scales: {
 					y: {
@@ -1097,7 +1085,23 @@
 			}
 		});
 
+		// ✅ 실제 데이터 fetch 및 적용
+		fetch(`/usr/pet/health/week-stats?petId=${petId}`)
+				.then(res => res.json())
+				.then(data => {
+					// 데이터 적용
+					myChart.data.labels = data.labels;        // ["월", ..., "일"]
+					myChart.data.datasets[0].data = data.food;
+					myChart.data.datasets[1].data = data.water;
+					myChart.data.datasets[2].data = data.score;
+					myChart.update(); // 업데이트
+				})
+				.catch(err => {
+					console.error("🚨 데이터 로딩 실패:", err);
+					alert("그래프 데이터를 불러올 수 없습니다.");
+				});
 	</script>
+
 	<script th:src="@{/resource/js/calendar.js}"></script>
 
 
