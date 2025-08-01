@@ -5,22 +5,21 @@ import com.cloudinary.utils.ObjectUtils;
 import com.example.RSW.service.FirebaseService;
 import com.example.RSW.service.NotificationService;
 import com.example.RSW.service.VetCertificateService;
-import com.example.RSW.vo.VetCertificate;
+import com.example.RSW.vo.*;
 import com.google.firebase.auth.*;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.*;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
 
-import com.example.RSW.vo.Rq;
-import com.example.RSW.vo.Member;
-import com.example.RSW.vo.ResultData;
 import com.example.RSW.util.Ut;
 import com.example.RSW.service.MemberService;
 
@@ -168,11 +167,20 @@ public class UsrMemberController {
             return ResultData.from("F-5", "탈퇴한 회원입니다.");
         }
 
-        // 로그인 처리
+        // ✅ Spring Security 인증 등록
+        CustomUserDetails userDetails = new CustomUserDetails(member);
+        UsernamePasswordAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        // ✅ 세션에 Spring Security Context 저장
+        req.getSession().setAttribute("SPRING_SECURITY_CONTEXT", SecurityContextHolder.getContext());
+
+        // 기존 rq.login 유지 (세션 기반 호환성)
         rq.login(member);
         req.getSession().setAttribute("rq", rq);
 
-        // Firebase용 UID 기준 토큰 생성 (선택사항: uid = 이메일도 가능)
+        // Firebase용 UID 기준 토큰 생성
         String uid = member.getLoginId() + "@aniwell.com";
         String firebaseToken = memberService.createFirebaseCustomToken(uid);
         req.getSession().setAttribute("firebaseToken", firebaseToken);
@@ -267,16 +275,16 @@ public class UsrMemberController {
 
         // 소셜 로그인 회원은 비밀번호 확인 없이 바로 이동
         if (rq.getLoginedMember().isSocialMember()) {
-        	return "SOCIAL_OK";
+            return "SOCIAL_OK";
         }
 
         // 일반 로그인 회원은 비밀번호 확인
         if (Ut.isEmptyOrNull(loginPw)) {
-        	return "비밀번호를 입력해 주세요.";
+            return "비밀번호를 입력해 주세요.";
         }
 
         if (!rq.getLoginedMember().getLoginPw().equals(Ut.sha256(loginPw))) {
-        	 return "비밀번호가 일치하지 않습니다.";
+            return "비밀번호가 일치하지 않습니다.";
 
         }
 
