@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 @Controller
 public class PetHealthController {
@@ -67,5 +68,11 @@ public class PetHealthController {
     public List<PetHealthLog> getLogsByDate(@RequestParam int petId, @RequestParam String date) {
         LocalDate targetDate = LocalDate.parse(date);
         return healthService.getLogsByPetIdAndDate(petId, targetDate);
+    }
+
+    @GetMapping("/usr/pet/health/week-stats")
+    @ResponseBody
+    public Map<String, Object> getWeekStats(@RequestParam int petId) {
+        return healthService.getWeeklyChartData(petId);
     }
 }
