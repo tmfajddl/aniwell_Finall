@@ -14,16 +14,16 @@
 
 </head>
 
-<body class="bg-gradient-to-b from-[#e4f0b9] to-[#fcdca9] min-h-[720px]">
+<body class="bg-gradient-to-b from-[#e4f0b9] to-[#fcdca9] min-h-[770px]">
 	<div class="flex h-screen">
 		<!-- Sidebar -->
 		<div th:replace="common :: siteHeader" class=""></div>
 
 		<!-- Main content -->
-		<main class="main_page min-h-[720px] flex-1 p-6 grid grid-cols-12 gap-4">
+		<main class="main_page min-h-[770px] grid-cols-12 flex-1 p-6 grid  gap-4">
 
 			<!-- 왼쪽 8칸: 차트 + 감정분석 + 캘린더 -->
-			<section class="col-span-8 flex flex-col gap-2 h-full">
+			<section class="col-span-12 xl:col-span-8 flex flex-col gap-2 h-full w-full">
 
 				<!-- 차트 -->
 				<div class="bg-white p-4 rounded-xl shadow h-52">
@@ -84,10 +84,18 @@
 
 				<!-- 감정분석 카드 -->
 				<div class="grid grid-cols-2 gap-2 h-full">
-					<!-- 분석 버튼 -->
-					<div class="relative bg-gradient-to-r from-[#DFF8E5] to-[#F4FBCC] rounded-xl p-4 text-center shadow hover:shadow-md transition-shadow duration-300 font-semibold cursor-pointer"
+					<div class="relative group overflow-hidden bg-gradient-to-r from-[#DFF8E5] to-[#F4FBCC] rounded-xl p-4 text-center shadow hover:shadow-md transition-shadow duration-300 font-semibold cursor-pointer w-full"
 						onclick="openEmotionPanel()">
-						<div class="text-left text-3xl font-bold text-black leading-snug flex self-conter">
+
+						<!-- ✅ 배경 이미지 -->
+						<div
+							class="absolute p-3 pr-6 inset-0 z-0 flex justify-end items-end pointer-events-none transition-all duration-300 group-hover:opacity-60 group-hover:scale-95">
+							<img src="/img/emo-cat.png" alt="감정 아이콘"
+								class="h-32 select-none transition-all duration-300 transform" />
+						</div>
+
+						<!-- ✅ 텍스트 -->
+						<div class="relative z-10 text-left text-3xl font-bold text-black leading-snug">
 							우리아이<br />
 							감정분석하기
 						</div>
@@ -165,28 +173,27 @@
 				</div>
 
 				<!-- 캘린더 -->
-				<div class="flex gap-4 h-full">
+				<div class="flex gap-2 h-full">
 
 					<!-- 왼쪽: 일정/버튼 -->
-					<div class="flex flex-col gap-2 w-2/3 relative">
+					<div class="flex flex-col gap-2 w-2/3 relative  bg-gradient-to-b from-[#FFFFFF] to-[#FFFCEF]">
 						<!-- 상단 + 버튼 포함한 헤더 -->
 
 						<!-- 일정 목록 -->
-						<div class="bg-[#fdf6c2] rounded-xl shadow text-sm h-full py-3">
+						<div class=" rounded-xl shadow h-full py-3">
 							<!-- 🐾 리스트 헤더 -->
-							<div class="px-4 py-2 font-bold text-gray-700">
-						<div class="flex justify-between items-center absoiute">
-							<span id="current-month-label" class="pl-6 text-lg font-bold">JULY 5</span>
-							<button
-								class="mr-3 shadow hover:shadow-md transition-shadow duration-300 font-semibold cursor-pointer w-8 h-6 rounded-full bg-[#fdf6c2] shadow flex items-center justify-center text-lg font-bold"
-								onclick="openTodayVaccineModal()">+</button>
+							<div class="px-4 py-1 font-bold text-gray-700 h-1/5">
+								<div class="flex pb-1 mb-1 justify-between items-center border-b-2 border-gray-200">
+									<span id="current-month-label" class="pl-6 text-lg font-bold"></span>
+									<button
+										class="mr-3 shadow hover:shadow-md transition-shadow duration-300 font-semibold cursor-pointer w-8 h-6 rounded-full bg-[#fdf6c2] shadow flex items-center justify-center text-lg font-bold"
+										onclick="openTodayVaccineModal()">+</button>
 
-						</div>
+								</div>
 								예방접종 리스트
 							</div>
 							<!-- ✅ 실제 리스트가 여기에 동적으로 들어감 -->
-							<div id="monthly-vaccine-list" class="px-4 pt-2 space-y-2 overflow-y-auto"
-								style="height: 200px;">
+							<div id="monthly-vaccine-list" class="px-4 pt-2 space-y-2 overflow-y-auto h-4/5">
 								<!-- 자바스크립트에서 appendChild로 추가됨 -->
 							</div>
 						</div>
@@ -195,7 +202,7 @@
 
 					<!-- 오른쪽: 캘린더 -->
 					<div
-						class="min-w-[400px] bg-gradient-to-r from-[#F4FBCC] to-[#fdf6c2] rounded-xl p-4 flex-1 shadow">
+						class="min-w-[400px] bg-gradient-to-r from-[#F4FBCC] to-[#FDF7DA] rounded-xl p-4 flex-1 shadow">
 						<div id="calendar-container" class="w-full h-full"></div>
 					</div>
 
@@ -205,7 +212,7 @@
 			</section>
 
 			<!-- 오른쪽 4칸: 고양이 정보 + 주변 펫살 -->
-			<aside class="min-w-[420px] col-span-4 flex flex-col gap-4">
+			<aside class="hidden xl:flex min-w-[420px] col-span-4 flex flex-col gap-1">
 
 				<!-- 고양이 일러스트 -->
 				<div class="tD_ani bg-white rounded-xl p-4 flex flex-col items-center shadow h-full">
@@ -214,9 +221,9 @@
 				</div>
 
 				<!-- 등록증 -->
-				<div class="ani-card bg-white rounded-xl max-w-md min-w-full aspect-[1/1.6] p-6 shadow">
+				<div class="ani-card bg-white rounded-xl max-w-md min-w-full aspect-[1/1.6] p-3 shadow">
 					<!-- 제목 -->
-					<h2 class="text-2xl font-bold flex items-center gap-1 mb-4 justify-center">
+					<h2 class="text-2xl font-bold flex items-center gap-1 mb-2 justify-center">
 						<span class="text-3xl">🐾</span> 반려동물등록증
 					</h2>
 
@@ -225,7 +232,7 @@
 
 						<!-- 1열 -->
 						<div class="col-span-1">
-							<div class="space-y-1 text-sm">
+							<div class="space-y-1 ">
 								<div><span class="font-semibold mr-2">이름:</span> <span th:text="${pet.name}">떡걸룩</span>
 								</div>
 								<div><span class="font-semibold mr-2">번호:</span> <span th:text="${pet.id}">12345</span>
@@ -235,16 +242,16 @@
 							</div>
 
 							<!-- 특징: grid 밖에 위치 -->
-							<div class="mt-1 text-sm">
+							<div class="mt-1">
 								<span class="font-semibold mr-2">특징:</span>
 								<span th:text="${pet.species}">겁이 많고 높은 데를 아주 좋아해요</span>
 							</div>
 						</div>
 
 						<!-- 2열 -->
-						<div class="col-span-1 space-y-1 text-sm">
-							<div><span class="font-semibold mr-2">생일:</span> <span
-									th:text="${pet.birthDate}">2020.01.01</span></div>
+						<div class="col-span-1 space-y-1 ">
+							<div><span class="font-semibold mr-2">생일:</span> <span th:text="${pet.birthDate}"
+									class="text-sm">2020.01.01</span></div>
 							<div><span class="font-semibold mr-2">중성화:</span> <span>완료</span>
 							</div>
 							<div><span class="font-semibold mr-2">성별:</span> <span th:text="${pet.gender}">암컷</span>
