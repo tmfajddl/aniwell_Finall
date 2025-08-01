@@ -27,9 +27,10 @@ public class SecurityConfig {
                 )
                 .formLogin(login -> login
                         .loginPage("/usr/member/login")
-                        .defaultSuccessUrl("/") // 로그인 성공 시 이동
+                        .defaultSuccessUrl("/", false) // ✅ false로 하면 이전 URL 유지
                         .permitAll()
                 )
+
                 .logout(logout -> logout
                         .logoutUrl("/usr/member/doLogout")   // 로그아웃 URL
                         .logoutSuccessUrl("/")              // 로그아웃 후 메인 페이지로 이동
