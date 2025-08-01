@@ -400,10 +400,8 @@
 		const todayStr = new Date().toISOString().split("T")[0];
 		const dateInput = document.getElementById("datePicker");
 
-		// 사료용
 		const labels = [], deltas = [], bgColors = [], tooltipLabels = [], rawData = [];
 
-		// 물용
 		const waterLabels = [], waterDeltas = [], waterBgColors = [], waterTooltipLabels = [];
 
 		let weightChart = null;
@@ -425,28 +423,26 @@
 			rawData.push(...data);
 			data.sort((a, b) => new Date(a.logDate) - new Date(b.logDate));
 
-			for (let i = 1; i < data.length; i++) {
-				const prev = data[i - 1], curr = data[i];
+			for (let i = 0; i < data.length; i++) {
+				const curr = data[i];
 				const label = new Date(curr.logDate).toTimeString().slice(0, 5);
 
 				// 사료
-				if (curr.foodWeight !== null && prev.foodWeight !== null) {
-					const foodDiff = parseFloat(curr.foodWeight) - parseFloat(prev.foodWeight);
-					const absFood = Math.abs(foodDiff).toFixed(2);
+				if (curr.foodWeight !== null) {
+					const foodValue = parseFloat(curr.foodWeight).toFixed(2);
 					labels.push(label);
-					deltas.push(absFood);
-					bgColors.push(foodDiff < 0 ? 'rgba(76, 175, 80, 0.2)' : 'rgba(255, 165, 0, 0.2)');
-					tooltipLabels.push(foodDiff < 0 ? `섭취: ${absFood}g` : `급식: ${absFood}g`);
+					deltas.push(foodValue);
+					bgColors.push('rgba(255, 193, 7, 0.4)'); // 노란색 계열
+					tooltipLabels.push(`사료 섭취량: ${foodValue}g`);
 				}
 
 				// 물
-				if (curr.waterWeight !== null && prev.waterWeight !== null) {
-					const waterDiff = parseFloat(curr.waterWeight) - parseFloat(prev.waterWeight);
-					const absWater = Math.abs(waterDiff).toFixed(2);
+				if (curr.waterWeight !== null) {
+					const waterValue = parseFloat(curr.waterWeight).toFixed(2);
 					waterLabels.push(label);
-					waterDeltas.push(absWater);
-					waterBgColors.push(waterDiff < 0 ? 'rgba(0, 191, 255, 0.2)' : 'rgba(30, 144, 255, 0.2)');
-					waterTooltipLabels.push(waterDiff < 0 ? `섭취: ${absWater}g` : `물 공급: ${absWater}g`);
+					waterDeltas.push(waterValue);
+					waterBgColors.push('rgba(30, 144, 255, 0.4)');
+					waterTooltipLabels.push(`물 섭취량: ${waterValue}g`);
 				}
 			}
 
@@ -461,10 +457,10 @@
 					data: {
 						labels,
 						datasets: [{
-							label: '사료 변화량 (절대값)',
+							label: '사료 섭취량',
 							data: deltas,
 							backgroundColor: bgColors,
-							borderColor: bgColors.map(c => c.replace('0.2', '1')),
+							borderColor: bgColors.map(c => c.replace('0.4', '1')),
 							borderWidth: 1
 						}]
 					},
@@ -472,9 +468,9 @@
 						responsive: true,
 						maintainAspectRatio: false,
 						scales: {
-							y: {title: {display: true, text: 'g'}},
+							y: { title: { display: true, text: 'g' } },
 							x: {
-								title: {display: true, text: '시간 (HH:MM)'},
+								title: { display: true, text: '시간 (HH:MM)' },
 								display: showFoodXAxis
 							}
 						},
@@ -491,7 +487,7 @@
 				weightChart.data.labels = labels;
 				weightChart.data.datasets[0].data = deltas;
 				weightChart.data.datasets[0].backgroundColor = bgColors;
-				weightChart.data.datasets[0].borderColor = bgColors.map(c => c.replace('0.2', '1'));
+				weightChart.data.datasets[0].borderColor = bgColors.map(c => c.replace('0.4', '1'));
 				weightChart.options.scales.x.display = showFoodXAxis;
 				weightChart.update();
 			}
@@ -504,10 +500,10 @@
 					data: {
 						labels: waterLabels,
 						datasets: [{
-							label: '물 변화량 (절대값)',
+							label: '물 섭취량',
 							data: waterDeltas,
 							backgroundColor: waterBgColors,
-							borderColor: waterBgColors.map(c => c.replace('0.2', '1')),
+							borderColor: waterBgColors.map(c => c.replace('0.4', '1')),
 							borderWidth: 1
 						}]
 					},
@@ -515,9 +511,9 @@
 						responsive: true,
 						maintainAspectRatio: false,
 						scales: {
-							y: {title: {display: true, text: 'g'}},
+							y: { title: { display: true, text: 'g' } },
 							x: {
-								title: {display: true, text: '시간 (HH:MM)'},
+								title: { display: true, text: '시간 (HH:MM)' },
 								display: showWaterXAxis
 							}
 						},
@@ -534,7 +530,7 @@
 				waterChart.data.labels = waterLabels;
 				waterChart.data.datasets[0].data = waterDeltas;
 				waterChart.data.datasets[0].backgroundColor = waterBgColors;
-				waterChart.data.datasets[0].borderColor = waterBgColors.map(c => c.replace('0.2', '1'));
+				waterChart.data.datasets[0].borderColor = waterBgColors.map(c => c.replace('0.4', '1'));
 				waterChart.options.scales.x.display = showWaterXAxis;
 				waterChart.update();
 			}
@@ -558,31 +554,25 @@
 		}
 
 		function updateChartWithNewLog(newLog) {
-			const last = rawData[rawData.length - 1];
 			const timeLabel = new Date(newLog.logDate).toTimeString().slice(0, 5);
-
 			rawData.push(newLog);
 
-			if (newLog.foodWeight !== null && last.foodWeight !== null) {
-				const foodDiff = parseFloat(newLog.foodWeight) - parseFloat(last.foodWeight);
-				const absFood = Math.abs(foodDiff).toFixed(2);
-				const foodColor = foodDiff < 0 ? 'rgba(76, 175, 80, 0.2)' : 'rgba(255, 165, 0, 0.2)';
+			if (newLog.foodWeight !== null) {
+				const foodValue = parseFloat(newLog.foodWeight).toFixed(2);
 				labels.push(timeLabel);
-				deltas.push(absFood);
-				bgColors.push(foodColor);
-				tooltipLabels.push(foodDiff < 0 ? `섭취: ${absFood}g` : `급식: ${absFood}g`);
+				deltas.push(foodValue);
+				bgColors.push('rgba(255, 193, 7, 0.4)');
+				tooltipLabels.push(`사료 남은 양: ${foodValue}g`);
 				weightChart.options.scales.x.display = true;
 				weightChart.update();
 			}
 
-			if (newLog.waterWeight !== null && last.waterWeight !== null) {
-				const waterDiff = parseFloat(newLog.waterWeight) - parseFloat(last.waterWeight);
-				const absWater = Math.abs(waterDiff).toFixed(2);
-				const waterColor = waterDiff < 0 ? 'rgba(0, 191, 255, 0.2)' : 'rgba(30, 144, 255, 0.2)';
+			if (newLog.waterWeight !== null) {
+				const waterValue = parseFloat(newLog.waterWeight).toFixed(2);
 				waterLabels.push(timeLabel);
-				waterDeltas.push(absWater);
-				waterBgColors.push(waterColor);
-				waterTooltipLabels.push(waterDiff < 0 ? `섭취: ${absWater}g` : `물 공급: ${absWater}g`);
+				waterDeltas.push(waterValue);
+				waterBgColors.push('rgba(30, 144, 255, 0.4)');
+				waterTooltipLabels.push(`물 남은 양: ${waterValue}g`);
 				waterChart.options.scales.x.display = true;
 				waterChart.update();
 			}
@@ -592,21 +582,21 @@
 			if (!dateStr) dateStr = todayStr;
 
 			fetch(`/usr/pet/health/logs?petId=${petId}&date=${dateStr}`)
-				.then(res => {
-					if (!res.ok) throw new Error(`서버 응답 오류: ${res.status}`);
-					return res.json();
-				})
-				.then(data => {
-					renderChart(data);
-					if (dateStr === todayStr) connectWebSocket();
-					else disconnectWebSocket();
-				})
-				.catch(err => {
-					console.error("🚨 데이터 로딩 실패:", err);
-					if (!rawData || rawData.length === 0) {
-						alert("데이터를 불러올 수 없습니다.");
-					}
-				});
+					.then(res => {
+						if (!res.ok) throw new Error(`서버 응답 오류: ${res.status}`);
+						return res.json();
+					})
+					.then(data => {
+						renderChart(data);
+						if (dateStr === todayStr) connectWebSocket();
+						else disconnectWebSocket();
+					})
+					.catch(err => {
+						console.error("🚨 데이터 로딩 실패:", err);
+						if (!rawData || rawData.length === 0) {
+							alert("데이터를 불러올 수 없습니다.");
+						}
+					});
 		}
 
 		function openFeedingPanel() {
@@ -628,6 +618,7 @@
 			disconnectWebSocket();
 		}
 	</script>
+
 
 
 
