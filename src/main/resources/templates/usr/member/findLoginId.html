@@ -2,73 +2,52 @@
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 
 <head>
-	<meta charset="UTF-8" />
-	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-	<title th:text="'아이디 찾기 - Aniwell'">아이디 찾기</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title th:text="'아이디 찾기 - Aniwell'">아이디 찾기</title>
 
-	<!-- CSS & JS -->
-	<link rel="stylesheet" th:href="@{/resource/css/login_join.css}" />
-	<script src="https://cdn.tailwindcss.com"></script>
-	<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-	<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <!-- CSS & JS -->
+  <link rel="stylesheet" th:href="@{/resource/css/login_join.css}" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 
-<body class="bg-white w-full">
+<body class="bg-white min-w-[200px] w-screen">
 
-	<div id="form-wrapper" class="opacity-100 animate-slide-up flex flex-col items-center justify-center px-4">
-		<section class="w-full bg-white p-6 flex flex-col content-center">
-			<h1 class="text-2xl font-bold mb-6 text-center">아이디 찾기</h1>
+  <div id="form-wrapper" class="opacity-100 animate-slide-up flex flex-col items-center justify-center px-4">
+    <section class="w-full bg-white p-6">
+      <h1 class="text-2xl font-bold mb-6 text-center">아이디 찾기</h1>
 
-			<form th:action="@{/member/doFindLoginId}" method="post" onsubmit="return MemberFindLoginId__submit(this)">
-				<input type="hidden" name="afterFindLoginIdUri" th:value="${param.afterFindLoginIdUri}" />
+	  <form id="findIdForm">
+        <input type="hidden" name="afterFindLoginIdUri" th:value="${param.afterFindLoginIdUri}" />
 
-				<div class="w-[75%] mx-auto space-y-4">
-					<input type="text" name="name" placeholder="이름을 입력해주세요" required th:value="${param.loginId}"
-						class="w-full text-center py-2 focus:border-yellow-400" />
+        <!-- 이름 입력 -->
+        <div class="mb-4 text-center w-full">
+          <label for="name" class="block mb-1 font-medium text-sm">이름</label>
+          <input type="text" name="name" id="name" class="w-full text-center py-2 focus:border-yellow-400" placeholder="이름을 입력해주세요" autocomplete="off" />
+        </div>
 
-					<input type="text" name="email" placeholder="이메일을 입력해주세요" required
-						class="w-full text-center py-2 focus:border-yellow-400" />
-				</div>
+        <!-- 이메일 입력 -->
+        <div class="mb-4 text-center w-full">
+          <label for="email" class="block mb-1 font-medium text-sm">이메일</label>
+          <input type="text" name="email" id="email" class="w-full text-center py-2 focus:border-yellow-400" placeholder="이메일을 입력해주세요" autocomplete="off" />
+        </div>
 
-				<!-- 버튼 영역 -->
-				<div class="flex justify-center mt-6 flex-wrap gap-2">
-					<button type="submit" class="btn btn-primary w-full sm:w-auto">아이디 찾기</button>
-				</div>
-			</form>
+        <!-- 버튼 영역 -->
+        <div class="flex justify-center mt-6 flex-wrap gap-2">
+          <button type="submit" class="btn btn-primary w-full sm:w-auto">아이디 찾기</button>
+        </div>
+      </form>
 
-			<div class="text-center mt-6">
-				<button class="btn btn-outline" type="button" onclick="history.back();">뒤로가기</button>
-			</div>
-		</section>
-	</div>
+      <div class="text-center mt-6 py-6">
+        <button class="btn btn-outline" type="button" onclick="window.parent.closeFindIdIframe()">뒤로가기</button>
+      </div>
+    </section>
+  </div>
 
-	<script>
-		function MemberFindLoginId__submit(form) {
-			form.name.value = form.name.value.trim();
-			form.email.value = form.email.value.trim();
 
-			if (form.name.value.length === 0) {
-				Swal.fire({
-					icon: 'warning',
-					title: '이름을 입력해주세요'
-				});
-				form.name.focus();
-				return false;
-			}
-
-			if (form.email.value.length === 0) {
-				Swal.fire({
-					icon: 'warning',
-					title: '이메일을 입력해주세요'
-				});
-				form.email.focus();
-				return false;
-			}
-
-			return true;
-		}
-	</script>
-
+  <script th:src="@{/resource/js/login_join.js}"></script>
 </body>
 
 </html>
