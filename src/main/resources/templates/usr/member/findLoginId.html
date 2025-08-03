@@ -1,69 +1,73 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
 
 <head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Login</title>
-	<link rel="stylesheet" th:href="@{/resource/css/login_join.css}">
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title th:text="'아이디 찾기 - Aniwell'">아이디 찾기</title>
+
+	<!-- CSS & JS -->
+	<link rel="stylesheet" th:href="@{/resource/css/login_join.css}" />
 	<script src="https://cdn.tailwindcss.com"></script>
 	<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 
-<body class="bg-white">
+<body class="bg-white w-full">
 
-	<div class="min-h-[680px] opacity-0 animate-slide-up form-wrapper flex-row overflow-hidden min-w-content relative"
-		id="form-wrapper">
+	<div id="form-wrapper" class="opacity-100 animate-slide-up flex flex-col items-center justify-center px-4">
+		<section class="w-full bg-white p-6 flex flex-col content-center">
+			<h1 class="text-2xl font-bold mb-6 text-center">아이디 찾기</h1>
 
-		<c:set var="pageTitle" value="아이디 찾기" />
-		<%@ include file="../common/head.jspf" %>
+			<form th:action="@{/member/doFindLoginId}" method="post" onsubmit="return MemberFindLoginId__submit(this)">
+				<input type="hidden" name="afterFindLoginIdUri" th:value="${param.afterFindLoginIdUri}" />
 
-			<script>
-				function MemberFindLoginId__submit(form) {
-					form.name.value = form.name.value.trim();
-					form.email.value = form.email.value.trim();
+				<div class="w-[75%] mx-auto space-y-4">
+					<input type="text" name="name" placeholder="이름을 입력해주세요" required th:value="${param.loginId}"
+						class="w-full text-center py-2 focus:border-yellow-400" />
 
-					if (form.name.value.length == 0) {
-						alert('이름을 입력해주세요');
-						form.name.focus();
-						return false;
-					}
-					if (form.email.value.length == 0) {
-						alert('이메일을 입력해주세요');
-						form.email.focus();
-						return false;
-					}
-					return true;
-				}
-			</script>
-
-			<section class="mt-24 text-lg px-4">
-				<div class="mx-auto max-w-xl bg-white p-6 rounded-xl shadow-md">
-					<h1 class="text-2xl font-bold mb-6 text-center">아이디 찾기</h1>
-					<form action="../member/doFindLoginId" method="POST"
-						onsubmit="return MemberFindLoginId__submit(this);">
-						<input type="hidden" name="afterFindLoginIdUri" value="${param.afterFindLoginIdUri}" />
-						<div class="mb-4">
-							<label class="block mb-1">이름</label>
-							<input type="text" name="name" class="input input-bordered w-full" placeholder="이름을 입력해주세요"
-								autocomplete="off">
-						</div>
-						<div class="mb-4">
-							<label class="block mb-1">이메일</label>
-							<input type="text" name="email" class="input input-bordered w-full"
-								placeholder="이메일을 입력해주세요" autocomplete="off">
-						</div>
-						<div class="flex justify-between mt-6">
-							<button type="submit" class="btn btn-primary">아이디 찾기</button>
-							<a class="btn btn-outline" href="../member/login">로그인</a>
-							<a class="btn btn-outline btn-success" href="${rq.findLoginPwUri}">비밀번호 찾기</a>
-						</div>
-					</form>
-					<div class="text-center mt-4">
-						<button class="btn btn-outline" type="button" onclick="history.back();">뒤로가기</button>
-					</div>
+					<input type="text" name="email" placeholder="이메일을 입력해주세요" required
+						class="w-full text-center py-2 focus:border-yellow-400" />
 				</div>
-			</section>
+
+				<!-- 버튼 영역 -->
+				<div class="flex justify-center mt-6 flex-wrap gap-2">
+					<button type="submit" class="btn btn-primary w-full sm:w-auto">아이디 찾기</button>
+				</div>
+			</form>
+
+			<div class="text-center mt-6">
+				<button class="btn btn-outline" type="button" onclick="history.back();">뒤로가기</button>
+			</div>
+		</section>
+	</div>
+
+	<script>
+		function MemberFindLoginId__submit(form) {
+			form.name.value = form.name.value.trim();
+			form.email.value = form.email.value.trim();
+
+			if (form.name.value.length === 0) {
+				Swal.fire({
+					icon: 'warning',
+					title: '이름을 입력해주세요'
+				});
+				form.name.focus();
+				return false;
+			}
+
+			if (form.email.value.length === 0) {
+				Swal.fire({
+					icon: 'warning',
+					title: '이메일을 입력해주세요'
+				});
+				form.email.focus();
+				return false;
+			}
+
+			return true;
+		}
+	</script>
 
 </body>
 
