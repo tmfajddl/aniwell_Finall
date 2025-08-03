@@ -68,7 +68,7 @@
 					</div>
 
 					<div class="flex justify-center items-center mt-3 space-x-4 text-gray-700 text-sm font-medium">
-						<a href="/find-id">아이디 찾기</a>
+						<button onclick="openFindIdIframe()">아이디 찾기</button>
 						<span class="text-gray-400">|</span>
 						<a href="/find-password">비밀번호 찾기</a>
 					</div>
@@ -162,6 +162,18 @@
 		</div>
 	</div>
 
+	<div id="findModal" class="hidden fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center">
+	  <div class="bg-white w-[90%] max-w-md h-[60%] min-h-[100px] rounded-xl overflow-hidden relative shadow-lg">
+	    <!-- 닫기 버튼 -->
+	    <button onclick="closeFindIdIframe()" class="absolute top-2 right-3 text-gray-500 hover:text-black text-xl z-10">&times;</button>
+	    
+	    <!-- iframe -->
+	    <iframe id="findIdIframe" src="" class="w-full h-full border-none"></iframe>
+	  </div>
+	</div>
+
+	
+	<script th:src="@{/resource/js/login_join.js}"></script>
 	<script>
 		// 로그인 ↔ 회원가입 전환
 		$(document).ready(function () {
@@ -524,6 +536,7 @@
 			if (event.data && event.data.email) firebaseLoginWithServerToken(event.data.email);
 		});
 	</script>
+	
 
 </body>
 
