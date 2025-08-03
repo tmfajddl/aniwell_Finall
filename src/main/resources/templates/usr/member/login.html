@@ -84,7 +84,7 @@
 						</a>
 
 						<!-- 네이버  -->
-						<a href="javascript:loginWithGoogle()"
+						<a href="javascript:openNaverPopup()"
 							class="flex items-center border px-4 py-2 rounded-xl shadow hover:shadow-md bg-white">
 							<img th:src="@{/img.socialLogin/btnG_아이콘사각.png}" alt="네이버 로그인" class="w-8 h-8" />
 							<span class="text-sm font-medium text-gray-700 w-full text-center">네이버 로그인</span>
@@ -356,7 +356,6 @@
 
 	<!-- ✅ Firebase 초기화 -->
 	<script>
-
 
 		firebase.initializeApp(firebaseConfig);
 		console.log("🔥 Firebase 초기화 완료:", firebase.apps.length);
