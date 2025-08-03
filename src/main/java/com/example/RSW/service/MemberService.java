@@ -8,6 +8,7 @@ import com.google.firebase.auth.UserRecord;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.example.RSW.repository.MemberRepository;
@@ -39,6 +40,8 @@ public class MemberService {
     @Autowired
     private RedisTemplate<String, String> redisTemplate;
 
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     public MemberService(MemberRepository memberRepository) {
         this.memberRepository = memberRepository;
@@ -62,8 +65,10 @@ public class MemberService {
     }
 
     private void setTempPassword(Member actor, String tempPassword) {
-        memberRepository.modify(actor.getId(), Ut.sha256(tempPassword), null, null, null, null, null);
+        String encodedPw = passwordEncoder.encode(tempPassword);
+        memberRepository.modify(actor.getId(), encodedPw, null, null, null, null, null);
     }
+
 
     public ResultData<Integer> join(String loginId, String loginPw, String name, String nickname, String cellphone,
                                     String email, String address, String authName, int authLevel) {
@@ -80,8 +85,11 @@ public class MemberService {
             return ResultData.from("F-8", Ut.f("이미 사용중인 이름(%s)과 이메일(%s)입니다", name, email));
         }
 
+        // ✅ 비밀번호 암호화
+        String encodedPw = passwordEncoder.encode(loginPw);
+
         // 회원가입 처리 (필수 컬럼을 테이블에 맞게 추가)
-        memberRepository.doJoin(loginId, loginPw, name, nickname, cellphone, email, address, authName, authLevel);
+        memberRepository.doJoin(loginId, encodedPw, loginPw, name, nickname, cellphone, email, address, authName, authLevel);
 
         // 최근 삽입된 회원 ID 조회
         int id = memberRepository.getLastInsertId();
@@ -108,8 +116,9 @@ public class MemberService {
     public ResultData modify(int loginedMemberId, String loginPw, String name, String nickname, String cellphone,
                              String email, String photo) {
 
-        loginPw = Ut.sha256(loginPw);
-
+        if (loginPw != null && !loginPw.trim().isEmpty()) {
+            loginPw = passwordEncoder.encode(loginPw);
+        }
         memberRepository.modify(loginedMemberId, loginPw, name, nickname, cellphone, email, photo);
 
         return ResultData.from("S-1", "회원정보 수정 완료");

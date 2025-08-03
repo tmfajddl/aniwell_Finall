@@ -13,5 +13,7 @@ public interface PetHealthRepository {
     List<PetHealthLog> findLogsByPetId(int petId);
 
     List<PetHealthLog> findByPetIdAndDate(int petId, LocalDate date);
+
+    List<Map<String, Object>> getWeeklyStats(int petId);
 }
 

@@ -238,7 +238,7 @@ public class NotificationService {
 		int leaderId = crew.getLeaderId();
 		Member requester = memberService.getMemberById(requesterId);
 		String title = requester.getNickname() + "님이 크루 참가를 신청했습니다.";
-		String link = "/usr/walkCrew/cafeHome=" + crewId;
+		String link = "/usr/crewCafe/cafeHome?crewId=" + crewId;
 
 		addNotification(leaderId, requesterId, "CREW_JOIN_REQUEST", title, link);
 		messagingTemplate.convertAndSend("/topic/notifications/" + leaderId, "new");
@@ -251,10 +251,9 @@ public class NotificationService {
 			return;
 
 		String title = "신청하신 크루 [" + crew.getTitle() + "]에 수락되었습니다.";
-		String link = "/usr/walkCrew/cafeHome=" + crewId;
+		String link = "/usr/crewCafe/cafeHome?crewId=" + crewId;
 
 		addNotification(memberId, crew.getLeaderId(), "CREW_JOIN_ACCEPTED", title, link);
 		messagingTemplate.convertAndSend("/topic/notifications/" + memberId, "new");
 	}
-
 }
