@@ -129,4 +129,9 @@ public class WalkCrewService {
 	public void updateLeader(int crewId, int newLeaderId) {
 		walkCrewRepository.updateCrewLeader(crewId, newLeaderId);
 	}
+
+	public boolean updateDescription(int crewId, String newDescription) {
+		return walkCrewRepository.updateDescriptionById(crewId, newDescription) > 0;
+	}
+
 }
