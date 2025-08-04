@@ -55,8 +55,8 @@ public class UsrArticleController {
 
 	@Autowired
 	private SpringResourceTemplateResolver springResourceTemplateResolver;
-    @Autowired
-    private WalkCrewMemberService walkCrewMemberService;
+	@Autowired
+	private WalkCrewMemberService walkCrewMemberService;
 
 	UsrArticleController(BeforeActionInterceptor beforeActionInterceptor) {
 		this.beforeActionInterceptor = beforeActionInterceptor;
@@ -216,7 +216,7 @@ public class UsrArticleController {
 	@PostMapping("/usr/article/doDelete")
 	public ResultData doDelete(HttpServletRequest req, @RequestParam int id, @RequestParam int crewId) {
 		Rq rq = (Rq) req.getAttribute("rq");
-System.out.println(id+" / "+crewId);
+		System.out.println(id + " / " + crewId);
 		if (rq == null || !rq.isLogined()) {
 			return ResultData.from("F-0", "로그인 후 이용해주세요.");
 		}
@@ -259,8 +259,7 @@ System.out.println(id+" / "+crewId);
 				canWriteReply = true;
 			} else {
 				List<WalkCrewMember> crewMembers = walkCrewMemberService.getMembersByCrewId(article.getCrewId());
-				canWriteReply = crewMembers.stream()
-						.anyMatch(cm -> cm.getMemberId() == loginMemberId);
+				canWriteReply = crewMembers.stream().anyMatch(cm -> cm.getMemberId() == loginMemberId);
 				model.addAttribute("crewMembers", crewMembers); // 필요하면 계속 넘김
 			}
 		}
@@ -400,9 +399,13 @@ System.out.println(id+" / "+crewId);
 		System.err.printf("%s %s", scheduleTitle, scheduleBody);
 		int loginedMemberId = rq.getLoginedMemberId();
 
-		// ✅ 기존과 동일하게 저장만 처리
-		articleService.writeSchedule(crewId, loginedMemberId, scheduleDate, scheduleTitle, scheduleBody);
+		// ✅ 일정 등록
+		int scheduleId = articleService.writeSchedule(crewId, loginedMemberId, scheduleDate, scheduleTitle,
+				scheduleBody);
 
+		// ✅ ✨ 작성자를 자동으로 참가자로 등록
+		articleService.joinSchedule(scheduleId, loginedMemberId);
+		
 		// ✅ 성공 메시지 리턴 (articleId 없이)
 		return ResultData.from("S-1", "모임 일정이 등록되었습니다.",
 				Map.of("crewId", crewId, "redirectUrl", "/usr/crewCafe/cafeHome?crewId=" + crewId));
