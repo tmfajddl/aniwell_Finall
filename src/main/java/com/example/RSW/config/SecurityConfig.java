@@ -38,7 +38,7 @@ public class SecurityConfig {
 				.logout(logout -> logout.logoutUrl("/usr/member/doLogout").logoutSuccessUrl("/")
 						.invalidateHttpSession(true).deleteCookies("JSESSIONID").permitAll())
 
-				// :흰색_확인_표시: iframe 허용 설정 추가
+				// ✅ iframe 허용 설정 추가
 				.headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()));
 
 		return http.build();
@@ -49,4 +49,4 @@ public class SecurityConfig {
 	public PasswordEncoder passwordEncoder() {
 		return new BCryptPasswordEncoder();
 	}
-}
+
