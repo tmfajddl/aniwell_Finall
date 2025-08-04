@@ -256,5 +256,4 @@ public class NotificationService {
 		addNotification(memberId, crew.getLeaderId(), "CREW_JOIN_ACCEPTED", title, link);
 		messagingTemplate.convertAndSend("/topic/notifications/" + memberId, "new");
 	}
-
 }
