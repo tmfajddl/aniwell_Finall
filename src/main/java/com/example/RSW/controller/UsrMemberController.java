@@ -385,16 +385,16 @@ public class UsrMemberController {
 
     @RequestMapping("/usr/member/doFindLoginId")
     @ResponseBody
-    public String doFindLoginId(@RequestParam(defaultValue = "/usr/member/login") String afterFindLoginIdUri,
+    public ResultData doFindLoginId(@RequestParam(defaultValue = "/usr/member/login") String afterFindLoginIdUri,
                                 String name, String email) {
 
         Member member = memberService.getMemberByNameAndEmail(name, email);
 
         if (member == null) {
-            return Ut.jsHistoryBack("F-1", "너는 없는 사람이야");
+            return ResultData.from("F-1", "해당 아이디 없");
         }
 
-        return Ut.jsReplace("S-1", Ut.f("너의 아이디는 [ %s ] 야", member.getLoginId()), afterFindLoginIdUri);
+        return ResultData.from("S-1", "getLoginId",member.getLoginId());
     }
 
 
@@ -406,22 +406,22 @@ public class UsrMemberController {
 
     @RequestMapping("/usr/member/doFindLoginPw")
     @ResponseBody
-    public String doFindLoginPw(@RequestParam(defaultValue = "/") String afterFindLoginPwUri, String loginId,
+    public ResultData doFindLoginPw(@RequestParam(defaultValue = "/") String afterFindLoginPwUri, String loginId,
                                 String email) {
 
         Member member = memberService.getMemberByLoginId(loginId);
 
         if (member == null) {
-            return Ut.jsHistoryBack("F-1", "너는 없는 사람이야");
+            return ResultData.from("F-1", "너는 없는 사람이야");
         }
 
         if (member.getEmail().equals(email) == false) {
-            return Ut.jsHistoryBack("F-2", "일치하는 이메일이 없는데?");
+            return ResultData.from("F-2", "일치하는 이메일이 없는데?");
         }
 
         ResultData notifyTempLoginPwByEmailRd = memberService.notifyTempLoginPwByEmail(member);
 
-        return Ut.jsReplace(notifyTempLoginPwByEmailRd.getResultCode(), notifyTempLoginPwByEmailRd.getMsg(),
+        return ResultData.from(notifyTempLoginPwByEmailRd.getResultCode(), notifyTempLoginPwByEmailRd.getMsg(),
                 afterFindLoginPwUri);
     }
 
