@@ -112,9 +112,9 @@
 
 
 	<select id="getWalkCrews"
-	resultType="com.example.RSW.vo.WalkCrew">
-	SELECT * FROM walk_crew WHERE id = #{memberId}
-</select>
+		resultType="com.example.RSW.vo.WalkCrew">
+		SELECT * FROM walk_crew WHERE id = #{memberId}
+	</select>
 
 	<!-- ✅ 특정 멤버가 해당 크루에 이미 참가했는지 확인 -->
 	<select id="countByCrewIdAndMemberId" resultType="int">
@@ -244,7 +244,16 @@
 	<update id="updateCrewLeader">
 		UPDATE walk_crew
 		SET leaderId = #{newLeaderId}
+		WHERE id
+		= #{crewId}
+	</update>
+
+	<!-- 크루 소개글 수정하기 -->
+	<update id="updateDescriptionById">
+		UPDATE walk_crew
+		SET description = #{newDescription}
 		WHERE id = #{crewId}
 	</update>
+
 
 </mapper>

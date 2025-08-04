@@ -97,18 +97,20 @@
 		WHERE wcm.crewId = #{crewId}
 		AND wcm.status = 'APPROVED'
 	</select>
-	
-	
+
+
 	<!-- ✅ 특정 크루에 소속된 멤버 전체 조회 (회원 정보 포함) -->
 	<select id="intFindMembersByCrewId">
 		SELECT wcm.memberId
 		FROM walk_crew_member wcm
-		LEFT JOIN member m ON wcm.memberId = m.id
+		LEFT JOIN
+		member m ON wcm.memberId = m.id
 		WHERE wcm.crewId = #{crewId}
-		AND wcm.status = 'APPROVED'
+		AND
+		wcm.status = 'APPROVED'
 	</select>
-	
-	
+
+
 
 	<!-- 리더 변경 -->
 	<update id="updateRole">
