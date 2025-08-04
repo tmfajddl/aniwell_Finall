@@ -46,6 +46,13 @@
 
 					<div class="text-sm text-gray-700 mt-4" th:text="${crew.description}">Lorem ipsum dolor, sit amet consectetur
 						adipisicing elit...</div>
+
+					<!-- ✅ 소개글 수정 버튼 (리더만 보이게) -->
+					<div th:if="${isLeader}" class="mt-2">
+						<button onclick="showEditDescriptionModal()" class="text-sm text-blue-600 underline hover:text-blue-800">소개글
+							수정</button>
+					</div>
+
 				</div>
 
 				<div class="row-span-1 flex justify-center h-[70%] self-end">
@@ -238,6 +245,19 @@
 	<div id="sideModal"
 		class="bg-white fixed top-0 right-0 h-full w-[400px] shadow-lg z-50 transform translate-x-full transition-transform duration-300 ease-in-out">
 		<!-- ✅ 이곳은 JS에서 Ajax 호출로 채워짐 -->
+	</div>
+
+	<!-- ✅ 소개글 수정 모달 -->
+	<div id="descriptionModal" class="hidden fixed inset-0 bg-black bg-opacity-40 z-50 flex justify-center items-center">
+		<div class="bg-white rounded-lg p-6 w-full max-w-md">
+			<h2 class="text-lg font-bold mb-2">소개글 수정</h2>
+			<textarea id="newDescriptionInput" rows="5" class="w-full border rounded p-2 mb-3" placeholder="새로운 소개글을 입력하세요..."></textarea>
+			<div class="flex justify-end gap-2">
+				<button onclick="document.getElementById('descriptionModal').classList.add('hidden')"
+					class="px-3 py-1 bg-gray-300 rounded">취소</button>
+				<button onclick="submitDescriptionEdit()" class="px-3 py-1 bg-blue-500 text-white rounded">수정</button>
+			</div>
+		</div>
 	</div>
 
 	<!-- ✅ 역할 변경 및 멤버 목록 Ajax 렌더링 JS -->
@@ -513,6 +533,24 @@
 		}
 	</script>
 
+	<!-- ✅ 소개글 수정 모달 관련 함수 -->
+	<script>
+  function showEditDescriptionModal() {
+    document.getElementById('descriptionModal').classList.remove('hidden');
+    const currentDesc = document.querySelector('[th\\:text="${crew.description}"]')?.textContent || '';
+    document.getElementById('newDescriptionInput').value = currentDesc;
+  }
+
+  function submitDescriptionEdit() {
+    const newDesc = document.getElementById('newDescriptionInput').value.trim();
+    if (newDesc === '') {
+      Toast.fire({ icon: 'warning', title: '소개글을 입력해주세요.' });
+      return;
+    }
+    modifyDescription(crewId, newDesc);
+  }
+</script>
+
 	<script>
 		// 모달 외부 클릭 시 닫기
 		document.addEventListener('DOMContentLoaded', () => {
@@ -546,6 +584,34 @@
 			}
 		});
 	</script>
+
+	<script>
+  // ✅ 소개글 수정 요청 함수
+  function modifyDescription(crewId, newDescription) {
+    $.post('/usr/walkCrew/doModifyDescription', {
+        crewId: crewId,
+        newDescription: newDescription
+    }).done(function(res) {
+        if (res.resultCode === 'S-1') {
+            Toast.fire({
+                icon: 'success',
+                title: '소개글이 수정되었습니다.'
+            });
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            Toast.fire({
+                icon: 'error',
+                title: res.msg
+            });
+        }
+    }).fail(function() {
+        Toast.fire({
+            icon: 'error',
+            title: '서버 오류가 발생했습니다.'
+        });
+    });
+  }
+</script>
 
 
 

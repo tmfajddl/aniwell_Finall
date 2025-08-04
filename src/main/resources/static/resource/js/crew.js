@@ -1280,7 +1280,7 @@ function transLeader() {
 
 // 강퇴 처리
 function kickMember() {
-	const id = document.getElementById("memberDetail").dataset.userId;
+	const id = document.getElementById("memberDetail").dataset.usrId;
 
 	if (!confirm(`정말로 ID ${id} 회원을 강퇴하시겠습니까?`)) return;
 	$.ajax({
