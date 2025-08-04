@@ -30,8 +30,8 @@ public class SecurityConfig {
 						.anyRequest().authenticated())
 
 				// ✅ 폼 로그인 설정
-				.formLogin(login -> login.loginPage("/usr/member/login").defaultSuccessUrl("/", false) // 로그인 성공 후 이전
-																										// URL 유지
+				.formLogin(login -> login.loginPage("/usr/member/login")
+						.defaultSuccessUrl("/", false) // 로그인 성공 후 이전																// URL 유지
 						.permitAll())
 
 				// ✅ 로그아웃 설정
