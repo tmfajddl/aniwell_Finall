@@ -366,20 +366,21 @@
 
 
 	<!-- 일정을 등록하기 -->
-	<insert id="writeSchedule">
+	<insert id="writeSchedule" parameterType="Article"
+		useGeneratedKeys="true" keyProperty="id">
 		INSERT INTO article
 		SET
-		boardId = 5,
+		boardId = #{boardId},
 		crewId = #{crewId},
-		memberId = #{loginedMemberId},
-		title = #{scheduleTitle},
-		body =
-		#{scheduleBody},
+		memberId = #{memberId},
+		title =
+		#{title},
+		body = #{body},
 		regDate = NOW(),
 		updateDate = NOW(),
-		scheduleDate =
-		#{scheduleDate}
+		scheduleDate = #{scheduleDate}
 	</insert>
+
 
 	<!-- 일정 참가자 조회 -->
 	<insert id="insertScheduleParticipant">

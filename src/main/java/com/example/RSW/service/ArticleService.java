@@ -207,10 +207,18 @@ public class ArticleService {
 		return articleRepository.getNoticeArticlesByBoardId(boardId, limit);
 	}
 
-	// 일정등록하기
-	public void writeSchedule(int crewId, int loginedMemberId, LocalDate scheduleDate, String scheduleTitle,
+	// ✅ 일정등록 후 생성된 scheduleId 반환하도록 수정
+	public int writeSchedule(int crewId, int loginedMemberId, LocalDate scheduleDate, String scheduleTitle,
 			String scheduleBody) {
-		articleRepository.writeSchedule(crewId, loginedMemberId, scheduleDate, scheduleTitle, scheduleBody);
+
+		Article article = Article.builder().crewId(crewId).memberId(loginedMemberId)
+				.scheduleDate(java.sql.Date.valueOf(scheduleDate)) // ← ⚠️ 타입 변환 필요할 수 있음
+				.title(scheduleTitle).body(scheduleBody).boardId(5) // 일정용 boardId 고정
+				.build();
+
+		articleRepository.writeSchedule(article); // insert 실행 (id 자동 주입)
+
+		return article.getId(); // 주입된 PK 반환
 	}
 
 	// 공지사항 구분하기 (일반 공지사항 / 크루까페 공지사항)
