@@ -390,8 +390,8 @@
                 return;
             }
 
-            const customToken = result.data1; // ✅ firebase 토큰
-            const provider = result.data2;    // ✅ provider 정보
+            const customToken = result.data1; // firebase 토큰
+            const provider = result.data2;    // provider 정보
 
             const userCredential = await firebase.auth().signInWithCustomToken(customToken);
 
