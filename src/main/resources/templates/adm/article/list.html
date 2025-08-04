@@ -6,12 +6,12 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" />
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" th:href="@{/resource/css/common.css}">
-	<link rel="stylesheet" th:href="@{/resource/css/global.css}">
+<link rel="stylesheet" th:href="@{/resource/css/global.css}">
 <style>
-	.scroll-box {
-		max-height: 400px;
-		overflow-y: auto;
-	}
+.scroll-box {
+	max-height: 400px;
+	overflow-y: auto;
+}
 </style>
 </head>
 <body class="bg-gradient-to-b from-[#e4f0b9] to-[#fcdca9]  min-h-[720px]">
@@ -340,19 +340,22 @@
 						<!-- 제목 입력 -->
 						<div>
 							<label for="modal-title" class="block font-semibold mb-1">제목</label>
-							<input type="text" id="modal-title" name="title" required class="input input-bordered w-full" placeholder="제목을 입력하세요" />
+							<input type="text" id="modal-title" name="title" required class="input input-bordered w-full"
+								placeholder="제목을 입력하세요" />
 						</div>
 
 						<!-- 내용 입력 -->
 						<div>
 							<label for="modal-body" class="block font-semibold mb-1">내용</label>
-							<textarea id="modal-body" name="body" rows="8" required class="textarea textarea-bordered w-full" placeholder="내용을 입력하세요"></textarea>
+							<textarea id="modal-body" name="body" rows="8" required class="textarea textarea-bordered w-full"
+								placeholder="내용을 입력하세요"></textarea>
 						</div>
 
 						<!-- 이미지 업로드 -->
 						<div>
 							<label for="modal-imageFile" class="block font-semibold mb-1">이미지 첨부 (선택)</label>
-							<input type="file" id="modal-imageFile" name="imageFile" accept="image/*" class="file-input file-input-bordered w-full" />
+							<input type="file" id="modal-imageFile" name="imageFile" accept="image/*"
+								class="file-input file-input-bordered w-full" />
 						</div>
 
 						<!-- 버튼 -->
@@ -1030,4 +1033,3 @@
 		</main>
 	</div>
 </body>
-</html>
