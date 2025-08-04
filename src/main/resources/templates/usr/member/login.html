@@ -68,9 +68,9 @@
 					</div>
 
 					<div class="flex justify-center items-center mt-3 space-x-4 text-gray-700 text-sm font-medium">
-						<a href="/find-id">아이디 찾기</a>
+						<button onclick="openFindIdIframe()">아이디 찾기</button>
 						<span class="text-gray-400">|</span>
-						<a href="/find-password">비밀번호 찾기</a>
+						<button onclick="openFindPwIframe()">비밀번호 찾기</button>
 					</div>
 
 					<button class="w-[75%] min-w-[100px] sign-in-button" type="submit">sign in</button>
@@ -145,7 +145,7 @@
 							</select>
 
 							<input type="hidden" id="authLevel" name="authLevel" th:value="${param.authLevel ?: 1}" />
-							<button type="button" class="prev-button" onclick="goToStep(1)">뒤로가기</button>
+							<button type="button" class="prev-button" onclick="closeFindIdIframe()">뒤로가기</button>
 							<button type="submit" class="submit-button bg-green-400 p-2 rounded text-white">sign
 								up</button>
 						</div>
@@ -162,6 +162,20 @@
 		</div>
 	</div>
 
+	<div id="findModal" class="hidden fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center">
+		<div id="findModalContent"
+			class="w-full max-w-md h-[60%] min-h-[100px] rounded-xl overflow-hidden relative shadow-lg">
+			<iframe id="findIdIframe" src="" class="w-full h-full border-none"></iframe>
+		</div>
+	</div>
+
+	<div id="findPwModal" class="hidden fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center">
+		<div id="findModalContent" class="w-full max-w-md h-[60%] rounded-xl overflow-hidden shadow-lg relative">
+			<iframe id="findPwForm" src="" class="w-full h-full border-none"></iframe>
+		</div>
+	</div>
+
+	<script th:src="@{/resource/js/login_join.js}"></script>
 	<script>
 		// 로그인 ↔ 회원가입 전환
 		$(document).ready(function () {
@@ -523,6 +537,7 @@
 			if (event.data && event.data.email) firebaseLoginWithServerToken(event.data.email);
 		});
 	</script>
+
 
 </body>
 

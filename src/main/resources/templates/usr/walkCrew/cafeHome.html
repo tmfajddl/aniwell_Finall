@@ -147,7 +147,10 @@
 
 					<div class="flex justify-between px-5 items-center mb-1">
 						<h3 class="font-bold">게시글</h3>
-						<button onclick="crewArtAdd()" class="p-1 shadow text-gray-600 hover:text-black">추가 ＋</button>
+						<div th:if="${isJoined or isLeader}">
+							<button onclick="crewArtAdd()" class="p-1 shadow text-gray-600 hover:text-black">추가
+								＋</button>
+						</div>
 					</div>
 					<div th:if="${freeArticles == null or freeArticles.isEmpty()}" class="text-center text-gray-500 px-5 py-10">
 						게시글 없습니다.</div>
@@ -187,7 +190,9 @@
 				<div class="row-span-2 shadow w-full overflow-x-auto">
 					<div class="flex justify-between items-center mb-1 px-5">
 						<h3 class="font-bold text-lg">일정</h3>
-						<button onclick="scAdd()" class="p-1 shadow text-gray-600 hover:text-black">추가 ＋</button>
+						<div th:if="${isJoined or isLeader}">
+							<button onclick="scAdd()" class="p-1 shadow text-gray-600 hover:text-black">추가 ＋</button>
+						</div>
 					</div>
 					<div th:if="${scheduleArticles.isEmpty()}" class="text-center text-gray-500 px-5 py-3">일정 없습니다.</div>
 					<div th:if="${scheduleArticles != null and !scheduleArticles.isEmpty()}"
@@ -239,6 +244,13 @@
 		class="bg-white fixed top-0 right-0 h-full w-[400px] shadow-lg z-50 transform translate-x-full transition-transform duration-300 ease-in-out">
 		<!-- ✅ 이곳은 JS에서 Ajax 호출로 채워짐 -->
 	</div>
+	
+	
+	<script>
+	  const isLeader = [[${isLeader}]];
+	  const isJoined = [[${isJoined}]];
+	  const isPending = [[${isPending}]];
+	</script>
 
 	<!-- ✅ 역할 변경 및 멤버 목록 Ajax 렌더링 JS -->
 	<script>
