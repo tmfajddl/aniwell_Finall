@@ -21,7 +21,7 @@ public class SecurityConfig {
 
 				// ✅ 경로별 권한 설정
 				.authorizeHttpRequests(auth -> auth.requestMatchers("/", // 루트 URL
-						"/usr/home/main", "/usr/member/login", "/usr/member/doLogin", "/usr/member/join",
+						"/usr/home/main", "/usr/member/login", "/usr/member/doLogin", "/usr/member/join","/usr/member/findLoginId","/usr/member/findLoginPw",
 						"/usr/member/doJoin", "/usr/member/naver/**", // ✅ 네이버 로그인 콜백 허용
 						"/usr/member/kakao/**", // ✅ 카카오 로그인 콜백 허용
 						"/usr/member/firebase-session-login", // ✅ Firebase 로그인 허용

@@ -45,155 +45,159 @@
 
 <body class="bg-white">
 
-	<div class="min-h-[680px] opacity-0 animate-slide-up form-wrapper flex-row overflow-hidden min-w-content relative"
-		id="form-wrapper">
+	<section class="form-container">
+		<span id="arrowClick" class="form-container__arrow z-10">
+			<i class="fa fa-arrow-circle-left" aria-hidden="true"> <!-- HTML 파일 내 직접 삽입 -->
+				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+					<path
+						d="M15.75,9.525,11.164,4.939A1.5,1.5,0,0,0,9.043,7.061l4.586,4.585a.5.5,0,0,1,0,.708L9.043,16.939a1.5,1.5,0,0,0,2.121,2.122l4.586-4.586A3.505,3.505,0,0,0,15.75,9.525Z" />
+				</svg>
+			</i>
+		</span>
 
-		<div class="form-slider w-[200%] flex transition-transform duration-300">
-			<!-- 로그인 화면 -->
-			<div class="sign-in flex w-full relative">
-				<!-- 로그인 폼 -->
-				<form class="left-panel w-3/5 p-6 gap-3" th:action="@{/usr/member/doLogin}" method="post">
-					<h1>
-						<a href="/">
-							<img class="logo-img mt-4" th:src="@{/img/logo.png}" alt="Aniwell Logo">
-						</a>
-					</h1>
+		<!-- 오버레이 + 선택 -->
+		<div class="overlay"></div>
+		<div class="choose-form">
+			<div class="title">
+				<h1 class="title__h1">Welcome<br>Start for free</h1>
+			</div>
+			<div class="buttons">
+				<a id="signUp" class="buttons__signup" href="#">Sign up</a>
+				<a id="login" class="buttons__signup buttons__signup--login" href="#">Login</a>
+			</div>
+		</div>
 
-					<div class="w-[75%] mx-auto space-y-4">
-						<input type="text" name="loginId" placeholder="아이디" required th:value="${param.loginId}"
-							class="w-full text-center py-2 focus:border-yellow-400" />
+		<!-- 로그인 Form -->
+		<div class="login-form">
+			<div class="flex absolute top-[-80px] justify-center h-full w-full z-[-1]">
+				<h1>
+					<a href="/">
+						<img class="logo-img items-start justify-start h-20" src="/img/logo.png" alt="Aniwell Logo" />
+					</a>
+				</h1>
+			</div>
+			<div class="form-wrapper">
+				<form class="form-wrapper__form" th:action="@{/usr/member/doLogin}" method="post">
+					<label class="form-wrapper__label" for="loginId">아이디</label>
+					<input id="loginId" name="loginId" type="text" class="form-wrapper__input" required
+						placeholder="아이디" th:value="${param.loginId}" />
 
-						<input type="password" name="loginPw" placeholder="비밀번호" required
-							class="w-full text-center py-2 focus:border-yellow-400" />
-					</div>
+					<label class="form-wrapper__label" for="loginPw">비밀번호</label>
+					<input id="loginPw" name="loginPw" type="password" class="form-wrapper__input" required
+						placeholder="비밀번호" />
 
-					<div class="flex justify-center items-center mt-3 space-x-4 text-gray-700 text-sm font-medium">
+					<div class="flex justify-center items-center mt-3 space-x-4 text-sm z-10">
 						<button onclick="openFindIdIframe()">아이디 찾기</button>
 						<span class="text-gray-400">|</span>
 						<button onclick="openFindPwIframe()">비밀번호 찾기</button>
 					</div>
 
-					<button class="w-[75%] min-w-[100px] sign-in-button" type="submit">sign in</button>
-					<!-- 소셜 로그인 버튼 영역 -->
-					<div class="social-login-buttons flex flex-col gap-1 mt-4">
-						<a href="javascript:loginWithGoogle()"
-							class="flex items-center border px-4 py-2 rounded-xl shadow hover:shadow-md bg-white">
-							<img src="https://developers.google.com/identity/images/g-logo.png" alt="Google Logo"
-								class="w-8 h-8" />
-							<span class="text-sm font-medium text-gray-700 w-full text-center">구글 로그인</span>
-						</a>
-
-						<!-- 네이버  -->
-						<a href="javascript:openNaverPopup()"
-							class="flex items-center border px-4 py-2 rounded-xl shadow hover:shadow-md bg-white">
-							<img th:src="@{/img.socialLogin/btnG_아이콘사각.png}" alt="네이버 로그인" class="w-8 h-8" />
-							<span class="text-sm font-medium text-gray-700 w-full text-center">네이버 로그인</span>
-						</a>
-
-						<!-- 카카오 (팝업 방식) -->
-						<a href="javascript:openKakaoPopup()">
-							<img th:src="@{/img.socialLogin/kakao_login_medium_wide.png}" alt="카카오 로그인"
-								class="flex items-center border rounded-xl shadow hover:shadow-md bg-white h-[50px]" />
-						</a>
-					</div>
+					<button type="submit" class="buttons__signup buttons__signup--login-form  z-0">Login</button>
 				</form>
 
-				<!-- 회원가입 버튼 -->
-				<div class="right-panel h-full w-2/5 flex items-center justify-center bg-yellow-100">
-					<span class="sign-up-button cursor-pointer text-lg font-semibold text-gray-700"
-						id="show-sign-up">회원가입</span>
+				<!-- 소셜 로그인 -->
+				<div class="social-media pt-6">
+					<h6 class="title__h2">Or connect with</h6>
+					<div class="flex justify-around">
+						<a class="rounded-xl buttons__signup--social" href="javascript:loginWithGoogle()">
+							<img th:src="@{/img.socialLogin/Google_icon.png}" class="h-6" />
+						</a>
+						<a class="rounded buttons__signup--social" href="javascript:openNaverPopup()">
+							<img th:src="@{/img.socialLogin/Naver_icon.png}" class="h-6" />
+						</a>
+						<a class="rounded-lg buttons__signup--social" href="javascript:openKakaoPopup()">
+							<img th:src="@{/img.socialLogin/Kakao_icon.png}" class="h-6" />
+						</a>
+					</div>
 				</div>
 			</div>
+		</div>
+		<div id="findModal" class="hidden fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center">
+			<div id="findModalContent"
+				class="w-full max-w-md h-[60%] min-h-[100px] rounded-xl overflow-hidden relative shadow-lg">
+				<iframe id="findIdIframe" src="" class="w-full h-full border-none"></iframe>
+			</div>
+		</div>
+		<div id="findPwModal" class="hidden fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center">
+			<div id="findModalContent" class="w-full max-w-md h-[60%] rounded-xl overflow-hidden shadow-lg relative">
+				<iframe id="findPwForm" src="" class="w-full h-full border-none"></iframe>
+			</div>
+		</div>
 
-			<!-- 회원가입 화면 -->
-			<div class="sign-up flex w-full relative">
-				<!-- 왼쪽 로그인으로 돌아가기 -->
-				<div class="left-panel w-2/5 flex items-center justify-center bg-yellow-100">
-					<span class="sign-in-button cursor-pointer text-lg font-semibold text-gray-700"
-						id="show-sign-in">로그인</span>
-				</div>
-
-				<!-- 오른쪽 회원가입 -->
-				<form class="form-panel w-3/5 relative overflow-hidden p-6 gap-3" th:action="@{/usr/member/doJoin}" method="post"
-					onsubmit="return validateForm()">
-
-					<div class="form-panel-slide h-full flex relative" id="slide-panel">
+		<!-- 회원가입 Form -->
+		<div class="login-form login-form--register">
+			<div class="form-wrapper h-full">
+				<form class="w-[100%] relative overflow-hidden justify-center h-full" th:action="@{/usr/member/doJoin}"
+					method="post" onsubmit="return validateForm()">
+					<!-- 🐾 발바닥 타임라인 -->
+					<div class="z-10 absolute top-3 justify-center left-1/2 transform -translate-x-1/2 flex gap-4 z-10">
+						<img id="paw1" src="/img/paw_active.png" class="h-4 transition-transform duration-300" />
+						<img id="paw2" src="/img/paw_inactive.png" class="h-4 transition-transform duration-300" />
+					</div>
+					<div class="form-panel-slide transition-transform duration-500 w-[200%] h-full py-4"
+						id="slide-panel">
 						<!-- STEP 1 -->
-						<div class="form-step flex mx-auto space-y-4" id="step1">
-							<h2>회원가입</h2>
-							<input class="w-[75%] text-center py-2 focus:border-yellow-400" type="text" name="loginId"
-								placeholder="ID" required th:value="${param.loginId}" />
-							<input class="w-[75%] text-center py-2 focus:border-yellow-400" type="password"
-								name="loginPw" placeholder="PW" required />
-							<input class="w-[75%] text-center py-2 focus:border-yellow-400" type="text" name="name"
-								placeholder="NAME" required th:value="${param.name}" />
-							<input class="w-[75%] text-center py-2 focus:border-yellow-400" type="text" name="nickname"
-								placeholder="NICKNAME" required th:value="${param.nickname}" />
-							<button type="button" class="next-button w-[75%] min-w-[100px] hover:bg-[#88AD96]"
-								onclick="goToStep(2)">다음
-							</button>
+						<div class="relative overflow-hidden py-12 content-center form-step w-1/2 flex flex-col self-start h-full" id="step1">
+							<label class="form-wrapper__label" for="loginId">아이디</label>
+							<input class="form-wrapper__input" id="loginId" name="loginId" type="text" required
+								placeholder="ID" th:value="${param.loginId}" />
+
+							<label class="form-wrapper__label" for="loginPw">비밀번호</label>
+							<input class="form-wrapper__input" id="loginPw" name="loginPw" type="password" required
+								placeholder="PW" />
+
+							<label class="form-wrapper__label" for="name">이름</label>
+							<input class="form-wrapper__input" id="name" name="name" type="text" required
+								placeholder="NAME" th:value="${param.name}" />
+
+							<label class="form-wrapper__label" for="nickname">닉네임</label>
+							<input class="form-wrapper__input" id="nickname" name="nickname" type="text" required
+								placeholder="NICKNAME" th:value="${param.nickname}" />
+
+							<button type="button" class="z-10 top-46 buttons__signup buttons__signup--sign-up-form "
+								onclick="goToStep(2)">다음</button>
 						</div>
-
 						<!-- STEP 2 -->
-						<div class="form-step flex mx-auto space-y-4" id="step2">
-							<input class="w-[75%] text-center py-2 focus:border-yellow-400" type="text" name="cellphone"
-								placeholder="PHONE NUMBER" required th:value="${param.cellphone}">
-							<input class="w-[75%] text-center py-2 focus:border-yellow-400" type="email" name="email"
-								placeholder="EMAIL" required th:value="${param.email}" />
-							<input class="w-[75%] text-center py-2 focus:border-yellow-400" type="text" name="address"
-								id="address" placeholder="ADDRESS" required th:value="${param.address}" />
+						<div class="relative py-12 overflow-hidden form-step w-1/2 flex flex-col self-start h-full" id="step2">
+							<label class="form-wrapper__label" for="cellphone">전화번호</label>
+							<input class="form-wrapper__input" id="cellphone" name="cellphone" type="text" required
+								placeholder="PHONE NUMBER" th:value="${param.cellphone}" />
 
-							<select name="authName" onchange="updateAuthLevel()" required>
+							<label class="form-wrapper__label" for="email">이메일</label>
+							<input class="form-wrapper__input" id="email" name="email" type="email" required
+								placeholder="EMAIL" th:value="${param.email}" />
+
+							<label class="form-wrapper__label" for="address">주소</label>
+							<div class="flex gap-2">
+								<input class="form-wrapper__input" id="address" name="address" type="text" readonly
+									placeholder="ADDRESS" th:value="${param.address}" />
+								<button type="button" onclick="execDaumPostcode()" class="ser">검색</button>
+							</div>
+
+							<label class="form-wrapper__label" for="authName">권한</label>
+							<select class="w-[200px]" name="authName" onchange="updateAuthLevel()" required>
 								<option value="일반" th:selected="${param.authName == '일반'}">일반</option>
 								<option value="수의사" th:selected="${param.authName == '수의사'}">수의사</option>
 							</select>
-
-							<input type="hidden" id="authLevel" name="authLevel" th:value="${param.authLevel ?: 1}" />
-							<button type="button" button"
-								class="next-button w-[75%] min-w-[100px] hover:bg-[#88AD96]" onclick="goToStep(1)">뒤로가기</button>
-							<button type="submit" class="w-[75%] min-w-[100px] sign-in-button">sign
-								up</button>
+							<div class="py-4">
+								<input type="hidden" id="authLevel" name="authLevel"
+									th:value="${param.authLevel ?: 1}" />
+								<button type="button" class=" buttons__signup buttons__signup--sign-up-form"
+									onclick="goToStep(1)">뒤로가기</button>
+								<button type="submit" class="top-[260px] buttons__signup buttons__signup--sign-up-form">sign
+									up</button>
+							</div>
 						</div>
-					</div>
-
-					<!-- 🐾 발바닥 타임라인 -->
-					<div class="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-4 z-10">
-						<img id="paw1" src="/img/paw_active.png" class="w-10 h-10 transition-transform duration-300" />
-						<img id="paw2" src="/img/paw_inactive.png"
-							class="w-10 h-10 transition-transform duration-300" />
 					</div>
 				</form>
 			</div>
 		</div>
-	</div>
+	</section>
 
-	<div id="findModal" class="hidden fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center">
-		<div id="findModalContent"
-			class="w-full max-w-md h-[60%] min-h-[100px] rounded-xl overflow-hidden relative shadow-lg">
-			<iframe id="findIdIframe" src="" class="w-full h-full border-none"></iframe>
-		</div>
-	</div>
 
-	<div id="findPwModal" class="hidden fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center">
-		<div id="findModalContent" class="w-full max-w-md h-[60%] rounded-xl overflow-hidden shadow-lg relative">
-			<iframe id="findPwForm" src="" class="w-full h-full border-none"></iframe>
-		</div>
-	</div>
-
+	<script src="https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
 	<script th:src="@{/resource/js/login_join.js}"></script>
 	<script>
-		// 로그인 ↔ 회원가입 전환
-		$(document).ready(function () {
-			$('#show-sign-up').on('click', function () {
-				$('.form-slider').css('transform', 'translateX(-50%)');
-			});
-			$('#show-sign-in').on('click', function () {
-				$('.form-slider').css('transform', 'translateX(0)');
-			});
-		});
-
-		let currentStep = 1;
-
 		function goToStep(step) {
 			currentStep = step;
 			const slide = document.querySelector('.form-panel-slide');
@@ -386,6 +390,19 @@
 	</script>
 
 	<script>
+		function goToStep(step) {
+			const panel = document.getElementById("slide-panel");
+			if (!panel) return;
+
+			// 0% (step1), -50% (step2)
+			const offset = (step - 1) * -50;
+			panel.style.transform = `translateX(${offset}%)`;
+
+			// 발바닥 타임라인 전환도 함께 처리
+			document.getElementById('paw1').src = step === 1 ? '/img/paw_active.png' : '/img/paw_inactive.png';
+			document.getElementById('paw2').src = step === 2 ? '/img/paw_active.png' : '/img/paw_inactive.png';
+		}
+
 		let isGooglePopupInProgress = false;
 
 		// ✅ Firebase Custom Token 로그인 공통 함수
@@ -542,6 +559,29 @@
 			if (event.data && event.data.email) firebaseLoginWithServerToken(event.data.email);
 		});
 	</script>
+	<script>
+		function execDaumPostcode() {
+			new daum.Postcode({
+				oncomplete: function (data) {
+					// 기본 주소
+					let fullAddress = data.address;
+
+					// 참고항목 (법정동 등)
+					if (data.addressType === 'R') {
+						if (data.bname !== '') {
+							fullAddress += ' ' + data.bname;
+						}
+						if (data.buildingName !== '') {
+							fullAddress += ' ' + data.buildingName;
+						}
+					}
+
+					document.getElementById('address').value = fullAddress;
+				}
+			}).open();
+		}
+	</script>
+
 
 
 </body>
