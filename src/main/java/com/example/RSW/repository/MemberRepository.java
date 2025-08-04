@@ -11,7 +11,7 @@ import java.util.Optional;
 @Mapper
 public interface MemberRepository {
 
-    int doJoin(String loginId, String loginPw, String name, String nickname, String cellphone,
+    int doJoin(String loginId, String encodedPw, String loginPw, String name, String nickname, String cellphone,
                String email, String address, String authName, int authLevel);
 
     public Member getMemberById(int id);
