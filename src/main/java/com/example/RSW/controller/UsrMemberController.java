@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.*;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -32,6 +33,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -780,22 +782,20 @@ public class UsrMemberController {
         try {
             RestTemplate restTemplate = new RestTemplate();
 
-            // 1. 토큰 요청
+            // 1️⃣ 구글 OAuth2 토큰 요청
             MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
             params.add("code", code);
             params.add("client_id", "");
             params.add("client_secret", "");
-
             params.add("redirect_uri", "http://localhost:8080/usr/member/google");
             params.add("grant_type", "authorization_code");
 
             Map<String, Object> tokenResponse = restTemplate.postForObject(
                     "https://oauth2.googleapis.com/token", params, Map.class
             );
-
             String accessToken = (String) tokenResponse.get("access_token");
 
-            // 2. 사용자 정보 요청
+            // 2️⃣ 구글 사용자 정보 요청
             HttpHeaders headers = new HttpHeaders();
             headers.setBearerAuth(accessToken);
             HttpEntity<String> entity = new HttpEntity<>(headers);
@@ -810,22 +810,31 @@ public class UsrMemberController {
             Map<String, Object> userInfo = userInfoResponse.getBody();
             String email = (String) userInfo.get("email");
             String name = (String) userInfo.get("name");
-            String socialId = (String) userInfo.get("id"); // ✅ 고유 ID 따로 받아옴
+            String socialId = (String) userInfo.get("id");
 
-            // 3. 회원 생성 or 조회
+            // 3️⃣ 회원 조회/생성
             Member member = memberService.getOrCreateSocialMember("google", socialId, email, name);
 
-            // 4. 세션 저장
-            req.getSession().setAttribute("loginedMemberId", member.getId());
-            req.getSession().setAttribute("loginedMember", member);
-            req.setAttribute("rq", new Rq(req, resp, memberService));
-
-            // 5. Firebase 토큰 발급 (✅ uid: google_소셜ID)
+            // 4️⃣ Firebase UID 생성 및 커스텀 토큰 발급
             String uid = "google_" + socialId;
             String firebaseToken = memberService.createFirebaseCustomToken(uid);
+
+            // 5️⃣ Redis에 Firebase 토큰 캐싱 (1시간)
+            String redisKey = "firebase:token:" + member.getId();
+            redisTemplate.opsForValue().set(redisKey, firebaseToken, 1, TimeUnit.HOURS);
+
+            // 6️⃣ Spring Security 인증 객체 등록
+            UsernamePasswordAuthenticationToken authentication =
+                    new UsernamePasswordAuthenticationToken(member, null,
+                            List.of(new SimpleGrantedAuthority("ROLE_USER")));
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+
+            // 7️⃣ 세션 저장
+            req.getSession().setAttribute("loginedMemberId", member.getId());
+            req.getSession().setAttribute("loginedMember", member);
             req.getSession().setAttribute("firebaseToken", firebaseToken);
 
-            // ✅ 6. 부모 창에 메시지 전송 후 창 닫기
+            // 8️⃣ 부모 창에 로그인 성공 메시지 전송
             resp.setContentType("text/html; charset=UTF-8");
             PrintWriter out = resp.getWriter();
             out.println("<script>");
@@ -918,7 +927,6 @@ public class UsrMemberController {
     }
 
 
-
     @RequestMapping("/usr/member/firebase-token")
     @ResponseBody
     public ResultData<Map<String, String>> generateFirebaseToken(HttpServletRequest req) {
@@ -964,87 +972,73 @@ public class UsrMemberController {
         try {
             FirebaseToken decodedToken = FirebaseAuth.getInstance().verifyIdToken(idToken);
             String email = decodedToken.getEmail();
-            String uid = decodedToken.getUid();
+            String uid = decodedToken.getUid(); // google_xxx 형식
             String name = decodedToken.getName();
 
-            System.out.println("✅ [로그] Firebase 인증 성공");
-            System.out.println("   - UID: " + uid);
-            System.out.println("   - 이메일: " + email);
+            System.out.println("✅ Firebase 인증 성공: UID=" + uid + ", Email=" + email);
 
-            // ✅ 이메일 null일 경우 UID 기반 조회 fallback
-            if (Ut.isEmpty(email)) {
-                System.out.println("⚠️ 이메일 없음 → UID 기반 회원 조회 시도");
-                Member uidMember = memberService.findByUid(uid); // 새 메서드 필요
-                if (uidMember == null) {
-                    return ResultData.from("F-2", "이메일 정보 없음 & UID 기반 회원 없음");
-                }
-                email = uidMember.getEmail();
+            Member member = null;
+
+            // ✅ 1. 이메일 우선 조회
+            if (!Ut.isEmpty(email)) {
+                member = memberService.findByEmail(email);
             }
 
-            // ✅ 기존 회원 조회
-            Member member = memberService.findByEmail(email);
-
-            // ❗ 회원 없으면 자동 가입
+            // ✅ 2. UID 기반 조회
             if (member == null) {
-                System.out.println("📌 [로그] 회원 정보 없음 → 자동 가입 시도");
+                member = memberService.findByUid(uid);
+            }
 
-                String provider = "email";
-                if (uid != null && uid.contains("_")) {
-                    provider = uid.split("_")[0];
-                }
-
-                member = memberService.getOrCreateByEmail(email, name, provider);
-
-                if (member == null) {
-                    System.out.println("❌ [로그] 자동 가입 실패");
-                    return ResultData.from("F-9", "회원 자동 가입 실패");
-                }
-
-                System.out.println("📌 [로그] 자동 가입 완료 → ID: " + member.getId());
+            // ✅ 3. 자동 가입
+            if (member == null) {
+                System.out.println("📌 회원 정보 없음 → 자동 가입 시도");
+                String provider = uid.contains("_") ? uid.split("_")[0] : "google";
+                String socialId = uid.contains("_") ? uid.split("_")[1] : uid;
+                member = memberService.getOrCreateSocialMember(provider, socialId, email, name != null ? name : "구글사용자");
             }
 
             // ✅ 세션 저장
             req.getSession().setAttribute("loginedMemberId", member.getId());
             req.getSession().setAttribute("loginedMember", member);
 
-            System.out.println("✅ [로그] 세션에 로그인 정보 저장 완료");
-            System.out.println("   - memberId: " + member.getId());
-            System.out.println("   - nickname: " + member.getNickname());
-
+            System.out.println("✅ 세션 로그인 완료: memberId=" + member.getId());
             return ResultData.from("S-1", "세션 로그인 완료");
 
         } catch (FirebaseAuthException e) {
-            System.out.println("❌ [로그] Firebase 인증 실패: " + e.getMessage());
+            System.out.println("❌ Firebase 인증 실패: " + e.getMessage());
             return ResultData.from("F-1", "Firebase 인증 실패: " + e.getMessage());
         }
     }
 
 
+
     // ✅ 소셜 로그인 후 Redis 캐싱 및 Firebase Custom Token 발급
     @RequestMapping("/usr/member/social-login")
     @ResponseBody
-    public ResultData socialLogin(@RequestParam String email, Rq rq) {
-        // 이메일로 회원 조회
+    public ResultData socialLogin(@RequestParam String email, @RequestParam(required = false) String name) {
         Member member = memberService.findByEmail(email);
+
+        // ✅ 이메일 없으면 자동 가입
         if (member == null) {
-            return ResultData.from("F-1", "회원 정보가 존재하지 않습니다.");
+            member = memberService.getOrCreateByEmail(email, name != null ? name : "구글사용자", "google");
         }
 
-        // Redis 캐시 확인
+        // ✅ Redis 캐시 확인
         String redisKey = "firebase:token:" + member.getId();
         String cachedToken = redisTemplate.opsForValue().get(redisKey);
-
         if (cachedToken != null) {
-            // 캐시 토큰 즉시 반환
-            return ResultData.from("S-1", "캐시된 토큰 사용", "token", cachedToken, "provider", member.getSocialProvider());
+            return ResultData.from("S-1", "캐시된 토큰 사용",
+                    "token", cachedToken,
+                    "provider", member.getSocialProvider());
         }
 
-        // Firebase Custom Token 생성
+        // ✅ Firebase Custom Token 생성 후 Redis 저장
         String firebaseToken = firebaseService.createCustomToken(member);
-
-        // Redis에 토큰 저장 (30분 유효)
         redisTemplate.opsForValue().set(redisKey, firebaseToken, 30, TimeUnit.MINUTES);
 
-        return ResultData.from("S-1", "새 토큰 발급", "token", firebaseToken, "provider", member.getSocialProvider());
+        return ResultData.from("S-1", "새 토큰 발급",
+                "token", firebaseToken,
+                "provider", member.getSocialProvider());
     }
+
 }

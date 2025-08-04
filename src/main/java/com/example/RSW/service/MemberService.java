@@ -161,24 +161,26 @@ public class MemberService {
 
     // 소셜 로그인 시, 기존 회원 조회 또는 신규 생성
     public Member getOrCreateSocialMember(String provider, String socialId, String email, String name) {
+        // 1️⃣ provider + socialId 기반 조회
         Member member = memberRepository.getMemberBySocial(provider, socialId);
+        if (member != null) return member;
 
-        if (member == null) {
-            // loginId 생성 (예: kakao_1234567890)
-            String loginId = provider + "_" + socialId;
-
-            // nickname은 name과 동일하게 사용
-            String nickname = name;
-            String loginPw = "SOCIAL_LOGIN";
-
-            // ✅ MyBatis XML에 맞게 파라미터 6개 전달
-            memberRepository.doJoinBySocial(loginId, loginPw, provider, socialId, name, nickname, email);
-
-            int id = memberRepository.getLastInsertId();
-            member = memberRepository.getMemberById(id);
+        // 2️⃣ 이메일 중복 시 소셜 정보 업데이트
+        Member emailMember = memberRepository.findByEmail(email);
+        if (emailMember != null) {
+            emailMember.setSocialProvider(provider);
+            emailMember.setSocialId(socialId);
+            memberRepository.updateSocialInfo(emailMember);
+            return emailMember;
         }
 
-        return member;
+        // 3️⃣ 신규 가입
+        String loginId = provider + "_" + socialId;
+        String loginPw = "SOCIAL_LOGIN";
+        memberRepository.doJoinBySocial(loginId, loginPw, provider, socialId, name, name, email);
+
+        int id = memberRepository.getLastInsertId();
+        return memberRepository.getMemberById(id);
     }
 
 
@@ -210,15 +212,17 @@ public class MemberService {
 
     // ✅ Firebase 커스텀 토큰 생성
     public String createFirebaseCustomToken(String uid) {
+        String redisKey = "firebaseToken::" + uid;
+        String cachedToken = redisTemplate.opsForValue().get(redisKey);
+
+        if (cachedToken != null) return cachedToken;
+
         try {
-            System.out.println("📌 [DEBUG] createFirebaseCustomToken() 진입, uid = " + uid);
-            return FirebaseAuth.getInstance().createCustomToken(uid);
+            String token = FirebaseAuth.getInstance().createCustomToken(uid);
+            redisTemplate.opsForValue().set(redisKey, token, 1, TimeUnit.HOURS);
+            return token;
         } catch (FirebaseAuthException e) {
-            System.out.println("⚠️ FirebaseAuthException: " + e.getMessage());
-            return null;
-        } catch (Exception e) {
-            System.out.println("❌ 기타 예외: " + e.getMessage());
-            return null;
+            throw new RuntimeException("❌ Firebase 토큰 생성 실패: " + e.getMessage());
         }
     }
 
@@ -226,7 +230,6 @@ public class MemberService {
     public Member findByEmail(String email) {
         return memberRepository.findByEmail(email);
     }
-
     public String getOrCreateFirebaseToken(Member member) {
         String redisKey = "firebaseToken::" + member.getId();
 
@@ -311,7 +314,10 @@ public class MemberService {
     }
 
     public Member findByUid(String uid) {
-        return memberRepository.findByUid(uid);
+        if (uid.contains("_")) {
+            String[] parts = uid.split("_", 2);
+            return memberRepository.getMemberBySocial(parts[0], parts[1]);
+        }
+        return null;
     }
-
 }
