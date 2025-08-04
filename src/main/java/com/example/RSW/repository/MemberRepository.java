@@ -70,4 +70,6 @@ public interface MemberRepository {
     void updateUidById(String uid, int id);
 
     Member findByUid(String uid);
+
+    void updateSocialInfo(Member emailMember);
 }
