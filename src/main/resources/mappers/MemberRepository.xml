@@ -207,4 +207,11 @@
         SELECT * FROM member WHERE uid = #{uid}
     </select>
 
+    <!-- 소셜 정보 업데이트 -->
+    <update id="updateSocialInfo" parameterType="com.example.RSW.vo.Member">
+        UPDATE `member`
+        SET socialProvider = #{socialProvider},
+            socialId = #{socialId}
+        WHERE id = #{id}
+    </update>
 </mapper>
