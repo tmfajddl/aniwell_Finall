@@ -184,7 +184,6 @@ public class MemberService {
     }
 
 
-
     public Member getOrCreateByEmail(String email, String name, String provider) {
         Member member = memberRepository.findByEmail(email);
 
@@ -230,88 +229,63 @@ public class MemberService {
     public Member findByEmail(String email) {
         return memberRepository.findByEmail(email);
     }
+
     public String getOrCreateFirebaseToken(Member member) {
         String redisKey = "firebaseToken::" + member.getId();
 
-        // 1. Redis에서 캐시 확인
+        // 1. Redis 캐시 확인 (6시간 TTL)
         String cachedToken = redisTemplate.opsForValue().get(redisKey);
         if (cachedToken != null) {
             System.out.println("✅ [Redis] 캐시된 Firebase 토큰 반환");
             return cachedToken;
         }
 
-        // 2. UID 확인 → 없으면 UUID 생성 + DB 저장
+        // 2. UID 확인 → 없으면 예외
         String uid = member.getUid();
         if (uid == null || uid.trim().isEmpty()) {
-            uid = UUID.randomUUID().toString();
-            member.setUid(uid);
-            memberRepository.updateUidById(uid, member.getId());
-            System.out.println("📌 [UID 생성 및 저장] " + uid);
+            throw new RuntimeException("UID가 없습니다. 회원가입 시 UID를 생성하세요.");
         }
 
-        // 3. Firebase 사용자 이메일 기반 존재 여부 확인
+        // 3. Firebase UID 사용자 확인 (try-catch로 감싸기)
         try {
-            // 먼저 이메일 기준 조회
-            UserRecord existingUser = FirebaseAuth.getInstance().getUserByEmail(member.getEmail());
-            uid = existingUser.getUid();
-            System.out.println("✅ [Firebase] 이메일 기반 기존 사용자 UID 확인: " + uid);
-
-            // DB UID와 다르면 동기화
-            if (!uid.equals(member.getUid())) {
-                member.setUid(uid);
-                memberRepository.updateUidById(uid, member.getId());
-                System.out.println("🔄 [DB] UID를 Firebase UID로 동기화");
-            }
-
-        } catch (FirebaseAuthException emailEx) {
-            if (emailEx.getAuthErrorCode() == AuthErrorCode.USER_NOT_FOUND) {
-                // 이메일도 없으면 UID 기준 조회 시도
+            FirebaseAuth.getInstance().getUser(uid); // UID 기반 사용자 조회
+        } catch (FirebaseAuthException e) {
+            if (e.getAuthErrorCode() == AuthErrorCode.USER_NOT_FOUND) {
                 try {
-                    FirebaseAuth.getInstance().getUser(uid);
-                    System.out.println("✅ [Firebase] UID 기준 기존 사용자 확인: " + uid);
-                } catch (FirebaseAuthException uidEx) {
-                    if (uidEx.getAuthErrorCode() == AuthErrorCode.USER_NOT_FOUND) {
-                        // UID도 없으면 새 사용자 등록
-                        UserRecord.CreateRequest request = new UserRecord.CreateRequest()
-                                .setUid(uid)
-                                .setEmail(member.getEmail())
-                                .setDisplayName(member.getNickname())
-                                .setEmailVerified(true);
-
-                        try {
-                            FirebaseAuth.getInstance().createUser(request);
-                            System.out.println("✅ [Firebase] 새 사용자 등록 완료: " + uid);
-                        } catch (FirebaseAuthException ex) {
-                            throw new RuntimeException("❌ Firebase 사용자 생성 실패: " + ex.getMessage());
-                        }
-                    } else {
-                        throw new RuntimeException("❌ Firebase UID 조회 실패: " + uidEx.getMessage());
-                    }
+                    // 사용자 없으면 새로 생성
+                    UserRecord.CreateRequest request = new UserRecord.CreateRequest()
+                            .setUid(uid)
+                            .setEmail(member.getEmail())
+                            .setDisplayName(member.getNickname())
+                            .setEmailVerified(true);
+                    FirebaseAuth.getInstance().createUser(request);
+                    System.out.println("✅ Firebase 신규 사용자 생성 완료");
+                } catch (FirebaseAuthException createEx) {
+                    System.err.println("❌ Firebase 사용자 생성 실패: " + createEx.getMessage());
+                    throw new RuntimeException("Firebase 사용자 생성 실패", createEx);
                 }
             } else {
-                throw new RuntimeException("❌ Firebase 이메일 조회 실패: " + emailEx.getMessage());
+                System.err.println("❌ Firebase UID 조회 실패: " + e.getMessage());
+                throw new RuntimeException("Firebase UID 조회 실패", e);
             }
         }
 
-        // 4. Custom Token 발급 (이메일 추가)
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("provider", member.getSocialProvider() != null ? member.getSocialProvider() : "email");
-        claims.put("email", member.getEmail()); // ✅ 이메일 추가
-
-        String customToken;
+        // 4. 커스텀 토큰 발급
         try {
-            customToken = FirebaseAuth.getInstance().createCustomToken(uid, claims);
-            System.out.println("✅ [Firebase] 커스텀 토큰 발급 완료 (이메일 포함)");
+            Map<String, Object> claims = new HashMap<>();
+            claims.put("email", member.getEmail());
+            claims.put("provider", member.getSocialProvider() != null ? member.getSocialProvider() : "email");
+
+            String customToken = FirebaseAuth.getInstance().createCustomToken(uid, claims);
+            redisTemplate.opsForValue().set(redisKey, customToken, 6, TimeUnit.HOURS);
+            System.out.println("✅ Firebase 토큰 발급 및 Redis 캐싱 완료");
+            return customToken;
         } catch (FirebaseAuthException e) {
-            throw new RuntimeException("❌ Firebase 토큰 생성 실패: " + e.getMessage());
+            System.err.println("❌ Firebase 토큰 생성 실패: " + e.getMessage());
+            throw new RuntimeException("Firebase 토큰 생성 실패", e);
         }
-
-        // 5. Redis 캐싱 (TTL 1시간)
-        redisTemplate.opsForValue().set(redisKey, customToken, 1, TimeUnit.HOURS);
-        System.out.println("✅ [Redis] Firebase 토큰 캐싱 완료: " + redisKey);
-
-        return customToken;
     }
+
 
     public Member findByUid(String uid) {
         if (uid.contains("_")) {
