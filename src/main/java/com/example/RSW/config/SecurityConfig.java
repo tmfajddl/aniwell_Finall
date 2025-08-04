@@ -58,7 +58,10 @@ public class SecurityConfig {
                         .invalidateHttpSession(true)
                         .deleteCookies("JSESSIONID")
                         .permitAll()
-                );
+                )
+          
+          // ✅ iframe 허용 설정 추가
+				.headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()));
 
         return http.build();
     }
@@ -70,4 +73,5 @@ public class SecurityConfig {
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder(8);  // 기본 10 → 8로 낮춰 인증 속도 개선
     }
+
 }
