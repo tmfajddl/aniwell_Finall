@@ -50,4 +50,6 @@ public interface WalkCrewRepository {
 
 	void updateCrewLeader(int crewId, int newLeaderId);
 
+	int updateDescriptionById(int crewId, String newDescription);
+
 }
