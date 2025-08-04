@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.example.RSW.service.*;
+import com.example.RSW.vo.*;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -19,12 +20,6 @@ import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 import com.example.RSW.interceptor.BeforeActionInterceptor;
 import com.example.RSW.util.Ut;
-import com.example.RSW.vo.Article;
-import com.example.RSW.vo.Board;
-import com.example.RSW.vo.Reply;
-import com.example.RSW.vo.ResultData;
-import com.example.RSW.vo.Rq;
-import com.example.RSW.vo.WalkCrew;
 
 import jakarta.servlet.http.HttpServletRequest;
 import org.thymeleaf.spring6.templateresolver.SpringResourceTemplateResolver;
@@ -60,6 +55,8 @@ public class UsrArticleController {
 
 	@Autowired
 	private SpringResourceTemplateResolver springResourceTemplateResolver;
+	@Autowired
+	private WalkCrewMemberService walkCrewMemberService;
 
 	UsrArticleController(BeforeActionInterceptor beforeActionInterceptor) {
 		this.beforeActionInterceptor = beforeActionInterceptor;
@@ -219,7 +216,7 @@ public class UsrArticleController {
 	@PostMapping("/usr/article/doDelete")
 	public ResultData doDelete(HttpServletRequest req, @RequestParam int id, @RequestParam int crewId) {
 		Rq rq = (Rq) req.getAttribute("rq");
-System.out.println(id+" / "+crewId);
+		System.out.println(id + " / " + crewId);
 		if (rq == null || !rq.isLogined()) {
 			return ResultData.from("F-0", "로그인 후 이용해주세요.");
 		}
@@ -253,6 +250,21 @@ System.out.println(id+" / "+crewId);
 	public String showDetail(HttpServletRequest req, HttpServletResponse resp, Model model, int id) throws IOException {
 		Rq rq = (Rq) req.getAttribute("rq");
 		Article article = articleService.getForPrintArticle(rq.getLoginedMemberId(), id);
+
+		boolean canWriteReply = false;
+		int loginMemberId = rq.getLoginedMemberId();
+
+		if (rq.isLogined()) {
+			if (article.getCrewId() == null) {
+				canWriteReply = true;
+			} else {
+				List<WalkCrewMember> crewMembers = walkCrewMemberService.getMembersByCrewId(article.getCrewId());
+				canWriteReply = crewMembers.stream().anyMatch(cm -> cm.getMemberId() == loginMemberId);
+				model.addAttribute("crewMembers", crewMembers); // 필요하면 계속 넘김
+			}
+		}
+
+		model.addAttribute("canWriteReply", canWriteReply);
 
 		if (article == null) {
 			resp.setContentType("text/html; charset=UTF-8");
@@ -387,9 +399,13 @@ System.out.println(id+" / "+crewId);
 		System.err.printf("%s %s", scheduleTitle, scheduleBody);
 		int loginedMemberId = rq.getLoginedMemberId();
 
-		// ✅ 기존과 동일하게 저장만 처리
-		articleService.writeSchedule(crewId, loginedMemberId, scheduleDate, scheduleTitle, scheduleBody);
+		// ✅ 일정 등록
+		int scheduleId = articleService.writeSchedule(crewId, loginedMemberId, scheduleDate, scheduleTitle,
+				scheduleBody);
 
+		// ✅ ✨ 작성자를 자동으로 참가자로 등록
+		articleService.joinSchedule(scheduleId, loginedMemberId);
+		
 		// ✅ 성공 메시지 리턴 (articleId 없이)
 		return ResultData.from("S-1", "모임 일정이 등록되었습니다.",
 				Map.of("crewId", crewId, "redirectUrl", "/usr/crewCafe/cafeHome?crewId=" + crewId));

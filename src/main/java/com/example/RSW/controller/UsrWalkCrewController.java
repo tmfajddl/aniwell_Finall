@@ -299,4 +299,37 @@ public class UsrWalkCrewController {
 		return ResultData.from("S-1", "크루 목록 불러오기 성공", data);
 	}
 
+	// ✅ 크루 소개글 수정 처리
+	@PostMapping("/doModifyDescription")
+	@ResponseBody
+	public ResultData modifyCrewDescription(@RequestParam int crewId, @RequestParam String newDescription,
+			HttpServletRequest req) {
+		Rq rq = (Rq) req.getAttribute("rq");
+
+		// ✅ 로그인 체크
+		if (rq == null || !rq.isLogined()) {
+			return ResultData.from("F-1", "로그인 후 이용해주세요.");
+		}
+
+		int memberId = rq.getLoginedMemberId();
+
+		// ✅ 크루장만 수정 가능
+		boolean isLeader = walkCrewMemberService.isCrewLeader(crewId, memberId);
+		if (!isLeader) {
+			return ResultData.from("F-2", "크루장만 소개글을 수정할 수 있습니다.");
+		}
+
+		// ✅ 실제 수정 로직 수행
+		boolean result = walkCrewService.updateDescription(crewId, newDescription);
+		if (!result) {
+			return ResultData.from("F-3", "소개글 수정에 실패했습니다.");
+		}
+
+		Map<String, Object> data = new HashMap<>();
+		data.put("crewId", crewId);
+		data.put("newDescription", newDescription);
+
+		return ResultData.from("S-1", "소개글이 성공적으로 수정되었습니다.", data);
+	}
+
 }

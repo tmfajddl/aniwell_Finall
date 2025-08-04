@@ -925,6 +925,19 @@ function nextMonth() {
 
 function modal_btn() {
 	const modal = document.getElementById("sideModal");
+
+	const joinButtonHTML = isLeader
+		? `<button onclick="handleCrewJoin()" class="w-full text-left text-sm font-medium text-gray-800 hover:text-yellow-500 transition">
+				참가 신청
+			   </button>`
+		: '';
+
+	const artiButtonHTML = isLeader && isJoined
+		? `	<button onclick="handleArticleList()" class="w-full text-left text-sm font-medium text-gray-800 hover:text-yellow-500 transition">
+	     내가 쓴 글
+	    </button>`
+		: '';
+
 	const contentHtml = `
   <div class="relative p-6 w-50% h-full bg-white shadow-lg rounded-tl-3xl rounded-bl-3xl">
     <!-- 닫기 버튼 (오른쪽 상단) -->
@@ -940,14 +953,9 @@ function modal_btn() {
 	  <!-- 메뉴 항목 -->
 	  <div class="space-y-4 mb-8">
 	    <!-- 참가 신청서 (방장만 노출) -->
-	    <button onclick="handleCrewJoin()" class="w-full text-left text-sm font-medium text-gray-800 hover:text-yellow-500 transition">
-	      참가 신청
-	    </button>
-
+		${joinButtonHTML}
 	    <!-- 내가 쓴 글 -->
-	    <button onclick="handleArticleList()" class="w-full text-left text-sm font-medium text-gray-800 hover:text-yellow-500 transition">
-	     내가 쓴 글
-	    </button>
+	   ${artiButtonHTML}
 
 	  </div>
 
@@ -1280,7 +1288,7 @@ function transLeader() {
 
 // 강퇴 처리
 function kickMember() {
-	const id = document.getElementById("memberDetail").dataset.userId;
+	const id = document.getElementById("memberDetail").dataset.usrId;
 
 	if (!confirm(`정말로 ID ${id} 회원을 강퇴하시겠습니까?`)) return;
 	$.ajax({

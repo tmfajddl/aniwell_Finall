@@ -21,9 +21,6 @@ public class SecurityConfig {
                         .sessionFixation(sessionFixation -> sessionFixation.none())
                 )
 
-                // ✅ iframe 허용 (동일 출처만)
-                .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()))
-
                 // ✅ 경로별 권한 설정
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
@@ -33,8 +30,6 @@ public class SecurityConfig {
                                 "/usr/member/join", "/usr/member/doJoin",
                                 "/usr/member/naver/**",   // ✅ 네이버 로그인 콜백 허용
                                 "/usr/member/kakao/**",   // ✅ 카카오 로그인 콜백 허용
-                                "/usr/member/google/**", // ✅ 구글 로그인 콜백 허용
-                                "/usr/member/social-login", // ✅ 소셜 로그인 토큰 발급 허용
                                 "/usr/member/firebase-session-login", // ✅ Firebase 로그인 허용
                                 "/css/**", "/js/**", "/img/**", "/img.socialLogin/**", "/resource/**"
                         ).permitAll()
