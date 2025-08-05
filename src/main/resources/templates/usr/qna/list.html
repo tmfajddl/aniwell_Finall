@@ -34,7 +34,7 @@
                 <!-- 1. 자주 묻는 질문 제목 목록 -->
                 <div class="bg-white/90 p-6 rounded-2xl shadow-lg">
                     <h2 class="text-xl font-bold text-lime-800 mb-4">📌 자주 묻는 질문 목록</h2>
-                    <ol class="list-decimal list-inside space-y-2">
+                    <ol class="list-decimal list-inside space-y-2 h-[100px] overflow-y-auto">
                         <li th:each="qna : ${selectedQna}"
                             class="text-lime-700 font-medium cursor-pointer faq-item"
                             th:attr="data-id=${qna.id}"
