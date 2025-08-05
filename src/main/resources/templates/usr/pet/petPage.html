@@ -899,6 +899,8 @@
 
 		// 이미지 업로드 시 미리보기
 		function previewImage(event) {
+			console.log("✅ previewImage 호출됨");
+
 			const file = event.target.files[0];
 			if (!file) return;
 
@@ -906,10 +908,16 @@
 
 			const reader = new FileReader();
 			reader.onload = function (e) {
-				document.getElementById('emotionPreview').src = e.target.result;
+				const previewImg = document.getElementById('emotionPreview');
+				previewImg.src = e.target.result;
+
+				// ✅ 꼭 필요: 이미지가 숨겨져 있었다면 다시 보여주기
+				previewImg.classList.remove('hidden');
 			};
 			reader.readAsDataURL(file);
 		}
+
+
 
 		// 감정 분석 요청
 		function analyzeEmotion() {
@@ -1002,20 +1010,40 @@
 
 		function resetEmotionPanel() {
 			document.querySelectorAll('.species-btn, .upload-label, .analyze-btn')
-				.forEach(el => el.classList.remove('hidden'));
+					.forEach(el => el.classList.remove('hidden'));
 
 			document.getElementById('imageContainer').classList.remove('hidden');
-
 			document.getElementById('resultArea').classList.add('hidden');
 			document.getElementById('retryButton').classList.add('hidden');
 
 			document.getElementById('emotionPreview').src = '';
 			document.getElementById('resultText').textContent = '';
+
 			if (emotionChart) {
 				emotionChart.destroy();
 				emotionChart = null;
 			}
+
+			uploadedFile = null;
+
+			// ✅ 완전히 새로운 input 생성 후 다시 label 안에 삽입
+			const uploadLabel = document.querySelector('.upload-label');
+			const newInput = document.createElement('input');
+			newInput.type = 'file';
+			newInput.accept = 'image/*';
+			newInput.className = 'hidden';
+			newInput.onchange = previewImage;
+
+			// 기존 input 제거하고 새 input 삽입
+			const oldInput = uploadLabel.querySelector('input[type="file"]');
+			if (oldInput) oldInput.remove();
+			uploadLabel.appendChild(newInput);
 		}
+
+
+
+
+
 
 
 
