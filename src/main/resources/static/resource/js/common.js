@@ -164,7 +164,11 @@ function updateNotificationBadge() {
 				console.warn("❗ 알림 수 조회 실패", json.msg);
 				return;
 			}
+<<<<<<< HEAD
 
+=======
+			
+>>>>>>> good/Develop
 			const badge = document.getElementById('notiCountBadge');
 			const count = json.data1 ?? 0;
 
@@ -193,6 +197,7 @@ function connectWebSocket() {
 		});
 	});
 }
+<<<<<<< HEAD
 
 
 function openModal() {
@@ -217,4 +222,6 @@ document.getElementById("myModal").addEventListener("click", (e) => {
 	if (e.target.id === "myModal") closeModal();
 });
 
+=======
+>>>>>>> good/Develop
 
