@@ -246,13 +246,13 @@ public class MemberService {
             throw new RuntimeException("UID가 없습니다. 회원가입 시 UID를 생성하세요.");
         }
 
-        // 3. Firebase UID 사용자 확인 (try-catch로 감싸기)
+        // 3. Firebase UID 존재 여부 확인 (캐시 없을 때만 실행)
         try {
-            FirebaseAuth.getInstance().getUser(uid); // UID 기반 사용자 조회
+            FirebaseAuth.getInstance().getUser(uid);  // UID 기반 사용자 조회
         } catch (FirebaseAuthException e) {
-            if (e.getAuthErrorCode() == AuthErrorCode.USER_NOT_FOUND) {
+            if (AuthErrorCode.USER_NOT_FOUND.equals(e.getAuthErrorCode())) {
+                // 사용자 없으면 신규 생성
                 try {
-                    // 사용자 없으면 새로 생성
                     UserRecord.CreateRequest request = new UserRecord.CreateRequest()
                             .setUid(uid)
                             .setEmail(member.getEmail())
