@@ -235,16 +235,11 @@ public class MemberService {
         String redisKey = "firebase:token:" + member.getUid();
         String lockKey = redisKey + ":lock";
 
-        System.out.println("📥 [DEBUG] getOrCreateFirebaseToken() 호출 | UID: " + member.getUid());
 
         // 1️⃣ Redis 캐시 확인
         String cachedToken = redisTemplate.opsForValue().get(redisKey);
         if (cachedToken != null) {
-            System.out.println("✅ [DEBUG] Redis 캐시된 토큰 존재");
-            System.out.println("🔎 [DEBUG] 캐시된 토큰 길이: " + cachedToken.length());
-            System.out.println("🔎 [DEBUG] 캐시된 토큰 '.' 개수: " + (cachedToken.split("\\.").length - 1));
             if ((cachedToken.split("\\.").length - 1) == 2) return cachedToken;
-            System.out.println("❌ [WARN] 캐시된 토큰 형식 오류 → 재발급");
             redisTemplate.delete(redisKey);
         }
 
@@ -258,9 +253,6 @@ public class MemberService {
         try {
             // 3️⃣ Firebase Custom Token 생성
             String customToken = firebaseAuth.createCustomToken(member.getUid());
-            System.out.println("🎯 [DEBUG] UID: " + member.getUid());
-            System.out.println("🔥 [DEBUG] Firebase Admin SDK Project ID: " + FirebaseApp.getInstance().getOptions().getProjectId());
-            System.out.println("🎟 [DEBUG] 생성된 Firebase Custom Token 길이: " + customToken.length());
 
             // 4️⃣ Redis 저장
             redisTemplate.opsForValue().set(redisKey, customToken, 12, TimeUnit.HOURS);
@@ -279,7 +271,6 @@ public class MemberService {
 
         // UID는 있는데 회원 정보가 없는 경우 → 자동 신규 생성 (Firebase 최초 로그인 직후 대비)
         if (member == null && uid != null) {
-            System.out.println("⚠️ UID 존재하지만 회원 없음 → 자동 가입 로직 실행");
             String provider = uid.contains("_") ? uid.split("_")[0] : "google";
             String socialId = uid.contains("_") ? uid.split("_")[1] : uid;
             member = getOrCreateSocialMember(provider, socialId, null, "신규사용자");
@@ -293,7 +284,6 @@ public class MemberService {
         // 1️⃣ UID → Member ID 캐시 확인
         String memberIdCache = redisTemplate.opsForValue().get("firebase:member:" + uid);
         if (memberIdCache != null) {
-            System.out.println("✅ [Redis] 캐시된 Member ID 사용: " + memberIdCache);
             return getMemberById(Integer.parseInt(memberIdCache));
         }
 

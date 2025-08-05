@@ -429,10 +429,7 @@
     firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL)
         .then(() => console.log("🟢 Firebase 세션 지속성 LOCAL 설정 완료"));
 </script>
-
 <script>
-    let loginStartTime = null;
-
     // ✅ Firebase 로그인 보장
     async function ensureFirebaseLogin(customToken) {
         if (firebase.auth().currentUser) return firebase.auth().currentUser;
@@ -456,45 +453,51 @@
 
     // ✅ 공통 로그인 프로세스 (일반/소셜 공용)
     async function processLogin() {
-        loginStartTime = performance.now();
         try {
             const res = await fetch('/usr/member/firebase-token', { method: 'POST' });
             const result = await res.json();
-            if (result.resultCode !== 'S-1') return redirectWithDelay();
+            if (result.resultCode !== 'S-1') {
+                window.location.replace("/usr/member/login");
+                return;
+            }
 
             let customToken = result.data1?.token || result.data1;
-
-            // JWT 형식 체크 후 Firebase 로그인 및 서버 세션 로그인
             if (customToken && (customToken.match(/\./g) || []).length === 2) {
                 await handleFirebaseAndSessionLogin(customToken);
             }
-
-            redirectWithDelay();
+            // ✅ 로그인 성공 시 즉시 메인으로 이동
+            window.location.replace("/");
         } catch {
-            redirectWithDelay();
+            window.location.replace("/usr/member/login");
         }
     }
 
-    // ✅ 구글 로그인 (Popup)
+    // ✅ 구글 로그인 (Popup) - 최적화
     window.loginWithGoogle = async function () {
-        loginStartTime = performance.now();
         try {
+            // 세션 지속성 유지
             await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL);
-            const provider = new firebase.auth.GoogleAuthProvider();
-            provider.setCustomParameters({ prompt: 'select_account' });
 
+            const provider = new firebase.auth.GoogleAuthProvider();
+            provider.setCustomParameters({ prompt: 'select_account' }); // 계정 선택 유지
+
+            // 🔥 Firebase 팝업 로그인
             const result = await firebase.auth().signInWithPopup(provider);
             const email = result.user.email;
 
-            // 서버에서 Firebase Custom Token 발급
-            const res = await fetch(`/usr/member/social-login?email=${encodeURIComponent(email)}`);
-            const data = await res.json();
+            // ✅ 서버에 이메일 전달 → DB 회원 처리 + Firebase Custom Token 발급
+            const [sessionRes] = await Promise.all([
+                fetch(`/usr/member/social-login?email=${encodeURIComponent(email)}`),
+                result.user.getIdToken()
+            ]);
 
+            const data = await sessionRes.json();
             if (data.resultCode === "S-1") {
-                await handleFirebaseAndSessionLogin(data.data1);
-                redirectWithDelay();
+                await handleFirebaseAndSessionLogin(data.data1); // Redis 캐싱된 토큰이면 즉시 처리
+                window.location.replace("/");
             }
-        } catch {
+        } catch (error) {
+            console.error("❌ Google 로그인 중 오류", error);
             alert("Google 로그인 중 오류가 발생했습니다.");
         }
     };
@@ -502,22 +505,14 @@
     // ✅ 카카오/네이버 팝업 메시지 수신 후 로그인 처리
     window.addEventListener("message", async function (event) {
         if (event.data && event.data.email) {
-            loginStartTime = performance.now();
             const res = await fetch(`/usr/member/social-login?email=${encodeURIComponent(event.data.email)}`);
             const data = await res.json();
             if (data.resultCode === "S-1") {
                 await handleFirebaseAndSessionLogin(data.data1);
-                redirectWithDelay();
+                window.location.replace("/");
             }
         }
     });
-
-    // ✅ 로그인 후 메인 이동 (로그인 시간 디버깅)
-    function redirectWithDelay() {
-        const loginEndTime = performance.now();
-        console.log(`⏱ 로그인 총 소요 시간: ${(loginEndTime - loginStartTime).toFixed(2)} ms`);
-        setTimeout(() => window.location.replace("/"), 5000); // 5초 대기 후 메인 이동
-    }
 
     // ✅ 일반 로그인 폼 이벤트
     document.addEventListener("DOMContentLoaded", function () {
@@ -528,7 +523,10 @@
                 const formData = new FormData(loginForm);
                 const response = await fetch(loginForm.getAttribute("action"), { method: "POST", body: formData });
                 const result = await response.json();
-                if (result.resultCode !== "S-1") return alert(result.msg || "로그인 실패");
+                if (result.resultCode !== "S-1") {
+                    alert(result.msg || "로그인 실패");
+                    return;
+                }
                 await processLogin();
             });
         }
