@@ -59,4 +59,7 @@ public interface WalkCrewMemberRepository {
 	// 크루 신청 취소하기
 	int cancelJoin(@Param("crewId") int crewId, @Param("memberId") int memberId);
 
+	// WalkCrewMemberRepository.java
+	List<WalkCrew> findCrewsByMemberId(@Param("memberId") int memberId);
+
 }

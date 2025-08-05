@@ -104,9 +104,8 @@ public class WalkCrewMemberService {
 	// ① 크루 가입 여부 확인
 	public boolean isJoinedCrew(int crewId, int memberId) {
 		String role = walkCrewMemberRepository.findRoleByMemberIdAndCrewId(memberId, crewId);
-		return role != null
-				&& (role.equals("leader") || role.equals("subleader") || role.equals("member") || role.equals("pending")
-				);
+		return role != null && (role.equals("leader") || role.equals("subleader") || role.equals("member")
+				|| role.equals("pending"));
 	}
 
 	// ② 신청 대기 여부 확인
@@ -138,6 +137,10 @@ public class WalkCrewMemberService {
 	public boolean isPending(int crewId, int memberId) {
 		String status = walkCrewMemberRepository.findStatusByMemberIdAndCrewId(crewId, memberId);
 		return "pending".equalsIgnoreCase(status); // 실제 DB 저장 상태값과 맞춰야 함
+	}
+
+	public List<WalkCrew> getCrewsByMemberId(int memberId) {
+		return walkCrewMemberRepository.findCrewsByMemberId(memberId);
 	}
 
 }

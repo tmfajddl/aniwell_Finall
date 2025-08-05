@@ -33,6 +33,7 @@ public class SecurityConfig {
                                 "/usr/home/main",
                                 "/usr/member/login", "/usr/member/doLogin",
                                 "/usr/member/join", "/usr/member/doJoin",
+                                "/usr/member/findLoginId","/usr/member/findLoginPw",
                                 "/usr/member/naver/**",   // ✅ 네이버 로그인 콜백 허용
                                 "/usr/member/kakao/**",   // ✅ 카카오 로그인 콜백 허용
                                 "/usr/member/google/**", // ✅ 구글 로그인 콜백 허용
@@ -58,7 +59,10 @@ public class SecurityConfig {
                         .invalidateHttpSession(true)
                         .deleteCookies("JSESSIONID")
                         .permitAll()
-                );
+                )
+          
+          // ✅ iframe 허용 설정 추가
+				.headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()));
 
         return http.build();
     }
@@ -70,4 +74,5 @@ public class SecurityConfig {
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder(8);  // 기본 10 → 8로 낮춰 인증 속도 개선
     }
+
 }
