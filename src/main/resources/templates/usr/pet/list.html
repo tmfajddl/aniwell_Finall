@@ -20,7 +20,7 @@
 	<!-- HEAD 태그 내부에 추가 -->
 	<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 	<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
-	
+
 
 
 </head>
@@ -71,55 +71,57 @@
 
 				return (
 					<React.Fragment>
-						<div
-							className="ani-card bg-white aspect-[1/1.6] w-[420px] rounded-xl p-6 shadow"
-							onClick={handleClick}
-						>
-							<h2 className="text-2xl font-bold flex items-center gap-1 mb-4 justify-center">
-								<span className="text-3xl">🐾</span> 반려동물등록증
-							</h2>
+						<div className="w-[420px] bg-white rounded-xl p-3 shadow">
+							<div
+								className="aspect-[2.1/1] w-full h-auto rounded-xl"
+								onClick={handleClick}
+							>
+								<h2 className="text-2xl font-bold flex items-center gap-1 mb-4 justify-center">
+									<span className="text-3xl">🐾</span> 반려동물등록증
+								</h2>
 
-							<div className="grid grid-cols-3">
-								<div className="grid-rows-2">
+								<div className="grid grid-cols-3">
+									<div className="grid-rows-2">
+										<div className="row-auto text-start space-y-1 text-sm">
+											<div>
+												<span className="font-semibold mr-2">이름:</span> {pet.name}
+											</div>
+											<div>
+												<span className="font-semibold mr-2">번호:</span> {pet.id}
+											</div>
+											<div>
+												<span className="font-semibold mr-2">품종:</span> {pet.breed}
+											</div>
+										</div>
+										<div className="row-auto text-sm text-start pt-1">
+											<span className="font-semibold mr-2">특징:</span> {pet.species}
+										</div>
+									</div>
+
 									<div className="row-auto text-start space-y-1 text-sm">
 										<div>
-											<span className="font-semibold mr-2">이름:</span> {pet.name}
+											<span className="font-semibold mr-2">성별:</span> {pet.gender}
 										</div>
 										<div>
-											<span className="font-semibold mr-2">번호:</span> {pet.id}
+											<span className="font-semibold mr-2">생일:</span> {pet.birthDate}
 										</div>
 										<div>
-											<span className="font-semibold mr-2">품종:</span> {pet.breed}
+											<span className="font-semibold mr-2">중성화:</span> 완료
 										</div>
 									</div>
-									<div className="row-auto text-sm text-start pt-1">
-										<span className="font-semibold mr-2">특징:</span> {pet.species}
+
+									<div className="space-y-1 flex justify-center items-start">
+										<img
+											src={pet.photo && pet.photo.trim() !== '' ? pet.photo : '/img/default-pet.png'}
+											alt="pet"
+											className="w-[100px] h-[100px] object-cover rounded-xl border"
+										/>
 									</div>
 								</div>
 
-								<div className="row-auto text-start space-y-1 text-sm">
-									<div>
-										<span className="font-semibold mr-2">성별:</span> {pet.gender}
-									</div>
-									<div>
-										<span className="font-semibold mr-2">생일:</span> {pet.birthDate}
-									</div>
-									<div>
-										<span className="font-semibold mr-2">중성화:</span> 완료
-									</div>
+								<div className="createdAt text-right text-xs text-gray-500 mt-2">
+									{pet.createdAt}
 								</div>
-
-								<div className="space-y-1 flex justify-center items-start">
-									<img
-										src={pet.photo && pet.photo.trim() !== '' ? pet.photo : '/img/default-pet.png'}
-										alt="pet"
-										className="w-[100px] h-[100px] object-cover rounded-xl border"
-									/>
-								</div>
-							</div>
-
-							<div className="createdAt text-right text-xs text-gray-500 mt-2">
-								{pet.createdAt}
 							</div>
 						</div>
 					</React.Fragment>
@@ -334,23 +336,23 @@
 				}
 			});	
 		</script>
-		
+
 		<!-- Toast 먼저 정의 -->
 		<script>
-		  const Toast = Swal.mixin({
-		    toast: true,
-		    position: "top-end",
-		    showConfirmButton: false,
-		    timer: 2500,
-		    timerProgressBar: true,
-		    didOpen: (toast) => {
-		      toast.onmouseenter = Swal.stopTimer;
-		      toast.onmouseleave = Swal.resumeTimer;
-		    }
-		  });
+			const Toast = Swal.mixin({
+				toast: true,
+				position: "top-end",
+				showConfirmButton: false,
+				timer: 2500,
+				timerProgressBar: true,
+				didOpen: (toast) => {
+					toast.onmouseenter = Swal.stopTimer;
+					toast.onmouseleave = Swal.resumeTimer;
+				}
+			});
 		</script>
 
-		
+
 
 
 </body>
