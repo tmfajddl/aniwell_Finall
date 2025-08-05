@@ -192,5 +192,15 @@
 		AND role = 'PENDING'
 	</delete>
 
+	<!-- ✅ memberId가 참여한 모든 크루 조회 (상태 approved만 포함) -->
+	<select id="findCrewsByMemberId" parameterType="int"
+		resultType="com.example.RSW.vo.WalkCrew">
+		SELECT wc.*
+		FROM walk_crew wc
+		INNER JOIN walk_crew_member wcm ON wc.id = wcm.crewId
+		WHERE wcm.memberId = #{memberId}
+		AND wcm.status = 'approved'
+	</select>
+
 
 </mapper>

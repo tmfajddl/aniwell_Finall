@@ -134,4 +134,12 @@ public class WalkCrewService {
 		return walkCrewRepository.updateDescriptionById(crewId, newDescription) > 0;
 	}
 
+	public List<WalkCrew> getCrewsByLeaderId(int leaderId) {
+		return walkCrewRepository.findCrewsByLeaderId(leaderId);
+	}
+
+	public List<WalkCrew> getJoinedCrewsByMemberId(int memberId) {
+		return walkCrewRepository.findJoinedCrewsByMemberId(memberId);
+	}
+
 }
