@@ -36,6 +36,7 @@ import com.cloudinary.utils.ObjectUtils;
 
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.io.IOException;
@@ -126,26 +127,51 @@ public class UsrCrewCafeController {
 	@ResponseBody
 	public ResultData<Map<String, Object>> getMyCrewCafe(HttpServletRequest req) {
 		Rq rq = (Rq) req.getAttribute("rq");
-		int memberId = rq.getLoginedMemberId();
 
-		// 1. 내가 만든 크루 or 가입한 크루 조회
-		WalkCrew myCrew = walkCrewService.getCrewByLeaderId(memberId);
-		if (myCrew == null) {
-			myCrew = walkCrewMemberService.getMyCrew(memberId);
+		if (rq == null || !rq.isLogined()) {
+			return ResultData.from("F-AUTH", "로그인 후 이용해주세요.");
 		}
 
+		int memberId = rq.getLoginedMemberId();
+
+		
+		// ✅ 1. 내가 만든 크루 전체 조회
+		List<WalkCrew> myCrews = walkCrewService.getCrewsByLeaderId(memberId);
+		if (myCrews == null)
+			myCrews = new ArrayList<>();
+
+		// ✅ 2. 내가 리더가 아닌 가입한 크루 전체 조회
+		List<WalkCrew> joinedCrews = walkCrewMemberService.getCrewsByMemberId(memberId);
+		if (joinedCrews == null)
+			joinedCrews = new ArrayList<>();
+
+		// ✅ 3. 대표 크루(myCrew) 하나 선택 (기존 로직 그대로 유지)
+		WalkCrew myCrew = null;
+		if (myCrews != null && !myCrews.isEmpty()) {
+			myCrew = myCrews.get(0); // 내가 만든 크루 중 첫 번째
+		} else if (joinedCrews != null && !joinedCrews.isEmpty()) {
+			myCrew = joinedCrews.get(0); // 가입한 크루 중 첫 번째
+		}
+
+		// ✅ 4. 대표 크루가 하나도 없다면 실패 응답
 		if (myCrew == null) {
 			return ResultData.from("F-1", "가입된 크루가 없습니다.");
 		}
 
-		// 2. 크루 게시글도 같이 가져옴
+		// ✅ 5. 대표 크루의 게시글 목록 (기존 유지)
 		List<Article> articles = articleService.getArticlesByCrewId(myCrew.getId());
 
-		// 3. Map으로 묶어서 전달
+		// ✅ 6. 응답 데이터 구성
 		Map<String, Object> data = new HashMap<>();
-		data.put("crew", myCrew);
-		data.put("articles", articles);
+		data.put("crew", myCrew); // ✅ 기존: 대표 크루 1개 (crew)
+		data.put("articles", articles); // ✅ 기존: 대표 크루의 게시글
+		data.put("myCrews", myCrews); // 🔼 추가: 내가 만든 크루 전체 리스트
+		data.put("joinedCrews", joinedCrews); // 🔼 추가: 내가 가입한 크루 전체 리스트
 
+		System.out.println("rq = " + rq);
+		System.out.println("memberId = " + memberId);
+		System.out.println("myCrews.size = " + myCrews.size());
+		System.out.println("joinedCrews.size = " + joinedCrews.size());
 		return ResultData.from("S-1", "나의 크루와 게시글을 불러왔습니다.", data);
 	}
 

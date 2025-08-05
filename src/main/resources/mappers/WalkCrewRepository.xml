@@ -255,5 +255,23 @@
 		WHERE id = #{crewId}
 	</update>
 
+	<!-- 내가 리더로 있는 모든 크루 조회 -->
+	<select id="getCrewsByLeaderId" parameterType="int"
+		resultType="com.example.RSW.vo.WalkCrew">
+		SELECT *
+		FROM walk_crew
+		WHERE leaderId = #{memberId}
+	</select>
+
+	<select id="findJoinedCrewsByMemberId" resultType="WalkCrew">
+		SELECT C.*
+		FROM walk_crew_member M
+		JOIN walk_crew C ON M.crewId = C.id
+		WHERE
+		M.memberId = #{memberId}
+		AND M.status COLLATE utf8mb4_general_ci =
+		'approved'
+	</select>
+
 
 </mapper>
