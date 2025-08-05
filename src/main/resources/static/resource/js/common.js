@@ -164,7 +164,7 @@ function updateNotificationBadge() {
 				console.warn("❗ 알림 수 조회 실패", json.msg);
 				return;
 			}
-			
+
 			const badge = document.getElementById('notiCountBadge');
 			const count = json.data1 ?? 0;
 
@@ -193,4 +193,28 @@ function connectWebSocket() {
 		});
 	});
 }
+
+
+function openModal() {
+	document.getElementById("myModal").classList.remove("hidden");
+}
+
+function closeModal() {
+	document.getElementById("myModal").classList.add("hidden");
+}
+
+function logout() {
+	alert("로그아웃 처리 실행"); // 실제 로그아웃 로직으로 변경
+	closeModal();
+}
+
+function submitCertificate() {
+	alert("인증서 제출 페이지로 이동"); // 또는 window.location.href = ...
+	closeModal();
+}
+
+document.getElementById("myModal").addEventListener("click", (e) => {
+	if (e.target.id === "myModal") closeModal();
+});
+
 
