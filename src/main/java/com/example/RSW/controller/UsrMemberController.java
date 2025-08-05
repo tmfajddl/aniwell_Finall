@@ -963,7 +963,6 @@ public class UsrMemberController {
         }
     }
 
-    // ✅ Firebase 세션 로그인 (Redis 기반 최적화)
     @RequestMapping("/usr/member/firebase-session-login")
     @ResponseBody
     public ResultData doFirebaseSessionLogin(@RequestBody Map<String, String> body, HttpServletRequest req) {
@@ -971,40 +970,38 @@ public class UsrMemberController {
         System.out.println("📥 [로그] firebase-session-login 요청 도착");
 
         try {
-            // 1️⃣ Firebase ID 토큰 검증 (첫 로그인에서만 호출)
-            FirebaseToken decodedToken = FirebaseAuth.getInstance().verifyIdToken(idToken);
-            String uid = decodedToken.getUid();
-            String cacheKey = "firebase:uid:" + uid;
+            // 1️⃣ 토큰 → UID 캐시 확인 (재로그인 최적화)
+            String tokenCacheKey = "firebase:tokenToUid:" + idToken;
+            String cachedUid = redisTemplate.opsForValue().get(tokenCacheKey);
 
-            // 2️⃣ Redis 캐시 기반 로그인 (재로그인 시 Firebase API 호출 없음)
-            if (redisTemplate.hasKey(cacheKey)) {
-                System.out.println("✅ [Redis] 캐시 인증 성공: UID=" + uid);
-                Member cachedMember = memberService.findByUid(uid);
-                if (cachedMember == null) {
-                    return ResultData.from("F-1", "회원 정보를 찾을 수 없습니다.");
+            if (cachedUid != null) {
+                System.out.println("✅ [Redis] 토큰→UID 캐시 인증 성공: UID=" + cachedUid);
+                Member cachedMember = memberService.findByUid(cachedUid);
+                if (cachedMember != null) {
+                    setSpringSecuritySession(req, cachedMember);
+                    return ResultData.from("S-1", "Redis 기반 세션 로그인 완료 (verifyIdToken 생략)");
                 }
-                setSpringSecuritySession(req, cachedMember);
-                return ResultData.from("S-1", "Redis 기반 세션 로그인 완료");
             }
 
-            // 3️⃣ 첫 로그인 → Firebase UID 캐싱
-            String email = decodedToken.getEmail();
-            String name = decodedToken.getName();
-            redisTemplate.opsForValue().set(cacheKey, uid, 12, TimeUnit.HOURS); // TTL 12시간
+            // 2️⃣ 캐시가 없으면 Firebase 토큰 검증
+            FirebaseToken decodedToken = FirebaseAuth.getInstance().verifyIdToken(idToken);
+            String uid = decodedToken.getUid();
+            redisTemplate.opsForValue().set("firebase:uid:" + uid, uid, 12, TimeUnit.HOURS);
+            redisTemplate.opsForValue().set(tokenCacheKey, uid, 12, TimeUnit.HOURS);
 
             System.out.println("✅ Firebase 인증 성공: UID=" + uid);
 
-            // DB 회원 조회 or 자동 가입
-            Member member = !Ut.isEmpty(email) ? memberService.findByEmail(email) : memberService.findByUid(uid);
+            // DB 조회 및 세션 설정
+            Member member = memberService.findByUid(uid);
             if (member == null) {
+                String email = decodedToken.getEmail();
+                String name = decodedToken.getName();
                 String provider = uid.contains("_") ? uid.split("_")[0] : "google";
                 String socialId = uid.contains("_") ? uid.split("_")[1] : uid;
                 member = memberService.getOrCreateSocialMember(provider, socialId, email, name != null ? name : "구글사용자");
             }
 
-            // 4️⃣ 서버 세션 설정
             setSpringSecuritySession(req, member);
-
             return ResultData.from("S-1", "첫 로그인 완료 (Redis 캐시 저장)");
 
         } catch (FirebaseAuthException e) {
@@ -1015,6 +1012,7 @@ public class UsrMemberController {
             return ResultData.from("F-2", "로그인 처리 중 오류 발생");
         }
     }
+
 
     // ✅ Spring Security 세션 설정 메서드
     private void setSpringSecuritySession(HttpServletRequest req, Member member) {
