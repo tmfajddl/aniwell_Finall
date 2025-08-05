@@ -420,160 +420,124 @@
 <!-- ✅ Firebase 초기화 -->
 <script>
 
-    firebase.initializeApp(firebaseConfig);
-    console.log("🔥 Firebase 초기화 완료:", firebase.apps.length);
+    if (firebase.apps.length === 0) {
+        firebase.initializeApp(firebaseConfig);
+        console.log("🔥 Firebase 초기화 완료");
+    }
 
-    // 전역 오류 감지
-    window.addEventListener('error', function (e) {
-        console.error("❌ 전역 오류 발생:", e.message, " at ", e.filename, ":", e.lineno);
-    });
+    // ✅ Firebase 세션 지속성 유지
+    firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+        .then(() => console.log("🟢 Firebase 세션 지속성 LOCAL 설정 완료"));
 </script>
+
 <script>
-    let isGooglePopupInProgress = false;
     let loginStartTime = null;
 
-    // ✅ Firebase 로그인 보장 (재로그인 시 세션 재사용)
+    // ✅ Firebase 로그인 보장
     async function ensureFirebaseLogin(customToken) {
-        if (!firebase.auth().currentUser) {
-            console.log("🔑 Firebase 로그인 없음 → Custom Token으로 로그인");
-            await firebase.auth().signInWithCustomToken(customToken);
-        } else {
-            console.log("✅ 기존 Firebase 세션 유지:", firebase.auth().currentUser.email);
-        }
+        if (firebase.auth().currentUser) return firebase.auth().currentUser;
+        await firebase.auth().signInWithCustomToken(customToken);
         return firebase.auth().currentUser;
     }
 
-    // ✅ Firestore 저장 (첫 로그인만)
-    async function saveFirestoreIfFirstLogin(user, isFirstLogin, provider) {
-        if (isFirstLogin) {
-            const db = firebase.firestore();
-            await db.collection("users").doc(user.uid).set({
-                uid: user.uid,
-                email: user.email || '',
-                displayName: user.displayName || '',
-                provider: provider,
-                lastLogin: new Date().toISOString()
-            }, { merge: true });
-            console.log("✅ Firestore 최초 저장 완료");
-        } else {
-            console.log("⏩ Firestore 저장 생략 (재로그인)");
-        }
-    }
-
-    // ✅ 서버 세션 로그인
-    async function serverSessionLogin(user) {
+    // ✅ Firebase Custom Token + 서버 세션 로그인 공통 함수
+    async function handleFirebaseAndSessionLogin(customToken) {
+        const user = await ensureFirebaseLogin(customToken);
         const idToken = await user.getIdToken();
+
+        // 서버 세션 로그인
         await fetch("/usr/member/firebase-session-login", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            credentials: "include",
-            body: JSON.stringify({ idToken })
+            body: JSON.stringify({ idToken }),
+            credentials: "include"
         });
-        console.log("✅ 서버 세션 로그인 완료");
     }
 
-    // ✅ 공통 로그인 프로세스 (일반 + 소셜 통합)
-    async function processLogin(isFirstLogin, provider) {
+    // ✅ 공통 로그인 프로세스 (일반/소셜 공용)
+    async function processLogin() {
         loginStartTime = performance.now();
         try {
-            // Firebase Custom Token 발급 (Redis 캐시 사용)
-            const response = await fetch('/usr/member/firebase-token', { method: 'POST' });
-            const result = await response.json();
-            console.log("📥 firebase-token 응답:", result);
+            const res = await fetch('/usr/member/firebase-token', { method: 'POST' });
+            const result = await res.json();
+            if (result.resultCode !== 'S-1') return redirectWithDelay();
 
-            if (result.resultCode !== 'S-1') {
-                console.warn("⚠️ Firebase 토큰 발급 실패 → 메인 이동");
-                return redirectWithDelay();
+            let customToken = result.data1?.token || result.data1;
+
+            // JWT 형식 체크 후 Firebase 로그인 및 서버 세션 로그인
+            if (customToken && (customToken.match(/\./g) || []).length === 2) {
+                await handleFirebaseAndSessionLogin(customToken);
             }
-
-            // ✅ Firebase Custom Token 안전하게 추출 및 검증
-            const customToken = result.data1?.token || result.data1;  // data1.token or data1 둘 다 대응
-            if (!customToken || (customToken.match(/\./g) || []).length !== 2) {
-                console.error("❌ 잘못된 Firebase Custom Token:", customToken);
-                alert("로그인 세션이 만료되었거나 잘못된 토큰입니다. 다시 로그인해주세요.");
-                return redirectWithDelay();
-            }
-
-            const user = await ensureFirebaseLogin(customToken); // Firebase 세션 유지 or 로그인
-
-            await saveFirestoreIfFirstLogin(user, isFirstLogin, provider); // Firestore 첫 로그인만 저장
-            await serverSessionLogin(user); // 서버 세션 로그인
 
             redirectWithDelay();
-        } catch (err) {
-            console.error("🔥 로그인 오류:", err);
+        } catch {
             redirectWithDelay();
         }
     }
 
-    // ✅ Google 로그인 (Popup 방식)
+    // ✅ 구글 로그인 (Popup)
     window.loginWithGoogle = async function () {
-        if (isGooglePopupInProgress) return;
-        isGooglePopupInProgress = true;
+        loginStartTime = performance.now();
         try {
-            console.log("🌐 Google 로그인 팝업 시작");
             await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL);
-
             const provider = new firebase.auth.GoogleAuthProvider();
             provider.setCustomParameters({ prompt: 'select_account' });
 
             const result = await firebase.auth().signInWithPopup(provider);
-            console.log("✅ Google 로그인 성공:", result.user.email);
+            const email = result.user.email;
 
-            await processLogin(true, "google"); // 구글 로그인은 첫 로그인으로 간주 (서버에서 판별 가능)
-        } catch (err) {
-            console.error("❌ Google 로그인 오류:", err);
-            alert("Google 로그인 중 오류 발생");
-        } finally {
-            isGooglePopupInProgress = false;
+            // 서버에서 Firebase Custom Token 발급
+            const res = await fetch(`/usr/member/social-login?email=${encodeURIComponent(email)}`);
+            const data = await res.json();
+
+            if (data.resultCode === "S-1") {
+                await handleFirebaseAndSessionLogin(data.data1);
+                redirectWithDelay();
+            }
+        } catch {
+            alert("Google 로그인 중 오류가 발생했습니다.");
         }
     };
 
-    // ✅ 일반 로그인
+    // ✅ 카카오/네이버 팝업 메시지 수신 후 로그인 처리
+    window.addEventListener("message", async function (event) {
+        if (event.data && event.data.email) {
+            loginStartTime = performance.now();
+            const res = await fetch(`/usr/member/social-login?email=${encodeURIComponent(event.data.email)}`);
+            const data = await res.json();
+            if (data.resultCode === "S-1") {
+                await handleFirebaseAndSessionLogin(data.data1);
+                redirectWithDelay();
+            }
+        }
+    });
+
+    // ✅ 로그인 후 메인 이동 (로그인 시간 디버깅)
+    function redirectWithDelay() {
+        const loginEndTime = performance.now();
+        console.log(`⏱ 로그인 총 소요 시간: ${(loginEndTime - loginStartTime).toFixed(2)} ms`);
+        setTimeout(() => window.location.replace("/"), 5000); // 5초 대기 후 메인 이동
+    }
+
+    // ✅ 일반 로그인 폼 이벤트
     document.addEventListener("DOMContentLoaded", function () {
         const loginForm = document.querySelector('form[action="/usr/member/doLogin"]');
         if (loginForm) {
             loginForm.addEventListener("submit", async function (e) {
                 e.preventDefault();
-                console.log("🖱 일반 로그인 시도 시작");
-
                 const formData = new FormData(loginForm);
                 const response = await fetch(loginForm.getAttribute("action"), { method: "POST", body: formData });
                 const result = await response.json();
-                console.log("📥 /doLogin 응답:", result);
-
-                if (result.resultCode !== "S-1") {
-                    alert(result.msg || "로그인 실패");
-                    return;
-                }
-
-                console.log("✅ 일반 로그인 성공 → Firebase & 서버 세션 로그인");
-                await processLogin(result.data1.isFirstLogin, result.data1.provider || "email");
+                if (result.resultCode !== "S-1") return alert(result.msg || "로그인 실패");
+                await processLogin();
             });
         }
 
-        // ✅ 소셜 로그인 후 자동 Firebase 연동
+        // 소셜 로그인 후 자동 Firebase 연동
         const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get("social") === "1") {
-            console.log("⏳ 소셜 로그인 후 Firebase 연동 시작");
-            processLogin(false, "social");
-        }
+        if (urlParams.get("social") === "1") processLogin();
     });
-
-    // ✅ 카카오/네이버 팝업 메시지 수신
-    window.addEventListener("message", function (event) {
-        if (event.data && event.data.email) {
-            console.log("📨 카카오/네이버 이메일 수신:", event.data.email);
-            processLogin(true, "social"); // 첫 로그인 여부 서버에서 판별 필요
-        }
-    });
-
-    // ✅ 로그인 후 메인 이동
-    function redirectWithDelay() {
-        const loginEndTime = performance.now();
-        console.log(`⏱ 로그인 총 소요 시간: ${(loginEndTime - loginStartTime).toFixed(2)} ms`);
-        setTimeout(() => { window.location.replace("/"); }, 3000);
-    }
 </script>
+
 </body>
 </html>

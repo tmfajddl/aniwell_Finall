@@ -1,6 +1,7 @@
 
 package com.example.RSW.service;
 
+import com.google.firebase.FirebaseApp;
 import com.google.firebase.auth.AuthErrorCode;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
@@ -16,6 +17,7 @@ import com.example.RSW.util.Ut;
 import com.example.RSW.vo.Member;
 import com.example.RSW.vo.ResultData;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -167,17 +169,25 @@ public class MemberService {
         Member member = memberRepository.getMemberBySocial(provider, socialId);
         if (member != null) return member;
 
-        member = new Member();
-        member.setUid(provider + "_" + socialId);
-        member.setLoginId(email != null ? email : socialId);
-        member.setEmail(email);
-        member.setName(name);
-        member.setAuthLevel(1);
-        member.setAuthName("일반회원");
+        String loginId = email != null ? email : provider + "_" + socialId;
+        String nickname = name != null ? name : "소셜회원";
+        String loginPw = "SOCIAL_LOGIN";
 
-        memberRepository.insert(member);
-        return member;
+        // ✅ 전용 insert 사용
+        memberRepository.doJoinBySocial(
+                loginId,
+                loginPw,
+                provider,
+                socialId,
+                name,
+                nickname,
+                email
+        );
+
+        return memberRepository.getMemberBySocial(provider, socialId);
     }
+
+
 
     // ✅ 이메일 기반 소셜 가입
     public Member getOrCreateByEmail(String email, String name, String provider) {
@@ -221,38 +231,47 @@ public class MemberService {
         return memberRepository.findByEmail(email);
     }
 
-    // ✅ Firebase Custom Token 생성 (Redis 캐싱 포함)
     public String getOrCreateFirebaseToken(Member member) {
         String redisKey = "firebase:token:" + member.getUid();
         String lockKey = redisKey + ":lock";
 
-        // 1. 캐시 먼저 확인
+        System.out.println("📥 [DEBUG] getOrCreateFirebaseToken() 호출 | UID: " + member.getUid());
+
+        // 1️⃣ Redis 캐시 확인
         String cachedToken = redisTemplate.opsForValue().get(redisKey);
         if (cachedToken != null) {
-            System.out.println("✅ [Redis] 캐시된 Firebase 토큰 사용");
-            return cachedToken;
+            System.out.println("✅ [DEBUG] Redis 캐시된 토큰 존재");
+            System.out.println("🔎 [DEBUG] 캐시된 토큰 길이: " + cachedToken.length());
+            System.out.println("🔎 [DEBUG] 캐시된 토큰 '.' 개수: " + (cachedToken.split("\\.").length - 1));
+            if ((cachedToken.split("\\.").length - 1) == 2) return cachedToken;
+            System.out.println("❌ [WARN] 캐시된 토큰 형식 오류 → 재발급");
+            redisTemplate.delete(redisKey);
         }
 
-        // 2. 동시 요청 방지를 위한 분산 락
+        // 2️⃣ 분산 락 (동시 요청 방지)
         Boolean isLockAcquired = redisTemplate.opsForValue().setIfAbsent(lockKey, "1", 5, TimeUnit.SECONDS);
         if (Boolean.FALSE.equals(isLockAcquired)) {
-            // 다른 요청이 토큰 생성 중이면 잠시 대기 후 재확인
             try { Thread.sleep(300); } catch (InterruptedException ignored) {}
             return redisTemplate.opsForValue().get(redisKey);
         }
 
         try {
-            // 3. Firebase 토큰 새로 발급
+            // 3️⃣ Firebase Custom Token 생성
             String customToken = firebaseAuth.createCustomToken(member.getUid());
+            System.out.println("🎯 [DEBUG] UID: " + member.getUid());
+            System.out.println("🔥 [DEBUG] Firebase Admin SDK Project ID: " + FirebaseApp.getInstance().getOptions().getProjectId());
+            System.out.println("🎟 [DEBUG] 생성된 Firebase Custom Token 길이: " + customToken.length());
+
+            // 4️⃣ Redis 저장
             redisTemplate.opsForValue().set(redisKey, customToken, 12, TimeUnit.HOURS);
             return customToken;
         } catch (FirebaseAuthException e) {
             throw new RuntimeException("Firebase 토큰 생성 실패: " + e.getMessage());
         } finally {
-            // 4. 락 해제
             redisTemplate.delete(lockKey);
         }
     }
+
 
     // ✅ UID 기반 회원 조회 (Null 방어 강화)
     public Member findByUid(String uid) {
