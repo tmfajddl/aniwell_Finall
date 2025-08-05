@@ -15,7 +15,7 @@ spring:
   oauth2:
     google:
     client-id: ""
-    client-secret: ""
+    client-secret:
     redirect-uri: "http://localhost:8080/usr/member/google"
   data:
     redis:    # 로그인 딜레이 줄이기 위해 redis 추가

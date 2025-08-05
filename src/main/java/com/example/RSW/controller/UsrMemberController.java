@@ -930,6 +930,7 @@ public class UsrMemberController {
     }
 
 
+    // ✅ Firebase 토큰 발급 (Redis 캐싱 활용)
     @RequestMapping("/usr/member/firebase-token")
     @ResponseBody
     public ResultData<Map<String, String>> generateFirebaseToken(HttpServletRequest req) {
@@ -946,13 +947,14 @@ public class UsrMemberController {
         }
 
         try {
+            // ✅ Redis 캐시 우선 확인 후 Firebase Custom Token 발급
             String customToken = memberService.getOrCreateFirebaseToken(loginedMember);
 
             Map<String, String> data = new HashMap<>();
             data.put("token", customToken);
             data.put("provider", loginedMember.getSocialProvider() != null ? loginedMember.getSocialProvider() : "email");
 
-            System.out.println("✅ Firebase 토큰 발급 완료");
+            System.out.println("✅ Firebase 토큰 발급 완료 (Redis 캐시 활용)");
             return ResultData.from("S-1", "토큰 생성 성공", data);
 
         } catch (RuntimeException e) {
@@ -961,7 +963,7 @@ public class UsrMemberController {
         }
     }
 
-
+    // ✅ Firebase 세션 로그인 (Redis 기반 최적화)
     @RequestMapping("/usr/member/firebase-session-login")
     @ResponseBody
     public ResultData doFirebaseSessionLogin(@RequestBody Map<String, String> body, HttpServletRequest req) {
@@ -969,39 +971,30 @@ public class UsrMemberController {
         System.out.println("📥 [로그] firebase-session-login 요청 도착");
 
         try {
-            String cacheKey = "firebase:verify:" + idToken;
-            String uid;
-            String email = null;
-            String name = null;
+            // 1️⃣ Firebase ID 토큰 검증 (첫 로그인에서만 호출)
+            FirebaseToken decodedToken = FirebaseAuth.getInstance().verifyIdToken(idToken);
+            String uid = decodedToken.getUid();
+            String cacheKey = "firebase:uid:" + uid;
 
-            // ✅ Redis 캐시 확인
+            // 2️⃣ Redis 캐시 기반 로그인 (재로그인 시 Firebase API 호출 없음)
             if (redisTemplate.hasKey(cacheKey)) {
-                // Firebase API 호출 없이 캐시된 UID 사용
-                uid = redisTemplate.opsForValue().get(cacheKey);
-                System.out.println("✅ [Redis] 캐시된 UID 사용: " + uid);
-
-                // UID 기반 회원 조회
+                System.out.println("✅ [Redis] 캐시 인증 성공: UID=" + uid);
                 Member cachedMember = memberService.findByUid(uid);
                 if (cachedMember == null) {
                     return ResultData.from("F-1", "회원 정보를 찾을 수 없습니다.");
                 }
-
-                // 세션 저장 및 Spring Security 인증
                 setSpringSecuritySession(req, cachedMember);
-                return ResultData.from("S-1", "Redis 캐시 기반 세션 로그인 완료");
+                return ResultData.from("S-1", "Redis 기반 세션 로그인 완료");
             }
 
-            // ✅ 최초 로그인 시 Firebase 토큰 검증
-            FirebaseToken decodedToken = FirebaseAuth.getInstance().verifyIdToken(idToken);
-            uid = decodedToken.getUid();
-            email = decodedToken.getEmail();
-            name = decodedToken.getName();
+            // 3️⃣ 첫 로그인 → Firebase UID 캐싱
+            String email = decodedToken.getEmail();
+            String name = decodedToken.getName();
+            redisTemplate.opsForValue().set(cacheKey, uid, 12, TimeUnit.HOURS); // TTL 12시간
 
-            // UID를 Redis 캐시에 저장 (30분 유지)
-            redisTemplate.opsForValue().set(cacheKey, uid, 30, TimeUnit.MINUTES);
             System.out.println("✅ Firebase 인증 성공: UID=" + uid);
 
-            // 회원 조회 및 자동 가입
+            // DB 회원 조회 or 자동 가입
             Member member = !Ut.isEmpty(email) ? memberService.findByEmail(email) : memberService.findByUid(uid);
             if (member == null) {
                 String provider = uid.contains("_") ? uid.split("_")[0] : "google";
@@ -1009,9 +1002,10 @@ public class UsrMemberController {
                 member = memberService.getOrCreateSocialMember(provider, socialId, email, name != null ? name : "구글사용자");
             }
 
-            // 세션 저장 및 Spring Security 인증
+            // 4️⃣ 서버 세션 설정
             setSpringSecuritySession(req, member);
-            return ResultData.from("S-1", "세션 로그인 완료");
+
+            return ResultData.from("S-1", "첫 로그인 완료 (Redis 캐시 저장)");
 
         } catch (FirebaseAuthException e) {
             System.out.println("❌ Firebase 인증 실패: " + e.getMessage());
@@ -1022,8 +1016,7 @@ public class UsrMemberController {
         }
     }
 
-
-    // ✅ Spring Security 세션 설정 공통 메서드
+    // ✅ Spring Security 세션 설정 메서드
     private void setSpringSecuritySession(HttpServletRequest req, Member member) {
         req.getSession().setAttribute("loginedMemberId", member.getId());
         req.getSession().setAttribute("loginedMember", member);
@@ -1033,8 +1026,7 @@ public class UsrMemberController {
         req.getSession().setAttribute("SPRING_SECURITY_CONTEXT", SecurityContextHolder.getContext());
     }
 
-
-    // ✅ 소셜 로그인 후 Redis 캐싱 및 Firebase Custom Token 발급
+    // ✅ 소셜 로그인 (Redis 캐시 활용)
     @RequestMapping("/usr/member/social-login")
     @ResponseBody
     public ResultData socialLogin(@RequestParam String email, @RequestParam(required = false) String name) {
@@ -1045,7 +1037,7 @@ public class UsrMemberController {
         }
 
         // Redis 캐시 확인
-        String redisKey = "firebase:token:" + member.getId();
+        String redisKey = "firebase:token:" + member.getUid();
         String cachedToken = redisTemplate.opsForValue().get(redisKey);
         if (cachedToken != null) {
             return ResultData.from("S-1", "캐시된 토큰 사용",
@@ -1053,9 +1045,9 @@ public class UsrMemberController {
                     "provider", member.getSocialProvider());
         }
 
-        // Firebase Custom Token 생성
+        // Firebase Custom Token 생성 후 캐싱
         String firebaseToken = firebaseService.createCustomToken(member);
-        redisTemplate.opsForValue().set(redisKey, firebaseToken, 6, TimeUnit.HOURS);
+        redisTemplate.opsForValue().set(redisKey, firebaseToken, 12, TimeUnit.HOURS);
 
         return ResultData.from("S-1", "새 토큰 발급",
                 "token", firebaseToken,
