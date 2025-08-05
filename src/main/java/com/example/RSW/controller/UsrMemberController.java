@@ -819,9 +819,9 @@ public class UsrMemberController {
             String uid = "google_" + socialId;
             String firebaseToken = memberService.createFirebaseCustomToken(uid);
 
-            // 5️⃣ Redis에 Firebase 토큰 캐싱 (1시간)
+            // 5️⃣ Redis에 Firebase 토큰 캐싱 (6시간)
             String redisKey = "firebase:token:" + member.getId();
-            redisTemplate.opsForValue().set(redisKey, firebaseToken, 1, TimeUnit.HOURS);
+            redisTemplate.opsForValue().set(redisKey, firebaseToken, 6, TimeUnit.HOURS);
 
             // 6️⃣ Spring Security 인증 등록
             UsernamePasswordAuthenticationToken authentication =
@@ -970,21 +970,35 @@ public class UsrMemberController {
 
         try {
             String cacheKey = "firebase:verify:" + idToken;
-            FirebaseToken decodedToken;
+            String uid;
+            String email = null;
+            String name = null;
+
+            // ✅ Redis 캐시 확인
             if (redisTemplate.hasKey(cacheKey)) {
-                String cachedUid = redisTemplate.opsForValue().get(cacheKey);
-                decodedToken = FirebaseAuth.getInstance().getUser(cachedUid) != null
-                        ? FirebaseAuth.getInstance().verifyIdToken(idToken) // UID 확인 후 검증 재사용
-                        : FirebaseAuth.getInstance().verifyIdToken(idToken);
-            } else {
-                decodedToken = FirebaseAuth.getInstance().verifyIdToken(idToken);
-                redisTemplate.opsForValue().set(cacheKey, decodedToken.getUid(), 30, TimeUnit.MINUTES);
+                // Firebase API 호출 없이 캐시된 UID 사용
+                uid = redisTemplate.opsForValue().get(cacheKey);
+                System.out.println("✅ [Redis] 캐시된 UID 사용: " + uid);
+
+                // UID 기반 회원 조회
+                Member cachedMember = memberService.findByUid(uid);
+                if (cachedMember == null) {
+                    return ResultData.from("F-1", "회원 정보를 찾을 수 없습니다.");
+                }
+
+                // 세션 저장 및 Spring Security 인증
+                setSpringSecuritySession(req, cachedMember);
+                return ResultData.from("S-1", "Redis 캐시 기반 세션 로그인 완료");
             }
 
-            String email = decodedToken.getEmail();
-            String uid = decodedToken.getUid();
-            String name = decodedToken.getName();
+            // ✅ 최초 로그인 시 Firebase 토큰 검증
+            FirebaseToken decodedToken = FirebaseAuth.getInstance().verifyIdToken(idToken);
+            uid = decodedToken.getUid();
+            email = decodedToken.getEmail();
+            name = decodedToken.getName();
 
+            // UID를 Redis 캐시에 저장 (30분 유지)
+            redisTemplate.opsForValue().set(cacheKey, uid, 30, TimeUnit.MINUTES);
             System.out.println("✅ Firebase 인증 성공: UID=" + uid);
 
             // 회원 조회 및 자동 가입
@@ -996,13 +1010,7 @@ public class UsrMemberController {
             }
 
             // 세션 저장 및 Spring Security 인증
-            req.getSession().setAttribute("loginedMemberId", member.getId());
-            req.getSession().setAttribute("loginedMember", member);
-            CustomUserDetails userDetails = new CustomUserDetails(member);
-            SecurityContextHolder.getContext().setAuthentication(
-                    new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities()));
-            req.getSession().setAttribute("SPRING_SECURITY_CONTEXT", SecurityContextHolder.getContext());
-
+            setSpringSecuritySession(req, member);
             return ResultData.from("S-1", "세션 로그인 완료");
 
         } catch (FirebaseAuthException e) {
@@ -1012,6 +1020,17 @@ public class UsrMemberController {
             System.out.println("❌ 로그인 중 예외 발생: " + e.getMessage());
             return ResultData.from("F-2", "로그인 처리 중 오류 발생");
         }
+    }
+
+
+    // ✅ Spring Security 세션 설정 공통 메서드
+    private void setSpringSecuritySession(HttpServletRequest req, Member member) {
+        req.getSession().setAttribute("loginedMemberId", member.getId());
+        req.getSession().setAttribute("loginedMember", member);
+        CustomUserDetails userDetails = new CustomUserDetails(member);
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities()));
+        req.getSession().setAttribute("SPRING_SECURITY_CONTEXT", SecurityContextHolder.getContext());
     }
 
 
