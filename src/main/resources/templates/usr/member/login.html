@@ -419,11 +419,7 @@
 
 <!-- ✅ Firebase 초기화 -->
 <script>
-    const firebaseConfig = {
-        apiKey: "AIzaSyCickEEoEGDTVyy-7defZSkOSSmWj2shkw",
-        authDomain: "aniwell-2a90b.firebaseapp.com",
-        projectId: "aniwell-2a90b",
-    };
+
     firebase.initializeApp(firebaseConfig);
     console.log("🔥 Firebase 초기화 완료:", firebase.apps.length);
 
@@ -490,8 +486,16 @@
                 return redirectWithDelay();
             }
 
-            const customToken = result.data1.token;
+            // ✅ Firebase Custom Token 안전하게 추출 및 검증
+            const customToken = result.data1?.token || result.data1;  // data1.token or data1 둘 다 대응
+            if (!customToken || (customToken.match(/\./g) || []).length !== 2) {
+                console.error("❌ 잘못된 Firebase Custom Token:", customToken);
+                alert("로그인 세션이 만료되었거나 잘못된 토큰입니다. 다시 로그인해주세요.");
+                return redirectWithDelay();
+            }
+
             const user = await ensureFirebaseLogin(customToken); // Firebase 세션 유지 or 로그인
+
             await saveFirestoreIfFirstLogin(user, isFirstLogin, provider); // Firestore 첫 로그인만 저장
             await serverSessionLogin(user); // 서버 세션 로그인
 

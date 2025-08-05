@@ -221,28 +221,70 @@ public class MemberService {
         return memberRepository.findByEmail(email);
     }
 
-    // ✅ Firebase Custom Token (Redis 캐시 활용)
+    // ✅ Firebase Custom Token 생성 (Redis 캐싱 포함)
     public String getOrCreateFirebaseToken(Member member) {
         String redisKey = "firebase:token:" + member.getUid();
-        String cachedToken = redisTemplate.opsForValue().get(redisKey);
+        String lockKey = redisKey + ":lock";
 
+        // 1. 캐시 먼저 확인
+        String cachedToken = redisTemplate.opsForValue().get(redisKey);
         if (cachedToken != null) {
             System.out.println("✅ [Redis] 캐시된 Firebase 토큰 사용");
             return cachedToken;
         }
 
+        // 2. 동시 요청 방지를 위한 분산 락
+        Boolean isLockAcquired = redisTemplate.opsForValue().setIfAbsent(lockKey, "1", 5, TimeUnit.SECONDS);
+        if (Boolean.FALSE.equals(isLockAcquired)) {
+            // 다른 요청이 토큰 생성 중이면 잠시 대기 후 재확인
+            try { Thread.sleep(300); } catch (InterruptedException ignored) {}
+            return redisTemplate.opsForValue().get(redisKey);
+        }
+
         try {
+            // 3. Firebase 토큰 새로 발급
             String customToken = firebaseAuth.createCustomToken(member.getUid());
-            redisTemplate.opsForValue().set(redisKey, customToken, 12, TimeUnit.HOURS); // TTL 12시간
+            redisTemplate.opsForValue().set(redisKey, customToken, 12, TimeUnit.HOURS);
             return customToken;
         } catch (FirebaseAuthException e) {
             throw new RuntimeException("Firebase 토큰 생성 실패: " + e.getMessage());
+        } finally {
+            // 4. 락 해제
+            redisTemplate.delete(lockKey);
         }
     }
 
-
-    // ✅ UID 기반 회원 조회
+    // ✅ UID 기반 회원 조회 (Null 방어 강화)
     public Member findByUid(String uid) {
-        return memberRepository.findByUid(uid);
+        Member member = memberRepository.findByUid(uid);
+
+        // UID는 있는데 회원 정보가 없는 경우 → 자동 신규 생성 (Firebase 최초 로그인 직후 대비)
+        if (member == null && uid != null) {
+            System.out.println("⚠️ UID 존재하지만 회원 없음 → 자동 가입 로직 실행");
+            String provider = uid.contains("_") ? uid.split("_")[0] : "google";
+            String socialId = uid.contains("_") ? uid.split("_")[1] : uid;
+            member = getOrCreateSocialMember(provider, socialId, null, "신규사용자");
+        }
+
+        return member;
     }
+
+    // ✅ Redis 캐시 기반 회원 조회 (DB fallback)
+    public Member findCachedMemberOrDb(String uid) {
+        // 1️⃣ UID → Member ID 캐시 확인
+        String memberIdCache = redisTemplate.opsForValue().get("firebase:member:" + uid);
+        if (memberIdCache != null) {
+            System.out.println("✅ [Redis] 캐시된 Member ID 사용: " + memberIdCache);
+            return getMemberById(Integer.parseInt(memberIdCache));
+        }
+
+        // 2️⃣ 캐시 없으면 DB 조회
+        Member member = findByUid(uid);
+        if (member != null) {
+            // 조회 후 Redis 캐싱
+            redisTemplate.opsForValue().set("firebase:member:" + uid, String.valueOf(member.getId()), 24, TimeUnit.HOURS);
+        }
+        return member;
+    }
+
 }
