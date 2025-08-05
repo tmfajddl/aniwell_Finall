@@ -33,6 +33,7 @@ public class SecurityConfig {
                                 "/usr/home/main",
                                 "/usr/member/login", "/usr/member/doLogin",
                                 "/usr/member/join", "/usr/member/doJoin",
+                                "/usr/member/findLoginId","/usr/member/findLoginPw",
                                 "/usr/member/naver/**",   // ✅ 네이버 로그인 콜백 허용
                                 "/usr/member/kakao/**",   // ✅ 카카오 로그인 콜백 허용
                                 "/usr/member/google/**", // ✅ 구글 로그인 콜백 허용
