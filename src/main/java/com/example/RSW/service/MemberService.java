@@ -221,7 +221,7 @@ public class MemberService {
         return memberRepository.findByEmail(email);
     }
 
-    // ✅ Firebase Custom Token 생성 (Redis 캐싱 포함)
+    // ✅ Firebase Custom Token (Redis 캐시 활용)
     public String getOrCreateFirebaseToken(Member member) {
         String redisKey = "firebase:token:" + member.getUid();
         String cachedToken = redisTemplate.opsForValue().get(redisKey);
@@ -233,8 +233,7 @@ public class MemberService {
 
         try {
             String customToken = firebaseAuth.createCustomToken(member.getUid());
-            redisTemplate.opsForValue().set(redisKey, customToken, 12, TimeUnit.HOURS);
-            System.out.println("✅ Firebase 토큰 생성 및 Redis 캐시 저장");
+            redisTemplate.opsForValue().set(redisKey, customToken, 12, TimeUnit.HOURS); // TTL 12시간
             return customToken;
         } catch (FirebaseAuthException e) {
             throw new RuntimeException("Firebase 토큰 생성 실패: " + e.getMessage());
