@@ -59,29 +59,28 @@
 				</div>
 
 				<!-- 오른쪽 회원가입 -->
-				<form class="form-panel w-3/5 relative overflow-hidden" th:action="@{/usr/member/doJoin}" method="post"
+				<form class="form-panel w-3/5 relative " th:action="@{/usr/member/doJoin}" method="post"
 					onsubmit="return validateForm()">
 
 					<div class="form-panel-slide h-full flex relative" id="slide-panel">
 						<!-- STEP 1 -->
 						<div class="form-step flex flex-col justify-around" id="step1">
-							<h2>Create Account</h2>
-							<input type="text" name="loginId" placeholder="ID" required th:value="${param.loginId}" />
-							<input type="password" name="loginPw" placeholder="PW" required />
-							<input type="text" name="name" placeholder="NAME" required th:value="${param.name}" />
-							<input type="text" name="nickname" placeholder="NICKNAME" required
+							<h2>회원가입</h2>
+							<input class="w-full text-center py-2 focus:border-yellow-400" type="text" name="loginId" placeholder="ID" required th:value="${param.loginId}" />
+							<input class="w-full text-center py-2 focus:border-yellow-400" type="password" name="loginPw" placeholder="PW" required />
+							<input class="w-full text-center py-2 focus:border-yellow-400" type="text" name="name" placeholder="NAME" required th:value="${param.name}" />
+							<input class="w-full text-center py-2 focus:border-yellow-400" type="text" name="nickname" placeholder="NICKNAME" required
 								th:value="${param.nickname}" />
-							<button type="button" class="next-button bg-yellow-400 p-2 rounded" onclick="goToStep(2)">다음
+							<button type="button" class="next-button w-[75%] min-w-[100px] hover:bg-[#88AD96]" onclick="goToStep(2)">다음
 							</button>
 						</div>
 
 						<!-- STEP 2 -->
 						<div class="form-step flex flex-col justify-around" id="step2">
-							<h2>Contact Info</h2>
-							<input type="text" name="cellphone" placeholder="PHONE NUMBER" required
+							<input class="w-full text-center py-2 focus:border-yellow-400" type="text" name="cellphone" placeholder="PHONE NUMBER" required
 								th:value="${param.cellphone}">
-							<input type="email" name="email" placeholder="EMAIL" required th:value="${param.email}" />
-							<input type="text" name="address" id="address" placeholder="ADDRESS" required
+							<input class="w-full text-center py-2 focus:border-yellow-400" type="email" name="email" placeholder="EMAIL" required th:value="${param.email}" />
+							<input class="w-full text-center py-2 focus:border-yellow-400" type="text" name="address" id="address" placeholder="ADDRESS" required
 								th:value="${param.address}" />
 
 							<select name="authName" onchange="updateAuthLevel()" required>
@@ -90,8 +89,8 @@
 							</select>
 
 							<input type="hidden" id="authLevel" name="authLevel" th:value="${param.authLevel ?: 1}" />
-							<button type="button" class="prev-button" onclick="goToStep(1)">뒤로가기</button>
-							<button type="submit" class="submit-button bg-green-400 p-2 rounded text-white">sign
+							<button type="button" button" class="next-button w-[75%] min-w-[100px] hover:bg-[#88AD96] onclick="goToStep(1)">뒤로가기</button>
+							<button type="submit" class="w-[75%] min-w-[100px] sign-in-button">sign
 								up</button>
 						</div>
 					</div>
