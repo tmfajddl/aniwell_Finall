@@ -41,6 +41,7 @@
 		}
 	</style>
 
+
 </head>
 
 <body class="bg-white">
@@ -71,12 +72,13 @@
 
 		<!-- 로그인 Form -->
 		<div class="login-form ">
-			<div class="flex absolute top-[-20px] justify-center h-full w-full z-[-1]">
-				<h1>
+			<div class="flex absolute top-[-20px] justify-center w-full">
+
+				<div class="z-[1000]"onclick="window.location.href = 'http://localhost:8080/'">
 					<a href="/">
 						<img class="logo-img items-start justify-start h-20" src="/img/logo.png" alt="Aniwell Logo" />
 					</a>
-				</h1>
+				</div>
 			</div>
 			<div class="form-wrapper">
 				<form class="form-wrapper__form h-full py-16" th:action="@{/usr/member/doLogin}" method="post">
@@ -88,7 +90,9 @@
 					<input id="loginPw" name="loginPw" type="password" class="form-wrapper__input" required
 						placeholder="비밀번호" />
 
+
 					<div class="flex justify-center items-center mt-2 space-x-4 text-sm z-10">
+
 						<button onclick="openFindIdIframe()">아이디 찾기</button>
 						<span class="text-gray-400">|</span>
 						<button onclick="openFindPwIframe()">비밀번호 찾기</button>
@@ -139,8 +143,10 @@
 					<div class="form-panel-slide transition-transform duration-500 w-[200%] h-full py-4"
 						id="slide-panel">
 						<!-- STEP 1 -->
+
 						<div class="relative overflow-hidden py-12 content-center form-step w-1/2 flex flex-col self-start h-full"
 							id="step1">
+
 							<label class="form-wrapper__label" for="loginId">아이디</label>
 							<input class="form-wrapper__input" id="loginId" name="loginId" type="text" required
 								placeholder="ID" th:value="${param.loginId}" />
@@ -161,8 +167,10 @@
 								onclick="goToStep(2)">다음</button>
 						</div>
 						<!-- STEP 2 -->
+
 						<div class="relative py-12 overflow-hidden form-step w-1/2 flex flex-col self-start h-full"
 							id="step2">
+
 							<label class="form-wrapper__label" for="cellphone">전화번호</label>
 							<input class="form-wrapper__input" id="cellphone" name="cellphone" type="text" required
 								placeholder="PHONE NUMBER" th:value="${param.cellphone}" />
@@ -188,8 +196,10 @@
 									th:value="${param.authLevel ?: 1}" />
 								<button type="button" class=" buttons__signup buttons__signup--sign-up-form"
 									onclick="goToStep(1)">뒤로가기</button>
+
 								<button type="submit"
 									class="top-[260px] buttons__signup buttons__signup--sign-up-form">sign
+
 									up</button>
 							</div>
 						</div>
@@ -207,6 +217,7 @@
 			currentStep = step;
 			const slide = document.querySelector('.form-panel-slide');
 			slide.style.transform = `translateX(${step === 1 ? '0' : '-50%'})`;
+
 
 			// 발바닥 이미지 변경
 			document.getElementById('paw1').src = step === 1 ? '/img/paw_active.png' : '/img/paw_inactive.png';
@@ -296,7 +307,6 @@
 			});
 		});
 	</script>
-
 	<script>
 		function execDaumPostcode() {
 			new daum.Postcode({
@@ -344,6 +354,7 @@
 			}
 		}
 	</script>
+
 
 	<!--구글-->
 	<script>
