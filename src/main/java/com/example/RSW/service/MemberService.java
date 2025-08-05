@@ -43,6 +43,9 @@ public class MemberService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private FirebaseAuth firebaseAuth;
+
     public MemberService(MemberRepository memberRepository) {
         this.memberRepository = memberRepository;
     }
@@ -159,53 +162,41 @@ public class MemberService {
         return memberRepository.findByAuthLevel(7); // 관리자 권한이 7인 회원들
     }
 
-    // 소셜 로그인 시, 기존 회원 조회 또는 신규 생성
+    // ✅ 소셜 로그인 시 기존 회원 조회 or 신규 생성
     public Member getOrCreateSocialMember(String provider, String socialId, String email, String name) {
-        // 1️⃣ provider + socialId 기반 조회
         Member member = memberRepository.getMemberBySocial(provider, socialId);
         if (member != null) return member;
 
-        // 2️⃣ 이메일 중복 시 소셜 정보 업데이트
-        Member emailMember = memberRepository.findByEmail(email);
-        if (emailMember != null) {
-            emailMember.setSocialProvider(provider);
-            emailMember.setSocialId(socialId);
-            memberRepository.updateSocialInfo(emailMember);
-            return emailMember;
-        }
+        member = new Member();
+        member.setUid(provider + "_" + socialId);
+        member.setLoginId(email != null ? email : socialId);
+        member.setEmail(email);
+        member.setName(name);
+        member.setAuthLevel(1);
+        member.setAuthName("일반회원");
 
-        // 3️⃣ 신규 가입
-        String loginId = provider + "_" + socialId;
-        String loginPw = "SOCIAL_LOGIN";
-        memberRepository.doJoinBySocial(loginId, loginPw, provider, socialId, name, name, email);
-
-        int id = memberRepository.getLastInsertId();
-        return memberRepository.getMemberById(id);
+        memberRepository.insert(member);
+        return member;
     }
 
-
+    // ✅ 이메일 기반 소셜 가입
     public Member getOrCreateByEmail(String email, String name, String provider) {
         Member member = memberRepository.findByEmail(email);
-
         if (member == null) {
             String loginId = provider + "_" + email.split("@")[0];
             String loginPw = Ut.sha256("temp_pw_" + provider);
-            String nickname = name;
 
-            // provider와 socialId 구분
             memberRepository.doJoinBySocial(
                     loginId,
                     loginPw,
                     provider,
-                    provider + "_" + email, // socialId = "kakao_email@noemail.kakao"
+                    provider + "_" + email,
                     name,
-                    nickname,
+                    name,
                     email
             );
-
             member = memberRepository.findByEmail(email);
         }
-
         return member;
     }
 
@@ -230,68 +221,29 @@ public class MemberService {
         return memberRepository.findByEmail(email);
     }
 
+    // ✅ Firebase Custom Token 생성 (Redis 캐싱 포함)
     public String getOrCreateFirebaseToken(Member member) {
-        String redisKey = "firebaseToken::" + member.getId();
-
-        // 1. Redis 캐시 확인 (6시간 TTL)
+        String redisKey = "firebase:token:" + member.getUid();
         String cachedToken = redisTemplate.opsForValue().get(redisKey);
+
         if (cachedToken != null) {
-            System.out.println("✅ [Redis] 캐시된 Firebase 토큰 반환");
+            System.out.println("✅ [Redis] 캐시된 Firebase 토큰 사용");
             return cachedToken;
         }
 
-        // 2. UID 확인 → 없으면 예외
-        String uid = member.getUid();
-        if (uid == null || uid.trim().isEmpty()) {
-            throw new RuntimeException("UID가 없습니다. 회원가입 시 UID를 생성하세요.");
-        }
-
-        // 3. Firebase UID 존재 여부 확인 (캐시 없을 때만 실행)
         try {
-            FirebaseAuth.getInstance().getUser(uid);  // UID 기반 사용자 조회
-        } catch (FirebaseAuthException e) {
-            if (AuthErrorCode.USER_NOT_FOUND.equals(e.getAuthErrorCode())) {
-                // 사용자 없으면 신규 생성
-                try {
-                    UserRecord.CreateRequest request = new UserRecord.CreateRequest()
-                            .setUid(uid)
-                            .setEmail(member.getEmail())
-                            .setDisplayName(member.getNickname())
-                            .setEmailVerified(true);
-                    FirebaseAuth.getInstance().createUser(request);
-                    System.out.println("✅ Firebase 신규 사용자 생성 완료");
-                } catch (FirebaseAuthException createEx) {
-                    System.err.println("❌ Firebase 사용자 생성 실패: " + createEx.getMessage());
-                    throw new RuntimeException("Firebase 사용자 생성 실패", createEx);
-                }
-            } else {
-                System.err.println("❌ Firebase UID 조회 실패: " + e.getMessage());
-                throw new RuntimeException("Firebase UID 조회 실패", e);
-            }
-        }
-
-        // 4. 커스텀 토큰 발급
-        try {
-            Map<String, Object> claims = new HashMap<>();
-            claims.put("email", member.getEmail());
-            claims.put("provider", member.getSocialProvider() != null ? member.getSocialProvider() : "email");
-
-            String customToken = FirebaseAuth.getInstance().createCustomToken(uid, claims);
-            redisTemplate.opsForValue().set(redisKey, customToken, 6, TimeUnit.HOURS);
-            System.out.println("✅ Firebase 토큰 발급 및 Redis 캐싱 완료");
+            String customToken = firebaseAuth.createCustomToken(member.getUid());
+            redisTemplate.opsForValue().set(redisKey, customToken, 12, TimeUnit.HOURS);
+            System.out.println("✅ Firebase 토큰 생성 및 Redis 캐시 저장");
             return customToken;
         } catch (FirebaseAuthException e) {
-            System.err.println("❌ Firebase 토큰 생성 실패: " + e.getMessage());
-            throw new RuntimeException("Firebase 토큰 생성 실패", e);
+            throw new RuntimeException("Firebase 토큰 생성 실패: " + e.getMessage());
         }
     }
 
 
+    // ✅ UID 기반 회원 조회
     public Member findByUid(String uid) {
-        if (uid.contains("_")) {
-            String[] parts = uid.split("_", 2);
-            return memberRepository.getMemberBySocial(parts[0], parts[1]);
-        }
-        return null;
+        return memberRepository.findByUid(uid);
     }
 }
