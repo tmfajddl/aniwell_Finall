@@ -359,6 +359,7 @@
 <script>
 
     firebase.initializeApp(firebaseConfig);
+    console.log("🔥 Firebase 초기화 완료:", firebase.apps.length);
 
     // 전역 오류 감지
     window.addEventListener('error', function (e) {
@@ -391,9 +392,11 @@
                 return;
             }
 
+            console.log("✅ [DEBUG] 서버에서 커스텀 토큰 수신 완료");
             const customToken = result.data1;
 
             const userCredential = await firebase.auth().signInWithCustomToken(customToken);
+            console.log("✅ [DEBUG] Firebase 로그인 성공:", userCredential.user.email);
 
             const idToken = await userCredential.user.getIdToken();
 

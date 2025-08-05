@@ -172,7 +172,7 @@ function modifyPet(pet) {
         </div>
 
         <div class="text-center">
-		<button onclick="petDelete()" class="bg-yellow-400 hover:bg-yellow-500 text-white font-semibold px-6 py-2 rounded shadow">
+		<button type="button" onclick="petDelete()" class="bg-yellow-400 hover:bg-yellow-500 text-white font-semibold px-6 py-2 rounded shadow">
 		          삭제
 		         </button>
           <button type="submit" class="bg-yellow-400 hover:bg-yellow-500 text-white font-semibold px-6 py-2 rounded shadow">
@@ -287,3 +287,44 @@ function submitModifyForm(e) {
       });
     });
 }
+
+
+function petDelete() {
+  const petId = document.querySelector('input[name="petId"]')?.value;
+
+  if (!petId) {
+    Toast.fire({
+      icon: 'error',
+      title: '펫 ID를 찾을 수 없습니다.'
+    });
+    return;
+  }
+
+  if (!confirm("정말 삭제하시겠습니까?")) return;
+
+  fetch('/usr/pet/delete?petId=' + encodeURIComponent(petId), {
+    method: 'POST'
+  })
+    .then(res => res.json())
+    .then(data => {
+      const { resultCode, msg } = data;
+
+      Toast.fire({
+        icon: resultCode === 'S-1' ? 'success' : 'error',
+        title: msg || (resultCode === 'S-1' ? '삭제 성공!' : '삭제 실패!')
+      });
+
+      if (resultCode === "S-1") {
+        setTimeout(() => location.reload(), 1000);
+      }
+    })
+    .catch(err => {
+      console.error("❌ 삭제 중 오류:", err);
+      Toast.fire({
+        icon: 'error',
+        title: '서버 오류 발생'
+      });
+    });
+}
+
+

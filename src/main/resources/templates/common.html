@@ -14,13 +14,25 @@
 	<div th:fragment="siteHeader" class="flex">
 		<!-- Sidebar -->
 		<aside class="w-20 flex flex-col items-center p-4 min-h-[770px]">
+
 			<img src="https://i.imgur.com/rcOcaL6.png" alt="Logo" class="w-12 mb-6"
 				onclick="window.location.href = 'http://localhost:8080/'">
 
 			<!-- 프로필 원형 -->
-			<div class="w-14 h-14 bg-white rounded-full shrink-0 overflow-hidden" id="memberPhoto" onclick="myPop()">
+			<div onclick="openModal()" class="w-14 h-14 bg-white rounded-full shrink-0 overflow-hidden cursor-pointer"
+				id="memberPhoto">
 			</div>
-
+			<div id="myModal" class="fixed inset-0 z-50 bg-black bg-opacity-40 flex items-center justify-center hidden">
+				<div class="bg-white w-[300px] rounded-lg shadow-lg p-6 relative">
+					<h3 class="text-lg font-semibold mb-4">계정 관리</h3>
+					<ul class="space-y-3">
+						<li><button class="text-blue-600 hover:underline w-full text-left"
+								onclick="logout()">로그아웃</button></li>
+						<li><button class="text-blue-600 hover:underline w-full text-left"
+								onclick="submitCertificate()">인증서 제출</button></li>
+					</ul>
+				</div>
+			</div>
 			<!-- 메뉴 아이콘 -->
 			<div class="flex flex-col gap-10 justify-center h-4/5">
 
@@ -125,7 +137,7 @@
 		<script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
 
 
-		
+
 		<script th:inline="javascript">
 			const cp = [[${contextPath}]];
 
@@ -309,7 +321,7 @@
 				}
 			}
 		</script>
-		
+
 	</div>
 
 

@@ -394,16 +394,16 @@ public class PetController {
 	// 펫 삭제 로직
 	@ResponseBody
 	@RequestMapping("/usr/pet/delete")
-	public String doDelete(HttpServletRequest req, @RequestParam("petId") int petId) {
+	public ResultData doDelete(HttpServletRequest req, @RequestParam("petId") int petId) {
 		int memberId = rq.getLoginedMemberId();
 		Pet pet = petService.getPetsById(petId);
 		if (pet.getMemberId() != memberId) {
-			return Ut.jsHistoryBack("F-1", "권한이 없습니다.");
+			return ResultData.from("F-1", "권한이 없습니다.");
 		}
 
 		ResultData deleteRd = petService.deletePet(petId);
 		int id = rq.getLoginedMemberId();
-		return Ut.jsReplace(deleteRd.getResultCode(), deleteRd.getMsg(), "../pet/list?memberId=" + id); // JSP 경로
+		return ResultData.from(deleteRd.getResultCode(), deleteRd.getMsg()); // JSP 경로
 	}
 
 

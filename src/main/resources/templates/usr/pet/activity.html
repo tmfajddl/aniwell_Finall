@@ -3,31 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <title>활동 일지</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.js"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.css" rel="stylesheet"/>
-    <script src="https://cdn.jsdelivr.net/npm/sockjs-client/dist/sockjs.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/stompjs/lib/stomp.min.js"></script>
-	<script src="https://cdn.tailwindcss.com"></script>
-	<link rel="stylesheet" th:href="@{/resource/css/global.css}">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" th:href="@{/resource/css/common.css}">
+    <link rel="stylesheet" th:href="@{/resource/css/global.css}">
     <style>
-        body {
-            font-family: 'SUIT', sans-serif;
-            background: #f2fbf4;
-            margin: 0;
-            padding: 40px;
-            display: flex;
-            justify-content: center;
-        }
-
-        .popup-container {
-            background: #ffffff;
-            border-radius: 30px;
-            box-shadow: 0 0 25px rgba(190, 220, 170, 0.4);
-            padding: 30px;
-            max-width: 900px;
-            width: 100%;
-        }
-
         h2 {
             margin: 0 0 20px 10px;
             color: #4a6e4d;
@@ -36,13 +15,59 @@
             align-items: center;
         }
 
-        h2::before {
-            content: "🐾";
-            margin-right: 8px;
+        #chartWrapper {
+            overflow-x: auto;
+            margin-top: 20px;
+            border-top: 2px dashed #ccc;
         }
 
-        #timeline {
-            height: 420px;
+        #chartArea {
+            min-width: 1920px; /* 24시간 * 80px */
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding: 20px 0;
+        }
+
+        .bar-row {
+            position: relative;
+            height: 50px;
+            background: #fff;
+        }
+
+        .bars {
+            height: 30px;
+            border-radius: 20px;
+            position: absolute;
+        }
+
+        .time-grid {
+            position: relative;
+            height: 20px;
+            border-bottom: 1px dashed #ccc;
+            min-width: 1920px;
+        }
+
+        .time-label {
+            position: absolute;
+            font-size: 12px;
+            color: #666;
+            top: 0;
+            transform: translateX(-50%);
+        }
+
+        .bars:hover::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            top: -35px;
+            left: 0;
+            white-space: nowrap;
+            background: #444;
+            color: #fff;
+            padding: 5px 8px;
+            border-radius: 5px;
+            font-size: 12px;
+            z-index: 10;
         }
 
         #datePicker {
@@ -53,16 +78,26 @@
         }
     </style>
 </head>
-<body class="font-[Ownglyph_ParkDaHyun]  min-h-[770px]">
 
-<div class="popup-containe  min-h-[770px]r">
-    <h2>활동 일지
-        <input type="date" id="datePicker"/>
-    </h2>
-    <div id="timeline"></div>
-    <div id="noActivityMessage" style="display:none; margin-top:20px; text-align:center; color:#888; font-size:16px;">
-        오늘 활동이 없습니다 🐾
-    </div>
+<body class="bg-gradient-to-b from-[#e4f0b9] to-[#fcdca9] min-h-[770px]">
+<div class="flex h-screen">
+    <div th:replace="common :: siteHeader" class=""></div>
+    <main class="main_page min-h-[770px] grid-cols-12 flex-1 p-6 grid gap-4">
+        <div class="col-span-11">
+            <h2>활동 일지 <input type="date" id="datePicker"/></h2>
+            <div id="chartWrapper">
+                <div class="time-grid">
+                    <script>
+                        for (let h = 0; h <= 24; h++) {
+                            document.write(`<div class="time-label" style="left: ${h * 80}px">${String(h).padStart(2, '0')}:00</div>`);
+                        }
+                    </script>
+                </div>
+                <div id="chartArea"></div>
+            </div>
+            <div id="noActivityMessage" style="display:none; text-align:center; color:#888; font-size:16px;">오늘 활동이 없습니다</div>
+        </div>
+    </main>
 </div>
 
 <script th:inline="javascript">
@@ -70,15 +105,9 @@
     let rawInitialData = [[${activitiesJson}]];
     let initialData;
 
-    // 🔹 초기 데이터가 문자열이라면 JSON 파싱
     try {
-        if (typeof rawInitialData === "string") {
-            initialData = JSON.parse(rawInitialData);
-        } else {
-            initialData = rawInitialData;
-        }
-    } catch (e) {
-        console.warn("초기 데이터 파싱 실패:", e);
+        initialData = typeof rawInitialData === "string" ? JSON.parse(rawInitialData) : rawInitialData;
+    } catch {
         initialData = [];
     }
 
@@ -86,128 +115,77 @@
     const datePicker = document.getElementById("datePicker");
     datePicker.value = todayStr;
 
-    let stompClient = null;
-    let timeline = null;
-    let items = new vis.DataSet();
-    const container = document.getElementById('timeline');
+    const chartArea = document.getElementById("chartArea");
 
-    function getEmoji() {
-        const list = ["🐱"];
-        return list[Math.floor(Math.random() * list.length)];
+    const COLORS = {
+        "거실": "#fff8b5",
+        "침실": "#d3f8e2",
+        "기타": "#e0eafc"
+    };
+
+    function formatTime(date) {
+        const d = new Date(date);
+        return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
     }
 
-    function getColor(zoneName) {
-        if (zoneName.includes("거실")) return "#fff8b5";
-        if (zoneName.includes("침실")) return "#d3f8e2";
-        return "#e0eafc";
+    function formatDuration(seconds) {
+        seconds = Math.max(0, seconds);
+        const mins = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return `${mins}분 ${secs}초 머묾`;
     }
 
-    function addItem(data) {
-        if (!data.enteredAt || !data.exitedAt) return;
+    function renderChart(data) {
+        chartArea.innerHTML = "";
 
-        let start = new Date(data.enteredAt.replace('T', ' '));
-        let end = new Date(data.exitedAt.replace('T', ' '));
-
-        if ((end - start) < 10 * 1000) {
-            end = new Date(start.getTime() + 10 * 1000);
+        const rows = Math.max(data.length, 5);
+        for (let i = 0; i < rows; i++) {
+            const barRow = document.createElement("div");
+            barRow.className = "bar-row";
+            chartArea.appendChild(barRow);
         }
 
-        const color = getColor(data.zoneName);
-        const id = Date.now() + Math.random();
-
-        items.add({
-            id,
-            content: getEmoji(),
-            start,
-            end,
-            group: data.zoneName,
-            title: `${data.zoneName}에서 ${data.durationSec}초 동안 머물렀어요 🐾`,
-            style: `background-color: ${color}; border-radius: 16px; font-size:16px; padding:4px;`
-        });
-
-        return id;
-    }
-
-    function renderTimeline(data, dateStr) {
-        if (timeline) {
-            timeline.destroy();
-            container.innerHTML = '';
+        if (!Array.isArray(data) || data.length === 0) {
+            document.getElementById("noActivityMessage").style.display = "block";
+            return;
         }
-        items.clear();
-        if (Array.isArray(data)) data.forEach(item => addItem(item));
+        document.getElementById("noActivityMessage").style.display = "none";
 
-        const selectedDate = new Date(dateStr);
-        const startOfDay = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), 0, 0, 0);
-        const endOfDay = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), 23, 59, 59);
+        data.sort((a, b) => new Date(a.enteredAt) - new Date(b.enteredAt));
+        const startOfDay = new Date(data[0].enteredAt);
+        startOfDay.setHours(0, 0, 0, 0);
 
-        const groups = new vis.DataSet([
-            { id: "거실", content: "거실" },
-            { id: "침실", content: "침실" }
-        ]);
+        data.forEach((item, index) => {
+            const entered = new Date(item.enteredAt);
+            const exited = new Date(item.exitedAt);
+            const durationSec = (exited - entered) / 1000;
+            const offsetSec = (entered - startOfDay) / 1000;
 
+            const offsetPx = (offsetSec / 3600) * 80;
+            const widthPx = Math.max((durationSec / 3600) * 80, 4);
 
-        const options = {
-            stack: false,
-            orientation: 'top',
-            margin: { item: 12 },
-            showMajorLabels: true,
-            showCurrentTime: true,
-            min: startOfDay,
-            max: endOfDay,
-            tooltip: { followMouse: true },
-            zoomable: false,
-            moveable: true
-        };
+            const bar = document.createElement("div");
+            bar.className = "bars";
+            bar.style.left = `${offsetPx}px`;
+            bar.style.width = `${widthPx}px`;
+            bar.style.backgroundColor = COLORS[item.zoneName] || COLORS["기타"];
+            bar.setAttribute("data-tooltip", `${formatTime(entered)} ~ ${formatTime(exited)}\n${formatDuration(durationSec)}`);
 
-        timeline = new vis.Timeline(container, items, groups, options);
-
-        // ✅ 하루 전체 보기로 줌아웃
-        timeline.setWindow(startOfDay, endOfDay);
-    }
-
-    function connectWebSocket() {
-        const socket = new SockJS("/ws");
-        stompClient = Stomp.over(socket);
-        stompClient.connect({}, () => {
-            stompClient.subscribe(`/topic/activity/${petId}`, (msg) => {
-                const act = JSON.parse(msg.body);
-                console.log("📩 WebSocket 수신:", act);
-                const id = addItem(act);
-                if (id) {
-                    setTimeout(() => {
-                        timeline.focus(id);
-                    }, 300);
-                }
-            });
+            chartArea.children[index].appendChild(bar);
         });
-    }
-
-    function disconnectWebSocket() {
-        if (stompClient) stompClient.disconnect();
     }
 
     function loadActivitiesByDate(dateStr) {
         fetch(`/usr/pet/activity/list?petId=${petId}&date=${dateStr}`)
             .then(res => res.json())
-            .then(data => {
-                renderTimeline(data, dateStr);
-                if (dateStr === todayStr) connectWebSocket();
-                else disconnectWebSocket();
-            });
+            .then(data => renderChart(data));
     }
 
-    // 🔹 초기 로딩
-    renderTimeline(initialData, todayStr);
-    connectWebSocket();
-
-    // 🔹 날짜 변경 시 새로 불러오기
     datePicker.addEventListener("change", () => {
-        const selectedDate = datePicker.value;
-        disconnectWebSocket();
-        loadActivitiesByDate(selectedDate);
+        loadActivitiesByDate(datePicker.value);
     });
+
+    renderChart(initialData);
 </script>
-
-
-</bodyclass>
+</body>
 </html>
