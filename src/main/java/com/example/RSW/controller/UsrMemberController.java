@@ -819,9 +819,9 @@ public class UsrMemberController {
             String uid = "google_" + socialId;
             String firebaseToken = memberService.createFirebaseCustomToken(uid);
 
-            // 5️⃣ Redis에 Firebase 토큰 캐싱 (1시간)
+            // 5️⃣ Redis에 Firebase 토큰 캐싱 (6시간)
             String redisKey = "firebase:token:" + member.getId();
-            redisTemplate.opsForValue().set(redisKey, firebaseToken, 1, TimeUnit.HOURS);
+            redisTemplate.opsForValue().set(redisKey, firebaseToken, 6, TimeUnit.HOURS);
 
             // 6️⃣ Spring Security 인증 등록
             UsernamePasswordAuthenticationToken authentication =
