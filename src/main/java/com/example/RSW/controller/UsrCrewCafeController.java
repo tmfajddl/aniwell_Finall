@@ -172,6 +172,7 @@ public class UsrCrewCafeController {
 		System.out.println("memberId = " + memberId);
 		System.out.println("myCrews.size = " + myCrews.size());
 		System.out.println("joinedCrews.size = " + joinedCrews.size());
+		
 		return ResultData.from("S-1", "나의 크루와 게시글을 불러왔습니다.", data);
 	}
 
