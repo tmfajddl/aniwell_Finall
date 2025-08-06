@@ -303,6 +303,7 @@ public class UsrWalkCrewController {
 
 		// ✅ 정렬: 1) dong 일치 → 2) 거리순 → 3) createdAt 또는 title
 		resultList.sort((a, b) -> {
+			// 🎯 [기능 3-1] isTargetDong = true인 항목이 먼저 오도록 정렬 (위치 기반 우선 정렬 - 가설 2, 3)
 			boolean aIsTarget = (boolean) a.getOrDefault("isTargetDong", false);
 			boolean bIsTarget = (boolean) b.getOrDefault("isTargetDong", false);
 
@@ -322,9 +323,9 @@ public class UsrWalkCrewController {
 
 			// 💡 기타 정렬 (기본은 createdAt 내림차순)
 			if (sortBy.equals("title")) {
-				return ((String) a.get("title")).compareTo((String) b.get("title")); // 가나다순
+				return ((String) a.get("title")).compareTo((String) b.get("title")); // 가나다순 정렬
 			} else {
-				return ((Comparable) b.get("createdAt")).compareTo(a.get("createdAt")); // 최신순
+				return ((Comparable) b.get("createdAt")).compareTo(a.get("createdAt")); // 최신순 정렬
 			}
 		});
 
