@@ -242,31 +242,41 @@ public class UsrWalkCrewController {
 	// ✅ 크루 목록을 JSON 형태로 반환하는 API 컨트롤러
 	@GetMapping("/api/list")
 	@ResponseBody
-	public ResultData getCrewListAsJson(HttpServletRequest req, @RequestParam(required = false) String query, // 🔍 검색어
-			@RequestParam(required = false) String dong, // 🏠 동네 이름 (정렬 우선순위용)
+	public ResultData getCrewListAsJson(HttpServletRequest req, @RequestParam(required = false) String query,
+			// 🔍 검색어 (제목/설명포함 여부판단)
+
+			@RequestParam(required = false) String dong, // 🏠 동네 이름 (정렬 및 필터 기준)
 			@RequestParam(required = false, defaultValue = "createdAt") String sortBy // 🔃 정렬 기준
 	) {
-		// ✅ 로그인된 사용자 정보 가져오기
+		// ✅ 로그인 사용자 정보 가져오기 (필요 시 로그인된 사용자 ID 전달)
 		Rq rq = (Rq) req.getAttribute("rq");
 
-		// ✅ 전체 크루 리스트 조회
+		// ✅ [기능 0] 전체 크루 리스트 가져오기
 		List<WalkCrew> crews = walkCrewService.getAllCrews();
 
-		// ✅ 결과로 반환할 JSON 리스트 준비
+		// ✅ [기능 1] 반환할 JSON 형태의 리스트 준비
 		List<Map<String, Object>> resultList = new ArrayList<>();
 
-		// ✅ 크루 리스트를 하나씩 순회
+		// ✅ [기능 2] 모든 크루 순회하며 조건별로 필터링 및 변환
 		for (WalkCrew crew : crews) {
 
-			// 🔍 검색어 필터링 (제목 또는 설명에 query가 포함되어 있어야 함)
+			// 🔍 [기능 2-1] 검색어(query)가 있을 경우 → 제목 또는 설명에 포함된 항목만 통과 (가설 2)
 			if (query != null && !query.isBlank()) {
 				boolean titleMatch = crew.getTitle() != null && crew.getTitle().contains(query);
 				boolean descMatch = crew.getDescription() != null && crew.getDescription().contains(query);
-				if (!titleMatch && !descMatch)
-					continue; // 조건에 맞지 않으면 제외
+				if (!titleMatch && !descMatch) {
+					continue; // 검색어와 관련 없는 항목은 제외
+				}
 			}
 
-			// ✅ 크루 정보를 Map 형태로 변환
+			// 🏠 [기능 2-2] 동네 버튼만 클릭한 경우 (query는 없고 dong만 있는 경우) → 해당 동네만 필터링 (가설 1)
+			if (dong != null && !dong.isBlank() && (query == null || query.isBlank())) {
+				if (!dong.equals(crew.getDong())) {
+					continue;
+				}
+			}
+
+			// ✅ [기능 2-3] 하나의 크루 정보를 JSON Map 형태로 구성
 			Map<String, Object> crewMap = new HashMap<>();
 			crewMap.put("id", crew.getId());
 			crewMap.put("title", crew.getTitle());
@@ -278,39 +288,38 @@ public class UsrWalkCrewController {
 			crewMap.put("createdAt", crew.getCreatedAt());
 			crewMap.put("imageUrl", crew.getImageUrl());
 
-			// 🏠 dong 우선 정렬을 위한 비교용 flag 저장
-			// ➜ 해당 동네일 경우 true → 나중에 정렬 시 상단으로 배치
+			// 🎯 [기능 2-4] 위치 기반 정렬용 플래그 설정 (dong과 일치하는 항목 true로 표시) (가설 2, 3)
 			crewMap.put("isTargetDong", dong != null && dong.equals(crew.getDong()));
 
-			// 결과 리스트에 추가
+			// ✅ 리스트에 추가
 			resultList.add(crewMap);
 		}
 
-		// ✅ 정렬 처리 (1순위: 동네 우선, 2순위: sortBy 기준)
+		// ✅ [기능 3] 리스트 정렬 처리
 		resultList.sort((a, b) -> {
+			// 🎯 [기능 3-1] isTargetDong = true인 항목이 먼저 오도록 정렬 (위치 기반 우선 정렬 - 가설 2, 3)
 			boolean aIsTarget = (boolean) a.getOrDefault("isTargetDong", false);
 			boolean bIsTarget = (boolean) b.getOrDefault("isTargetDong", false);
 
-			// 💡 1순위: dong이 일치하는 항목을 최상단에 배치
 			if (aIsTarget && !bIsTarget)
 				return -1;
 			if (!aIsTarget && bIsTarget)
 				return 1;
 
-			// 💡 2순위: 정렬 기준에 따라 정렬 (기본은 createdAt 내림차순)
+			// 🔃 [기능 3-2] 이후 정렬 기준 적용 (title이면 가나다순, createdAt이면 최신순)
 			if (sortBy.equals("title")) {
-				return ((String) a.get("title")).compareTo((String) b.get("title")); // 가나다순
+				return ((String) a.get("title")).compareTo((String) b.get("title")); // 가나다순 정렬
 			} else {
-				return ((Comparable) b.get("createdAt")).compareTo(a.get("createdAt")); // 최신순
+				return ((Comparable) b.get("createdAt")).compareTo(a.get("createdAt")); // 최신순 정렬
 			}
 		});
 
-		// ✅ 반환 데이터 구성
+		// ✅ [기능 4] 최종 응답 JSON 구성
 		Map<String, Object> data = new HashMap<>();
-		data.put("crews", resultList); // 정렬된 크루 리스트
-		data.put("loginMemberId", (rq != null && rq.isLogined()) ? rq.getLoginedMemberId() : ""); // 로그인된 사용자 ID
+		data.put("crews", resultList); // 정렬/필터링된 크루 목록
+		data.put("loginMemberId", (rq != null && rq.isLogined()) ? rq.getLoginedMemberId() : ""); // 로그인 ID
 
-		// ✅ JSON 응답 반환
+		// ✅ [기능 5] 응답 반환
 		return ResultData.from("S-1", "크루 목록 불러오기 성공", data);
 	}
 
