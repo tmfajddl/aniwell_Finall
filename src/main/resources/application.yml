@@ -17,8 +17,10 @@ spring:
     client-id: ""
     client-secret: ""
     redirect-uri: "http://localhost:8080/usr/member/google"
+  session:
+    store-type: redis   # 세션 저장소를 Redis로 변경
   data:
-    redis:    # 로그인 딜레이 줄이기 위해 redis 추가
+    redis:    # 로그인 딜레이 줄이기 위해 redis 토큰 추가
       host: localhost
       port: 6379
   thymeleaf:

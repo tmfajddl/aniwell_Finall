@@ -147,7 +147,6 @@ public class UsrMemberController {
 
         if (rq == null) {
             rq = new Rq(req, resp, memberService);
-            req.getSession().setAttribute("rq", rq);
         }
 
         if (Ut.isEmptyOrNull(loginId)) {
@@ -182,7 +181,6 @@ public class UsrMemberController {
 
         // 기존 rq.login 유지 (세션 기반 호환성)
         rq.login(member);
-        req.getSession().setAttribute("rq", rq);
 
         // Firebase용 UID 기준 토큰 생성
         String uid = member.getLoginId() + "@aniwell.com";
@@ -617,7 +615,6 @@ public class UsrMemberController {
             // 4️⃣ 세션 등록
             Rq rq = new Rq(req, resp, memberService);
             rq.login(member);
-            req.getSession().setAttribute("rq", rq);
             req.getSession().setAttribute("kakaoAccessToken", accessToken);
 
             // ✅ Spring Security 인증 등록
@@ -668,7 +665,6 @@ public class UsrMemberController {
 
         Rq rq = new Rq(req, resp, memberService);
         rq.login(member);
-        req.getSession().setAttribute("rq", rq);
 
         return ResultData.from("S-1", "로그인 성공");
     }
