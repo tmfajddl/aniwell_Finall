@@ -52,52 +52,49 @@ public class PetHealthService {
     }
 
     public Map<String, Object> getWeeklyChartData(int petId) {
-        List<Map<String, Object>> dbResults = repo.getWeeklyStats(petId);
+        List<Map<String, Object>> dbResults = repo.getWeeklyStats(petId);  // 쿼리 호출
 
         // 🐾 고양이 몸무게 가져오기
         Pet pet = petService.getPetsById(petId);
         double weight = pet.getWeight();
 
+        // 📅 요일 라벨 (Chart.js용)
         List<String> labels = List.of("월", "화", "수", "목", "금", "토", "일");
 
-        double[] rawFood = new double[7];
-        double[] rawWater = new double[7];
-        double[] foodScore = new double[7];
+        // 📊 요일별 점수 초기화
+        double[] foodScore = new double[7];   // 월=0 ~ 일=6
         double[] waterScore = new double[7];
 
         for (Map<String, Object> row : dbResults) {
-            int dayOfWeek = ((Number) row.get("dayOfWeek")).intValue();
+            int dayIndex = ((Number) row.get("dayOfWeek")).intValue();  // 0=월 ~ 6=일
+
             double foodTotal = row.get("foodTotal") != null ? ((Number) row.get("foodTotal")).doubleValue() : 0.0;
             double waterTotal = row.get("waterTotal") != null ? ((Number) row.get("waterTotal")).doubleValue() : 0.0;
 
-            int index = switch (dayOfWeek) {
-                case 2 -> 0; case 3 -> 1; case 4 -> 2;
-                case 5 -> 3; case 6 -> 4; case 7 -> 5;
-                case 1 -> 6; default -> -1;
-            };
-            if (index != -1) {
-                rawFood[index] = foodTotal;
-                rawWater[index] = waterTotal;
-                foodScore[index] = calculateScore(foodTotal, weight * 15.0, weight * 20.0);   // ✅ 몸무게 기준 점수
-                waterScore[index] = calculateScore(waterTotal, weight * 50.0, weight * 70.0);
-            }
+            // ✅ 몸무게 기준 점수 계산
+            foodScore[dayIndex] = calculateScore(foodTotal, weight * 15.0, weight * 20.0);     // 권장 사료량 범위
+            waterScore[dayIndex] = calculateScore(waterTotal, weight * 50.0, weight * 70.0);   // 권장 물 섭취량
         }
 
-        // ✅ 평균 점수
-        List<Double> score = new ArrayList<>();
+        // ✅ 평균 점수 계산 (소수점 1자리 반올림)
+        List<Double> avgScore = new ArrayList<>();
         for (int i = 0; i < 7; i++) {
-            double s = (foodScore[i] + waterScore[i]) / 2.0;
-            score.add(Math.round(s * 10.0) / 10.0);
+            double avg = (foodScore[i] + waterScore[i]) / 2.0;
+            avgScore.add(Math.round(avg * 10.0) / 10.0);
         }
 
+        // ✅ 결과 구성
         Map<String, Object> result = new HashMap<>();
         result.put("labels", labels);
-        result.put("food", Arrays.stream(foodScore).boxed().toList());   // ✅ 점수로 반환
-        result.put("water", Arrays.stream(waterScore).boxed().toList()); // ✅ 점수로 반환
-        result.put("score", score);                                      // ✅ 평균 점수
+        result.put("food", Arrays.stream(foodScore).boxed().toList());
+        result.put("water", Arrays.stream(waterScore).boxed().toList());
+        result.put("score", avgScore);
+        System.out.println(result);
+
 
         return result;
     }
+
 
     private double calculateScore(double actual, double targetMin, double targetMax) {
         double targetMid = (targetMin + targetMax) / 2.0;
