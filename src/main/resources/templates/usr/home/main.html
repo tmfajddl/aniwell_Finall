@@ -56,14 +56,15 @@
 						</button>
 					</div>
 					<div>
-						<!-- 로그인일 때: petlist 버튼 -->
-						<button id="petlist" type="button" class="in-icon"
-							th:if="${rq.isLogined and rq.loginedMember.authLevel != 3}"
-							onclick="location.href='/usr/pet/list?memberId=[[${rq.loginedMember.id}]]'">
-							petlist
-							<img src="https://imgur.com/2ZJPrGR.png" alt="petlist">
-						</button>
+					  <!-- 로그인일 때: petlist 버튼 -->
+					  <button id="petlist" type="button" class="in-icon"
+					          th:if="${rq.isLogined and rq.loginedMember.authLevel != 3}"
+					          th:onclick="|location.href='/usr/pet/list?memberId=${rq.loginedMember.id}'|">
+					    petlist
+					    <img src="https://imgur.com/2ZJPrGR.png" alt="petlist">
+					  </button>
 					</div>
+
 				</div>
 			</div>
 		</div>
