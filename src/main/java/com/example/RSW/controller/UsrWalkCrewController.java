@@ -243,37 +243,31 @@ public class UsrWalkCrewController {
 	@GetMapping("/api/list")
 	@ResponseBody
 	public ResultData getCrewListAsJson(HttpServletRequest req, @RequestParam(required = false) String query, // 🔍 검색어
-			@RequestParam(required = false) String dong) {
-		// 🔹 로그인 사용자 정보 가져오기 (Rq는 로그인 상태 확인용 커스텀 객체)
+			@RequestParam(required = false) String dong, // 🏠 동네 이름 (정렬 우선순위용)
+			@RequestParam(required = false, defaultValue = "createdAt") String sortBy // 🔃 정렬 기준
+	) {
+		// ✅ 로그인된 사용자 정보 가져오기
 		Rq rq = (Rq) req.getAttribute("rq");
 
-		// 🔹 모든 크루 정보를 데이터베이스에서 조회
+		// ✅ 전체 크루 리스트 조회
 		List<WalkCrew> crews = walkCrewService.getAllCrews();
 
-		// 🔹 프론트에 반환할 JSON 형태로 변환할 리스트 선언
+		// ✅ 결과로 반환할 JSON 리스트 준비
 		List<Map<String, Object>> resultList = new ArrayList<>();
 
-		// 🔁 필터링된 데이터만 추출
+		// ✅ 크루 리스트를 하나씩 순회
 		for (WalkCrew crew : crews) {
-			// ✅ query (검색어) 필터 조건
+
+			// 🔍 검색어 필터링 (제목 또는 설명에 query가 포함되어 있어야 함)
 			if (query != null && !query.isBlank()) {
 				boolean titleMatch = crew.getTitle() != null && crew.getTitle().contains(query);
 				boolean descMatch = crew.getDescription() != null && crew.getDescription().contains(query);
-				if (!titleMatch && !descMatch) {
-					continue; // 검색어와 일치하지 않으면 건너뜀
-				}
+				if (!titleMatch && !descMatch)
+					continue; // 조건에 맞지 않으면 제외
 			}
 
-			// ✅ dong (동네) 필터 조건
-			if (dong != null && !dong.isBlank()) {
-				if (crew.getDong() == null || !crew.getDong().equals(dong)) {
-					continue; // 동네가 일치하지 않으면 제외
-				}
-			}
-
+			// ✅ 크루 정보를 Map 형태로 변환
 			Map<String, Object> crewMap = new HashMap<>();
-
-			// ▶️ 크루 기본 정보 저장
 			crewMap.put("id", crew.getId());
 			crewMap.put("title", crew.getTitle());
 			crewMap.put("description", crew.getDescription());
@@ -282,20 +276,41 @@ public class UsrWalkCrewController {
 			crewMap.put("district", crew.getDistrict());
 			crewMap.put("dong", crew.getDong());
 			crewMap.put("createdAt", crew.getCreatedAt());
-
-			// ✅ 핵심: 이미지 URL도 포함해야 프론트에서 썸네일 출력 가능
 			crewMap.put("imageUrl", crew.getImageUrl());
 
-			// ▶️ 완성된 crewMap을 결과 리스트에 추가
+			// 🏠 dong 우선 정렬을 위한 비교용 flag 저장
+			// ➜ 해당 동네일 경우 true → 나중에 정렬 시 상단으로 배치
+			crewMap.put("isTargetDong", dong != null && dong.equals(crew.getDong()));
+
+			// 결과 리스트에 추가
 			resultList.add(crewMap);
 		}
 
-		// 🔹 최종 반환용 data 객체 생성 (crews 리스트 + 로그인한 사용자 ID 포함)
-		Map<String, Object> data = new HashMap<>();
-		data.put("crews", resultList); // 크루 목록 데이터
-		data.put("loginMemberId", (rq != null && rq.isLogined()) ? rq.getLoginedMemberId() : "");
+		// ✅ 정렬 처리 (1순위: 동네 우선, 2순위: sortBy 기준)
+		resultList.sort((a, b) -> {
+			boolean aIsTarget = (boolean) a.getOrDefault("isTargetDong", false);
+			boolean bIsTarget = (boolean) b.getOrDefault("isTargetDong", false);
 
-		// 🔚 ResultData 포맷으로 응답 반환
+			// 💡 1순위: dong이 일치하는 항목을 최상단에 배치
+			if (aIsTarget && !bIsTarget)
+				return -1;
+			if (!aIsTarget && bIsTarget)
+				return 1;
+
+			// 💡 2순위: 정렬 기준에 따라 정렬 (기본은 createdAt 내림차순)
+			if (sortBy.equals("title")) {
+				return ((String) a.get("title")).compareTo((String) b.get("title")); // 가나다순
+			} else {
+				return ((Comparable) b.get("createdAt")).compareTo(a.get("createdAt")); // 최신순
+			}
+		});
+
+		// ✅ 반환 데이터 구성
+		Map<String, Object> data = new HashMap<>();
+		data.put("crews", resultList); // 정렬된 크루 리스트
+		data.put("loginMemberId", (rq != null && rq.isLogined()) ? rq.getLoginedMemberId() : ""); // 로그인된 사용자 ID
+
+		// ✅ JSON 응답 반환
 		return ResultData.from("S-1", "크루 목록 불러오기 성공", data);
 	}
 
