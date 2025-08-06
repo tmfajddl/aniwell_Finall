@@ -151,12 +151,12 @@
                                placeholder="ID" th:value="${param.loginId}"/>
 
                         <label class="form-wrapper__label" for="loginPw">비밀번호</label>
-                        <input class="form-wrapper__input" id="loginPw" name="loginPw" type="password" required
-                               placeholder="PW"/>
+                        <input class="form-wrapper__input" id="loginPw" name="loginPw" type="password" required placeholder="PW" />
 
+                        <!-- 비밀번호 확인 -->
                         <label class="form-wrapper__label" for="loginPwConfirm">비밀번호 확인</label>
-                        <input class="form-wrapper__input" id="loginPwConfirm" name="loginPwConfirm" type="password" required
-                               placeholder="Confirm PW"/>
+                        <input class="form-wrapper__input" id="loginPwConfirm" name="loginPwConfirm" type="password" required placeholder="Confirm PW" />
+                        <p id="pwMessage" class="text-xs mt-1 mb-2 hidden">비밀번호가 일치하지 않습니다.</p>
 
                         <label class="form-wrapper__label" for="name">이름</label>
                         <input class="form-wrapper__input" id="name" name="name" type="text" required
@@ -314,6 +314,43 @@
     });
 </script>
 <script>
+    // 회원가입 폼 선택
+    const joinForm = document.querySelector('.login-form--register form');
+
+    function checkPasswordMatch() {
+        const pw = joinForm.querySelector("#loginPw").value.trim();
+        const pwConfirm = joinForm.querySelector("#loginPwConfirm").value.trim();
+        const pwInput = joinForm.querySelector("#loginPwConfirm");
+        const message = joinForm.querySelector("#pwMessage");
+
+        // 초기화
+        pwInput.classList.remove("border-red-500", "border-green-500");
+        message.classList.add("hidden");
+        message.textContent = "";
+        message.classList.remove("text-red-600", "text-green-600");
+
+        if (pwConfirm === "") return;
+
+        if (pw === pwConfirm) {
+            // ✅ 일치
+            pwInput.classList.add("border-green-500");
+            message.textContent = "비밀번호가 일치합니다.";
+            message.classList.add("text-green-600");
+            message.classList.remove("hidden");
+        } else {
+            // ❌ 불일치
+            pwInput.classList.add("border-red-500");
+            message.textContent = "비밀번호가 일치하지 않습니다.";
+            message.classList.add("text-red-600");
+            message.classList.remove("hidden");
+        }
+    }
+
+    // ✅ 회원가입 폼 안의 비밀번호 필드에만 이벤트 바인딩
+    joinForm.querySelector("#loginPw").addEventListener("keyup", checkPasswordMatch);
+    joinForm.querySelector("#loginPwConfirm").addEventListener("keyup", checkPasswordMatch);
+</script>
+<script>
     function execDaumPostcode() {
         new daum.Postcode({
             oncomplete: function (data) {
@@ -449,8 +486,8 @@
         // 서버 세션 로그인
         await fetch("/usr/member/firebase-session-login", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ idToken }),
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({idToken}),
             credentials: "include"
         });
     }
@@ -458,7 +495,7 @@
     // ✅ 공통 로그인 프로세스 (일반/소셜 공용)
     async function processLogin() {
         try {
-            const res = await fetch('/usr/member/firebase-token', { method: 'POST' });
+            const res = await fetch('/usr/member/firebase-token', {method: 'POST'});
             const result = await res.json();
             if (result.resultCode !== 'S-1') {
                 window.location.replace("/usr/member/login");
@@ -483,7 +520,7 @@
             await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL);
 
             const provider = new firebase.auth.GoogleAuthProvider();
-            provider.setCustomParameters({ prompt: 'select_account' }); // 계정 선택 유지
+            provider.setCustomParameters({prompt: 'select_account'}); // 계정 선택 유지
 
             // 🔥 Firebase 팝업 로그인
             const result = await firebase.auth().signInWithPopup(provider);
@@ -525,7 +562,7 @@
             loginForm.addEventListener("submit", async function (e) {
                 e.preventDefault();
                 const formData = new FormData(loginForm);
-                const response = await fetch(loginForm.getAttribute("action"), { method: "POST", body: formData });
+                const response = await fetch(loginForm.getAttribute("action"), {method: "POST", body: formData});
                 const result = await response.json();
                 if (result.resultCode !== "S-1") {
                     alert(result.msg || "로그인 실패");
