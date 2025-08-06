@@ -1,6 +1,7 @@
 
 package com.example.RSW.service;
 
+import com.google.firebase.FirebaseApp;
 import com.google.firebase.auth.AuthErrorCode;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
@@ -16,6 +17,7 @@ import com.example.RSW.util.Ut;
 import com.example.RSW.vo.Member;
 import com.example.RSW.vo.ResultData;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,6 +44,9 @@ public class MemberService {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private FirebaseAuth firebaseAuth;
 
     public MemberService(MemberRepository memberRepository) {
         this.memberRepository = memberRepository;
@@ -159,53 +164,49 @@ public class MemberService {
         return memberRepository.findByAuthLevel(7); // 관리자 권한이 7인 회원들
     }
 
-    // 소셜 로그인 시, 기존 회원 조회 또는 신규 생성
+    // ✅ 소셜 로그인 시 기존 회원 조회 or 신규 생성
     public Member getOrCreateSocialMember(String provider, String socialId, String email, String name) {
-        // 1️⃣ provider + socialId 기반 조회
         Member member = memberRepository.getMemberBySocial(provider, socialId);
         if (member != null) return member;
 
-        // 2️⃣ 이메일 중복 시 소셜 정보 업데이트
-        Member emailMember = memberRepository.findByEmail(email);
-        if (emailMember != null) {
-            emailMember.setSocialProvider(provider);
-            emailMember.setSocialId(socialId);
-            memberRepository.updateSocialInfo(emailMember);
-            return emailMember;
-        }
-
-        // 3️⃣ 신규 가입
-        String loginId = provider + "_" + socialId;
+        String loginId = email != null ? email : provider + "_" + socialId;
+        String nickname = name != null ? name : "소셜회원";
         String loginPw = "SOCIAL_LOGIN";
-        memberRepository.doJoinBySocial(loginId, loginPw, provider, socialId, name, name, email);
 
-        int id = memberRepository.getLastInsertId();
-        return memberRepository.getMemberById(id);
+        // ✅ 전용 insert 사용
+        memberRepository.doJoinBySocial(
+                loginId,
+                loginPw,
+                provider,
+                socialId,
+                name,
+                nickname,
+                email
+        );
+
+        return memberRepository.getMemberBySocial(provider, socialId);
     }
 
 
+
+    // ✅ 이메일 기반 소셜 가입
     public Member getOrCreateByEmail(String email, String name, String provider) {
         Member member = memberRepository.findByEmail(email);
-
         if (member == null) {
             String loginId = provider + "_" + email.split("@")[0];
             String loginPw = Ut.sha256("temp_pw_" + provider);
-            String nickname = name;
 
-            // provider와 socialId 구분
             memberRepository.doJoinBySocial(
                     loginId,
                     loginPw,
                     provider,
-                    provider + "_" + email, // socialId = "kakao_email@noemail.kakao"
+                    provider + "_" + email,
                     name,
-                    nickname,
+                    name,
                     email
             );
-
             member = memberRepository.findByEmail(email);
         }
-
         return member;
     }
 
@@ -231,67 +232,68 @@ public class MemberService {
     }
 
     public String getOrCreateFirebaseToken(Member member) {
-        String redisKey = "firebaseToken::" + member.getId();
+        String redisKey = "firebase:token:" + member.getUid();
+        String lockKey = redisKey + ":lock";
 
-        // 1. Redis 캐시 확인 (6시간 TTL)
+
+        // 1️⃣ Redis 캐시 확인
         String cachedToken = redisTemplate.opsForValue().get(redisKey);
         if (cachedToken != null) {
-            System.out.println("✅ [Redis] 캐시된 Firebase 토큰 반환");
-            return cachedToken;
+            if ((cachedToken.split("\\.").length - 1) == 2) return cachedToken;
+            redisTemplate.delete(redisKey);
         }
 
-        // 2. UID 확인 → 없으면 예외
-        String uid = member.getUid();
-        if (uid == null || uid.trim().isEmpty()) {
-            throw new RuntimeException("UID가 없습니다. 회원가입 시 UID를 생성하세요.");
+        // 2️⃣ 분산 락 (동시 요청 방지)
+        Boolean isLockAcquired = redisTemplate.opsForValue().setIfAbsent(lockKey, "1", 5, TimeUnit.SECONDS);
+        if (Boolean.FALSE.equals(isLockAcquired)) {
+            try { Thread.sleep(300); } catch (InterruptedException ignored) {}
+            return redisTemplate.opsForValue().get(redisKey);
         }
 
-        // 3. Firebase UID 사용자 확인 (try-catch로 감싸기)
         try {
-            FirebaseAuth.getInstance().getUser(uid); // UID 기반 사용자 조회
-        } catch (FirebaseAuthException e) {
-            if (e.getAuthErrorCode() == AuthErrorCode.USER_NOT_FOUND) {
-                try {
-                    // 사용자 없으면 새로 생성
-                    UserRecord.CreateRequest request = new UserRecord.CreateRequest()
-                            .setUid(uid)
-                            .setEmail(member.getEmail())
-                            .setDisplayName(member.getNickname())
-                            .setEmailVerified(true);
-                    FirebaseAuth.getInstance().createUser(request);
-                    System.out.println("✅ Firebase 신규 사용자 생성 완료");
-                } catch (FirebaseAuthException createEx) {
-                    System.err.println("❌ Firebase 사용자 생성 실패: " + createEx.getMessage());
-                    throw new RuntimeException("Firebase 사용자 생성 실패", createEx);
-                }
-            } else {
-                System.err.println("❌ Firebase UID 조회 실패: " + e.getMessage());
-                throw new RuntimeException("Firebase UID 조회 실패", e);
-            }
-        }
+            // 3️⃣ Firebase Custom Token 생성
+            String customToken = firebaseAuth.createCustomToken(member.getUid());
 
-        // 4. 커스텀 토큰 발급
-        try {
-            Map<String, Object> claims = new HashMap<>();
-            claims.put("email", member.getEmail());
-            claims.put("provider", member.getSocialProvider() != null ? member.getSocialProvider() : "email");
-
-            String customToken = FirebaseAuth.getInstance().createCustomToken(uid, claims);
-            redisTemplate.opsForValue().set(redisKey, customToken, 6, TimeUnit.HOURS);
-            System.out.println("✅ Firebase 토큰 발급 및 Redis 캐싱 완료");
+            // 4️⃣ Redis 저장
+            redisTemplate.opsForValue().set(redisKey, customToken, 12, TimeUnit.HOURS);
             return customToken;
         } catch (FirebaseAuthException e) {
-            System.err.println("❌ Firebase 토큰 생성 실패: " + e.getMessage());
-            throw new RuntimeException("Firebase 토큰 생성 실패", e);
+            throw new RuntimeException("Firebase 토큰 생성 실패: " + e.getMessage());
+        } finally {
+            redisTemplate.delete(lockKey);
         }
     }
 
 
+    // ✅ UID 기반 회원 조회 (Null 방어 강화)
     public Member findByUid(String uid) {
-        if (uid.contains("_")) {
-            String[] parts = uid.split("_", 2);
-            return memberRepository.getMemberBySocial(parts[0], parts[1]);
+        Member member = memberRepository.findByUid(uid);
+
+        // UID는 있는데 회원 정보가 없는 경우 → 자동 신규 생성 (Firebase 최초 로그인 직후 대비)
+        if (member == null && uid != null) {
+            String provider = uid.contains("_") ? uid.split("_")[0] : "google";
+            String socialId = uid.contains("_") ? uid.split("_")[1] : uid;
+            member = getOrCreateSocialMember(provider, socialId, null, "신규사용자");
         }
-        return null;
+
+        return member;
     }
+
+    // ✅ Redis 캐시 기반 회원 조회 (DB fallback)
+    public Member findCachedMemberOrDb(String uid) {
+        // 1️⃣ UID → Member ID 캐시 확인
+        String memberIdCache = redisTemplate.opsForValue().get("firebase:member:" + uid);
+        if (memberIdCache != null) {
+            return getMemberById(Integer.parseInt(memberIdCache));
+        }
+
+        // 2️⃣ 캐시 없으면 DB 조회
+        Member member = findByUid(uid);
+        if (member != null) {
+            // 조회 후 Redis 캐싱
+            redisTemplate.opsForValue().set("firebase:member:" + uid, String.valueOf(member.getId()), 24, TimeUnit.HOURS);
+        }
+        return member;
+    }
+
 }
