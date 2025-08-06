@@ -244,20 +244,18 @@
 		});
 	}
 
-	// ✅ 페이지 로드 시 자동 필터링 적용
+	// ✅ 페이지 로드 시 전체 리스트만 불러오도록 수정
 	$(document).ready(function () {
-		const userDongs = JSON.parse(localStorage.getItem("userDongs") || "[]");
+	  // ❌ 자동 동네 설정 제거
+	  // localStorage.setItem("selectedDong", userDongs[0]); ← 삭제
 
-		if (userDongs.length > 0) {
-			// ✅ 첫 번째 동네로 자동 필터링
-			localStorage.setItem("selectedDong", userDongs[0]);
-		} else {
-			// ✅ 동네 정보 없으면 전체 조회
-			localStorage.removeItem("selectedDong");
-		}
+	  // ✅ 동네 정보는 유지하지만 필터링은 하지 않음
+	  localStorage.removeItem("selectedDong"); // 👉 무조건 삭제
 
-		loadCrewList(); // 🔄 리스트 불러오기
+	  loadCrewList(); // 🔄 전체 리스트 불러오기
 	});
+
+
 </script>
 
 
