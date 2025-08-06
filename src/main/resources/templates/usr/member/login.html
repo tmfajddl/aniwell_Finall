@@ -2,44 +2,51 @@
 <html lang="ko">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login</title>
-    <link rel="stylesheet" th:href="@{/resource/css/login_join.css}">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <style>
-        .form-panel-slide {
-            display: flex;
-            transition: transform 0.3s ease;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login</title>
+<link rel="stylesheet" th:href="@{/resource/css/login_join.css}">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<style>
+.form-panel-slide {
+	display: flex;
+	transition: transform 0.3s ease;
+}
 
-        .form-step {
-            width: 100%;
-            padding: 1rem;
-        }
+.form-step {
+	width: 100%;
+	padding: 1rem;
+}
 
-        @keyframes slide-up {
-            0% {
-                opacity: 0;
-                transform: translateY(30px);
-                /* 살짝만 내려온 상태에서 */
-            }
+@
+keyframes slide-up { 0% {
+	opacity: 0;
+	transform: translateY(30px);
+	/* 살짝만 내려온 상태에서 */
+}
 
-            100% {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
+100
+%
+{
+opacity
+:
+1;
+transform
+:
+translateY(
+0
+);
+}
+}
+.animate-slide-up {
+	animation: slide-up 0.3s ease-out forwards;
+}
 
-        .animate-slide-up {
-            animation: slide-up 0.3s ease-out forwards;
-        }
-
-        .animate-slide-up {
-            animation: slide-up 0.3s ease-out forwards;
-        }
-    </style>
+.animate-slide-up {
+	animation: slide-up 0.3s ease-out forwards;
+}
+</style>
 
 
 </head>
@@ -47,174 +54,168 @@
 <body class="bg-white">
 
 
-<section class="form-container">
+	<section class="form-container">
 		<span id="arrowClick" class="form-container__arrow z-10">
-			<i class="fa fa-arrow-circle-left" aria-hidden="true"> <!-- HTML 파일 내 직접 삽입 -->
+			<i class="fa fa-arrow-circle-left" aria-hidden="true">
+				<!-- HTML 파일 내 직접 삽입 -->
 				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="currentColor"
-                     className="w-6 h-6 text-gray-700 hover:text-yellow-400 transition-colors">
+					className="w-6 h-6 text-gray-700 hover:text-yellow-400 transition-colors">
 					<path
-                            d="M19,10.5H10.207l2.439-2.439a1.5,1.5,0,0,0-2.121-2.122L6.939,9.525a3.505,3.505,0,0,0,0,4.95l3.586,3.586a1.5,1.5,0,0,0,2.121-2.122L10.207,13.5H19a1.5,1.5,0,0,0,0-3Z"/>
+						d="M19,10.5H10.207l2.439-2.439a1.5,1.5,0,0,0-2.121-2.122L6.939,9.525a3.505,3.505,0,0,0,0,4.95l3.586,3.586a1.5,1.5,0,0,0,2.121-2.122L10.207,13.5H19a1.5,1.5,0,0,0,0-3Z" />
 				</svg>
 			</i>
 		</span>
 
-    <!-- 오버레이 + 선택 -->
-    <div class="overlay"></div>
-    <div class="choose-form">
-        <div class="title">
-            <h1 class="title__h1">Welcome<br>Start for free</h1>
-        </div>
-        <div class="buttons">
-            <a id="signUp" class="buttons__signup" href="#">Sign up</a>
-            <a id="login" class="buttons__signup buttons__signup--login" href="#">Login</a>
-        </div>
-    </div>
+		<!-- 오버레이 + 선택 -->
+		<div class="overlay"></div>
+		<div class="choose-form">
+			<div class="title">
+				<h1 class="title__h1">
+					Welcome
+					<br>
+					Start for free
+				</h1>
+			</div>
+			<div class="buttons">
+				<a id="signUp" class="buttons__signup" href="#">Sign up</a>
+				<a id="login" class="buttons__signup buttons__signup--login" href="#">Login</a>
+			</div>
+		</div>
 
-    <!-- 로그인 Form -->
-    <div class="login-form ">
-        <div class="flex absolute top-[-20px] justify-center w-full">
+		<!-- 로그인 Form -->
+		<div class="login-form ">
+			<div class="flex absolute top-[-20px] justify-center w-full">
 
-            <div class="z-[1000]" onclick="window.location.href = 'http://localhost:8080/'">
-                <a href="/">
-                    <img class="logo-img items-start justify-start h-20" src="/img/logo.png" alt="Aniwell Logo"/>
-                </a>
-            </div>
-        </div>
-        <div class="form-wrapper">
-            <form class="form-wrapper__form h-full py-16" th:action="@{/usr/member/doLogin}" method="post">
-                <label class="form-wrapper__label" for="loginId">아이디</label>
-                <input id="loginId" name="loginId" type="text" class="form-wrapper__input" required
-                       placeholder="아이디" th:value="${param.loginId}"/>
+				<div class="z-[1000]" onclick="window.location.href = 'http://localhost:8080/'">
+					<a href="/">
+						<img class="logo-img items-start justify-start h-20" src="/img/logo.png" alt="Aniwell Logo" />
+					</a>
+				</div>
+			</div>
+			<div class="form-wrapper">
+				<form class="form-wrapper__form h-full py-16" th:action="@{/usr/member/doLogin}" method="post">
+					<label class="form-wrapper__label" for="loginId">아이디</label>
+					<input id="loginId" name="loginId" type="text" class="form-wrapper__input" required placeholder="아이디"
+						th:value="${param.loginId}" />
 
-                <label class="form-wrapper__label" for="loginPw">비밀번호</label>
-                <input id="loginPw" name="loginPw" type="password" class="form-wrapper__input" required
-                       placeholder="비밀번호"/>
+					<label class="form-wrapper__label" for="loginPw">비밀번호</label>
+					<input id="loginPw" name="loginPw" type="password" class="form-wrapper__input" required placeholder="비밀번호" />
 
-                <button type="submit" class="buttons__signup buttons__signup--login-form z-0">Login</button>
+					<button type="submit" class="buttons__signup buttons__signup--login-form z-0">Login</button>
 
-                <div class="flex justify-center items-center mt-[100px] space-x-4 text-sm z-10">
+					<div class="flex justify-center items-center mt-[100px] space-x-4 text-sm z-10">
 
-                    <button onclick="openFindIdIframe()">아이디 찾기</button>
-                    <span class="text-gray-400">|</span>
-                    <button onclick="openFindPwIframe()">비밀번호 찾기</button>
-                </div>
-            </form>
+						<button onclick="openFindIdIframe()">아이디 찾기</button>
+						<span class="text-gray-400">|</span>
+						<button onclick="openFindPwIframe()">비밀번호 찾기</button>
+					</div>
+				</form>
 
-            <!-- 소셜 로그인 -->
-            <div class="social-media pt-6">
-                <h6 class="title__h2">Or connect with</h6>
-                <div class="flex justify-around">
-                    <a class="rounded-xl buttons__signup--social" href="javascript:loginWithGoogle()">
-                        <img th:src="@{/img.socialLogin/Google_icon.png}" class="h-6"/>
-                    </a>
-                    <a class="rounded buttons__signup--social" href="javascript:openNaverPopup()">
-                        <img th:src="@{/img.socialLogin/Naver_icon.png}" class="h-6"/>
-                    </a>
-                    <a class="rounded-lg buttons__signup--social" href="javascript:openKakaoPopup()">
-                        <img th:src="@{/img.socialLogin/Kakao_icon.png}" class="h-6"/>
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div id="findModal" class="hidden fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center">
-        <div id="findModalContent"
-             class="w-full max-w-md h-[60%] min-h-[100px] rounded-xl overflow-hidden relative shadow-lg">
-            <iframe id="findIdIframe" src="" class="w-full h-full border-none"></iframe>
-        </div>
-    </div>
-    <div id="findPwModal" class="hidden fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center">
-        <div id="findModalContent" class="w-full max-w-md h-[60%] rounded-xl overflow-hidden shadow-lg relative">
-            <iframe id="findPwForm" src="" class="w-full h-full border-none"></iframe>
-        </div>
-    </div>
+				<!-- 소셜 로그인 -->
+				<div class="social-media pt-6">
+					<h6 class="title__h2">Or connect with</h6>
+					<div class="flex justify-around">
+						<a class="rounded-xl buttons__signup--social" href="javascript:loginWithGoogle()">
+							<img th:src="@{/img.socialLogin/Google_icon.png}" class="h-6" />
+						</a>
+						<a class="rounded buttons__signup--social" href="javascript:openNaverPopup()">
+							<img th:src="@{/img.socialLogin/Naver_icon.png}" class="h-6" />
+						</a>
+						<a class="rounded-lg buttons__signup--social" href="javascript:openKakaoPopup()">
+							<img th:src="@{/img.socialLogin/Kakao_icon.png}" class="h-6" />
+						</a>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div id="findModal" class="hidden fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center">
+			<div id="findModalContent"
+				class="w-full max-w-md h-[60%] min-h-[100px] rounded-xl overflow-hidden relative shadow-lg">
+				<iframe id="findIdIframe" src="" class="w-full h-full border-none"></iframe>
+			</div>
+		</div>
+		<div id="findPwModal" class="hidden fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center">
+			<div id="findModalContent" class="w-full max-w-md h-[60%] rounded-xl overflow-hidden shadow-lg relative">
+				<iframe id="findPwForm" src="" class="w-full h-full border-none"></iframe>
+			</div>
+		</div>
 
-    <!-- 회원가입 Form -->
-    <div class="login-form login-form--register">
-        <div class="form-wrapper h-full">
-            <form class="w-[100%] relative overflow-hidden justify-center h-full" th:action="@{/usr/member/doJoin}"
-                  method="post" onsubmit="return validateForm()">
-                <!-- 🐾 발바닥 타임라인 -->
-                <div class="z-10 absolute top-3 justify-center left-1/2 transform -translate-x-1/2 flex gap-4 z-10">
-                    <img id="paw1" src="/img/paw_active.png" class="h-4 transition-transform duration-300"/>
-                    <img id="paw2" src="/img/paw_inactive.png" class="h-4 transition-transform duration-300"/>
-                </div>
-                <div class="form-panel-slide transition-transform duration-500 w-[200%] h-full py-4"
-                     id="slide-panel">
-                    <!-- STEP 1 -->
+		<!-- 회원가입 Form -->
+		<div class="login-form login-form--register">
+			<div class="form-wrapper h-full">
+				<form class="w-[100%] relative overflow-hidden justify-center h-full" th:action="@{/usr/member/doJoin}"
+					method="post" onsubmit="return validateForm()">
+					<!-- 🐾 발바닥 타임라인 -->
+					<div class="z-10 absolute top-3 justify-center left-1/2 transform -translate-x-1/2 flex gap-4 z-10">
+						<img id="paw1" src="/img/paw_active.png" class="h-4 transition-transform duration-300" />
+						<img id="paw2" src="/img/paw_inactive.png" class="h-4 transition-transform duration-300" />
+					</div>
+					<div class="form-panel-slide transition-transform duration-500 w-[200%] h-full py-4" id="slide-panel">
+						<!-- STEP 1 -->
 
-                    <div class="relative overflow-hidden py-12 content-center form-step w-1/2 flex flex-col self-start h-full"
-                         id="step1">
+						<div class="relative overflow-hidden py-12 content-center form-step w-1/2 flex flex-col self-start h-full"
+							id="step1">
 
-                        <label class="form-wrapper__label" for="loginId">아이디</label>
-                        <input class="form-wrapper__input" id="loginId" name="loginId" type="text" required
-                               placeholder="ID" th:value="${param.loginId}"/>
+							<label class="form-wrapper__label" for="loginId">아이디</label>
+							<input class="form-wrapper__input" id="loginId" name="loginId" type="text" required placeholder="ID"
+								th:value="${param.loginId}" />
 
-                        <label class="form-wrapper__label" for="loginPw">비밀번호</label>
-                        <input class="form-wrapper__input" id="loginPw" name="loginPw" type="password" required
-                               placeholder="PW"/>
+							<label class="form-wrapper__label" for="loginPw">비밀번호</label>
+							<input class="form-wrapper__input" id="loginPw" name="loginPw" type="password" required placeholder="PW" />
 
-                        <label class="form-wrapper__label" for="name">이름</label>
-                        <input class="form-wrapper__input" id="name" name="name" type="text" required
-                               placeholder="NAME" th:value="${param.name}"/>
+							<label class="form-wrapper__label" for="name">이름</label>
+							<input class="form-wrapper__input" id="name" name="name" type="text" required placeholder="NAME"
+								th:value="${param.name}" />
 
-                        <label class="form-wrapper__label" for="nickname">닉네임</label>
-                        <input class="form-wrapper__input" id="nickname" name="nickname" type="text" required
-                               placeholder="NICKNAME" th:value="${param.nickname}"/>
+							<label class="form-wrapper__label" for="nickname">닉네임</label>
+							<input class="form-wrapper__input" id="nickname" name="nickname" type="text" required placeholder="NICKNAME"
+								th:value="${param.nickname}" />
 
-                        <button type="button" class="z-10 top-46 buttons__signup buttons__signup--sign-up-form "
-                                onclick="goToStep(2)">다음
-                        </button>
-                    </div>
-                    <!-- STEP 2 -->
+							<button type="button" class="z-10 top-46 buttons__signup buttons__signup--sign-up-form " onclick="goToStep(2)">다음
+							</button>
+						</div>
+						<!-- STEP 2 -->
 
-                    <div class="relative py-12 overflow-hidden form-step w-1/2 flex flex-col self-start h-full"
-                         id="step2">
+						<div class="relative py-12 overflow-hidden form-step w-1/2 flex flex-col self-start h-full" id="step2">
 
-                        <label class="form-wrapper__label" for="cellphone">전화번호</label>
-                        <input class="form-wrapper__input" id="cellphone" name="cellphone" type="text" required
-                               placeholder="PHONE NUMBER" th:value="${param.cellphone}"/>
+							<label class="form-wrapper__label" for="cellphone">전화번호</label>
+							<input class="form-wrapper__input" id="cellphone" name="cellphone" type="text" required
+								placeholder="PHONE NUMBER" th:value="${param.cellphone}" />
 
-                        <label class="form-wrapper__label" for="email">이메일</label>
-                        <input class="form-wrapper__input" id="email" name="email" type="email" required
-                               placeholder="EMAIL" th:value="${param.email}"/>
+							<label class="form-wrapper__label" for="email">이메일</label>
+							<input class="form-wrapper__input" id="email" name="email" type="email" required placeholder="EMAIL"
+								th:value="${param.email}" />
 
-                        <label class="form-wrapper__label" for="address">주소</label>
-                        <div class="flex gap-2">
-                            <input class="form-wrapper__input" id="address" name="address" type="text" readonly
-                                   placeholder="ADDRESS" th:value="${param.address}"/>
-                            <button type="button" onclick="execDaumPostcode()" class="ser">검색</button>
-                        </div>
+							<label class="form-wrapper__label" for="address">주소</label>
+							<div class="flex gap-2">
+								<input class="form-wrapper__input" id="address" name="address" type="text" readonly placeholder="ADDRESS"
+									th:value="${param.address}" />
+								<button type="button" onclick="execDaumPostcode()" class="ser">검색</button>
+							</div>
 
-                        <label class="form-wrapper__label" for="authName">권한</label>
-                        <select class="w-[200px]" name="authName" onchange="updateAuthLevel()" required>
-                            <option value="일반" th:selected="${param.authName == '일반'}">일반</option>
-                            <option value="수의사" th:selected="${param.authName == '수의사'}">수의사</option>
-                        </select>
-                        <div class="py-4">
-                            <input type="hidden" id="authLevel" name="authLevel"
-                                   th:value="${param.authLevel ?: 1}"/>
-                            <button type="button" class=" buttons__signup buttons__signup--sign-up-form"
-                                    onclick="goToStep(1)">뒤로가기
-                            </button>
+							<label class="form-wrapper__label" for="authName">권한</label>
+							<select class="w-[200px]" name="authName" onchange="updateAuthLevel()" required>
+								<option value="일반" th:selected="${param.authName == '일반'}">일반</option>
+								<option value="수의사" th:selected="${param.authName == '수의사'}">수의사</option>
+							</select>
+							<div class="py-4">
+								<input type="hidden" id="authLevel" name="authLevel" th:value="${param.authLevel ?: 1}" />
+								<button type="button" class=" buttons__signup buttons__signup--sign-up-form" onclick="goToStep(1)">뒤로가기
+								</button>
 
-                            <button type="submit"
-                                    class="top-[260px] buttons__signup buttons__signup--sign-up-form">sign
-
-                                up
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </form>
-        </div>
-    </div>
-</section>
+								<button type="submit" class="top-[260px] buttons__signup buttons__signup--sign-up-form">sign up</button>
+							</div>
+						</div>
+					</div>
+				</form>
+			</div>
+		</div>
+	</section>
 
 
-<script src="https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
-<script th:src="@{/resource/js/login_join.js}"></script>
-<script>
+	<script src="https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+	<script th:src="@{/resource/js/login_join.js}"></script>
+	<script>
     function goToStep(step) {
         currentStep = step;
         const slide = document.querySelector('.form-panel-slide');
@@ -309,7 +310,7 @@
         });
     });
 </script>
-<script>
+	<script>
     function execDaumPostcode() {
         new daum.Postcode({
             oncomplete: function (data) {
@@ -333,9 +334,9 @@
 </script>
 
 
-<!--카카오-->
-<script src="https://developers.kakao.com/sdk/js/kakao.js"></script>
-<script>
+	<!--카카오-->
+	<script src="https://developers.kakao.com/sdk/js/kakao.js"></script>
+	<script>
     function openKakaoPopup() {
         const popup = window.open(
             "https://kauth.kakao.com/oauth/authorize?" +
@@ -356,8 +357,8 @@
     }
 </script>
 
-<!--구글-->
-<script>
+	<!--구글-->
+	<script>
 
     window.loginWithGoogle = async function () {
         const provider = new firebase.auth.GoogleAuthProvider();
@@ -391,8 +392,8 @@
     }
 </script>
 
-<!--네이버-->
-<script>
+	<!--네이버-->
+	<script>
     function openNaverPopup() {
         const popup = window.open(
             "https://nid.naver.com/oauth2.0/authorize?" +
@@ -412,14 +413,22 @@
     }
 </script>
 
-<!-- ✅ Firebase 라이브러리 로드 -->
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+	<!-- ✅ Firebase 라이브러리 로드 -->
+	<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
-<!-- ✅ Firebase 초기화 -->
-<script>
-
+	<!-- ✅ Firebase 초기화 -->
+	<script>
+const firebaseConfig = {
+	    apiKey: "AIzaSyCickEEoEGDTVyy-7defZSkOSSmWj2shkw",
+	    authDomain: "aniwell-2a90b.firebaseapp.com",
+	    projectId: "aniwell-2a90b",
+	    storageBucket: "aniwell-2a90b.appspot.com",
+	    messagingSenderId: "399675409170",
+	    appId: "1:399675409170:web:2fb665a85291a8c9a6a9cb"
+	};
+	
     if (firebase.apps.length === 0) {
         firebase.initializeApp(firebaseConfig);
         console.log("🔥 Firebase 초기화 완료");
@@ -429,7 +438,7 @@
     firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL)
         .then(() => console.log("🟢 Firebase 세션 지속성 LOCAL 설정 완료"));
 </script>
-<script>
+	<script>
     // ✅ Firebase 로그인 보장
     async function ensureFirebaseLogin(customToken) {
         if (firebase.auth().currentUser) return firebase.auth().currentUser;
