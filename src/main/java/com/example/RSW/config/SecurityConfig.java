@@ -17,7 +17,7 @@ public class SecurityConfig {
                 // ✅ CSRF 비활성화
                 .csrf(csrf -> csrf.disable())
 
-                // ✅ 세션 재생성 방지 (OAuth 콜백 시 세션 유지)
+                // ✅ 세션 재생성 방지 (OAuth 콜백 시 세션 유지) + 세션 타임아웃 7일
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED) // 필요 시 세션 생성 및 유지
                         .sessionFixation(sessionFixation -> sessionFixation.none()) // OAuth 콜백 시 세션 유지
@@ -29,21 +29,19 @@ public class SecurityConfig {
                 // ✅ 경로별 권한 설정
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
-                                "/", // 루트 URL
+                                "/",
                                 "/usr/home/main",
                                 "/usr/member/login", "/usr/member/doLogin",
                                 "/usr/member/join", "/usr/member/doJoin",
-                                "/usr/member/findLoginId","/usr/member/findLoginPw",
-                                "/usr/member/naver/**",   // ✅ 네이버 로그인 콜백 허용
-                                "/usr/member/kakao/**",   // ✅ 카카오 로그인 콜백 허용
-                                "/usr/member/google/**", // ✅ 구글 로그인 콜백 허용
-                                "/usr/member/social-login", // ✅ 소셜 로그인 토큰 발급 허용
-                                "/usr/member/firebase-session-login", // ✅ Firebase 로그인 허용
+                                "/usr/member/findLoginId", "/usr/member/findLoginPw",
+                                "/usr/member/naver/**", "/usr/member/kakao/**", "/usr/member/google/**",
+                                "/usr/member/social-login",
+                                "/usr/member/firebase-session-login",
                                 "/css/**", "/js/**", "/img/**", "/img.socialLogin/**", "/resource/**"
                         ).permitAll()
-                        .requestMatchers("/usr/pet/**").authenticated() // ✅ 로그인 후만 접근 가능
-                        .anyRequest().authenticated()
+                        .anyRequest().authenticated()  // ✅ 그 외는 로그인 필요
                 )
+
 
                 // ✅ 폼 로그인 설정
                 .formLogin(login -> login
@@ -60,19 +58,19 @@ public class SecurityConfig {
                         .deleteCookies("JSESSIONID")
                         .permitAll()
                 )
-          
-          // ✅ iframe 허용 설정 추가
-				.headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()));
+
+                // ✅ remember-me (7일 유지)
+                .rememberMe(rememberMe -> rememberMe
+                        .tokenValiditySeconds(7 * 24 * 60 * 60) // 7일 유지
+                        .alwaysRemember(true)
+                );
 
         return http.build();
     }
-
-
 
     // 비밀번호 암호화
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder(8);  // 기본 10 → 8로 낮춰 인증 속도 개선
     }
-
 }
