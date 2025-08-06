@@ -88,11 +88,19 @@
 		const { latitude, longitude } = position.coords;
 		const geocoder = new kakao.maps.services.Geocoder();
 
+		// ✅ 좌표를 localStorage에 저장
+		localStorage.setItem("userLat", latitude);
+		localStorage.setItem("userLng", longitude);
+		
 		geocoder.coord2RegionCode(longitude, latitude, (result, status) => {
 			if (status === kakao.maps.services.Status.OK) {
 				const city = result[0].region_1depth_name;
 				const district = result[0].region_2depth_name;
 
+				// ✅ 'H' 타입의 region_3depth_name을 우선 사용
+				const dongName = result.find(r => r.region_type === 'H')?.region_3depth_name
+				              || result[0].region_3depth_name;
+				
 				console.log("📍 시:", city, "구:", district);
 
 				$.ajax({
@@ -105,7 +113,26 @@
 
 						localStorage.setItem("userCity", city);
 						localStorage.setItem("userDistrict", district);
+						
+						
+						// ✅ 여기에 정렬 코드 추가
+						// ✅ 앞 2글자 기준 정렬 코드로 교체
+                   const dongPrefix = dongName.substring(0, 2).replace(/\s+/g, '').toLowerCase();
+
+                   dongs.sort((a, b) => {
+	               const aPrefix = a.substring(0, 2).replace(/\s+/g, '').toLowerCase();
+	               const bPrefix = b.substring(0, 2).replace(/\s+/g, '').toLowerCase();
+
+	               if (aPrefix === dongPrefix && bPrefix !== dongPrefix) return -1;
+	               if (aPrefix !== dongPrefix && bPrefix === dongPrefix) return 1;
+	               return 0;
+                    });
+
+						
 						localStorage.setItem("userDongs", JSON.stringify(dongs));
+						
+						console.log("🔍 현재 위치 동:", dongName);
+						console.log("📋 정렬된 동 리스트:", dongs);
 
 						// ✅ 동네 버튼 HTML 생성 (onclick 추가됨)
 						const asideHTML = `
@@ -158,6 +185,9 @@
 		const query = $('#searchInput').val(); // 🔸 검색어 가져오기
 		const dong = localStorage.getItem("selectedDong"); // 🔸 선택된 동 가져오기
 
+		const lat = localStorage.getItem("userLat");
+		const lng = localStorage.getItem("userLng");
+		
 		// ✅ 서버에 검색어와 동 둘 다 전달하도록 수정
 		$.ajax({
 			url: '/usr/walkCrew/api/list',
@@ -214,10 +244,19 @@
 		});
 	}
 
-	// ✅ 페이지 로드 시 전체 리스트 조회
+	// ✅ 페이지 로드 시 자동 필터링 적용
 	$(document).ready(function () {
-		localStorage.removeItem("selectedDong"); // 🔸 동네 초기화 (전체 조회 위해)
-		loadCrewList();
+		const userDongs = JSON.parse(localStorage.getItem("userDongs") || "[]");
+
+		if (userDongs.length > 0) {
+			// ✅ 첫 번째 동네로 자동 필터링
+			localStorage.setItem("selectedDong", userDongs[0]);
+		} else {
+			// ✅ 동네 정보 없으면 전체 조회
+			localStorage.removeItem("selectedDong");
+		}
+
+		loadCrewList(); // 🔄 리스트 불러오기
 	});
 </script>
 

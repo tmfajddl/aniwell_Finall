@@ -29,14 +29,20 @@
 
     <!-- FoodLogMapper.xml -->
     <select id="getWeeklyStats" resultType="map">
+  <![CDATA[
         SELECT
-            DAYOFWEEK(logDate) AS dayOfWeek, -- 1(일) ~ 7(토)
-            SUM(foodWeight) AS foodTotal,
-            SUM(waterWeight) AS waterTotal
+            WEEKDAY(logDate) AS dayOfWeek,
+            SUM(IFNULL(foodWeight, 0)) AS foodTotal,
+            SUM(IFNULL(waterWeight, 0)) AS waterTotal
         FROM pet__health_log
         WHERE petId = #{petId}
-        GROUP BY DAYOFWEEK(logDate)
-    </select>
+          AND DATE(logDate) >= CURDATE() - INTERVAL WEEKDAY(CURDATE()) DAY
+          AND DATE(logDate) <= CURDATE() + INTERVAL (6 - WEEKDAY(CURDATE())) DAY
+        GROUP BY WEEKDAY(logDate)
+        ORDER BY dayOfWeek
+        ]]>
+</select>
+
 
 
 

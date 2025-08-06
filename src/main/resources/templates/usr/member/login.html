@@ -26,7 +26,23 @@ keyframes slide-up { 0% {
 	/* 살짝만 내려온 상태에서 */
 }
 
+<<<<<<< HEAD
 100%{opacity:1;transform:translateY(0);}}
+=======
+100
+%
+{
+opacity
+:
+1;
+transform
+:
+translateY(
+0
+);
+}
+}
+>>>>>>> 42c18b95c1d5bf6cda8a293f97e165993ff3763b
 .animate-slide-up {
 	animation: slide-up 0.3s ease-out forwards;
 }
@@ -48,9 +64,15 @@ keyframes slide-up { 0% {
 				<!-- HTML 파일 내 직접 삽입 -->
 				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="currentColor"
 					className="w-6 h-6 text-gray-700 hover:text-yellow-400 transition-colors">
+<<<<<<< HEAD
                 <path
 						d="M19,10.5H10.207l2.439-2.439a1.5,1.5,0,0,0-2.121-2.122L6.939,9.525a3.505,3.505,0,0,0,0,4.95l3.586,3.586a1.5,1.5,0,0,0,2.121-2.122L10.207,13.5H19a1.5,1.5,0,0,0,0-3Z" />
              </svg>
+=======
+					<path
+						d="M19,10.5H10.207l2.439-2.439a1.5,1.5,0,0,0-2.121-2.122L6.939,9.525a3.505,3.505,0,0,0,0,4.95l3.586,3.586a1.5,1.5,0,0,0,2.121-2.122L10.207,13.5H19a1.5,1.5,0,0,0,0-3Z" />
+				</svg>
+>>>>>>> 42c18b95c1d5bf6cda8a293f97e165993ff3763b
 			</i>
 		</span>
 
@@ -151,6 +173,7 @@ keyframes slide-up { 0% {
 							<label class="form-wrapper__label" for="loginPw">비밀번호</label>
 							<input class="form-wrapper__input" id="loginPw" name="loginPw" type="password" required placeholder="PW" />
 
+<<<<<<< HEAD
 							<!-- 비밀번호 확인 -->
 							<label class="form-wrapper__label" for="loginPwConfirm">비밀번호 확인</label>
 							<input class="form-wrapper__input" id="loginPwConfirm" name="loginPwConfirm" type="password" required
@@ -197,6 +220,48 @@ keyframes slide-up { 0% {
 								<button type="button" class=" buttons__signup buttons__signup--sign-up-form" onclick="goToStep(1)">뒤로가기
 								</button>
 
+=======
+							<label class="form-wrapper__label" for="name">이름</label>
+							<input class="form-wrapper__input" id="name" name="name" type="text" required placeholder="NAME"
+								th:value="${param.name}" />
+
+							<label class="form-wrapper__label" for="nickname">닉네임</label>
+							<input class="form-wrapper__input" id="nickname" name="nickname" type="text" required placeholder="NICKNAME"
+								th:value="${param.nickname}" />
+
+							<button type="button" class="z-10 top-46 buttons__signup buttons__signup--sign-up-form " onclick="goToStep(2)">다음
+							</button>
+						</div>
+						<!-- STEP 2 -->
+
+						<div class="relative py-12 overflow-hidden form-step w-1/2 flex flex-col self-start h-full" id="step2">
+
+							<label class="form-wrapper__label" for="cellphone">전화번호</label>
+							<input class="form-wrapper__input" id="cellphone" name="cellphone" type="text" required
+								placeholder="PHONE NUMBER" th:value="${param.cellphone}" />
+
+							<label class="form-wrapper__label" for="email">이메일</label>
+							<input class="form-wrapper__input" id="email" name="email" type="email" required placeholder="EMAIL"
+								th:value="${param.email}" />
+
+							<label class="form-wrapper__label" for="address">주소</label>
+							<div class="flex gap-2">
+								<input class="form-wrapper__input" id="address" name="address" type="text" readonly placeholder="ADDRESS"
+									th:value="${param.address}" />
+								<button type="button" onclick="execDaumPostcode()" class="ser">검색</button>
+							</div>
+
+							<label class="form-wrapper__label" for="authName">권한</label>
+							<select class="w-[200px]" name="authName" onchange="updateAuthLevel()" required>
+								<option value="일반" th:selected="${param.authName == '일반'}">일반</option>
+								<option value="수의사" th:selected="${param.authName == '수의사'}">수의사</option>
+							</select>
+							<div class="py-4">
+								<input type="hidden" id="authLevel" name="authLevel" th:value="${param.authLevel ?: 1}" />
+								<button type="button" class=" buttons__signup buttons__signup--sign-up-form" onclick="goToStep(1)">뒤로가기
+								</button>
+
+>>>>>>> 42c18b95c1d5bf6cda8a293f97e165993ff3763b
 								<button type="submit" class="top-[260px] buttons__signup buttons__signup--sign-up-form">sign up</button>
 							</div>
 						</div>
@@ -305,6 +370,7 @@ keyframes slide-up { 0% {
     });
 </script>
 	<script>
+<<<<<<< HEAD
     // 회원가입 폼 선택
     const joinForm = document.querySelector('.login-form--register form');
 
@@ -342,6 +408,8 @@ keyframes slide-up { 0% {
     joinForm.querySelector("#loginPwConfirm").addEventListener("keyup", checkPasswordMatch);
 </script>
 	<script>
+=======
+>>>>>>> 42c18b95c1d5bf6cda8a293f97e165993ff3763b
     function execDaumPostcode() {
         new daum.Postcode({
             oncomplete: function (data) {
@@ -451,6 +519,7 @@ keyframes slide-up { 0% {
 
 	<!-- ✅ Firebase 초기화 -->
 	<script>
+<<<<<<< HEAD
     const firebaseConfig = {
         apiKey: "AIzaSyCickEEoEGDTVyy-7defZSkOSSmWj2shkw",
         authDomain: "aniwell-2a90b.firebaseapp.com",
@@ -459,6 +528,17 @@ keyframes slide-up { 0% {
         messagingSenderId: "399675409170",
         appId: "1:399675409170:web:2fb665a85291a8c9a6a9cb"
     };
+=======
+const firebaseConfig = {
+	    apiKey: "AIzaSyCickEEoEGDTVyy-7defZSkOSSmWj2shkw",
+	    authDomain: "aniwell-2a90b.firebaseapp.com",
+	    projectId: "aniwell-2a90b",
+	    storageBucket: "aniwell-2a90b.appspot.com",
+	    messagingSenderId: "399675409170",
+	    appId: "1:399675409170:web:2fb665a85291a8c9a6a9cb"
+	};
+	
+>>>>>>> 42c18b95c1d5bf6cda8a293f97e165993ff3763b
     if (firebase.apps.length === 0) {
         firebase.initializeApp(firebaseConfig);
         console.log("🔥 Firebase 초기화 완료");
