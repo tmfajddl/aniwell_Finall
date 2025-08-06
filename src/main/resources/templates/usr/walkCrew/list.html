@@ -215,10 +215,11 @@
 				crewList.forEach(crew => {
 					const formattedDate = new Date(crew.createdAt).toLocaleDateString('ko-KR');
 
-					// ✅ 이미지 출력 처리
-					const thumbnail = crew.imageUrl
-						? `<img src="${crew.imageUrl}" alt="크루 이미지" class="w-20 h-20 object-cover rounded-md shrink-0">`
-						: `<div class="w-20 h-20 bg-gray-200 rounded-md shrink-0"></div>`;
+					// ✅ 이미지 출력 처리				
+                   const thumbnail = crew.imageUrl
+                    ? `<img src="${crew.imageUrl}" alt="크루 이미지" class="w-20 h-20 object-cover rounded-md shrink-0">`
+                     : `<div class="w-20 h-20 bg-center bg-cover rounded-md shrink-0" 
+                           style="background-image: url('/img/default-pet.png');"></div>`;
 
 					const html = `
 					<div class="bg-white rounded-lg shadow p-4 flex gap-4 items-start cursor-pointer"
