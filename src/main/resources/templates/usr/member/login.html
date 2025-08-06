@@ -56,7 +56,7 @@
                 <path
                         d="M19,10.5H10.207l2.439-2.439a1.5,1.5,0,0,0-2.121-2.122L6.939,9.525a3.505,3.505,0,0,0,0,4.95l3.586,3.586a1.5,1.5,0,0,0,2.121-2.122L10.207,13.5H19a1.5,1.5,0,0,0,0-3Z"/>
              </svg>
-          </i>
+           </i>
        </span>
 
     <!-- 오버레이 + 선택 -->
@@ -157,9 +157,7 @@
                                    required placeholder="PW"/>
                             <button type="button" id="togglePw"
                                     class="absolute -right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700">
-                                <!-- 기본: 눈 감김 -->
                                 <i class="fa-solid fa-eye-slash" id="iconClosedPw"></i>
-                                <!-- 클릭 시 눈 뜸 -->
                                 <i class="fa-solid fa-eye hidden" id="iconOpenPw"></i>
                             </button>
                         </div>
@@ -170,9 +168,7 @@
                                    type="password" required placeholder="Confirm PW"/>
                             <button type="button" id="togglePwConfirm"
                                     class="absolute -right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700">
-                                <!-- 기본: 눈 감김 -->
                                 <i class="fa-solid fa-eye-slash" id="iconClosedPwConfirm"></i>
-                                <!-- 클릭 시 눈 뜸 -->
                                 <i class="fa-solid fa-eye hidden" id="iconOpenPwConfirm"></i>
                             </button>
                         </div>
@@ -334,65 +330,68 @@
     });
 </script>
 <script>
-    // 회원가입 폼 선택
-    const joinForm = document.querySelector('.login-form--register form');
+    document.addEventListener("DOMContentLoaded", () => {
+        // ✅ 회원가입 폼 선택
+        const joinForm = document.querySelector('.login-form--register form');
+        if (!joinForm) return; // 폼이 없으면 중단 (로그인 페이지에서는 실행 안됨)
 
-    function checkPasswordMatch() {
-        const pw = joinForm.querySelector("#loginPw").value.trim();
-        const pwConfirm = joinForm.querySelector("#loginPwConfirm").value.trim();
-        const pwInput = joinForm.querySelector("#loginPwConfirm");
-        const message = joinForm.querySelector("#pwMessage");
+        const pwInput = joinForm.querySelector("#loginPw");
+        const pwConfirmInput = joinForm.querySelector("#loginPwConfirm");
+        const pwMessage = joinForm.querySelector("#pwMessage");
 
-        // 초기화
-        pwInput.classList.remove("border-red-500", "border-green-500");
-        message.classList.add("hidden");
-        message.textContent = "";
-        message.classList.remove("text-red-600", "text-green-600");
+        // ✅ 비밀번호 실시간 확인
+        function checkPasswordMatch() {
+            const pw = pwInput.value.trim();
+            const pwConfirm = pwConfirmInput.value.trim();
 
-        if (pwConfirm === "") return;
+            pwConfirmInput.classList.remove("border-red-500", "border-green-500");
+            pwMessage.classList.add("hidden");
+            pwMessage.textContent = "";
+            pwMessage.classList.remove("text-red-600", "text-green-600");
 
-        if (pw === pwConfirm) {
-            // ✅ 일치
-            pwInput.classList.add("border-green-500");
-            message.textContent = "비밀번호가 일치합니다.";
-            message.classList.add("text-green-600");
-            message.classList.remove("hidden");
-        } else {
-            // ❌ 불일치
-            pwInput.classList.add("border-red-500");
-            message.textContent = "비밀번호가 일치하지 않습니다.";
-            message.classList.add("text-red-600");
-            message.classList.remove("hidden");
-        }
-    }
+            if (pwConfirm === "") return;
 
-    // ✅ 회원가입 폼 안의 비밀번호 필드에만 이벤트 바인딩
-    joinForm.querySelector("#loginPw").addEventListener("keyup", checkPasswordMatch);
-    joinForm.querySelector("#loginPwConfirm").addEventListener("keyup", checkPasswordMatch);
-
-    function togglePasswordFA(inputId, btnId, openIconId, closedIconId) {
-        const input = document.getElementById(inputId);
-        const button = document.getElementById(btnId);
-        const openIcon = document.getElementById(openIconId);
-        const closedIcon = document.getElementById(closedIconId);
-
-        button.addEventListener("click", () => {
-            if (input.type === "password") {
-                input.type = "text";
-                closedIcon.classList.add("hidden");
-                openIcon.classList.remove("hidden");
+            if (pw === pwConfirm) {
+                pwConfirmInput.classList.add("border-green-500");
+                pwMessage.textContent = "비밀번호가 일치합니다.";
+                pwMessage.classList.add("text-green-600");
+                pwMessage.classList.remove("hidden");
             } else {
-                input.type = "password";
-                openIcon.classList.add("hidden");
-                closedIcon.classList.remove("hidden");
+                pwConfirmInput.classList.add("border-red-500");
+                pwMessage.textContent = "비밀번호가 일치하지 않습니다.";
+                pwMessage.classList.add("text-red-600");
+                pwMessage.classList.remove("hidden");
             }
-        });
-    }
+        }
 
-    // 각각의 필드에 적용
-    togglePasswordFA("loginPw", "togglePw", "iconOpenPw", "iconClosedPw");
-    togglePasswordFA("loginPwConfirm", "togglePwConfirm", "iconOpenPwConfirm", "iconClosedPwConfirm");
+        pwInput.addEventListener("keyup", checkPasswordMatch);
+        pwConfirmInput.addEventListener("keyup", checkPasswordMatch);
+
+        // ✅ 비밀번호 보기 토글
+        function togglePassword(input, btn, openIcon, closedIcon) {
+            btn.addEventListener("click", () => {
+                const isPw = input.type === "password";
+                input.type = isPw ? "text" : "password"; // 🔑 cloneNode 대신 type 변경
+                openIcon.classList.toggle("hidden", !isPw);
+                closedIcon.classList.toggle("hidden", isPw);
+            });
+        }
+
+        togglePassword(
+            pwInput,
+            joinForm.querySelector("#togglePw"),
+            joinForm.querySelector("#iconOpenPw"),
+            joinForm.querySelector("#iconClosedPw")
+        );
+        togglePassword(
+            pwConfirmInput,
+            joinForm.querySelector("#togglePwConfirm"),
+            joinForm.querySelector("#iconOpenPwConfirm"),
+            joinForm.querySelector("#iconClosedPwConfirm")
+        );
+    });
 </script>
+
 <script>
     function execDaumPostcode() {
         new daum.Postcode({
@@ -503,6 +502,7 @@
 
 <!-- ✅ Firebase 초기화 -->
 <script>
+
 
     if (firebase.apps.length === 0) {
         firebase.initializeApp(firebaseConfig);
