@@ -7,7 +7,12 @@
 	<script src="https://cdn.tailwindcss.com"></script>
 	<link rel="stylesheet" th:href="@{/resource/css/main.css}">
 	<link rel="stylesheet" th:href="@{/resource/css/dog-toggle.css}" />
-
+	<!-- AOS 라이브러리 불러오기-->
+	<link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css">
+	<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+	<script>
+		AOS.init();
+	</script>
 	<title>MAIN</title>
 </head>
 
@@ -62,11 +67,18 @@
 				</div>
 			</div>
 		</div>
+
 	</div>
 
 	<div class="relative section section-middle mx-auto">
+		<span class="hero__scroll aos-init aos-animate z-10 flex flex-col" data-aos="fade-up" data-aos-easing="ease"
+			data-aos-delay="800">
+			" Scroll down "
+			<br>
+			<i class="chevron bottom"></i>
+		</span>
 		<div class="wave"></div>
-		<div class="contain absolute left-[20%] mx-auto w-[60%] h-[100%] bottom-8">
+		<div data-aos="fade-left" class="contain absolute left-[20%] mx-auto w-[60%] h-[100%] bottom-8">
 			<!-- 상단 박스 -->
 			<div class="mb-2 h-[50%] bg-yellow-400 flex items-center justify-center text-2xl font-bold rounded shadow">
 				상단 박스
