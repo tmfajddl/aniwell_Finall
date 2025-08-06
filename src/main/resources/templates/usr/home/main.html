@@ -6,6 +6,8 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<script src="https://cdn.tailwindcss.com"></script>
 	<link rel="stylesheet" th:href="@{/resource/css/main.css}">
+	<link rel="stylesheet" th:href="@{/resource/css/dog-toggle.css}" />
+
 	<title>MAIN</title>
 </head>
 
@@ -18,28 +20,29 @@
 				<img class="mx-auto" src="https://imgur.com/OJI4yzC.png" alt="dig_cat">
 			</div>
 			<div class="icon">
-				<div>
-					<!-- 로그인/로그아웃 버튼 -->
-					<button type="button" class="in-icon" th:if="${!rq.isLogined}"
-						onclick="location.href='/usr/member/login'">
-						로그인
-						<img src="https://imgur.com/vTaaRnh.png" alt="login">
-					</button>
-					<button type="button" class="in-icon" th:if="${rq.isLogined}"
-						onclick="location.href='/usr/member/doLogout'">
-						로그아웃
-						<img src="https://imgur.com/vTaaRnh.png" alt="logout">
-					</button>
-				</div>
+				<!-- 로그인/로그아웃 버튼 -->
+				<button type="button" class="" th:if="${!rq.isLogined}"
+					onclick="setTimeout(() => { location.href='/usr/member/login'; }, 1000)">
+					<div class="mb-[100px]">
+						<div class="toggle dog-rollover">
+							<input type="checkbox" id="doggo" />
+							<label for="doggo" class="toggle-item">
+								<div class="dog">
+									<div class="ear"></div>
+									<div class="ear right"></div>
+									<div class="face">
+										<div class="eyes"></div>
+										<div class="mouth"></div>
+									</div>
+								</div>
+							</label>
+						</div>
+					</div>
+				</button>
 
 				<div class="up-icon">
 					<!-- 회원가입 / 펫 리스트 버튼 -->
 					<!-- 로그인 아닐 때: join 버튼 -->
-					<button type="button" class="in-icon" th:if="${!rq.isLogined}"
-							onclick="location.href='/usr/member/join'">
-						join
-						<img src="https://imgur.com/2ZJPrGR.png" alt="join">
-					</button>
 					<div>
 						<!-- 로그인 상태 유지 시: 수의사 버튼 -->
 						<button id="vetList" type="button" class="in-icon hidden" th:if="${rq.isLogined}">
@@ -50,8 +53,8 @@
 					<div>
 						<!-- 로그인일 때: petlist 버튼 -->
 						<button id="petlist" type="button" class="in-icon"
-								th:if="${rq.isLogined and rq.loginedMember.authLevel != 3}"
-								onclick="location.href='/usr/pet/list?memberId=[[${rq.loginedMember.id}]]'">
+							th:if="${rq.isLogined and rq.loginedMember.authLevel != 3}"
+							onclick="location.href='/usr/pet/list?memberId=[[${rq.loginedMember.id}]]'">
 							petlist
 							<img src="https://imgur.com/2ZJPrGR.png" alt="petlist">
 						</button>
