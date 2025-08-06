@@ -63,6 +63,9 @@
             <if test="photo != null">
                 photo = #{photo},
             </if>
+            <if test="address != null">
+                address = #{address},
+            </if>
             updateDate = NOW()
         </set>
         WHERE id = #{loginedMemberId}

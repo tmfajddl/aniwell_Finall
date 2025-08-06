@@ -71,7 +71,7 @@ public class MemberService {
 
     private void setTempPassword(Member actor, String tempPassword) {
         String encodedPw = passwordEncoder.encode(tempPassword);
-        memberRepository.modify(actor.getId(), encodedPw, null, null, null, null, null);
+        memberRepository.modify(actor.getId(), encodedPw, null, null, null, null, null, null);
     }
 
 
@@ -119,12 +119,12 @@ public class MemberService {
     }
 
     public ResultData modify(int loginedMemberId, String loginPw, String name, String nickname, String cellphone,
-                             String email, String photo) {
+                             String email, String photo, String address) {
 
         if (loginPw != null && !loginPw.trim().isEmpty()) {
             loginPw = passwordEncoder.encode(loginPw);
         }
-        memberRepository.modify(loginedMemberId, loginPw, name, nickname, cellphone, email, photo);
+        memberRepository.modify(loginedMemberId, loginPw, name, nickname, cellphone, email, photo, address);
 
         return ResultData.from("S-1", "회원정보 수정 완료");
     }
