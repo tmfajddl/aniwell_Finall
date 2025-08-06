@@ -240,33 +240,36 @@ public class UsrWalkCrewController {
 	}
 
 	// ✅ 크루 목록을 JSON 형태로 반환하는 API 컨트롤러
+	// ✅ 크루 목록을 JSON 형태로 반환하는 API (검색 + 동네 필터 + 거리 정렬 포함)
 	@GetMapping("/api/list")
 	@ResponseBody
 	public ResultData getCrewListAsJson(HttpServletRequest req, @RequestParam(required = false) String query, // 🔍 검색어
-			@RequestParam(required = false) String dong, // 🏠 동네 이름 (정렬 우선순위용)
-			@RequestParam(required = false, defaultValue = "createdAt") String sortBy // 🔃 정렬 기준
+																												// (제목/설명)
+			@RequestParam(required = false) String dong, // 🏠 필터용 동네 이름
+			@RequestParam(required = false, defaultValue = "createdAt") String sortBy, // 🔃 정렬 기준
+			@RequestParam(required = false) Double lat, // 📍 사용자 위치(위도)
+			@RequestParam(required = false) Double lng // 📍 사용자 위치(경도)
 	) {
-		// ✅ 로그인된 사용자 정보 가져오기
+		// ✅ 로그인 정보
 		Rq rq = (Rq) req.getAttribute("rq");
 
-		// ✅ 전체 크루 리스트 조회
+		// ✅ 전체 크루 목록 가져오기
 		List<WalkCrew> crews = walkCrewService.getAllCrews();
 
-		// ✅ 결과로 반환할 JSON 리스트 준비
+		// ✅ JSON 응답용 리스트 생성
 		List<Map<String, Object>> resultList = new ArrayList<>();
 
-		// ✅ 크루 리스트를 하나씩 순회
 		for (WalkCrew crew : crews) {
 
-			// 🔍 검색어 필터링 (제목 또는 설명에 query가 포함되어 있어야 함)
+			// 🔍 검색어 필터 (query가 제목 또는 설명에 포함되어야 함)
 			if (query != null && !query.isBlank()) {
 				boolean titleMatch = crew.getTitle() != null && crew.getTitle().contains(query);
 				boolean descMatch = crew.getDescription() != null && crew.getDescription().contains(query);
 				if (!titleMatch && !descMatch)
-					continue; // 조건에 맞지 않으면 제외
+					continue;
 			}
 
-			// ✅ 크루 정보를 Map 형태로 변환
+			// ✅ JSON 객체로 변환
 			Map<String, Object> crewMap = new HashMap<>();
 			crewMap.put("id", crew.getId());
 			crewMap.put("title", crew.getTitle());
@@ -278,26 +281,46 @@ public class UsrWalkCrewController {
 			crewMap.put("createdAt", crew.getCreatedAt());
 			crewMap.put("imageUrl", crew.getImageUrl());
 
-			// 🏠 dong 우선 정렬을 위한 비교용 flag 저장
-			// ➜ 해당 동네일 경우 true → 나중에 정렬 시 상단으로 배치
-			crewMap.put("isTargetDong", dong != null && dong.equals(crew.getDong()));
+			// 🏠 dong 일치 여부 저장 → 동네 우선 정렬용 flag
+			boolean isTargetDong = dong != null && dong.equals(crew.getDong());
+			crewMap.put("isTargetDong", isTargetDong);
 
-			// 결과 리스트에 추가
+			// 📍 거리 계산 (lat/lng가 모두 존재하고, 크루 위치도 존재할 경우)
+			if (lat != null && lng != null && crew.getLatitude() != null && crew.getLongitude() != null) {
+				double distance = walkCrewService.calculateDistance(lat, lng, crew.getLatitude(), crew.getLongitude());
+
+				// ✅ 여기에 추가
+				System.out.println(
+						"🧭 좌표 확인: " + crew.getTitle() + " → " + crew.getLatitude() + ", " + crew.getLongitude());
+
+				crewMap.put("distance", distance); // km 단위 거리
+			} else {
+				crewMap.put("distance", Double.MAX_VALUE); // 거리 계산 불가 시 무한대
+			}
+
 			resultList.add(crewMap);
 		}
 
-		// ✅ 정렬 처리 (1순위: 동네 우선, 2순위: sortBy 기준)
+		// ✅ 정렬: 1) dong 일치 → 2) 거리순 → 3) createdAt 또는 title
 		resultList.sort((a, b) -> {
 			boolean aIsTarget = (boolean) a.getOrDefault("isTargetDong", false);
 			boolean bIsTarget = (boolean) b.getOrDefault("isTargetDong", false);
 
-			// 💡 1순위: dong이 일치하는 항목을 최상단에 배치
+			// 💡 동네 우선 정렬
 			if (aIsTarget && !bIsTarget)
 				return -1;
 			if (!aIsTarget && bIsTarget)
 				return 1;
 
-			// 💡 2순위: 정렬 기준에 따라 정렬 (기본은 createdAt 내림차순)
+			// 💡 거리 우선 정렬
+			Double aDistance = (Double) a.get("distance");
+			Double bDistance = (Double) b.get("distance");
+
+			int distanceCompare = aDistance.compareTo(bDistance);
+			if (distanceCompare != 0)
+				return distanceCompare;
+
+			// 💡 기타 정렬 (기본은 createdAt 내림차순)
 			if (sortBy.equals("title")) {
 				return ((String) a.get("title")).compareTo((String) b.get("title")); // 가나다순
 			} else {
@@ -305,12 +328,11 @@ public class UsrWalkCrewController {
 			}
 		});
 
-		// ✅ 반환 데이터 구성
+		// ✅ 최종 응답 데이터 구성
 		Map<String, Object> data = new HashMap<>();
-		data.put("crews", resultList); // 정렬된 크루 리스트
-		data.put("loginMemberId", (rq != null && rq.isLogined()) ? rq.getLoginedMemberId() : ""); // 로그인된 사용자 ID
+		data.put("crews", resultList);
+		data.put("loginMemberId", (rq != null && rq.isLogined()) ? rq.getLoginedMemberId() : "");
 
-		// ✅ JSON 응답 반환
 		return ResultData.from("S-1", "크루 목록 불러오기 성공", data);
 	}
 
