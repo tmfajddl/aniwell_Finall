@@ -19,71 +19,71 @@
 		<!-- Sidebar -->
 		<div th:replace="common :: siteHeader" class=""></div>
 
-		<!-- Main content -->
-		<main class="main_page min-h-[770px] grid-cols-12 flex-1 p-6 grid gap-4">
-
+		<!-- Main content --><!-- Main content -->
+		<main class="main_page min-h-[770px] grid-cols-12 flex-1 p-6 grid  gap-4">
+		
 			<!-- 왼쪽 8칸: 차트 + 감정분석 + 캘린더 -->
-			<section class="col-span-12 xl:col-span-8 relative grid grid-rows-7 gap-2 h-[770px] w-full">
-
+			<section class="col-span-12 xl:col-span-8 flex flex-col gap-2 h-full w-full">
 				<!-- 차트 -->
 
-				<div class="row-span-2 bg-white p-4 rounded-xl shadow">
-					<canvas id="myChart" class=" w-full h-full"></canvas>
-				</div>
+				<div class="row-span-1 bg-white p-4 rounded-xl shadow">
+					<canvas id="myChart" class=" w-full h-full h-2/6"></canvas>
+					<div id="feedingPanel"
+						class="fixed top-0 right-0 w-[95%] h-full bg-white shadow-xl z-40 transform translate-x-full transition-transform duration-300 rounded-l-[40px] flex flex-col p-6 overflow-auto">
 
-				<div id="feedingPanel"
-					class="fixed top-0 right-0 w-[95%] h-full bg-white shadow-xl z-40 transform translate-x-full transition-transform duration-300 rounded-l-[40px] flex flex-col p-6 overflow-auto">
+						<!-- 닫기 버튼 -->
+						<button onclick="closeFeedingPanel()"
+							class="absolute top-4 left-4 text-3xl text-gray-500 hover:text-black font-bold">×</button>
 
-					<!-- 닫기 버튼 -->
-					<button onclick="closeFeedingPanel()"
-						class="absolute top-4 left-4 text-3xl text-gray-500 hover:text-black font-bold">×</button>
+						<h2 class="text-xl font-bold text-gray-700 text-center mb-6 mt-10"> 📝 하루 건강 리포트</h2>
 
-					<h2 class="text-xl font-bold text-gray-700 text-center mb-6 mt-10"> 📝 하루 건강 리포트</h2>
+						<!-- 날짜 선택 -->
+						<div class="text-center mb-4">
+							<input type="date" id="datePicker" class="border rounded px-3 py-2 shadow-sm" />
+						</div>
 
-					<!-- 날짜 선택 -->
-					<div class="text-center mb-4">
-						<input type="date" id="datePicker" class="border rounded px-3 py-2 shadow-sm" />
-					</div>
+						<!-- 1. 사료 차트 -->
+						<div class="h-[200px] mb-10 w-full px-4">
+							<h3 class="text-lg font-bold text-gray-800 mb-2">🍚 사료</h3>
+							<div class="w-full h-full bg-white rounded-xl shadow p-4">
+								<canvas id="weightChart" class="w-full h-full"></canvas>
+							</div>
+						</div>
 
-					<!-- 1. 사료 차트 -->
-					<div class="h-[200px] mb-10 w-full px-4">
-						<h3 class="text-lg font-bold text-gray-800 mb-2">🍚 사료</h3>
-						<div class="w-full h-full bg-white rounded-xl shadow p-4">
-							<canvas id="weightChart" class="w-full h-full"></canvas>
+						<!-- 2. 물 섭취량 차트 -->
+						<div class="h-[200px] mb-10 w-full px-4">
+							<h3 class="text-lg font-bold text-gray-800 mb-2">💧 물</h3>
+							<div class="w-full h-full bg-white rounded-xl shadow p-4">
+								<canvas id="waterChart" class="w-full h-full"></canvas>
+							</div>
+						</div>
+
+						<!-- 3. 배변 횟수 -->
+						<div class="h-[300px]">
+							<h3 class="text-lg font-bold text-gray-800 mb-2">🚽 배변</h3>
+							<div class="overflow-y-auto max-h-[250px]">
+								<table class="w-full max-w-2xl mx-auto text-sm border border-gray-300 rounded-lg">
+									<thead class="bg-gray-100">
+										<tr>
+											<th class="p-2 border">시간</th>
+											<th class="p-2 border">배변 종류</th>
+										</tr>
+									</thead>
+									<tbody id="poopTableBody">
+										<!-- JavaScript로 행 추가됨 -->
+									</tbody>
+								</table>
+							</div>
 						</div>
 					</div>
 
-					<!-- 2. 물 섭취량 차트 -->
-					<div class="h-[200px] mb-10 w-full px-4">
-						<h3 class="text-lg font-bold text-gray-800 mb-2">💧 물</h3>
-						<div class="w-full h-full bg-white rounded-xl shadow p-4">
-							<canvas id="waterChart" class="w-full h-full"></canvas>
-						</div>
-					</div>
 
-					<!-- 3. 배변 횟수 -->
-					<div class="h-[300px]">
-						<h3 class="text-lg font-bold text-gray-800 mb-2">🚽 배변</h3>
-						<div class="overflow-y-auto max-h-[250px]">
-							<table class="w-full max-w-2xl mx-auto text-sm border border-gray-300 rounded-lg">
-								<thead class="bg-gray-100">
-									<tr>
-										<th class="p-2 border">시간</th>
-										<th class="p-2 border">배변 종류</th>
-									</tr>
-								</thead>
-								<tbody id="poopTableBody">
-									<!-- JavaScript로 행 추가됨 -->
-								</tbody>
-							</table>
-						</div>
-					</div>
 				</div>
 
 
 
 				<!-- 감정분석 카드 -->
-				<div class="grid grid-cols-2 gap-2 h-full row-span-2">
+				<div class="grid grid-cols-2 gap-2 h-1/6">
 					<div class="relative group overflow-hidden bg-gradient-to-r from-[#DFF8E5] to-[#F4FBCC] rounded-xl p-4 text-center shadow hover:shadow-md transition-shadow duration-300 font-semibold cursor-pointer w-full"
 						onclick="openEmotionPanel()">
 
@@ -104,7 +104,7 @@
 
 					<!-- 슬라이드 감정 분석 패널 -->
 					<div id="emotionPanel"
-						class="fixed top-0 right-0 w-[95%] h-full bg-[white] shadow-xl z-50 transform translate-x-full transition-transform duration-300 rounded-l-[40px] flex flex-col p-6">
+						class="fixed row-span-3 top-0 right-0 w-[95%] h-full bg-[white] shadow-xl z-50 transform translate-x-full transition-transform duration-300 rounded-l-[40px] flex flex-col p-6">
 
 						<!-- 닫기 버튼 -->
 						<button onclick="closeEmotionPanel()"
@@ -173,7 +173,7 @@
 				</div>
 
 				<!-- 캘린더 -->
-				<div class="flex gap-2 h-full row-span-2">
+				<div class="flex gap-2 h-3/6">
 
 					<!-- 왼쪽: 일정/버튼 -->
 					<div class="flex flex-col gap-2 w-2/3 relative  bg-gradient-to-b from-[#FFFFFF] to-[#FFFCEF]">
