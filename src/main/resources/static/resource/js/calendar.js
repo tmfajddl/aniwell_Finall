@@ -20,7 +20,6 @@ function renderMiniCalendar(targetId, events, date = new Date()) {
 		monthLabel.textContent = englishMonthNames[month];
 		monthLabel.classList.add('font-bold');
 	}
-
 	const header = document.createElement('div');
 	header.className = 'flex justify-between items-center mb-4 text-yellow-200';
 
