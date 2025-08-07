@@ -23,11 +23,12 @@
 		<main class="main_page min-h-[770px] grid-cols-12 flex-1 p-6 grid gap-4">
 
 			<!-- 왼쪽 8칸: 차트 + 감정분석 + 캘린더 -->
-			<section class="col-span-12 xl:col-span-8 flex flex-col gap-2 h-full w-full">
+			<section class="col-span-12 xl:col-span-8 relative grid grid-rows-7 gap-2 h-[770px] w-full">
 
 				<!-- 차트 -->
-				<div class="bg-white p-4 rounded-xl shadow">
-					<canvas id="myChart" class="w-full h-full"></canvas>
+
+				<div class="row-span-2 bg-white p-4 rounded-xl shadow">
+					<canvas id="myChart" class=" w-full h-full"></canvas>
 				</div>
 
 				<div id="feedingPanel"
@@ -77,13 +78,12 @@
 							</table>
 						</div>
 					</div>
-
 				</div>
 
 
 
 				<!-- 감정분석 카드 -->
-				<div class="grid grid-cols-2 gap-2 h-full">
+				<div class="grid grid-cols-2 gap-2 h-full row-span-2">
 					<div class="relative group overflow-hidden bg-gradient-to-r from-[#DFF8E5] to-[#F4FBCC] rounded-xl p-4 text-center shadow hover:shadow-md transition-shadow duration-300 font-semibold cursor-pointer w-full"
 						onclick="openEmotionPanel()">
 
@@ -173,7 +173,7 @@
 				</div>
 
 				<!-- 캘린더 -->
-				<div class="flex gap-2 h-full">
+				<div class="flex gap-2 h-full row-span-2">
 
 					<!-- 왼쪽: 일정/버튼 -->
 					<div class="flex flex-col gap-2 w-2/3 relative  bg-gradient-to-b from-[#FFFFFF] to-[#FFFCEF]">
@@ -218,52 +218,61 @@
 					<!-- 등록증 -->
 					<div class="w-full h-auto rounded-xl">
 
-					  <!-- 제목 -->
-					  <h2 class="text-2xl font-bold flex items-center gap-1 mb-2 justify-center">
-					    <span class="text-3xl">🐾</span> 반려동물등록증
-					  </h2>
+						<!-- 제목 -->
+						<h2 class="text-2xl font-bold flex items-center gap-1 mb-2 justify-center">
+							<span class="text-3xl">🐾</span> 반려동물등록증
+						</h2>
 
-					  <!-- 전체 Flex Wrapper -->
-					  <div class="flex gap-6 w-full h-full pt-4">
-					    
-					    <!-- 왼쪽: 사진 영역 -->
-					    <div class="flex-[2] card_photo overflow-hidden rounded-xl border flex justify-center items-start max-w-[300px]">
-					      <img th:src="${pet.photo != null ? pet.photo : '/img/default-pet.png'}" alt="pet"
-					        class="object-cover w-full h-full" />
-					    </div>
+						<!-- 전체 Flex Wrapper -->
+						<div class="flex gap-6 w-full h-full pt-4">
 
-					    <!-- 오른쪽: 정보 영역 -->
-					    <div class="flex-[3] flex flex-col gap-3">
+							<!-- 왼쪽: 사진 영역 -->
+							<div
+								class="flex-[2] card_photo overflow-hidden rounded-xl border flex justify-center items-start max-w-[300px]">
+								<img th:src="${pet.photo != null ? pet.photo : '/img/default-pet.png'}" alt="pet"
+									class="object-cover w-full h-full" />
+							</div>
 
-					      <!-- 상단 정보 2열 -->
-					      <div class="flex gap-6">
-					        
-					        <!-- 왼쪽 열 -->
-					        <div class="space-y-1">
-					          <div><span class="font-semibold mr-2">이름:</span> <span th:text="${pet.name}">떡걸룩</span></div>
-					          <div><span class="font-semibold mr-2">번호:</span> <span th:text="${pet.id}">12345</span></div>
-					          <div><span class="font-semibold mr-2">품종:</span> <span th:text="${pet.breed}">코리안숏헤어</span></div>
-					        </div>
+							<!-- 오른쪽: 정보 영역 -->
+							<div class="flex-[3] flex flex-col gap-3">
 
-					        <!-- 오른쪽 열 -->
-					        <div class="space-y-1">
-					          <div><span class="font-semibold mr-2">생일:</span> <span th:text="${pet.birthDate}" class="text-sm">2020.01.01</span></div>
-					          <div><span class="font-semibold mr-2">중성화:</span> <span>완료</span></div>
-					          <div><span class="font-semibold mr-2">성별:</span> <span th:text="${pet.gender}">암컷</span></div>
-					        </div>
+								<!-- 상단 정보 2열 -->
+								<div class="flex gap-6">
 
-					      </div>
+									<!-- 왼쪽 열 -->
+									<div class="space-y-1">
+										<div><span class="font-semibold mr-2">이름:</span> <span
+												th:text="${pet.name}">떡걸룩</span>
+										</div>
+										<div><span class="font-semibold mr-2">번호:</span> <span
+												th:text="${pet.id}">12345</span>
+										</div>
+										<div><span class="font-semibold mr-2">품종:</span> <span
+												th:text="${pet.breed}">코리안숏헤어</span></div>
+									</div>
 
-					      <!-- 특징 -->
-					      <div>
-					        <span class="font-semibold mr-2">특징:</span>
-					        <span th:text="${pet.species}">겁이 많고 높은 데를 아주 좋아해요</span>
-					      </div>
+									<!-- 오른쪽 열 -->
+									<div class="space-y-1">
+										<div><span class="font-semibold mr-2">생일:</span> <span
+												th:text="${pet.birthDate}" class="text-sm">2020.01.01</span></div>
+										<div><span class="font-semibold mr-2">중성화:</span> <span>완료</span></div>
+										<div><span class="font-semibold mr-2">성별:</span> <span
+												th:text="${pet.gender}">암컷</span>
+										</div>
+									</div>
 
-					      <!-- 하단 구분선 -->
-					      <div class="border-b-2 border-yellow-400 w-full mt-2"></div>
-					    </div>
-					  </div>
+								</div>
+
+								<!-- 특징 -->
+								<div>
+									<span class="font-semibold mr-2">특징:</span>
+									<span th:text="${pet.species}">겁이 많고 높은 데를 아주 좋아해요</span>
+								</div>
+
+								<!-- 하단 구분선 -->
+								<div class="border-b-2 border-yellow-400 w-full mt-2"></div>
+							</div>
+						</div>
 					</div>
 				</div>
 
