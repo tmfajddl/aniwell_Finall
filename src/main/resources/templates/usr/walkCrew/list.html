@@ -26,13 +26,14 @@
 						<div class="h-[97%]">
 							<div class="stickypb">
 								<div class="w-full max-w-xl mx-auto">
-									<div class="flex items-center bg-white border border-gray-200 shadow-sm rounded-full px-4 py-2">
-										<form method="get" th:action="@{/usr/walkCrew/list}" class="flex w-full">
-											<input id="searchInput" type="text" name="query" placeholder="검색어를 입력하세요" th:value="${param.query}"
-												class="flex-1 text-sm text-gray-800 bg-transparent outline-none placeholder:text-gray-400" />
-											<button type="submit" class="ml-2 text-gray-500 hover:text-black">🔍</button>
-										</form>
+									<!-- 🔄 기존 <form>을 <div>로 변경 -->
+									<div class="flex items-center bg-white border border-gray-200 shadow-sm rounded-full px-4 py-2 w-full">
+										<input id="searchInput" type="text" placeholder="검색어를 입력하세요"
+											class="flex-1 text-sm text-gray-800 bg-transparent outline-none placeholder:text-gray-400"
+											onkeydown="if(event.key === 'Enter'){ event.preventDefault(); loadCrewList(); }" />
+										<button type="button" class="ml-2 text-gray-500 hover:text-black" onclick="loadCrewList()">🔍</button>
 									</div>
+
 								</div>
 								<div class="text-center">
 									<button onclick="openModal()"
@@ -182,9 +183,10 @@
 		loadCrewList(); // 🔹 필터링된 리스트 다시 로딩
 	}
 
-	function loadCrewList() {
+	function loadCrewList(skipDongFilter = false) {
 		const query = $('#searchInput').val(); // 🔸 검색어 가져오기
-		const dong = localStorage.getItem("selectedDong"); // 🔸 선택된 동 가져오기
+		const dong = skipDongFilter ? '' : 
+		(localStorage.getItem("selectedDong") || localStorage.getItem("userDong")); // 🔸 선택된 동 가져오기
 
 		const lat = localStorage.getItem("userLat");
 		const lng = localStorage.getItem("userLng");
@@ -254,10 +256,19 @@
 	  // ✅ 동네 정보는 유지하지만 필터링은 하지 않음
 	  localStorage.removeItem("selectedDong"); // 👉 무조건 삭제
 
-	  loadCrewList(); // 🔄 전체 리스트 불러오기
+	  loadCrewList(true); // 🔄 전체 리스트 불러오기
 	});
 
 
+	// ✅ [추가] 검색창에서 엔터 입력 시 동 필터 제거 후 검색
+	$(document).on('keydown', '#searchInput', function (e) {
+		if (e.key === 'Enter') {
+			e.preventDefault(); // 폼 제출 막기
+			localStorage.removeItem("selectedDong"); // 🔥 동네 필터 제거
+			loadCrewList(true); // 🔍 전체에서 검색
+		}
+	});
+	
 </script>
 
 

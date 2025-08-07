@@ -276,7 +276,11 @@ public class UsrWalkCrewController {
 				dongPrefix = dong.substring(0, Math.min(2, dong.length())).replaceAll("\\s+", "").toLowerCase();
 			}
 
-			boolean isTargetDong = !dongPrefix.isBlank() && dongPrefix.equals(crewDongPrefix);
+			boolean isTargetDong = false;
+
+			if (dongPrefix != null && !dongPrefix.isBlank()) {
+				isTargetDong = dongPrefix.equals(crewDongPrefix); // 또는 crewDongPrefix
+			}
 
 			System.out.println("\uD83D\uDEA8 비교중: dongPrefix = " + dongPrefix + ", crewDongPrefix = " + crewDongPrefix);
 
