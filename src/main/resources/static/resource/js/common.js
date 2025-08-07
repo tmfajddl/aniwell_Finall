@@ -203,14 +203,74 @@ function closeModal() {
 }
 
 function logout() {
-	alert("로그아웃 처리 실행"); // 실제 로그아웃 로직으로 변경
-	closeModal();
+  Swal.fire({
+    title: '로그아웃 하시겠습니까?',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: '네, 로그아웃',
+    cancelButtonText: '취소',
+    reverseButtons: true
+  }).then((result) => {
+    if (result.isConfirmed) {
+      // ✅ 확인 버튼 누르면 진행
+      Swal.fire({
+        title: '로그아웃 중...',
+        timer: 500,
+        didOpen: () => {
+          Swal.showLoading();
+        },
+        allowOutsideClick: false,
+        showConfirmButton: false
+      });
+
+      setTimeout(() => {
+        fetch('/usr/member/doLogout', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+          }
+        })
+        .then(res => {
+          if (!res.ok) throw new Error("서버 응답 오류");
+          return res.text();
+        })
+        .then(() => {
+          closeModal();
+          location.href = '/';
+        })
+        .catch(err => {
+          Swal.fire({
+            icon: 'error',
+            title: '❌ 로그아웃 실패',
+            text: err.message
+          });
+        });
+      }, 500);
+    }
+  });
 }
 
+
+
 function submitCertificate() {
-	alert("인증서 제출 페이지로 이동"); // 또는 window.location.href = ...
-	closeModal();
+  Swal.fire({
+    icon: 'info',
+    title: '인증서 제출 페이지로 이동합니다',
+    showConfirmButton: false,
+    timer: 500,
+    timerProgressBar: true,
+    didOpen: () => {
+      Swal.showLoading();
+    }
+  });
+
+  closeModal(); // 모달 닫기
+
+  setTimeout(() => {
+    window.location.href = "/usr/member/myCert";
+  }, 500);
 }
+
 
 document.getElementById("myModal").addEventListener("click", (e) => {
 	if (e.target.id === "myModal") closeModal();

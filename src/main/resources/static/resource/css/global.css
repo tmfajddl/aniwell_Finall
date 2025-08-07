@@ -1,11 +1,13 @@
 button:focus {
-  outline: none !important;
-  box-shadow: none !important;
+	outline: none !important;
+	box-shadow: none !important;
 }
 
 @font-face {
 	font-family: 'Ownglyph_ParkDaHyun';
-	src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/2411-3@1.0/Ownglyph_ParkDaHyun.woff2') format('woff2');
+	src:
+		url('https://fastly.jsdelivr.net/gh/projectnoonnu/2411-3@1.0/Ownglyph_ParkDaHyun.woff2')
+		format('woff2');
 	font-weight: normal;
 	font-style: normal;
 }
@@ -14,16 +16,29 @@ button:focus {
 
 @font-face {
 	font-family: 'EF_jejudoldam';
-	src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2210-EF@1.0/EF_jejudoldam.woff2') format('woff2');
+	src:
+		url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2210-EF@1.0/EF_jejudoldam.woff2')
+		format('woff2');
 	font-weight: normal;
 	font-style: normal;
 }
 
 @font-face {
-    font-family: 'MaplestoryOTFBold';
-    src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_20-04@2.1/MaplestoryOTFBold.woff') format('woff');
-    font-weight: normal;
-    font-style: normal;
+	font-family: 'MaplestoryOTFBold';
+	src:
+		url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_20-04@2.1/MaplestoryOTFBold.woff')
+		format('woff');
+	font-weight: normal;
+	font-style: normal;
+}
+
+@font-face {
+	font-family: 'MaplestoryOTFLight';
+	src:
+		url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_20-04@2.1/MaplestoryOTFLight.woff')
+		format('woff');
+	font-weight: normal;
+	font-style: normal;
 }
 
 /*
@@ -34,13 +49,15 @@ body {
 }
 */
 
-
+/* body {
+	font-family: 'MaplestoryOTFBold', sans-serif;
+	font-size: 20px;
+	letter-spacing: 0.05em; 🔹 자간을 약간 넓힘
+} */
 body {
-  font-family: 'MaplestoryOTFBold', sans-serif;
-  font-size: 20px;
+	font-family: 'MaplestoryOTFLight', sans-serif;
+	font-size: 20px;
 }
-
-
 
 /*
 body {
