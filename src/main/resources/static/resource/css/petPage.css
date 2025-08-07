@@ -18,3 +18,12 @@
 .tD_ani{
 	min-height: 200px;
 }
+.pet_card {
+	aspect-ratio: 1.6/1;
+	min-height: 400px;
+}
+.card_photo {
+	aspect-ratio: 1/1;
+	width: auto;
+}
+
