@@ -152,10 +152,10 @@
                                placeholder="ID" th:value="${param.loginId}"/>
 
                         <label class="form-wrapper__label" for="loginPw">비밀번호</label>
-                        <!-- ✅ 비밀번호 입력 전체를 독립된 wrapper로 감싸기 -->
                         <div class="mb-2">
                             <div class="relative flex items-center">
-                                <input class="form-wrapper__input pr-10 flex-1" id="loginPw" name="loginPw" type="password"
+                                <input class="form-wrapper__input pr-10 flex-1" id="loginPw" name="loginPw"
+                                       type="password"
                                        required placeholder="PW"/>
                                 <button type="button" id="togglePw"
                                         class="absolute right-2 text-gray-500 hover:text-gray-700">
@@ -163,14 +163,14 @@
                                     <i class="fa-solid fa-eye hidden" id="iconOpenPw"></i>
                                 </button>
                             </div>
-                            <!-- ✅ 경고 문구는 flex 외부, block 요소로 완전히 분리 -->
                             <p id="pwWarning" class="block text-xs text-red-600 mt-1 hidden"></p>
                         </div>
 
                         <label class="form-wrapper__label" for="loginPwConfirm">비밀번호 확인</label>
                         <div class="mb-2">
                             <div class="relative flex items-center">
-                                <input class="form-wrapper__input pr-10 flex-1" id="loginPwConfirm" name="loginPwConfirm"
+                                <input class="form-wrapper__input pr-10 flex-1" id="loginPwConfirm"
+                                       name="loginPwConfirm"
                                        type="password" required placeholder="Confirm PW"/>
                                 <button type="button" id="togglePwConfirm"
                                         class="absolute right-2 text-gray-500 hover:text-gray-700">
@@ -345,7 +345,7 @@
         const pwInput = joinForm.querySelector("#loginPw");
         const pwConfirmInput = joinForm.querySelector("#loginPwConfirm");
         const pwMessage = joinForm.querySelector("#pwMessage");
-        const pwWarning = joinForm.querySelector("#pwWarning"); // ✅ 기존 요소 참조
+        const pwWarning = joinForm.querySelector("#pwWarning");
 
         // 정규식
         const pwRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>])[A-Za-z\d!@#$%^&*(),.?":{}|<>]{8,16}$/;
