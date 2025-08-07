@@ -1,4 +1,4 @@
-	<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ko">
 
 <head>
@@ -41,6 +41,7 @@
         }
     </style>
 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
 </head>
 
@@ -49,13 +50,13 @@
 
 <section class="form-container">
        <span id="arrowClick" class="form-container__arrow z-10">
-          <i class="fa fa-arrow-circle-left" aria-hidden="true"> <!-- HTML 파일 내 직접 삽입 -->
+<!--          <i class="fa fa-arrow-circle-left" aria-hidden="true"> &lt;!&ndash; HTML 파일 내 직접 삽입 &ndash;&gt;-->
              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="currentColor"
-                     className="w-6 h-6 text-gray-700 hover:text-yellow-400 transition-colors">
+                  className="w-6 h-6 text-gray-700 hover:text-yellow-400 transition-colors">
                 <path
-                            d="M19,10.5H10.207l2.439-2.439a1.5,1.5,0,0,0-2.121-2.122L6.939,9.525a3.505,3.505,0,0,0,0,4.95l3.586,3.586a1.5,1.5,0,0,0,2.121-2.122L10.207,13.5H19a1.5,1.5,0,0,0,0-3Z"/>
+                        d="M19,10.5H10.207l2.439-2.439a1.5,1.5,0,0,0-2.121-2.122L6.939,9.525a3.505,3.505,0,0,0,0,4.95l3.586,3.586a1.5,1.5,0,0,0,2.121-2.122L10.207,13.5H19a1.5,1.5,0,0,0,0-3Z"/>
              </svg>
-          </i>
+           </i>
        </span>
 
     <!-- 오버레이 + 선택 -->
@@ -151,12 +152,34 @@
                                placeholder="ID" th:value="${param.loginId}"/>
 
                         <label class="form-wrapper__label" for="loginPw">비밀번호</label>
-                        <input class="form-wrapper__input" id="loginPw" name="loginPw" type="password" required placeholder="PW" />
+                        <div class="mb-2">
+                            <div class="relative flex items-center">
+                                <input class="form-wrapper__input pr-10 flex-1" id="loginPw" name="loginPw"
+                                       type="password"
+                                       required placeholder="PW"/>
+                                <button type="button" id="togglePw"
+                                        class="absolute right-2 text-gray-500 hover:text-gray-700">
+                                    <i class="fa-solid fa-eye-slash" id="iconClosedPw"></i>
+                                    <i class="fa-solid fa-eye hidden" id="iconOpenPw"></i>
+                                </button>
+                            </div>
+                            <p id="pwWarning" class="block text-xs text-red-600 mt-1 hidden"></p>
+                        </div>
 
-                        <!-- 비밀번호 확인 -->
                         <label class="form-wrapper__label" for="loginPwConfirm">비밀번호 확인</label>
-                        <input class="form-wrapper__input" id="loginPwConfirm" name="loginPwConfirm" type="password" required placeholder="Confirm PW" />
-                        <p id="pwMessage" class="text-xs mt-1 mb-2 hidden">비밀번호가 일치하지 않습니다.</p>
+                        <div class="mb-2">
+                            <div class="relative flex items-center">
+                                <input class="form-wrapper__input pr-10 flex-1" id="loginPwConfirm"
+                                       name="loginPwConfirm"
+                                       type="password" required placeholder="Confirm PW"/>
+                                <button type="button" id="togglePwConfirm"
+                                        class="absolute right-2 text-gray-500 hover:text-gray-700">
+                                    <i class="fa-solid fa-eye-slash" id="iconClosedPwConfirm"></i>
+                                    <i class="fa-solid fa-eye hidden" id="iconOpenPwConfirm"></i>
+                                </button>
+                            </div>
+                            <p id="pwMessage" class="block text-xs text-red-600 mt-1 mb-2 hidden">비밀번호가 일치하지 않습니다.</p>
+                        </div>
 
                         <label class="form-wrapper__label" for="name">이름</label>
                         <input class="form-wrapper__input" id="name" name="name" type="text" required
@@ -314,42 +337,113 @@
     });
 </script>
 <script>
-    // 회원가입 폼 선택
-    const joinForm = document.querySelector('.login-form--register form');
+    document.addEventListener("DOMContentLoaded", () => {
+        // ✅ 회원가입 폼 선택
+        const joinForm = document.querySelector('.login-form--register form');
+        if (!joinForm) return;
 
-    function checkPasswordMatch() {
-        const pw = joinForm.querySelector("#loginPw").value.trim();
-        const pwConfirm = joinForm.querySelector("#loginPwConfirm").value.trim();
-        const pwInput = joinForm.querySelector("#loginPwConfirm");
-        const message = joinForm.querySelector("#pwMessage");
+        const pwInput = joinForm.querySelector("#loginPw");
+        const pwConfirmInput = joinForm.querySelector("#loginPwConfirm");
+        const pwMessage = joinForm.querySelector("#pwMessage");
+        const pwWarning = joinForm.querySelector("#pwWarning");
 
-        // 초기화
-        pwInput.classList.remove("border-red-500", "border-green-500");
-        message.classList.add("hidden");
-        message.textContent = "";
-        message.classList.remove("text-red-600", "text-green-600");
+        // 정규식
+        const pwRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>])[A-Za-z\d!@#$%^&*(),.?":{}|<>]{8,16}$/;
+        const sequentialRegex = /(012|123|234|345|456|567|678|789|890)/;
 
-        if (pwConfirm === "") return;
+        // ✅ 비밀번호 실시간 유효성 검사
+        pwInput.addEventListener("input", () => {
+            const pw = pwInput.value.trim();
+            pwInput.classList.remove("border-red-500", "border-green-500");
+            pwWarning.classList.add("hidden");
+            pwWarning.textContent = "";
+            pwWarning.classList.remove("text-red-600", "text-green-600");
 
-        if (pw === pwConfirm) {
-            // ✅ 일치
+            if (pw === "") return;
+
+            if (!pwRegex.test(pw)) {
+                pwInput.classList.add("border-red-500");
+                if (pw.length < 8 || pw.length > 16) {
+                    pwWarning.textContent = "비밀번호는 8자리 이상 16자리 이하로 입력해주세요.";
+                } else if (!/[A-Za-z]/.test(pw)) {
+                    pwWarning.textContent = "영문자가 포함되어야 합니다.";
+                } else if (!/\d/.test(pw)) {
+                    pwWarning.textContent = "숫자가 포함되어야 합니다.";
+                } else if (!/[!@#$%^&*(),.?\":{}|<>]/.test(pw)) {
+                    pwWarning.textContent = "특수문자가 포함되어야 합니다.";
+                }
+                pwWarning.classList.add("text-red-600");
+                pwWarning.classList.remove("hidden");
+                return;
+            }
+
+            if (sequentialRegex.test(pw)) {
+                pwInput.classList.add("border-red-500");
+                pwWarning.textContent = "연속된 숫자는 사용할 수 없습니다.";
+                pwWarning.classList.add("text-red-600");
+                pwWarning.classList.remove("hidden");
+                return;
+            }
+
             pwInput.classList.add("border-green-500");
-            message.textContent = "비밀번호가 일치합니다.";
-            message.classList.add("text-green-600");
-            message.classList.remove("hidden");
-        } else {
-            // ❌ 불일치
-            pwInput.classList.add("border-red-500");
-            message.textContent = "비밀번호가 일치하지 않습니다.";
-            message.classList.add("text-red-600");
-            message.classList.remove("hidden");
-        }
-    }
+            pwWarning.textContent = "사용 가능한 비밀번호입니다.";
+            pwWarning.classList.add("text-green-600");
+            pwWarning.classList.remove("hidden");
+        });
 
-    // ✅ 회원가입 폼 안의 비밀번호 필드에만 이벤트 바인딩
-    joinForm.querySelector("#loginPw").addEventListener("keyup", checkPasswordMatch);
-    joinForm.querySelector("#loginPwConfirm").addEventListener("keyup", checkPasswordMatch);
+        // ✅ 비밀번호 확인 (일치 여부만)
+        function checkPasswordMatch() {
+            const pw = pwInput.value.trim();
+            const pwConfirm = pwConfirmInput.value.trim();
+
+            pwConfirmInput.classList.remove("border-red-500", "border-green-500");
+            pwMessage.classList.add("hidden");
+            pwMessage.textContent = "";
+            pwMessage.classList.remove("text-red-600", "text-green-600");
+
+            if (pwConfirm === "") return;
+
+            if (pw === pwConfirm) {
+                pwConfirmInput.classList.add("border-green-500");
+                pwMessage.textContent = "비밀번호가 일치합니다.";
+                pwMessage.classList.add("text-green-600");
+                pwMessage.classList.remove("hidden");
+            } else {
+                pwConfirmInput.classList.add("border-red-500");
+                pwMessage.textContent = "비밀번호가 일치하지 않습니다.";
+                pwMessage.classList.add("text-red-600");
+                pwMessage.classList.remove("hidden");
+            }
+        }
+
+        pwInput.addEventListener("keyup", checkPasswordMatch);
+        pwConfirmInput.addEventListener("keyup", checkPasswordMatch);
+
+        // ✅ 비밀번호 보기 토글
+        function togglePassword(input, btn, openIcon, closedIcon) {
+            btn.addEventListener("click", () => {
+                const isPw = input.type === "password";
+                input.type = isPw ? "text" : "password";
+                openIcon.classList.toggle("hidden", !isPw);
+                closedIcon.classList.toggle("hidden", isPw);
+            });
+        }
+
+        togglePassword(
+            pwInput,
+            joinForm.querySelector("#togglePw"),
+            joinForm.querySelector("#iconOpenPw"),
+            joinForm.querySelector("#iconClosedPw")
+        );
+        togglePassword(
+            pwConfirmInput,
+            joinForm.querySelector("#togglePwConfirm"),
+            joinForm.querySelector("#iconOpenPwConfirm"),
+            joinForm.querySelector("#iconClosedPwConfirm")
+        );
+    });
 </script>
+
 <script>
     function execDaumPostcode() {
         new daum.Postcode({
@@ -460,14 +554,7 @@
 
 <!-- ✅ Firebase 초기화 -->
 <script>
-    const firebaseConfig = {
-        apiKey: "AIzaSyCickEEoEGDTVyy-7defZSkOSSmWj2shkw",
-        authDomain: "aniwell-2a90b.firebaseapp.com",
-        projectId: "aniwell-2a90b",
-        storageBucket: "aniwell-2a90b.appspot.com",
-        messagingSenderId: "399675409170",
-        appId: "1:399675409170:web:2fb665a85291a8c9a6a9cb"
-    };
+
     if (firebase.apps.length === 0) {
         firebase.initializeApp(firebaseConfig);
         console.log("🔥 Firebase 초기화 완료");
@@ -586,4 +673,3 @@
 </script>
 
 </body>
-</html>
