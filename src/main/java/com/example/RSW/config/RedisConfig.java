@@ -1,47 +1,62 @@
 package com.example.RSW.config;
 
+import lombok.Data;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 @Configuration
+@ConfigurationProperties(prefix = "custom.redis")
+@Data
 public class RedisConfig {
 
-    // 공유 Redis (팀용)
-    private static final String SHARED_HOST = "100.65.187.38"; // 공유 IP (Tailscale)
-    private static final int SHARED_PORT = 6379;
-
-    // 개인 Redis (혼자 테스트용)
-    private static final String PERSONAL_HOST = "100.114.185.63"; // 개인 Redis IP
-    private static final int PERSONAL_PORT = 6379;
-
-    private static final String PASSWORD = "aniwell1234";
-
-    // ✅ true면 개인 Redis, false면 공유 Redis
-    private boolean usePersonalRedis = false;
+    private boolean enabled;
+    private boolean usePersonal;
+    private String personalHost;
+    private int personalPort;
+    private String sharedHost;
+    private int sharedPort;
+    private String password;
 
     @Bean
     public RedisConnectionFactory redisConnectionFactory() {
-        String host = usePersonalRedis ? PERSONAL_HOST : SHARED_HOST;
-        int port = usePersonalRedis ? PERSONAL_PORT : SHARED_PORT;
+        if (!enabled) {
+            System.err.println("❌ Redis 비활성화됨 (custom.redis.enabled = false)");
+            return null;
+        }
 
-        RedisStandaloneConfiguration config = new RedisStandaloneConfiguration(host, port);
-        config.setPassword(PASSWORD);
+        String host = usePersonal ? personalHost : sharedHost;
+        int port = usePersonal ? personalPort : sharedPort;
 
-        return new LettuceConnectionFactory(config);
+        try {
+            RedisStandaloneConfiguration config = new RedisStandaloneConfiguration(host, port);
+            if (password != null && !password.isEmpty()) {
+                config.setPassword(password);
+            }
+            return new LettuceConnectionFactory(config);
+        } catch (Exception e) {
+            System.err.println("❌ Redis 연결 실패 → 비활성화 상태로 실행됨: " + e.getMessage());
+            return null;
+        }
     }
 
     @Bean
-    public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory factory) {
-        RedisTemplate<String, Object> template = new RedisTemplate<>();
+    public RedisTemplate<String, String> redisTemplate(RedisConnectionFactory factory) {
+        RedisTemplate<String, String> template = new RedisTemplate<>();
+
+        if (factory == null) {
+            System.err.println("❌ RedisTemplate 생성 생략 (Redis 비활성화 상태)");
+            return template;
+        }
+
         template.setConnectionFactory(factory);
         template.setKeySerializer(new StringRedisSerializer());
-        template.setValueSerializer(new GenericJackson2JsonRedisSerializer()); // JSON 직렬화
+        template.setValueSerializer(new StringRedisSerializer());
         return template;
     }
 

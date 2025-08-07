@@ -7,6 +7,7 @@
 	<script src="https://cdn.tailwindcss.com"></script>
 	<link rel="stylesheet" th:href="@{/resource/css/main.css}">
 	<link rel="stylesheet" th:href="@{/resource/css/dog-toggle.css}" />
+	<link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css">
 
 	<title>MAIN</title>
 </head>
@@ -54,19 +55,27 @@
 						<!-- 로그인일 때: petlist 버튼 -->
 						<button id="petlist" type="button" class="in-icon"
 							th:if="${rq.isLogined and rq.loginedMember.authLevel != 3}"
-							onclick="location.href='/usr/pet/list?memberId=[[${rq.loginedMember.id}]]'">
+							th:onclick="|location.href='/usr/pet/list?memberId=${rq.loginedMember.id}'|">
 							petlist
 							<img src="https://imgur.com/2ZJPrGR.png" alt="petlist">
 						</button>
 					</div>
+
 				</div>
 			</div>
 		</div>
+
 	</div>
 
 	<div class="relative section section-middle mx-auto">
+		<span class="hero__scroll aos-init aos-animate z-10 flex flex-col" data-aos="fade-up" data-aos-easing="ease"
+			data-aos-delay="800">
+			" Scroll down "
+			<br>
+			<i class="chevron bottom"></i>
+		</span>
 		<div class="wave"></div>
-		<div class="contain absolute left-[20%] mx-auto w-[60%] h-[100%] bottom-8">
+		<div data-aos="fade-left" class="contain absolute left-[20%] mx-auto w-[60%] h-[100%] bottom-8">
 			<!-- 상단 박스 -->
 			<div class="mb-2 h-[50%] bg-yellow-400 flex items-center justify-center text-2xl font-bold rounded shadow">
 				상단 박스
@@ -83,6 +92,14 @@
 
 	<div class="section section-bottom mx-auto">메인 세션3</div>
 
+
+
+	<!-- AOS 라이브러리 불러오기-->
+	<link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css">
+	<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+	<script>
+		AOS.init();
+	</script>
 
 	<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 	<script>
