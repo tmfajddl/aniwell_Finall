@@ -143,13 +143,13 @@
                 <div class="form-panel-slide transition-transform duration-500 w-[200%] h-full py-4"
                      id="slide-panel">
                     <!-- STEP 1 -->
-
                     <div class="relative overflow-hidden py-12 content-center form-step w-1/2 flex flex-col self-start h-full"
                          id="step1">
 
                         <label class="form-wrapper__label" for="loginId">아이디</label>
                         <input class="form-wrapper__input" id="loginId" name="loginId" type="text" required
                                placeholder="ID" th:value="${param.loginId}"/>
+                        <p id="idWarning" class="block text-xs text-red-600 mt-1 hidden"></p>
 
                         <label class="form-wrapper__label" for="loginPw">비밀번호</label>
                         <div class="mb-2">
@@ -188,6 +188,7 @@
                         <label class="form-wrapper__label" for="nickname">닉네임</label>
                         <input class="form-wrapper__input" id="nickname" name="nickname" type="text" required
                                placeholder="NICKNAME" th:value="${param.nickname}"/>
+                        <p id="nicknameWarning" class="block text-xs text-red-600 mt-1 hidden"></p>
 
                         <button type="button" class="z-10 top-46 buttons__signup buttons__signup--sign-up-form "
                                 onclick="goToStep(2)">다음
@@ -201,10 +202,12 @@
                         <label class="form-wrapper__label" for="cellphone">전화번호</label>
                         <input class="form-wrapper__input" id="cellphone" name="cellphone" type="text" required
                                placeholder="PHONE NUMBER" th:value="${param.cellphone}"/>
+                        <p id="cellphoneWarning" class="block text-xs text-red-600 mt-1 hidden"></p>
 
                         <label class="form-wrapper__label" for="email">이메일</label>
                         <input class="form-wrapper__input" id="email" name="email" type="email" required
                                placeholder="EMAIL" th:value="${param.email}"/>
+                        <p id="emailWarning" class="block text-xs text-red-600 mt-1 hidden"></p>
 
                         <label class="form-wrapper__label" for="address">주소</label>
                         <div class="flex gap-2">
@@ -241,6 +244,8 @@
 
 <script src="https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
 <script th:src="@{/resource/js/login_join.js}"></script>
+<script th:src="@{/resource/js/validate_pw.js}"></script>
+
 <script>
     function goToStep(step) {
         currentStep = step;
@@ -334,113 +339,6 @@
             }
             e.target.value = result;
         });
-    });
-</script>
-<script>
-    document.addEventListener("DOMContentLoaded", () => {
-        // ✅ 회원가입 폼 선택
-        const joinForm = document.querySelector('.login-form--register form');
-        if (!joinForm) return;
-
-        const pwInput = joinForm.querySelector("#loginPw");
-        const pwConfirmInput = joinForm.querySelector("#loginPwConfirm");
-        const pwMessage = joinForm.querySelector("#pwMessage");
-        const pwWarning = joinForm.querySelector("#pwWarning");
-
-        // 정규식
-        const pwRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>])[A-Za-z\d!@#$%^&*(),.?":{}|<>]{8,16}$/;
-        const sequentialRegex = /(012|123|234|345|456|567|678|789|890)/;
-
-        // ✅ 비밀번호 실시간 유효성 검사
-        pwInput.addEventListener("input", () => {
-            const pw = pwInput.value.trim();
-            pwInput.classList.remove("border-red-500", "border-green-500");
-            pwWarning.classList.add("hidden");
-            pwWarning.textContent = "";
-            pwWarning.classList.remove("text-red-600", "text-green-600");
-
-            if (pw === "") return;
-
-            if (!pwRegex.test(pw)) {
-                pwInput.classList.add("border-red-500");
-                if (pw.length < 8 || pw.length > 16) {
-                    pwWarning.textContent = "비밀번호는 8자리 이상 16자리 이하로 입력해주세요.";
-                } else if (!/[A-Za-z]/.test(pw)) {
-                    pwWarning.textContent = "영문자가 포함되어야 합니다.";
-                } else if (!/\d/.test(pw)) {
-                    pwWarning.textContent = "숫자가 포함되어야 합니다.";
-                } else if (!/[!@#$%^&*(),.?\":{}|<>]/.test(pw)) {
-                    pwWarning.textContent = "특수문자가 포함되어야 합니다.";
-                }
-                pwWarning.classList.add("text-red-600");
-                pwWarning.classList.remove("hidden");
-                return;
-            }
-
-            if (sequentialRegex.test(pw)) {
-                pwInput.classList.add("border-red-500");
-                pwWarning.textContent = "연속된 숫자는 사용할 수 없습니다.";
-                pwWarning.classList.add("text-red-600");
-                pwWarning.classList.remove("hidden");
-                return;
-            }
-
-            pwInput.classList.add("border-green-500");
-            pwWarning.textContent = "사용 가능한 비밀번호입니다.";
-            pwWarning.classList.add("text-green-600");
-            pwWarning.classList.remove("hidden");
-        });
-
-        // ✅ 비밀번호 확인 (일치 여부만)
-        function checkPasswordMatch() {
-            const pw = pwInput.value.trim();
-            const pwConfirm = pwConfirmInput.value.trim();
-
-            pwConfirmInput.classList.remove("border-red-500", "border-green-500");
-            pwMessage.classList.add("hidden");
-            pwMessage.textContent = "";
-            pwMessage.classList.remove("text-red-600", "text-green-600");
-
-            if (pwConfirm === "") return;
-
-            if (pw === pwConfirm) {
-                pwConfirmInput.classList.add("border-green-500");
-                pwMessage.textContent = "비밀번호가 일치합니다.";
-                pwMessage.classList.add("text-green-600");
-                pwMessage.classList.remove("hidden");
-            } else {
-                pwConfirmInput.classList.add("border-red-500");
-                pwMessage.textContent = "비밀번호가 일치하지 않습니다.";
-                pwMessage.classList.add("text-red-600");
-                pwMessage.classList.remove("hidden");
-            }
-        }
-
-        pwInput.addEventListener("keyup", checkPasswordMatch);
-        pwConfirmInput.addEventListener("keyup", checkPasswordMatch);
-
-        // ✅ 비밀번호 보기 토글
-        function togglePassword(input, btn, openIcon, closedIcon) {
-            btn.addEventListener("click", () => {
-                const isPw = input.type === "password";
-                input.type = isPw ? "text" : "password";
-                openIcon.classList.toggle("hidden", !isPw);
-                closedIcon.classList.toggle("hidden", isPw);
-            });
-        }
-
-        togglePassword(
-            pwInput,
-            joinForm.querySelector("#togglePw"),
-            joinForm.querySelector("#iconOpenPw"),
-            joinForm.querySelector("#iconClosedPw")
-        );
-        togglePassword(
-            pwConfirmInput,
-            joinForm.querySelector("#togglePwConfirm"),
-            joinForm.querySelector("#iconOpenPwConfirm"),
-            joinForm.querySelector("#iconClosedPwConfirm")
-        );
     });
 </script>
 
@@ -671,5 +569,7 @@
         if (urlParams.get("social") === "1") processLogin();
     });
 </script>
+<script th:src="@{/resource/js/dup_check.js}"></script>
 
 </body>
+</html>
