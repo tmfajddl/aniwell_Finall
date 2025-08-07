@@ -165,11 +165,11 @@
 					</div>
 
 
-					<div
-						class="relative bg-gradient-to-r from-[#DFF8E5] to-[#F4FBCC] rounded-xl p-4 text-center shadow hover:shadow-md transition-shadow duration-300 font-semibold cursor-pointer">
-						어제보다 오늘 물을 <span class="font-bold">3ml</span> 더 먹었어요!<br>
-						<button class="text-blue-600 mt-2 underline" onclick="openFeedingPanel()">행동분석보기 &gt;</button>
+					<div id="summaryCard"
+						 class="relative bg-gradient-to-r from-[#DFF8E5] to-[#F4FBCC] rounded-xl p-4 text-center shadow hover:shadow-md transition-shadow duration-300 font-semibold cursor-pointer">
+						<!-- 동적으로 텍스트가 삽입될 예정 -->
 					</div>
+
 				</div>
 
 				<!-- 캘린더 -->
@@ -1119,19 +1119,73 @@
 
 		// ✅ 실제 데이터 fetch 및 적용
 		fetch(`/usr/pet/health/week-stats?petId=${petId}`)
-			.then(res => res.json())
-			.then(data => {
-				// 데이터 적용
-				myChart.data.labels = data.labels;        // ["월", ..., "일"]
-				myChart.data.datasets[0].data = data.food;
-				myChart.data.datasets[1].data = data.water;
-				myChart.data.datasets[2].data = data.score;
-				myChart.update(); // 업데이트
-			})
-			.catch(err => {
-				console.error("🚨 데이터 로딩 실패:", err);
-				alert("그래프 데이터를 불러올 수 없습니다.");
-			});
+				.then(res => res.json())
+				.then(data => {
+					myChart.data.labels = data.labels;
+					myChart.data.datasets[0].data = data.food;
+					myChart.data.datasets[1].data = data.water;
+					myChart.data.datasets[2].data = data.score;
+					myChart.update();
+
+					const todayIdx = new Date().getDay();
+					const yesterdayIdx = (todayIdx + 6) % 7;
+
+					const foodDiff = (data.food[todayIdx] ?? 0) - (data.food[yesterdayIdx] ?? 0);
+					const waterDiff = (data.water[todayIdx] ?? 0) - (data.water[yesterdayIdx] ?? 0);
+					const scoreDiff = (data.score[todayIdx] ?? 0) - (data.score[yesterdayIdx] ?? 0);
+
+					const diffs = [
+						{
+							type: 'water',
+							label: '물을',
+							value: waterDiff,
+							unit: 'ml',
+							upText: '더 마셨어요',
+							downText: '덜 마셨어요'
+						},
+						{
+							type: 'food',
+							label: '사료를',
+							value: foodDiff,
+							unit: 'g',
+							upText: '더 먹었어요',
+							downText: '덜 먹었어요'
+						},
+						{
+							type: 'score',
+							label: '점수가',
+							value: scoreDiff,
+							unit: '점',
+							upText: '올랐어요',
+							downText: '내려갔어요'
+						}
+					];
+
+					const maxDiff = diffs.reduce((prev, curr) => {
+						return Math.abs(curr.value) > Math.abs(prev.value) ? curr : prev;
+					});
+
+					let summary = '';
+					if (maxDiff.value === 0) {
+						summary = `오늘은 ${maxDiff.label} 어제와 같아요!`;
+					} else {
+						const amount = Math.abs(maxDiff.value).toFixed(1);
+						const direction = maxDiff.value > 0 ? maxDiff.upText : maxDiff.downText;
+						summary = `오늘은 어제보다 ${maxDiff.label} ${amount}${maxDiff.unit} ${direction}`;
+					}
+
+
+					document.getElementById("summaryCard").innerHTML = `
+			${summary}<br>
+			<button class="text-blue-600 mt-1 underline" onclick="openFeedingPanel()">행동분석보기 &gt;</button>
+		`;
+				})
+				.catch(err => {
+					console.error("🚨 요약 데이터 실패:", err);
+				});
+
+
+
 	</script>
 
 	<script th:src="@{/resource/js/calendar.js}"></script>
