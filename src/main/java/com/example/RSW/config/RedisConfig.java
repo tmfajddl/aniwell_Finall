@@ -23,7 +23,7 @@ public class RedisConfig {
     private static final String PASSWORD = "aniwell1234";
 
     // ✅ true면 개인 Redis, false면 공유 Redis
-    private boolean usePersonalRedis = true;
+    private boolean usePersonalRedis = false;
 
     @Bean
     public RedisConnectionFactory redisConnectionFactory() {
