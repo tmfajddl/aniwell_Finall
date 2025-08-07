@@ -130,6 +130,7 @@
 
 						
 						localStorage.setItem("userDongs", JSON.stringify(dongs));
+						 localStorage.setItem("userDong", dongName);
 						
 						console.log("🔍 현재 위치 동:", dongName);
 						console.log("📋 정렬된 동 리스트:", dongs);
@@ -195,7 +196,8 @@
 			dataType: 'json',
 			data: {
 				query: query || '',      // ✅ null 방지
-				dong: dong || ''         // ✅ null 방지
+				dong: dong || '',        // ✅ null 방지
+				sortBy: 'createdAt'      // or 'title' /기본 정렬 기준 명시
 			},
 			success: function (response) {
 				if (response.resultCode !== 'S-1') {
