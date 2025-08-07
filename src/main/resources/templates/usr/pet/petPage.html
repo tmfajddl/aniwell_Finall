@@ -214,16 +214,10 @@
 			<!-- 오른쪽 4칸: 고양이 정보 + 주변 펫살 -->
 			<div class="hidden xl:flex min-w-[420px] col-span-4 flex flex-col gap-1">
 
-				<!-- 고양이 일러스트 -->
-				<div class="tD_ani bg-white rounded-xl p-4 flex flex-col items-center shadow h-full">
-					<p class="text-sm text-gray-600 mb-2">똥냥이!</p>
-					<img src="https://i.imgur.com/qYhSSXR.png" alt="cat" class="w-24">
-				</div>
-
-				<div class="w-[430px] bg-white rounded-xl p-3 shadow">
+				<div class="bg-white rounded-xl p-3 shadow pet_card">
 
 					<!-- 등록증 -->
-					<div style="aspect-ratio: 2.1 / 1;" class="w-full h-auto rounded-xl">
+					<div class="w-full h-auto rounded-xl">
 
 						<!-- 제목 -->
 						<h2 class="text-2xl font-bold flex items-center gap-1 mb-2 justify-center">
@@ -265,7 +259,7 @@
 
 							<!-- 3열: 사진 -->
 							<div
-								class="col-span-1 row-span-2 overflow-hidden rounded-xl border flex justify-center items-start w-30 h-30">
+								class="petcard_potho col-span-1 row-span-2 overflow-hidden rounded-xl border flex justify-center items-start">
 								<img th:src="${pet.photo != null ? pet.photo : '/img/default-pet.png'}" alt="pet"
 									class="object-cover w-full h-full" />
 							</div>
@@ -277,6 +271,10 @@
 
 				<!-- 주변 펫살 보기 -->
 				<div class="grid grid-row-3 gap-2 h-full">
+					<a th:href="@{/usr/pet/petPlace}"
+						class="hover:shadow-md transition-shadow duration-300 font-semibold cursor-pointer shadow block bg-gradient-to-r from-[#EEE8CD] to-[#F4FBCC] rounded-xl p-3 text-sm text-center font-semibold transition">
+						우리 애기 위치보기
+					</a>
 					<a th:href="@{/usr/pet/petPlace}"
 						class="hover:shadow-md transition-shadow duration-300 font-semibold cursor-pointer shadow block bg-gradient-to-r from-[#EEE8CD] to-[#F4FBCC] rounded-xl p-3 text-sm text-center font-semibold transition">
 						주변 펫샵 알아보기
