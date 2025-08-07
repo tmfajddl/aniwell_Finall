@@ -37,7 +37,11 @@ public class SecurityConfig {
                                 "/usr/member/naver/**", "/usr/member/kakao/**", "/usr/member/google/**",
                                 "/usr/member/social-login",
                                 "/usr/member/firebase-session-login",
-                                "/css/**", "/js/**", "/img/**", "/img.socialLogin/**", "/resource/**"
+                                "/css/**", "/js/**", "/img/**", "/img.socialLogin/**", "/resource/**",
+                                "/usr/member/getLoginIdDup",
+                                "/usr/member/getEmailDup",
+                                "/usr/member/getNicknameDup",
+                                "/usr/member/getCellphoneDup"
                         ).permitAll()
                         .anyRequest().authenticated()  // ✅ 그 외는 로그인 필요
                 )

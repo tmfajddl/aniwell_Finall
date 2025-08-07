@@ -72,4 +72,10 @@ public interface MemberRepository {
     Member findByUid(String uid);
 
     void updateSocialInfo(Member emailMember);
+
+    Member getMemberByNickname(String nickname);
+
+    Member getMemberByEmail(String email);
+
+    Member getMemberByCellphone(String cellphone);
 }

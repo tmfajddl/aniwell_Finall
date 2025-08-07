@@ -357,10 +357,59 @@ public class UsrMemberController {
         Member existsMember = memberService.getMemberByLoginId(loginId);
 
         if (existsMember != null) {
-            return ResultData.from("F-2", "해당 아이디는 이미 사용중이야", "loginId", loginId);
+            return ResultData.from("F-2", "해당 아이디는 이미 사용중입니다.", "loginId", loginId);
         }
 
-        return ResultData.from("S-1", "사용 가능!", "loginId", loginId);
+        return ResultData.from("S-1", "사용 가능한 아이디입니다.", "loginId", loginId);
+    }
+
+    @RequestMapping("/usr/member/getEmailDup")
+    @ResponseBody
+    public ResultData getEmailDup(String email) {
+
+        if (Ut.isEmpty(email)) {
+            return ResultData.from("F-1", "이메일을 입력해주세요");
+        }
+
+        Member existsMember = memberService.getMemberByEmail(email);
+
+        if (existsMember != null) {
+            return ResultData.from("F-2", "이미 사용 중인 이메일입니다.", "email", email);
+        }
+
+        return ResultData.from("S-1", "사용 가능한 이메일입니다.", "email", email);
+    }
+
+    @RequestMapping("/usr/member/getNicknameDup")
+    @ResponseBody
+    public ResultData getNicknameDup(String nickname) {
+        if (Ut.isEmpty(nickname)) {
+            return ResultData.from("F-1", "닉네임을 입력해주세요");
+        }
+
+        Member existsMember = memberService.getMemberByNickname(nickname);
+
+        if (existsMember != null) {
+            return ResultData.from("F-2", "이미 사용 중인 닉네임입니다.", "nickname", nickname);
+        }
+
+        return ResultData.from("S-1", "사용 가능한 닉네임입니다.", "nickname", nickname);
+    }
+
+    @RequestMapping("/usr/member/getCellphoneDup")
+    @ResponseBody
+    public ResultData getCellphoneDup(String cellphone) {
+        if (Ut.isEmpty(cellphone)) {
+            return ResultData.from("F-1", "전화번호를 입력해주세요.");
+        }
+
+        Member existsMember = memberService.getMemberByCellphone(cellphone);
+
+        if (existsMember != null) {
+            return ResultData.from("F-2", "이미 사용 중인 전화번호입니다.", "cellphone", cellphone);
+        }
+
+        return ResultData.from("S-1", "사용 가능한 전화번호입니다.", "cellphone", cellphone);
     }
 
     @RequestMapping("/usr/member/findLoginId")
