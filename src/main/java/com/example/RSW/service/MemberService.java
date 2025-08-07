@@ -1,13 +1,11 @@
-
 package com.example.RSW.service;
 
-import com.google.firebase.FirebaseApp;
-import com.google.firebase.auth.AuthErrorCode;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
-import com.google.firebase.auth.UserRecord;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.RedisConnectionFailureException;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -17,14 +15,12 @@ import com.example.RSW.util.Ut;
 import com.example.RSW.vo.Member;
 import com.example.RSW.vo.ResultData;
 
-import java.time.LocalDateTime;
-import java.util.HashMap;
+
 import java.util.List;
-import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 @Service
+@Slf4j
 public class MemberService {
 
     @Value("${custom.siteMainUri}")
@@ -39,7 +35,7 @@ public class MemberService {
     @Autowired
     private MailService mailService;
 
-    @Autowired
+    @Autowired(required = false)
     private RedisTemplate<String, String> redisTemplate;
 
     @Autowired
@@ -47,6 +43,7 @@ public class MemberService {
 
     @Autowired
     private FirebaseAuth firebaseAuth;
+
 
     public MemberService(MemberRepository memberRepository) {
         this.memberRepository = memberRepository;
@@ -213,19 +210,32 @@ public class MemberService {
     // ✅ Firebase 커스텀 토큰 생성
     public String createFirebaseCustomToken(String uid) {
         String redisKey = "firebaseToken::" + uid;
-        String cachedToken = redisTemplate.opsForValue().get(redisKey);
 
-        if (cachedToken != null) return cachedToken;
+        if (redisTemplate != null) {
+            try {
+                String cachedToken = redisTemplate.opsForValue().get(redisKey);
+                if (cachedToken != null) return cachedToken;
+            } catch (RedisConnectionFailureException e) {
+                log.warn("Redis 꺼져 있음 - 토큰 캐시 무시");
+            }
+        }
 
         try {
-            String token = FirebaseAuth.getInstance().createCustomToken(uid);
-            redisTemplate.opsForValue().set(redisKey, token, 1, TimeUnit.HOURS);
+            String token = firebaseAuth.createCustomToken(uid);
+
+            if (redisTemplate != null) {
+                try {
+                    redisTemplate.opsForValue().set(redisKey, token, 1, TimeUnit.HOURS);
+                } catch (RedisConnectionFailureException e) {
+                    log.warn("Redis 꺼져 있음 - 캐시 실패: {}", e.getMessage());
+                }
+            }
+
             return token;
         } catch (FirebaseAuthException e) {
             throw new RuntimeException("❌ Firebase 토큰 생성 실패: " + e.getMessage());
         }
     }
-
 
     public Member findByEmail(String email) {
         return memberRepository.findByEmail(email);
@@ -235,65 +245,96 @@ public class MemberService {
         String redisKey = "firebase:token:" + member.getUid();
         String lockKey = redisKey + ":lock";
 
-
-        // 1️⃣ Redis 캐시 확인
-        String cachedToken = redisTemplate.opsForValue().get(redisKey);
-        if (cachedToken != null) {
-            if ((cachedToken.split("\\.").length - 1) == 2) return cachedToken;
-            redisTemplate.delete(redisKey);
+        if (redisTemplate != null) {
+            try {
+                String cachedToken = redisTemplate.opsForValue().get(redisKey);
+                if (cachedToken != null && cachedToken.split("\\.").length - 1 == 2) {
+                    return cachedToken;
+                }
+                redisTemplate.delete(redisKey);
+            } catch (RedisConnectionFailureException e) {
+                log.warn("Redis 꺼짐 - 캐시 조회 실패");
+            }
         }
 
-        // 2️⃣ 분산 락 (동시 요청 방지)
-        Boolean isLockAcquired = redisTemplate.opsForValue().setIfAbsent(lockKey, "1", 5, TimeUnit.SECONDS);
+        Boolean isLockAcquired = null;
+        if (redisTemplate != null) {
+            try {
+                isLockAcquired = redisTemplate.opsForValue().setIfAbsent(lockKey, "1", 5, TimeUnit.SECONDS);
+            } catch (RedisConnectionFailureException e) {
+                log.warn("Redis 꺼짐 - 락 사용 안 함");
+            }
+        }
+
         if (Boolean.FALSE.equals(isLockAcquired)) {
             try { Thread.sleep(300); } catch (InterruptedException ignored) {}
-            return redisTemplate.opsForValue().get(redisKey);
+            if (redisTemplate != null) {
+                try {
+                    return redisTemplate.opsForValue().get(redisKey);
+                } catch (RedisConnectionFailureException e) {
+                    log.warn("Redis 꺼짐 - 재조회 실패");
+                    return null;
+                }
+            }
         }
 
         try {
-            // 3️⃣ Firebase Custom Token 생성
             String customToken = firebaseAuth.createCustomToken(member.getUid());
-
-            // 4️⃣ Redis 저장
-            redisTemplate.opsForValue().set(redisKey, customToken, 12, TimeUnit.HOURS);
+            if (redisTemplate != null) {
+                try {
+                    redisTemplate.opsForValue().set(redisKey, customToken, 12, TimeUnit.HOURS);
+                } catch (RedisConnectionFailureException e) {
+                    log.warn("Redis 꺼짐 - 캐시 저장 실패");
+                }
+            }
             return customToken;
         } catch (FirebaseAuthException e) {
             throw new RuntimeException("Firebase 토큰 생성 실패: " + e.getMessage());
         } finally {
-            redisTemplate.delete(lockKey);
+            if (redisTemplate != null) {
+                try {
+                    redisTemplate.delete(lockKey);
+                } catch (RedisConnectionFailureException e) {
+                    log.warn("Redis 꺼짐 - 락 해제 실패");
+                }
+            }
         }
     }
 
-
-    // ✅ UID 기반 회원 조회 (Null 방어 강화)
     public Member findByUid(String uid) {
         Member member = memberRepository.findByUid(uid);
-
-        // UID는 있는데 회원 정보가 없는 경우 → 자동 신규 생성 (Firebase 최초 로그인 직후 대비)
         if (member == null && uid != null) {
             String provider = uid.contains("_") ? uid.split("_")[0] : "google";
             String socialId = uid.contains("_") ? uid.split("_")[1] : uid;
             member = getOrCreateSocialMember(provider, socialId, null, "신규사용자");
         }
-
         return member;
     }
 
-    // ✅ Redis 캐시 기반 회원 조회 (DB fallback)
     public Member findCachedMemberOrDb(String uid) {
-        // 1️⃣ UID → Member ID 캐시 확인
-        String memberIdCache = redisTemplate.opsForValue().get("firebase:member:" + uid);
-        if (memberIdCache != null) {
-            return getMemberById(Integer.parseInt(memberIdCache));
+        String redisKey = "firebase:member:" + uid;
+
+        if (redisTemplate != null) {
+            try {
+                String cachedId = redisTemplate.opsForValue().get(redisKey);
+                if (cachedId != null) {
+                    return getMemberById(Integer.parseInt(cachedId));
+                }
+            } catch (RedisConnectionFailureException e) {
+                log.warn("Redis 꺼짐 - UID 캐시 조회 실패");
+            }
         }
 
-        // 2️⃣ 캐시 없으면 DB 조회
         Member member = findByUid(uid);
-        if (member != null) {
-            // 조회 후 Redis 캐싱
-            redisTemplate.opsForValue().set("firebase:member:" + uid, String.valueOf(member.getId()), 24, TimeUnit.HOURS);
+
+        if (member != null && redisTemplate != null) {
+            try {
+                redisTemplate.opsForValue().set(redisKey, String.valueOf(member.getId()), 24, TimeUnit.HOURS);
+            } catch (RedisConnectionFailureException e) {
+                log.warn("Redis 꺼짐 - UID 캐시 저장 실패");
+            }
         }
+
         return member;
     }
-
 }
