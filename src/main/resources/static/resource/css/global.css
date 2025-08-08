@@ -71,3 +71,38 @@ body {
 
 }
 */
+
+
+
+/*
+아래는 마우스커서
+*/
+
+
+/* 전체 페이지 */
+html, body {
+  cursor: url("/img/cat-32px.png") 4 8, auto;
+}
+
+/* 클릭 가능한 요소는 fallback을 pointer로 */
+a, button, [role="button"] {
+  cursor: url("/img/cat-32px.png") 4 8, pointer;
+}
+
+/* 클릭 가능한 요소들: Tailwind .cursor-pointer 포함해서 전부 덮어쓰기 */
+a, a:any-link,
+button, button:enabled,
+[role="button"],
+input[type="button"], input[type="submit"],
+label,
+.cursor-pointer {
+  cursor: url("/img/cat-32px.png") 1 4, pointer !important;
+}
+
+/* 비활성 상태는 예외 처리(원하면 유지/삭제) */
+button:disabled,
+[aria-disabled="true"] {
+  cursor: not-allowed !important;
+}
+
+
