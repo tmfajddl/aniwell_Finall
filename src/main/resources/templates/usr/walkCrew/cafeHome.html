@@ -155,8 +155,7 @@
 					<div class="flex justify-between px-5 items-center mb-1">
 						<h3 class="font-bold">게시글</h3>
 						<div th:if="${isJoined or isLeader}">
-							<button onclick="crewArtAdd()" class="p-1 shadow text-gray-600 hover:text-black">추가
-								＋</button>
+							<button onclick="crewArtAdd()" class="p-1 shadow text-gray-600 hover:text-black">추가 ＋</button>
 						</div>
 					</div>
 					<div th:if="${freeArticles == null or freeArticles.isEmpty()}" class="text-center text-gray-500 px-5 py-10">
@@ -251,8 +250,8 @@
 		class="bg-white fixed top-0 right-0 h-full w-[400px] shadow-lg z-50 transform translate-x-full transition-transform duration-300 ease-in-out">
 		<!-- ✅ 이곳은 JS에서 Ajax 호출로 채워짐 -->
 	</div>
-	
-	
+
+
 	<script>
 	  const isLeader = [[${isLeader}]];
 	  const isJoined = [[${isJoined}]];
