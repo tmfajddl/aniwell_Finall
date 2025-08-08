@@ -2,30 +2,30 @@
 <html lang="ko">
 
 <head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Aniwell Dashboard</title>
-	<script src="https://cdn.tailwindcss.com"></script>
-	<link rel="stylesheet" th:href="@{/resource/css/common.css}">
-	<link rel="stylesheet" th:href="@{/resource/css/petPage.css}">
-	<link rel="stylesheet" th:href="@{/resource/css/petlist.css}">
-	<link rel="stylesheet" th:href="@{/resource/css/global.css}">
-	<!-- 🟦 HEAD에 추가 -->
-	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
-	<script src="https://unpkg.com/react@18/umd/react.development.js"></script>
-	<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-	<script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
-	<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
-	<script th:src="@{/resource/js/petPage.js}"></script>
-	<!-- HEAD 태그 내부에 추가 -->
-	<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-	<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aniwell Dashboard</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" th:href="@{/resource/css/common.css}">
+<link rel="stylesheet" th:href="@{/resource/css/petPage.css}">
+<link rel="stylesheet" th:href="@{/resource/css/petlist.css}">
+<link rel="stylesheet" th:href="@{/resource/css/global.css}">
+<!-- 🟦 HEAD에 추가 -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+<script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+<script th:src="@{/resource/js/petPage.js}"></script>
+<!-- HEAD 태그 내부에 추가 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
 
 
 
 </head>
 
-<body class="bg-gradient-to-b from-[#e4f0b9] to-[#fcdca9] min-h-[770px]">
+<body class="bg-gradient-to-b from-[#e4f0b9] to-[#fcdca9] min-h-[1000px]">
 	<!-- 🔻 BODY 끝에 추가 -->
 	<script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
 
@@ -34,7 +34,7 @@
 		<div th:replace="common :: siteHeader"></div>
 
 		<!-- Main content -->
-		<main class="main_page min-h-[770px] flex-1 p-1 grid grid-rows-10 gap-2 overflow-hidden">
+		<main class="main_page min-h-[1000px] flex-1 p-1 grid grid-rows-10 gap-2 overflow-hidden">
 
 			<div class="row-span-5 line ">
 				<div class="mx-auto py-8">
@@ -42,12 +42,11 @@
 					<div class="p-1 text-center">
 						<a onclick="addPet()"
 							class="bg-yellow-200 hover:bg-yellow-300 text-black px-4 pb-1 rounded-md shadow inline-block text-center">
-							등록하기
-						</a>
+							등록하기 </a>
 					</div>
 				</div>
 			</div>
-			<div class="privat_page row-span-5 w-full p-1 content-end">
+			<div class="privat_page row-span-5 w-full p-1 content-top">
 				<!-- 오른쪽 콘텐츠 영역 (3열) -->
 				<section class="bg-white p-2">
 					<!-- 동적으로 바뀌는 콘텐츠 영역 -->
@@ -351,10 +350,6 @@
 				}
 			});
 		</script>
-
-
-
-
 </body>
 
 </html>
