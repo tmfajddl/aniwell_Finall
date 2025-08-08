@@ -2,6 +2,7 @@
 <html lang="ko">
 
 <head>
+
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>Aniwell Dashboard</title>
@@ -18,9 +19,10 @@
 		<!-- Sidebar -->
 		<div th:replace="common :: siteHeader" class=""></div>
 
-		<!-- Main content --><!-- Main content -->
+		<!-- Main content -->
+		<!-- Main content -->
 		<main class="main_page min-h-[770px] grid-cols-12 flex-1 p-6 grid  gap-4">
-		
+
 			<!-- 왼쪽 8칸: 차트 + 감정분석 + 캘린더 -->
 			<section class="col-span-12 xl:col-span-8 flex flex-col gap-2 h-full w-full">
 				<!-- 차트 -->
@@ -34,7 +36,7 @@
 						<button onclick="closeFeedingPanel()"
 							class="absolute top-4 left-4 text-3xl text-gray-500 hover:text-black font-bold">×</button>
 
-						<h2 class="text-xl font-bold text-gray-700 text-center mb-6 mt-10"> 📝 하루 건강 리포트</h2>
+						<h2 class="text-xl font-bold text-gray-700 text-center mb-6 mt-10">📝 하루 건강 리포트</h2>
 
 						<!-- 날짜 선택 -->
 						<div class="text-center mb-4">
@@ -83,19 +85,20 @@
 
 				<!-- 감정분석 카드 -->
 				<div class="grid grid-cols-2 gap-2 h-1/6">
-					<div class="relative group overflow-hidden bg-gradient-to-r from-[#DFF8E5] to-[#F4FBCC] rounded-xl p-4 text-center shadow hover:shadow-md transition-shadow duration-300 font-semibold cursor-pointer w-full"
+					<div
+						class="relative group overflow-hidden bg-gradient-to-r from-[#DFF8E5] to-[#F4FBCC] rounded-xl p-4 text-center shadow hover:shadow-md transition-shadow duration-300 font-semibold cursor-pointer w-full"
 						onclick="openEmotionPanel()">
 
 						<!-- ✅ 배경 이미지 -->
 						<div
 							class="absolute p-3 pr-6 inset-0 z-0 flex justify-end items-end pointer-events-none transition-all duration-300 group-hover:opacity-60 group-hover:scale-95">
-							<img src="/img/emo-cat.png" alt="감정 아이콘"
-								class="h-32 select-none transition-all duration-300 transform" />
+							<img src="/img/emo-cat.png" alt="감정 아이콘" class="h-32 select-none transition-all duration-300 transform" />
 						</div>
 
 						<!-- ✅ 텍스트 -->
 						<div class="relative z-10 text-left text-3xl font-bold text-black leading-snug">
-							우리아이<br />
+							우리아이
+							<br />
 							감정분석하기
 						</div>
 
@@ -114,8 +117,7 @@
 
 						<button id="retryButton" onclick="resetEmotionPanel()"
 							class="hidden mt-6 mx-auto px-6 py-2 rounded-full bg-gray-300 text-gray-700 font-semibold hover:bg-gray-400 transition">
-							🔁 다시 분석하기
-						</button>
+							🔁 다시 분석하기</button>
 
 						<!-- 🐶 동물 종 선택 -->
 						<div class="flex justify-center gap-4 mb-4">
@@ -142,9 +144,7 @@
 						<!-- 감정 분석 버튼 -->
 						<button
 							class="analyze-btn mt-6 mx-auto px-6 py-2 rounded-full bg-yellow-300 text-white font-semibold hover:bg-yellow-400 transition"
-							onclick="analyzeEmotion()">
-							감정 분석하기
-						</button>
+							onclick="analyzeEmotion()">감정 분석하기</button>
 
 						<!-- 분석 결과 -->
 						<!-- 🐾 결과 표시 영역 (처음에는 hidden) -->
@@ -200,8 +200,7 @@
 					</div>
 
 					<!-- 오른쪽: 캘린더 -->
-					<div
-						class="min-w-[400px] bg-gradient-to-r from-[#F4FBCC] to-[#FDF7DA] rounded-xl p-4 flex-1 shadow">
+					<div class="min-w-[400px] bg-gradient-to-r from-[#F4FBCC] to-[#FDF7DA] rounded-xl p-4 flex-1 shadow">
 						<div id="calendar-container" class="w-full h-full"></div>
 					</div>
 
@@ -219,15 +218,15 @@
 
 						<!-- 제목 -->
 						<h2 class="text-2xl font-bold flex items-center gap-1 mb-2 justify-center">
-							<span class="text-3xl">🐾</span> 반려동물등록증
+							<span class="text-3xl">🐾</span>
+							반려동물등록증
 						</h2>
 
 						<!-- 전체 Flex Wrapper -->
 						<div class="flex gap-6 w-full h-full pt-4">
 
 							<!-- 왼쪽: 사진 영역 -->
-							<div
-								class="flex-[2] card_photo overflow-hidden rounded-xl border flex justify-center items-start max-w-[300px]">
+							<div class="flex-[2] card_photo overflow-hidden rounded-xl border flex justify-center items-start max-w-[300px]">
 								<img th:src="${pet.photo != null ? pet.photo : '/img/default-pet.png'}" alt="pet"
 									class="object-cover w-full h-full" />
 							</div>
@@ -240,23 +239,33 @@
 
 									<!-- 왼쪽 열 -->
 									<div class="space-y-1">
-										<div><span class="font-semibold mr-2">이름:</span> <span
-												th:text="${pet.name}">떡걸룩</span>
+										<div>
+											<span class="font-semibold mr-2">이름:</span>
+											<span th:text="${pet.name}">떡걸룩</span>
 										</div>
-										<div><span class="font-semibold mr-2">번호:</span> <span
-												th:text="${pet.id}">12345</span>
+										<div>
+											<span class="font-semibold mr-2">번호:</span>
+											<span th:text="${pet.id}">12345</span>
 										</div>
-										<div><span class="font-semibold mr-2">품종:</span> <span
-												th:text="${pet.breed}">코리안숏헤어</span></div>
+										<div>
+											<span class="font-semibold mr-2">품종:</span>
+											<span th:text="${pet.breed}">코리안숏헤어</span>
+										</div>
 									</div>
 
 									<!-- 오른쪽 열 -->
 									<div class="space-y-1">
-										<div><span class="font-semibold mr-2">생일:</span> <span
-												th:text="${pet.birthDate}" class="text-sm">2020.01.01</span></div>
-										<div><span class="font-semibold mr-2">중성화:</span> <span>완료</span></div>
-										<div><span class="font-semibold mr-2">성별:</span> <span
-												th:text="${pet.gender}">암컷</span>
+										<div>
+											<span class="font-semibold mr-2">생일:</span>
+											<span th:text="${pet.birthDate}" class="text-sm">2020.01.01</span>
+										</div>
+										<div>
+											<span class="font-semibold mr-2">중성화:</span>
+											<span>완료</span>
+										</div>
+										<div>
+											<span class="font-semibold mr-2">성별:</span>
+											<span th:text="${pet.gender}">암컷</span>
 										</div>
 									</div>
 
@@ -280,36 +289,28 @@
 				<div class="grid grid-row-3 gap-2 h-full">
 					<div id="summaryCard"
 						class="hover:shadow-md transition-shadow duration-300 font-semibold cursor-pointer shadow block bg-gradient-to-r from-[#EEE8CD] to-[#F4FBCC] rounded-xl p-3 text-sm text-center font-semibold transition">
-						행동반경 보기
-					</div>
+						행동반경 보기</div>
 					<a th:href="@{/usr/pet/petPlace}"
 						class="hover:shadow-md transition-shadow duration-300 font-semibold cursor-pointer shadow block bg-gradient-to-r from-[#EEE8CD] to-[#F4FBCC] rounded-xl p-3 text-sm text-center font-semibold transition">
-						주변 펫샵 알아보기
-					</a>
+						주변 펫샵 알아보기 </a>
 					<a th:href="@{/usr/pet/gallery(petId=${pet.id})}"
 						class="hover:shadow-md transition-shadow duration-300 font-semibold cursor-pointer shadow block bg-gradient-to-r from-[#EEE8CD] to-[#F4FBCC] rounded-xl p-3 text-sm text-center font-semibold transition">
-						감정 갤러리
-					</a>
+						감정 갤러리 </a>
 
 					<a th:href="@{/usr/pet/daily(petId=${pet.id})}"
 						class="hover:shadow-md transition-shadow duration-300 font-semibold cursor-pointer shadow block bg-gradient-to-r from-[#EEE8CD] to-[#F4FBCC] rounded-xl p-3 text-sm text-center font-semibold transition">
-						감정 일기
-					</a>
+						감정 일기 </a>
 
 				</div>
 				</aside>
-
-
 		</main>
 
 
 		<!-- 백신 등록 모달 -->
-		<div id="vaccineModal"
-			class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center hidden z-50">
+		<div id="vaccineModal" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center hidden z-50">
 			<div class="bg-white rounded-2xl p-6 w-[400px] relative shadow-lg">
 				<!-- 닫기 버튼 -->
-				<button onclick="closeVaccineModal()"
-					class="absolute top-3 right-3 text-gray-500 hover:text-red-500 text-xl">×</button>
+				<button onclick="closeVaccineModal()" class="absolute top-3 right-3 text-gray-500 hover:text-red-500 text-xl">×</button>
 
 				<h2 class="text-xl font-bold mb-4 text-yellow-700 text-center">🐾 백신 등록</h2>
 
@@ -334,8 +335,7 @@
 
 					<div class="mb-4">
 						<label class="block font-semibold text-sm mb-1">접종 날짜</label>
-						<input type="date" name="injectionDate" id="injectionDateInput" required
-							class="w-full border px-3 py-2 rounded" />
+						<input type="date" name="injectionDate" id="injectionDateInput" required class="w-full border px-3 py-2 rounded" />
 					</div>
 
 					<div class="mb-4">
@@ -344,8 +344,7 @@
 					</div>
 
 					<div class="flex justify-between mt-6">
-						<button type="submit"
-							class="bg-yellow-400 hover:bg-yellow-500 text-white font-bold py-2 px-4 rounded">💾
+						<button type="submit" class="bg-yellow-400 hover:bg-yellow-500 text-white font-bold py-2 px-4 rounded">💾
 							등록</button>
 						<button type="button" onclick="closeVaccineModal()"
 							class="bg-gray-300 hover:bg-gray-400 text-black font-bold py-2 px-4 rounded">❌ 취소</button>
@@ -355,23 +354,29 @@
 		</div>
 
 		<!-- ✅ 백신 상세/수정 모달 -->
-		<div id="vaccineDetailModal"
-			class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center">
+		<div id="vaccineDetailModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center">
 			<div class="bg-white p-6 rounded-2xl w-[400px] relative">
-				<button onclick="closeVaccineDetailModal()"
-					class="absolute top-3 right-3 text-gray-500 hover:text-red-500">×</button>
+				<button onclick="closeVaccineDetailModal()" class="absolute top-3 right-3 text-gray-500 hover:text-red-500">×</button>
 
 				<div id="vaccineDetailView">
 					<h2 class="text-lg font-bold text-center mb-4">💉 백신 상세정보</h2>
-					<p><b>이름:</b> <span id="detailName"></span></p>
-					<p><b>접종일:</b> <span id="detailDate"></span></p>
-					<p><b>비고:</b> <span id="detailNotes"></span></p>
+					<p>
+						<b>이름:</b>
+						<span id="detailName"></span>
+					</p>
+					<p>
+						<b>접종일:</b>
+						<span id="detailDate"></span>
+					</p>
+					<p>
+						<b>비고:</b>
+						<span id="detailNotes"></span>
+					</p>
 
 					<div class="flex justify-between mt-4">
-						<button id="editBtn" onclick="enterEditMode()"
-							class="bg-yellow-400 px-3 py-2 rounded text-white">✏ 수정</button>
-						<button id="deleteBtn" onclick="deleteVaccination()"
-							class="bg-red-400 px-3 py-2 rounded text-white">🗑 삭제</button>
+						<button id="editBtn" onclick="enterEditMode()" class="bg-yellow-400 px-3 py-2 rounded text-white">✏ 수정</button>
+						<button id="deleteBtn" onclick="deleteVaccination()" class="bg-red-400 px-3 py-2 rounded text-white">🗑
+							삭제</button>
 					</div>
 
 				</div>
@@ -389,8 +394,7 @@
 
 					<div class="flex justify-between mt-4">
 						<button type="submit" class="bg-green-500 text-white px-4 py-2 rounded">💾 저장</button>
-						<button type="button" onclick="cancelEdit()"
-							class="bg-gray-400 text-white px-4 py-2 rounded">취소</button>
+						<button type="button" onclick="cancelEdit()" class="bg-gray-400 text-white px-4 py-2 rounded">취소</button>
 					</div>
 				</form>
 			</div>
