@@ -108,3 +108,30 @@ button:disabled,
 }
 
 
+
+/*
+아래는 비율요
+*/
+
+/* 1) 폴백: 모든 브라우저 공통 */
+main { min-height: 100vh; }
+
+/* 2) dvh 지원 브라우저에서 덮어쓰기 */
+@supports (min-height: 100dvh) {
+  main { min-height: 100dvh; }
+}
+/* 화면이 상대적으로 세로가 긴 경우(예: 3:4보다 좁을 때) */
+@media (max-aspect-ratio: 3/4) {
+  .hero { grid-template-columns: 1fr; } /* 1열 */
+}
+
+/* 화면이 가로가 긴 경우(예: 16:9보다 넓을 때) */
+@media (min-aspect-ratio: 16/9) {
+  .hero { grid-template-columns: 1.2fr 0.8fr; } /* 2열 */
+}
+
+@media (orientation: portrait)  { /* 세로 레이아웃 */ }
+@media (orientation: landscape) { /* 가로 레이아웃 */ }
+
+
+

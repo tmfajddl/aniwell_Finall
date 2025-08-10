@@ -33,7 +33,8 @@
 
 			<div class="icon z-10">
 				<!-- 로그인 버튼 -->
-				<button type="button" id="loginButton" class="mb-[100px]">
+				<button type="button" class="" th:if="${!rq.isLogined}"
+									onclick="setTimeout(() => { location.href='/usr/member/login'; }, 1000)">
 					<div class="toggle dog-rollover">
 						<input type="checkbox" id="doggo">
 						<label for="doggo" class="toggle-item">
