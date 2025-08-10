@@ -1,135 +1,239 @@
+/* =========================
+   Reset & Base
+========================= */
+* {
+  box-sizing: border-box;
+}
+
+html,
 body {
-	margin: 0;
-	padding: 0;
-	font-family: "Comic Sans MS", "Segoe UI", sans-serif;
-	background-color: #eee8cd;
-	text-align: center;
+  margin: 0;
+  overflow-x: hidden;
+  /* 가로 흔들림 방지 */
+  /* scroll-behavior: smooth;  // pin 구간에서 튐이 있으면 주석 유지 권장 */
 }
 
+body {
+  text-align: center;
+  /* 배경/폰트는 Tailwind로 제어: body 클래스 그라디언트/인라인 폰트 유지 */
+}
+
+/* =========================
+   Section Layout
+========================= */
+/* 100vh 대신 100dvh만 사용 (중복/충돌 제거) */
+.section {
+  min-height: 100dvh;
+}
+
+/* 상단 섹션 */
 .section-top {
-	position: relative;
-	width: 100%;
-	height: 1000px;
-	padding: 10px 0;
+  position: relative;
+  width: 100%;
+  padding: 10px 0;
+  z-index: 5;
 }
 
+/* 중간 섹션 컨테이너: 부모는 고정(애니메이션 금지) */
+.section-middle {
+  position: relative;
+  z-index: 10;
+  background: transparent;
+  /* 개별 섹션이 각자 배경 가짐 */
+}
+
+/* =========================
+   Logo / Character
+========================= */
 .logo {
-	width: 130px;
+  width: 130px;
 }
 
 .bg-logo {
-	position: relative;
-	top: 15%;
-	min-width: 500px;
-	/* 너무 작아지는 걸 방지 */
+  position: relative;
+  margin-top: 50px;
+  min-width: 500px;
 }
 
 .b-logo {
-	position: relative;
-	width: 1300px;
+  position: relative;
+  width: 1300px;
 }
 
 .char {
-	position: absolute;
-	top: 80%;
-	left: 50%;
-	transform: translate(-50%, -50%);
-	min-width: 500px;
-	/* 너무 작아지는 걸 방지 */
-	min-height: 500px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  max-width: 600px;
+  min-width: 500px;
+  min-height: 500px;
 }
 
+.img_head {
+  position: absolute;
+  top: -90px;
+  left: 10px;
+  z-index: 99;
+}
+
+/* 세션3 스크롤 길이: 타임라인 길이에 맞게 조절(2~4 추천) */
+.sec3-scroller { height: calc(100dvh * 3); }
+
+/* wave는 레이아웃 차지하지 않도록 absolute (이미 적용했다면 생략) */
+.wave { position:absolute; left:0; right:0; bottom:0; height:100px; pointer-events:none; }
+.wave::before {
+  content:""; position:absolute; left:0; bottom:100%; width:100%; height:100px;
+  background: radial-gradient(circle at 50% 100%, #fff7e6 50%, transparent 51%);
+  background-size:100px 100px; background-repeat:repeat-x;
+}
+
+/* 성능 힌트 */
+.right-anim, .sec3-layer, .sec3-dog, .sec3-heart, .sec3-sparkle { will-change: transform, opacity; }
+
+
+/* .img_body는 HTML에서 Tailwind 'absolute' 사용중 — 여기선 사이즈만 */
+.img_body {
+  max-width: 600px;
+}
+
+/* =========================
+   Buttons / Icons
+========================= */
 .icon {
-	top: 80%;
-	position: relative;
-	display: flex;
-	gap: 50px;
-	padding-left: 70%;
-}
-
-.in-icon>img {
-	position: absolute;
-	width: 30px;
-	height: 30px;
-	top: 20%;
-	left: 30%;
-	max-width: 100px;
-	/* 너무 커지는 걸 방지 */
-	max-height: 100px;
-	min-width: 30px;
-	/* 너무 작아지는 걸 방지 */
-	min-height: 30px;
-}
-
-.up-icon>img {
-	position: absolute;
-	width: 30px;
-	height: 30px;
-	top: 25%;
-	left: 30%;
-	min-width: 500px;
-	/* 너무 작아지는 걸 방지 */
-	max-height: 100px;
-	min-width: 30px;
-	/* 너무 작아지는 걸 방지 */
-	min-height: 30px;
-}
-
-.in-icon {
-	z-index: 2;
-	position: relative;
-	background-color: #2e576d;
-	border-radius: 50%;
-	min-width: 500px;
-	/* 너무 작아지는 걸 방지 */
-}
-
-.up-icon {
-	z-index: 2;
-	position: relative;
-	background-color: #2e576d;
-	border-radius: 50%;
-	min-width: 500px;
-	/* 너무 작아지는 걸 방지 */
+  position: relative;
+  bottom: 100px;
+  display: flex;
+  gap: 50px;
+  padding-left: 70%;
 }
 
 .up-icon,
 .in-icon {
-	width: 8vw;
-	/* 브라우저 너비의 10% */
-	height: 8vw;
-	/* 정사각형 */
-	max-width: 100px;
-	/* 너무 커지는 걸 방지 */
-	max-height: 100px;
-	min-width: 30px;
-	/* 너무 작아지는 걸 방지 */
-	min-height: 30px;
+  position: relative;
+  z-index: 2;
+  background-color: #2e576d;
+  border-radius: 50%;
+  width: 8vw;
+  height: 8vw;
+  max-width: 100px;
+  max-height: 100px;
+  min-width: 30px;
+  min-height: 30px;
 }
 
-/* 세션2 */
-
-.section-middle {
-	width: 100%;
-	height: 1000px;
-	position: relative;
-	background-color: #dbe18f;
+.in-icon>img,
+.up-icon>img {
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  top: 25%;
+  left: 30%;
 }
 
-/* 경계선 반원 */
+/* =========================
+   Wave (반원 파도) — 절대배치로 레이아웃 영향 제거
+========================= */
 .wave {
-	height: 400px;
-	position: relative;
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 100px;
+  pointer-events: none;
 }
 
 .wave::before {
-	content: "";
-	position: absolute;
-	top: -100%;
-	left: 0;
-	width: 100%;
-	height: 400px;
-	background: radial-gradient(circle at 50% 100%, #dbe18f 50%, transparent 51%);
-	background-size: 400px 400px;
-	background-repeat: repeat-x;
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 100%;
+  width: 100%;
+  height: 100px;
+  background: radial-gradient(circle at 50% 100%, #fff7e6 50%, transparent 51%);
+  background-size: 100px 100px;
+  background-repeat: repeat-x;
+}
+
+/* wave가 붙어있는 부모들이 영역을 가질 수 있도록 */
+.section-top,
+#sectionMiddle {
+  position: relative;
+}
+
+/* =========================
+   Performance hints for GSAP layers
+========================= */
+.right-anim,
+.sec3-layer,
+.sec3-dog,
+.sec3-heart,
+.sec3-sparkle {
+  will-change: transform, opacity;
+}
+
+/* =========================
+   Keyframe Animations
+========================= */
+@keyframes sway-head {
+
+  0%,
+  100% {
+    transform: rotate(-1deg);
+  }
+
+  25% {
+    transform: rotate(0.5deg);
+  }
+
+  50% {
+    transform: rotate(-0.5deg);
+  }
+
+  75% {
+    transform: rotate(1deg);
+  }
+}
+
+@keyframes swingX {
+
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  25% {
+    transform: translateX(-4px);
+  }
+
+  75% {
+    transform: translateX(4px);
+  }
+}
+
+@keyframes bounce-down {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(8px);
+  }
+}
+
+.sway-top {
+  animation: sway-head 5s ease-in-out infinite;
+  transform-origin: bottom center;
+  z-index: 10;
+}
+
+.swing-left-right {
+  animation: swingX 2.5s ease-in-out infinite;
+  transform-origin: bottom center;
+}
+
+.animate-bounce-down {
+  animation: bounce-down 1.2s ease-in-out infinite;
 }
