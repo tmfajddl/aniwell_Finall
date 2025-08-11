@@ -128,8 +128,11 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             }
 
-            if (field === "email" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-                return showWarning("이메일 형식이 올바르지 않습니다.");
+            if (field === "email") {
+                const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+                if (!emailPattern.test(value)) {
+                    return showWarning("이메일 형식이 올바르지 않습니다.");
+                }
             }
 
             if (field === "nickname" && value.length < 2) {
