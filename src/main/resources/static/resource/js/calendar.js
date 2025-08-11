@@ -35,11 +35,11 @@ function renderMiniCalendar(targetId, events, date = new Date()) {
 	title.className = 'text-lg font-bold text-center text-black flex-1';
 	title.textContent = year + '년 ' + (month + 1) + '월';
 
-	prevBtn.onclick = function () {
+	prevBtn.onclick = function() {
 		const newDate = new Date(year, month - 1, 1);
 		renderMiniCalendar(targetId, events, newDate);
 	};
-	nextBtn.onclick = function () {
+	nextBtn.onclick = function() {
 		const newDate = new Date(year, month + 1, 1);
 		renderMiniCalendar(targetId, events, newDate);
 	};
@@ -53,7 +53,7 @@ function renderMiniCalendar(targetId, events, date = new Date()) {
 
 	const weekRow = document.createElement('div');
 	weekRow.className = 'grid grid-cols-7 text-center text-base font-semibold text-gray-700 mb-4';
-	['일', '월', '화', '수', '목', '금', '토'].forEach(function (day) {
+	['일', '월', '화', '수', '목', '금', '토'].forEach(function(day) {
 		const div = document.createElement('div');
 		div.textContent = day;
 		weekRow.appendChild(div);
@@ -88,7 +88,7 @@ function renderMiniCalendar(targetId, events, date = new Date()) {
 		const dayStr = (i < 10 ? '0' : '') + i;
 		const dateStr = year + '-' + monthStr + '-' + dayStr;
 
-		const matched = events.find(function (e) {
+		const matched = events.find(function(e) {
 			return e.start === dateStr;
 		});
 
@@ -100,7 +100,7 @@ function renderMiniCalendar(targetId, events, date = new Date()) {
 			el.appendChild(img);
 		}
 
-		el.onclick = function () {
+		el.onclick = function() {
 			const sameDayEvents = events.filter(e => e.start === dateStr);
 
 			if (sameDayEvents.length === 1) {
