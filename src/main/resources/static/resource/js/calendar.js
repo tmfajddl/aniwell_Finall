@@ -52,8 +52,13 @@ function renderMiniCalendar(targetId, events, date = new Date()) {
 	container.appendChild(header);
 
 	const weekRow = document.createElement('div');
+<<<<<<< HEAD
 	weekRow.className = 'grid grid-cols-7 text-center text-base font-semibold text-gray-700 mb-4';
 	['일', '월', '화', '수', '목', '금', '토'].forEach(function(day) {
+=======
+	weekRow.className = 'grid grid-cols-7 text-center text-gray-700 mb-1';
+	['일', '월', '화', '수', '목', '금', '토'].forEach(function (day) {
+>>>>>>> 8da2eff10150c4940055ea9fd101d87518cb562f
 		const div = document.createElement('div');
 		div.textContent = day;
 		weekRow.appendChild(div);
@@ -61,7 +66,7 @@ function renderMiniCalendar(targetId, events, date = new Date()) {
 	container.appendChild(weekRow);
 
 	const grid = document.createElement('div');
-	grid.className = 'grid grid-cols-7 grid-rows-6 gap-y-4 text-center';
+	grid.className = 'grid grid-cols-7 grid-rows-6 gap-y-1 text-center';
 
 	for (let i = firstDay - 1; i >= 0; i--) {
 		const d = prevLastDate - i;
@@ -81,7 +86,7 @@ function renderMiniCalendar(targetId, events, date = new Date()) {
 			month === today.getMonth() &&
 			year === today.getFullYear()
 		) {
-			el.classList.add('bg-yellow-400', 'rounded-full', 'font-bold');
+			el.classList.add('bg-yellow-400', 'rounded-full');
 		}
 
 		const monthStr = (month + 1 < 10 ? '0' : '') + (month + 1);
