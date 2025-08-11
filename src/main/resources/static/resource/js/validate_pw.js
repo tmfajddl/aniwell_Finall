@@ -7,7 +7,49 @@ document.addEventListener("DOMContentLoaded", () => {
     const pwMessage = joinForm.querySelector("#pwMessage");
     const pwWarning = joinForm.querySelector("#pwWarning");
 
+    // ✅ IME 한글 조합 상태 감지
+    let isComposing = false;
+
+    pwInput.addEventListener("compositionstart", () => {
+        isComposing = true;
+    });
+
+    pwInput.addEventListener("compositionend", (e) => {
+        isComposing = false;
+        if (/[ㄱ-ㅎㅏ-ㅣ가-힣]/.test(e.data)) {
+            pwInput.value = pwInput.value.replace(/[ㄱ-ㅎㅏ-ㅣ가-힣]/g, "");
+        }
+        validatePassword(); // 조합이 끝난 후 유효성 검사 실행
+    });
+
     pwInput.addEventListener("input", () => {
+        if (!isComposing) {
+            pwInput.value = pwInput.value.replace(/[ㄱ-ㅎㅏ-ㅣ가-힣]/g, "");
+            validatePassword(); // 한글 제거 후 유효성 검사 실행
+        }
+    });
+
+    pwInput.addEventListener("keydown", (e) => {
+        if (/^[ㄱ-ㅎㅏ-ㅣ가-힣]$/.test(e.key)) {
+            e.preventDefault();
+        }
+    });
+
+    pwInput.addEventListener("beforeinput", (e) => {
+        if (e.data && /[ㄱ-ㅎㅏ-ㅣ가-힣]/.test(e.data)) {
+            e.preventDefault();
+        }
+    });
+
+    pwInput.addEventListener("paste", (e) => {
+        const pasteData = (e.clipboardData || window.clipboardData).getData('text');
+        if (/[ㄱ-ㅎㅏ-ㅣ가-힣]/.test(pasteData)) {
+            e.preventDefault();
+        }
+    });
+
+    // ✅ 유효성 검사 함수
+    function validatePassword() {
         const pw = pwInput.value.trim();
         pwInput.classList.remove("border-red-500", "border-green-500");
         pwWarning.classList.add("hidden");
@@ -15,14 +57,6 @@ document.addEventListener("DOMContentLoaded", () => {
         pwWarning.classList.remove("text-red-600", "text-green-600");
 
         if (pw === "") return;
-
-        if (/[ㄱ-ㅎ|ㅏ-ㅣ|가-힣]/.test(pw)) {
-            pwInput.classList.add("border-red-500");
-            pwWarning.textContent = "한글은 입력할 수 없습니다.";
-            pwWarning.classList.add("text-red-600");
-            pwWarning.classList.remove("hidden");
-            return;
-        }
 
         if (/(012|123|234|345|456|567|678|789|890)/.test(pw)) {
             pwInput.classList.add("border-red-500");
@@ -76,7 +110,7 @@ document.addEventListener("DOMContentLoaded", () => {
         pwWarning.textContent = "사용 가능한 비밀번호입니다.";
         pwWarning.classList.add("text-green-600");
         pwWarning.classList.remove("hidden");
-    });
+    }
 
     function checkPasswordMatch() {
         const pw = pwInput.value.trim();

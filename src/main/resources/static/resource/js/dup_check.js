@@ -28,7 +28,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if (value === "") return;
 
             // 로컬 유효성 검사
-            if (field === "loginId" && value.length < 4) return showWarning("아이디는 4자 이상 입력해주세요.");
+            if (field === "loginId" && value.length < 6 || value.length > 12) return showWarning("아이디는 6자 이상 12자 이하로 입력해주세요.");
             if (field === "email" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return showWarning("이메일 형식이 올바르지 않습니다.");
             if (field === "nickname" && value.length < 2) return showWarning("닉네임은 2자 이상 입력해주세요.");
             if (field === "cellphone" && !/^\d{3}-\d{3,4}-\d{4}$/.test(value)) return showWarning("전화번호 형식이 올바르지 않습니다. 예: 010-1234-5678");
