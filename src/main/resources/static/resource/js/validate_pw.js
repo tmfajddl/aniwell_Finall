@@ -7,46 +7,50 @@ document.addEventListener("DOMContentLoaded", () => {
     const pwMessage = joinForm.querySelector("#pwMessage");
     const pwWarning = joinForm.querySelector("#pwWarning");
 
-    // ✅ IME 한글 조합 상태 감지
-    let isComposing = false;
+    function preventKoreanInput(input) {
+        let isComposing = false;
 
-    pwInput.addEventListener("compositionstart", () => {
-        isComposing = true;
-    });
+        input.addEventListener("compositionstart", () => {
+            isComposing = true;
+        });
 
-    pwInput.addEventListener("compositionend", (e) => {
-        isComposing = false;
-        if (/[ㄱ-ㅎㅏ-ㅣ가-힣]/.test(e.data)) {
-            pwInput.value = pwInput.value.replace(/[ㄱ-ㅎㅏ-ㅣ가-힣]/g, "");
-        }
-        validatePassword(); // 조합이 끝난 후 유효성 검사 실행
-    });
+        input.addEventListener("compositionend", (e) => {
+            isComposing = false;
+            if (/[ㄱ-ㅎㅏ-ㅣ가-힣]/.test(e.data)) {
+                input.value = input.value.replace(/[ㄱ-ㅎㅏ-ㅣ가-힣]/g, "");
+            }
+            if (input === pwInput) validatePassword();
+        });
 
-    pwInput.addEventListener("input", () => {
-        if (!isComposing) {
-            pwInput.value = pwInput.value.replace(/[ㄱ-ㅎㅏ-ㅣ가-힣]/g, "");
-            validatePassword(); // 한글 제거 후 유효성 검사 실행
-        }
-    });
+        input.addEventListener("input", () => {
+            if (!isComposing) {
+                input.value = input.value.replace(/[ㄱ-ㅎㅏ-ㅣ가-힣]/g, "");
+                if (input === pwInput) validatePassword();
+            }
+        });
 
-    pwInput.addEventListener("keydown", (e) => {
-        if (/^[ㄱ-ㅎㅏ-ㅣ가-힣]$/.test(e.key)) {
-            e.preventDefault();
-        }
-    });
+        input.addEventListener("keydown", (e) => {
+            if (/^[ㄱ-ㅎㅏ-ㅣ가-힣]$/.test(e.key)) {
+                e.preventDefault();
+            }
+        });
 
-    pwInput.addEventListener("beforeinput", (e) => {
-        if (e.data && /[ㄱ-ㅎㅏ-ㅣ가-힣]/.test(e.data)) {
-            e.preventDefault();
-        }
-    });
+        input.addEventListener("beforeinput", (e) => {
+            if (e.data && /[ㄱ-ㅎㅏ-ㅣ가-힣]/.test(e.data)) {
+                e.preventDefault();
+            }
+        });
 
-    pwInput.addEventListener("paste", (e) => {
-        const pasteData = (e.clipboardData || window.clipboardData).getData('text');
-        if (/[ㄱ-ㅎㅏ-ㅣ가-힣]/.test(pasteData)) {
-            e.preventDefault();
-        }
-    });
+        input.addEventListener("paste", (e) => {
+            const pasteData = (e.clipboardData || window.clipboardData).getData('text');
+            if (/[ㄱ-ㅎㅏ-ㅣ가-힣]/.test(pasteData)) {
+                e.preventDefault();
+            }
+        });
+    }
+
+    preventKoreanInput(pwInput);
+    preventKoreanInput(pwConfirmInput);
 
     // ✅ 유효성 검사 함수
     function validatePassword() {
