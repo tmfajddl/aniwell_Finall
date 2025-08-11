@@ -227,7 +227,10 @@
     </select>
 
     <select id="getMemberByCellphone" resultType="Member">
-        SELECT * FROM member WHERE cellphone = #{cellphone}
+        SELECT *
+        FROM member
+        WHERE REPLACE(cellphone, '-', '') = #{cellphone}
+        LIMIT 1
     </select>
 
 </mapper>
