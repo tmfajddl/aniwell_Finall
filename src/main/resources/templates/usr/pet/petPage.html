@@ -21,123 +21,10 @@
 
 		<!-- Main content -->
 		<!-- Main content -->
-		<main class="main_page h-full overflow-hidden min-h-0 box-border grid-cols-12 flex-1 p-6 grid  gap-4">
+		<main class="main_page h-full overflow-hidden min-h-0 box-border grid-cols-12 flex-1 p-6 pt-8 grid  gap-8">
 
 			<!-- 왼쪽 8칸: 차트 + 감정분석 + 캘린더 -->
 			<section class="col-span-12 xl:col-span-8 flex flex-col gap-2  w-full">
-				<!-- 차트 -->
-
-				<div class=" bg-white p-4 rounded-xl shadow h-1/4">
-					<canvas id="myChart" class=" w-full h-full"></canvas>
-					<div id="feedingPanel"
-						class="fixed top-0 right-0 w-[95%] h-full bg-white shadow-xl z-40 transform translate-x-full transition-transform duration-300 rounded-l-[40px] flex flex-col p-6 overflow-auto">
-
-						<!-- 닫기 버튼 -->
-						<button onclick="closeFeedingPanel()"
-							class="absolute top-4 left-4 text-3xl text-gray-500 hover:text-black font-bold">×</button>
-
-						<h2 class="text-xl font-bold text-gray-700 text-center mb-6 mt-10">📝 하루 건강 리포트</h2>
-
-						<!-- 날짜 선택 -->
-						<div class="text-center mb-4">
-							<input type="date" id="datePicker" class="border rounded px-3 py-2 shadow-sm" />
-						</div>
-
-						<!-- 1. 사료 차트 -->
-						<div class="h-[200px] mb-10 w-full px-4">
-							<h3 class="text-lg font-bold text-gray-800 mb-2">🍚 사료</h3>
-							<div class="w-full h-full bg-white rounded-xl shadow p-4">
-								<canvas id="weightChart" class="w-full h-full"></canvas>
-							</div>
-						</div>
-
-						<!-- 2. 물 섭취량 차트 -->
-						<div class="h-[200px] mb-10 w-full px-4">
-							<h3 class="text-lg font-bold text-gray-800 mb-2">💧 물</h3>
-							<div class="w-full h-full bg-white rounded-xl shadow p-4">
-								<canvas id="waterChart" class="w-full h-full"></canvas>
-							</div>
-						</div>
-
-						<!-- 3. 배변 횟수 -->
-						<div class="h-[300px]">
-							<h3 class="text-lg font-bold text-gray-800 mb-2">🚽 배변</h3>
-							<div class="overflow-y-auto max-h-[250px]">
-								<table class="w-full max-w-2xl mx-auto text-sm border border-gray-300 rounded-lg">
-									<thead class="bg-gray-100">
-										<tr>
-											<th class="p-2 border">시간</th>
-											<th class="p-2 border">배변 종류</th>
-										</tr>
-									</thead>
-									<tbody id="poopTableBody">
-										<!-- JavaScript로 행 추가됨 -->
-									</tbody>
-								</table>
-							</div>
-						</div>
-					</div>
-
-
-				</div>
-
-
-				<div class=" bg-white p-4 rounded-xl shadow h-1/4">
-					<canvas id="myChart" class=" w-full h-full"></canvas>
-					<div id="feedingPanel"
-						class="fixed top-0 right-0 w-[95%] h-full bg-white shadow-xl z-40 transform translate-x-full transition-transform duration-300 rounded-l-[40px] flex flex-col p-6 overflow-auto">
-
-						<!-- 닫기 버튼 -->
-						<button onclick="closeFeedingPanel()"
-							class="absolute top-4 left-4 text-3xl text-gray-500 hover:text-black font-bold">×</button>
-
-						<h2 class="text-xl font-bold text-gray-700 text-center mb-6 mt-10">📝 하루 건강 리포트</h2>
-
-						<!-- 날짜 선택 -->
-						<div class="text-center mb-4">
-							<input type="date" id="datePicker" class="border rounded px-3 py-2 shadow-sm" />
-						</div>
-
-						<!-- 1. 사료 차트 -->
-						<div class="h-[200px] mb-10 w-full px-4">
-							<h3 class="text-lg font-bold text-gray-800 mb-2">🍚 사료</h3>
-							<div class="w-full h-full bg-white rounded-xl shadow p-4">
-								<canvas id="weightChart" class="w-full h-full"></canvas>
-							</div>
-						</div>
-
-						<!-- 2. 물 섭취량 차트 -->
-						<div class="h-[200px] mb-10 w-full px-4">
-							<h3 class="text-lg font-bold text-gray-800 mb-2">💧 물</h3>
-							<div class="w-full h-full bg-white rounded-xl shadow p-4">
-								<canvas id="waterChart" class="w-full h-full"></canvas>
-							</div>
-						</div>
-
-						<!-- 3. 배변 횟수 -->
-						<div class="h-[300px]">
-							<h3 class="text-lg font-bold text-gray-800 mb-2">🚽 배변</h3>
-							<div class="overflow-y-auto max-h-[250px]">
-								<table class="w-full max-w-2xl mx-auto text-sm border border-gray-300 rounded-lg">
-									<thead class="bg-gray-100">
-										<tr>
-											<th class="p-2 border">시간</th>
-											<th class="p-2 border">배변 종류</th>
-										</tr>
-									</thead>
-									<tbody id="poopTableBody">
-										<!-- JavaScript로 행 추가됨 -->
-									</tbody>
-								</table>
-							</div>
-						</div>
-					</div>
-
-
-				</div>
-
-
-
 				<!-- 감정분석 카드 -->
 				<div class="grid grid-cols-2 gap-2">
 					<div class="relative group overflow-hidden bg-gradient-to-r from-[#DFF8E5] to-[#F4FBCC] rounded-xl p-4 text-center shadow hover:shadow-md transition-shadow duration-300 font-semibold cursor-pointer w-full"
@@ -244,6 +131,119 @@
 						감정 일기 </a>
 
 				</div>
+
+
+
+				<div class=" bg-white p-4 rounded-xl shadow h-1/3 flex">
+					<canvas id="myChart" class=" w-full h-full"></canvas>
+					<div id="feedingPanel"
+						class="fixed top-0 right-0 w-[95%] h-full bg-white shadow-xl z-40 transform translate-x-full transition-transform duration-300 rounded-l-[40px] flex flex-col p-6 overflow-auto">
+
+						<!-- 닫기 버튼 -->
+						<button onclick="closeFeedingPanel()"
+							class="absolute top-4 left-4 text-3xl text-gray-500 hover:text-black font-bold">×</button>
+
+						<h2 class="text-xl font-bold text-gray-700 text-center mb-6 mt-10">📝 하루 건강 리포트</h2>
+
+						<!-- 날짜 선택 -->
+						<div class="text-center mb-4">
+							<input type="date" id="datePicker" class="border rounded px-3 py-2 shadow-sm" />
+						</div>
+
+						<!-- 1. 사료 차트 -->
+						<div class="h-[200px] mb-10 w-full px-4">
+							<h3 class="text-lg font-bold text-gray-800 mb-2">🍚 사료</h3>
+							<div class="w-full h-full bg-white rounded-xl shadow p-4">
+								<canvas id="weightChart" class="w-full h-full"></canvas>
+							</div>
+						</div>
+
+						<!-- 2. 물 섭취량 차트 -->
+						<div class="h-[200px] mb-10 w-full px-4">
+							<h3 class="text-lg font-bold text-gray-800 mb-2">💧 물</h3>
+							<div class="w-full h-full bg-white rounded-xl shadow p-4">
+								<canvas id="waterChart" class="w-full h-full"></canvas>
+							</div>
+						</div>
+
+						<!-- 3. 배변 횟수 -->
+						<div class="h-[300px]">
+							<h3 class="text-lg font-bold text-gray-800 mb-2">🚽 배변</h3>
+							<div class="overflow-y-auto max-h-[250px]">
+								<table class="w-full max-w-2xl mx-auto text-sm border border-gray-300 rounded-lg">
+									<thead class="bg-gray-100">
+										<tr>
+											<th class="p-2 border">시간</th>
+											<th class="p-2 border">배변 종류</th>
+										</tr>
+									</thead>
+									<tbody id="poopTableBody">
+										<!-- JavaScript로 행 추가됨 -->
+									</tbody>
+								</table>
+							</div>
+						</div>
+					</div>
+
+
+				</div>
+
+
+				<div class=" bg-white p-4 rounded-xl shadow h-1/3 flex">
+					<canvas id="myChart_Sc" class=" w-full h-full"></canvas>
+					<div id="feedingPanel"
+						class="fixed top-0 right-0 w-[95%] h-full bg-white shadow-xl z-40 transform translate-x-full transition-transform duration-300 rounded-l-[40px] flex flex-col p-6 overflow-auto">
+
+						<!-- 닫기 버튼 -->
+						<button onclick="closeFeedingPanel()"
+							class="absolute top-4 left-4 text-3xl text-gray-500 hover:text-black font-bold">×</button>
+
+						<h2 class="text-xl font-bold text-gray-700 text-center mb-6 mt-10">📝 하루 건강 리포트</h2>
+
+						<!-- 날짜 선택 -->
+						<div class="text-center mb-4">
+							<input type="date" id="datePicker" class="border rounded px-3 py-2 shadow-sm" />
+						</div>
+
+						<!-- 1. 사료 차트 -->
+						<div class="h-[200px] mb-10 w-full px-4">
+							<h3 class="text-lg font-bold text-gray-800 mb-2">🍚 사료</h3>
+							<div class="w-full h-full bg-white rounded-xl shadow p-4">
+								<canvas id="weightChart" class="w-full h-full"></canvas>
+							</div>
+						</div>
+
+						<!-- 2. 물 섭취량 차트 -->
+						<div class="h-[200px] mb-10 w-full px-4">
+							<h3 class="text-lg font-bold text-gray-800 mb-2">💧 물</h3>
+							<div class="w-full h-full bg-white rounded-xl shadow p-4">
+								<canvas id="waterChart" class="w-full h-full"></canvas>
+							</div>
+						</div>
+
+						<!-- 3. 배변 횟수 -->
+						<div class="h-[300px]">
+							<h3 class="text-lg font-bold text-gray-800 mb-2">🚽 배변</h3>
+							<div class="overflow-y-auto max-h-[250px]">
+								<table class="w-full max-w-2xl mx-auto text-sm border border-gray-300 rounded-lg">
+									<thead class="bg-gray-100">
+										<tr>
+											<th class="p-2 border">시간</th>
+											<th class="p-2 border">배변 종류</th>
+										</tr>
+									</thead>
+									<tbody id="poopTableBody">
+										<!-- JavaScript로 행 추가됨 -->
+									</tbody>
+								</table>
+							</div>
+						</div>
+					</div>
+
+
+				</div>
+
+
 
 
 
@@ -637,11 +637,6 @@
 				disconnectWebSocket();
 			}
 		</script>
-
-
-
-
-
 
 		<script th:inline="javascript">
 			/*<![CDATA[*/
@@ -1073,9 +1068,9 @@
 
 
 		<script>
-			const ctx = document.getElementById('myChart').getContext('2d');
+			const ctx_Sc = document.getElementById('myChart_Sc').getContext('2d');
 
-			const myChart = new Chart(ctx, {
+			const myChart_Sc = new Chart(ctx_Sc, {
 				type: 'bar',
 				data: {
 					labels: ['월', '화', '수', '목', '금', '토', '일'], // 초기값
@@ -1129,11 +1124,11 @@
 			fetch(`/usr/pet/health/week-stats?petId=${petId}`)
 				.then(res => res.json())
 				.then(data => {
-					myChart.data.labels = data.labels;
-					myChart.data.datasets[0].data = data.food;
-					myChart.data.datasets[1].data = data.water;
-					myChart.data.datasets[2].data = data.score;
-					myChart.update();
+					myChart_Sc.data.labels = data.labels;
+					myChart_Sc.data.datasets[0].data = data.food;
+					myChart_Sc.data.datasets[1].data = data.water;
+					myChart_Sc.data.datasets[2].data = data.score;
+					myChart_Sc.update();
 
 					const todayIdx = new Date().getDay();
 					const yesterdayIdx = (todayIdx + 6) % 7;
@@ -1195,6 +1190,130 @@
 
 
 		</script>
+		
+		<script>
+					const ctx = document.getElementById('myChart').getContext('2d');
+
+					const myChart = new Chart(ctx, {
+						type: 'bar',
+						data: {
+							labels: ['월', '화', '수', '목', '금', '토', '일'], // 초기값
+							datasets: [
+								{
+									label: '식사량',
+									data: [], // 서버에서 채움
+									backgroundColor: 'rgba(244, 211, 94, 0.8)',
+									borderRadius: {topLeft: 100, bottomRight: 40},
+									barPercentage: 0.6,
+									borderSkipped: false,
+									categoryPercentage: 0.7
+								},
+								{
+									label: '물 섭취량',
+									data: [],
+									backgroundColor: 'rgba(127, 176, 105, 0.8)',
+									borderRadius: {topLeft: 100, bottomRight: 40},
+									barPercentage: 0.6,
+									borderSkipped: false,
+									categoryPercentage: 0.7
+								},
+								{
+									label: '최종 점수',
+									data: [],
+									backgroundColor: 'rgba(79, 109, 122, 0.8)',
+									borderRadius: {topLeft: 100, bottomRight: 40},
+									borderSkipped: false,
+									barPercentage: 0.6,
+									categoryPercentage: 0.7
+								}
+							]
+						},
+						options: {
+							responsive: true,
+							maintainAspectRatio: false,
+							plugins: {
+								legend: {position: 'top'},
+								title: {display: false}
+							},
+							scales: {
+								y: {
+									beginAtZero: true,
+									max: 20
+								}
+							}
+						}
+					});
+
+					// ✅ 실제 데이터 fetch 및 적용
+					fetch(`/usr/pet/health/week-stats?petId=${petId}`)
+						.then(res => res.json())
+						.then(data => {
+							myChart.data.labels = data.labels;
+							myChart.data.datasets[0].data = data.food;
+							myChart.data.datasets[1].data = data.water;
+							myChart.data.datasets[2].data = data.score;
+							myChart.update();
+
+							const todayIdx = new Date().getDay();
+							const yesterdayIdx = (todayIdx + 6) % 7;
+
+							const foodDiff = (data.food[todayIdx] ?? 0) - (data.food[yesterdayIdx] ?? 0);
+							const waterDiff = (data.water[todayIdx] ?? 0) - (data.water[yesterdayIdx] ?? 0);
+							const scoreDiff = (data.score[todayIdx] ?? 0) - (data.score[yesterdayIdx] ?? 0);
+
+							const diffs = [
+								{
+									type: 'water',
+									label: '물을',
+									value: waterDiff,
+									unit: 'ml',
+									upText: '더 마셨어요',
+									downText: '덜 마셨어요'
+								},
+								{
+									type: 'food',
+									label: '사료를',
+									value: foodDiff,
+									unit: 'g',
+									upText: '더 먹었어요',
+									downText: '덜 먹었어요'
+								},
+								{
+									type: 'score',
+									label: '점수가',
+									value: scoreDiff,
+									unit: '점',
+									upText: '올랐어요',
+									downText: '내려갔어요'
+								}
+							];
+
+							const maxDiff = diffs.reduce((prev, curr) => {
+								return Math.abs(curr.value) > Math.abs(prev.value) ? curr : prev;
+							});
+
+							let summary = '';
+							if (maxDiff.value === 0) {
+								summary = `오늘은 ${maxDiff.label} 어제와 같아요!`;
+							} else {
+								const amount = Math.abs(maxDiff.value).toFixed(1);
+								const direction = maxDiff.value > 0 ? maxDiff.upText : maxDiff.downText;
+								summary = `오늘은 어제보다 ${maxDiff.label} ${amount}${maxDiff.unit} ${direction}`;
+							}
+
+
+							document.getElementById("summaryCard").innerHTML = `
+					${summary}<br>
+					<button class="text-blue-600 mt-1 underline" onclick="openFeedingPanel()">행동분석보기 &gt;</button>
+				`;
+						})
+						.catch(err => {
+							console.error("🚨 요약 데이터 실패:", err);
+						});
+
+
+
+				</script>
 
 		<script th:src="@{/resource/js/calendar.js}"></script>
 

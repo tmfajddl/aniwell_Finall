@@ -68,19 +68,20 @@
 	<!-- 중간 섹션 -->
 	<div id="sectionMiddle" class="z-10 section-middle mx-auto transition-all duration-700">
 
-		<!-- 🌊 파도 배경 -->
-		<div class="wave"></div>
+		
 
 		<!-- 🐾 세션 2 -->
-		<section id="sec2" class="min-h-[100dvh] md:min-h-screen w-full bg-gradient-to-b from-[#fff7e6] to-[#ffe4b3]">
-			<div class="mx-auto grid md:grid-cols-2 items-center gap-6 md:gap-10 px-6 md:px-16 py-16">
+		<section id="sec2" class="flex items-center min-h-[100dvh] md:min-h-screen w-full bg-gradient-to-b from-[#fff7e6] to-[#ffe4b3]">
+			<!-- 🌊 파도 배경 -->
+					<div class="wave"></div>
+			<div class="mx-auto grid md:grid-cols-2 items-center gap-6 md:gap-10 px-6 md:px-16 py-32">
 				<!-- 왼쪽: 문구 -->
 				<div class="max-w-2xl" data-aos="fade-right">
 					<h2 class="text-5xl font-extrabold text-[#2b2b2b] drop-shadow mb-4">
 						우리 아이의 하루,<br>발자국까지 기록합니다 🐾
 					</h2>
 					<p class="text-lg text-gray-700 leading-relaxed">
-						배변 횟수와 움직임을 AI가 분석해<br>어디에서 얼마나 머물렀는지 알려드려요.
+						배변 횟수와 움직임을 분석해<br>어디에서 얼마나 머물렀는지 알려드려요.
 					</p>
 				</div>
 
@@ -218,27 +219,7 @@
 	</script>
 
 	<script>
-		gsap.registerPlugin(ScrollTrigger);
 
-		// 오른쪽 이미지 부드럽게 떠오르며 패럴랙스
-		gsap.fromTo(".right-anim",
-			{y: 80, opacity: 0, rotate: -4, scale: 0.96},
-			{
-				y: -40, opacity: 1, rotate: 0, scale: 1,
-				ease: "power2.out",
-				scrollTrigger: {
-					trigger: ".right-anim",
-					start: "top 85%",
-					end: "bottom 20%",
-					scrub: true   // 스크롤에 연동
-					// markers: true
-				}
-			}
-		);
-	</script>
-
-	<script>
-		gsap.registerPlugin(ScrollTrigger);
 
 		// 오른쪽 패럴랙스 (세션2)
 		gsap.fromTo(".right-anim",
@@ -247,6 +228,7 @@
 				y: -40, opacity: 1, rotate: 0, scale: 1,
 				ease: "power2.out",
 				scrollTrigger: {
+					pinSpacing: true, 
 					trigger: "#sec2",             // ✅ 섹션 자체를 트리거
 					start: "top bottom",          // 섹션 top이 뷰포트 bottom에 닿을 때 시작
 					end: "bottom top",            // 섹션 bottom이 뷰포트 top에 닿을 때 끝
@@ -256,19 +238,18 @@
 		);
 
 
-		// 섹션3 타임라인 + pin (부모는 움직이지 않음!)
 		const tl3 = gsap.timeline({
-			scrollTrigger: {
-				trigger: "#sec3",
-				start: "top top",
-				end: "+=200%",
-				scrub: true,
-				pin: true,
-				pinSpacing: true,
-				pinReparent: true,
-				anticipatePin: 1,
-				invalidateOnRefresh: true
-			}
+		  scrollTrigger: {
+		    trigger: "#sec3",                // 세션 루트
+		    start: "top top",                // 세션 시작과 동시에
+		    end: () => "+=" + window.innerHeight * 2, // 2뷰포트 길이 만큼 진행
+		    scrub: true,
+		    pin: true,             // ✅ 자식만 고정
+		    pinSpacing: true,               // ✅ pinSpacer 생성 안 함 (부모 레이아웃 안 흔들림)
+		    anticipatePin: 1,
+		    invalidateOnRefresh: true,
+		    // markers: true,
+		  }
 		});
 		tl3.fromTo(".sec3-layer",
 			{y: 40, scale: 0.92, rotate: -2, opacity: 0},
