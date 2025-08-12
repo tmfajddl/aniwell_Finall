@@ -211,4 +211,26 @@ document.addEventListener("DOMContentLoaded", () => {
     checkDup('email', 'email', 'emailWarning');
     checkDup('nickname', 'nickname', 'nicknameWarning');
     checkDup('cellphone', 'cellphone', 'cellphoneWarning');
+
+    // 이름: 값 있으면 초록, 없으면 '중립(노란)'로
+    const nameInput = joinForm.querySelector('#name');
+    if (nameInput) {
+        const toNeutral = () => {
+            nameInput.classList.remove('border-green-500', 'border-red-500'); // ← 둘 다 제거하면 기본 노란줄로 복귀
+        };
+        const toSuccess = () => {
+            nameInput.classList.add('border-green-500');
+            nameInput.classList.remove('border-red-500');
+        };
+
+        const applyNameStyle = () => {
+            if (nameInput.value.trim().length > 0) toSuccess();
+            else toNeutral(); // ← 비어있으면 노란줄 유지
+        };
+
+        nameInput.addEventListener('input', applyNameStyle);
+        nameInput.addEventListener('blur', applyNameStyle);
+        applyNameStyle(); // 초기값 반영
+    }
+
 });
