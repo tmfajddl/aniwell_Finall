@@ -129,8 +129,30 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             if (field === "email") {
+                // 공백 제거 & 소문자 변환
+                const trimmed = value.trim().toLowerCase();
+
+                // 이메일 기본 형식 검증
                 const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-                if (!emailPattern.test(value)) {
+                if (!emailPattern.test(trimmed)) {
+                    return showWarning("이메일 형식이 올바르지 않습니다.");
+                }
+
+                // 허용 도메인 목록
+                const allowed = new Set([
+                    "naver.com",
+                    "gmail.com",
+                    "daum.net",
+                    "hanmail.net",
+                    "nate.com",
+                    "aniwell.com",
+                    "example.com"
+                ]);
+
+                const domain = trimmed.split("@")[1];
+
+                // 허용 도메인인지 체크
+                if (!allowed.has(domain)) {
                     return showWarning("이메일 형식이 올바르지 않습니다.");
                 }
             }
@@ -145,7 +167,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 const isValid = /^(010\d{8}|01[16789]\d{7})$/.test(digitsOnly);
 
                 if (!isValid) {
-                    return showWarning("전화번호 형식이 올바르지 않습니다.");
+                    return showWarning("전화번호 형식이 올바르지 않습니다. 예: 000-0000-0000");
                 }
             }
 
