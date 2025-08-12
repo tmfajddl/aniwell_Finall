@@ -70,9 +70,9 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        if (/(\w)\1/.test(pw)) {
+        if (/(\w)\1\1/.test(pw)) {
             pwInput.classList.add("border-red-500");
-            pwWarning.textContent = "같은 문자를 2번 이상 반복할 수 없습니다.";
+            pwWarning.textContent = "같은 문자를 3번 이상 반복할 수 없습니다.";
             pwWarning.classList.add("text-red-600");
             pwWarning.classList.remove("hidden");
             return;
