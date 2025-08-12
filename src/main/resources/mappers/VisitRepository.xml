@@ -5,39 +5,46 @@
 
 <mapper namespace="com.example.RSW.repository.VisitRepository">
 
-    <!-- INSERT -->
-    <insert id="insertVisit" parameterType="com.example.domain.Visit">
-        INSERT INTO visit
-            (pet_id, visit_date, hospital, doctor, diagnosis, notes, total_cost)
-        VALUES
-            (#{petId}, #{visitDate}, #{hospital}, #{doctor}, #{diagnosis}, #{notes}, #{totalCost})
-    </insert>
+	<!-- INSERT -->
+	<!-- [수정] VO 패키지 경로: com.example.domain → com.example.RSW.vo -->
+	<insert id="insertVisit"
+		parameterType="com.example.RSW.vo.Visit">
+		INSERT INTO visit
+		(pet_id, visit_date, hospital, doctor, diagnosis, notes, total_cost)
+		VALUES
+		(#{petId}, #{visitDate}, #{hospital}, #{doctor}, #{diagnosis}, #{notes},
+		#{totalCost})
+	</insert>
 
-    <!-- UPDATE -->
-    <update id="updateVisit" parameterType="com.example.domain.Visit">
-        UPDATE visit
-        SET
-            visit_date = #{visitDate},
-            hospital = #{hospital},
-            doctor = #{doctor},
-            diagnosis = #{diagnosis},
-            notes = #{notes},
-            total_cost = #{totalCost}
-        WHERE id = #{id}
-    </update>
+	<!-- UPDATE -->
+	<!-- [수정] VO 패키지 경로 교정 -->
+	<update id="updateVisit"
+		parameterType="com.example.RSW.vo.Visit">
+		UPDATE visit
+		SET
+		visit_date = #{visitDate},
+		hospital = #{hospital},
+		doctor = #{doctor},
+		diagnosis = #{diagnosis},
+		notes = #{notes},
+		total_cost = #{totalCost}
+		WHERE id = #{id}
+	</update>
 
-    <!-- DELETE -->
-    <delete id="deleteVisit" parameterType="int">
-        DELETE FROM visit
-        WHERE id = #{id}
-    </delete>
+	<!-- DELETE -->
+	<delete id="deleteVisit" parameterType="int">
+		DELETE FROM visit
+		WHERE id = #{id}
+	</delete>
 
-    <!-- SELECT: petId로 조회 -->
-    <select id="selectVisitsByPetId" parameterType="int" resultType="com.example.domain.Visit">
-        SELECT *
-        FROM visit
-        WHERE pet_id = #{petId}
-        ORDER BY visit_date DESC
-    </select>
+	<!-- SELECT: petId로 조회 -->
+	<!-- [수정] resultType 패키지 경로 교정 -->
+	<select id="selectVisitsByPetId" parameterType="int"
+		resultType="com.example.RSW.vo.Visit">
+		SELECT *
+		FROM visit
+		WHERE pet_id = #{petId}
+		ORDER BY visit_date DESC
+	</select>
 
 </mapper>
