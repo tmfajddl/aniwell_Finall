@@ -160,8 +160,6 @@
 		}
 
 		document.getElementById("loginButton").classList.add("hidden");
-
-		const memberId = localStorage.getItem("loginedMember");
 		if (!memberId) return;
 
 		$.get("/api/member/getUsrInfo", {memberId})
@@ -189,8 +187,6 @@
 
 	<script>
 		gsap.registerPlugin(ScrollTrigger);
-
-		ScrollTrigger.defaults({markers: true});
 
 		// section-top의 하단이 뷰포트 하단에 닿는 지점부터 200px 스크롤 구간 동안
 		// #sectionMiddle의 margin-top을 0 -> -80px로 보간
@@ -241,14 +237,15 @@
 		const tl3 = gsap.timeline({
 		  scrollTrigger: {
 		    trigger: "#sec3",                // 세션 루트
-		    start: "top top",                // 세션 시작과 동시에
+		    start: "top  top",                // 세션 시작과 동시에
 		    end: () => "+=" + window.innerHeight * 2, // 2뷰포트 길이 만큼 진행
 		    scrub: true,
 		    pin: true,             // ✅ 자식만 고정
 		    pinSpacing: true,               // ✅ pinSpacer 생성 안 함 (부모 레이아웃 안 흔들림)
 		    anticipatePin: 1,
 		    invalidateOnRefresh: true,
-		    // markers: true,
+		    markers: true,
+			id: "sec3", 
 		  }
 		});
 		tl3.fromTo(".sec3-layer",
