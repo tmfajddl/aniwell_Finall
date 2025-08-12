@@ -3,67 +3,79 @@
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.example.RSW.repository.MedicalDocumentRepository">
+<mapper
+	namespace="com.example.RSW.repository.MedicalDocumentRepository">
 
+	<!-- 공통 컬럼 매핑 -->
+	<!-- [수정] VO 실제 패키지로 교정: com.example.domain → com.example.RSW.vo -->
+	<resultMap id="MedicalDocumentMap"
+		type="com.example.RSW.vo.MedicalDocument">
+		<id property="id" column="id" />
+		<result property="visitId" column="visit_id" />
+		<result property="docType" column="doc_type" />
+		<result property="fileUrl" column="file_url" />
+		<result property="ocrJson" column="ocr_json" />
+		<result property="createdAt" column="created_at" />
+	</resultMap>
 
-    <!-- 공통 컬럼 매핑 -->
-    <resultMap id="MedicalDocumentMap" type="com.example.domain.MedicalDocument">
-        <id     property="id"        column="id"/>
-        <result property="visitId"   column="visit_id"/>
-        <result property="docType"   column="doc_type"/>
-        <result property="fileUrl"   column="file_url"/>
-        <result property="ocrJson"   column="ocr_json"/>
-        <result property="createdAt" column="created_at"/>
-    </resultMap>
+	<!-- INSERT -->
+	<!-- [수정] parameterType 패키지 교정 -->
+	<insert id="insertDocument"
+		parameterType="com.example.RSW.vo.MedicalDocument"
+		useGeneratedKeys="true" keyProperty="id">
+		INSERT INTO medical_document
+		(visit_id, doc_type, file_url, ocr_json)
+		VALUES
+		(#{visitId}, #{docType}, #{fileUrl}, #{ocrJson})
+	</insert>
 
-    <!-- INSERT -->
-    <insert id="insertDocument" parameterType="com.example.domain.MedicalDocument"
-            useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO medical_document
-            (visit_id, doc_type, file_url, ocr_json)
-        VALUES
-            (#{visitId}, #{docType}, #{fileUrl}, #{ocrJson})
-    </insert>
+	<!-- UPDATE (부분 수정 지원) -->
+	<!-- [수정] parameterType 패키지 교정 -->
+	<update id="updateDocument"
+		parameterType="com.example.RSW.vo.MedicalDocument">
+		UPDATE medical_document
+		<set>
+			<if test="visitId != null">visit_id = #{visitId},</if>
+			<if test="docType != null and docType != ''">doc_type = #{docType},</if>
+			<if test="fileUrl != null and fileUrl != ''">file_url = #{fileUrl},</if>
+			<if test="ocrJson != null">ocr_json = #{ocrJson},</if>
+		</set>
+		WHERE id = #{id}
+	</update>
 
-    <!-- UPDATE (부분 수정 지원) -->
-    <update id="updateDocument" parameterType="com.example.domain.MedicalDocument">
-        UPDATE medical_document
-        <set>
-            <if test="visitId != null">visit_id = #{visitId},</if>
-            <if test="docType != null and docType != ''">doc_type = #{docType},</if>
-            <if test="fileUrl != null and fileUrl != ''">file_url = #{fileUrl},</if>
-            <if test="ocrJson != null">ocr_json = #{ocrJson},</if>
-        </set>
-        WHERE id = #{id}
-    </update>
+	<!-- DELETE -->
+	<delete id="deleteDocument" parameterType="int">
+		DELETE FROM medical_document WHERE id = #{id}
+	</delete>
 
-    <!-- DELETE -->
-    <delete id="deleteDocument" parameterType="int">
-        DELETE FROM medical_document WHERE id = #{id}
-    </delete>
+	<!-- SELECT 단건 -->
+	<select id="selectById" parameterType="int"
+		resultMap="MedicalDocumentMap">
+		SELECT id, visit_id, doc_type, file_url, ocr_json, created_at
+		FROM medical_document
+		WHERE id = #{id}
+	</select>
 
-    <!-- SELECT 단건 -->
-    <select id="selectById" parameterType="int" resultMap="MedicalDocumentMap">
-        SELECT id, visit_id, doc_type, file_url, ocr_json, created_at
-        FROM medical_document
-        WHERE id = #{id}
-    </select>
+	<!-- SELECT: visitId로 -->
+	<!-- ⚠ 안내: Mapper 인터페이스에서 @Param("visitId") 사용 권장(단일 int 파라미터 이름 바인딩 보장) -->
+	<select id="selectByVisitId" parameterType="int"
+		resultMap="MedicalDocumentMap">
+		SELECT id, visit_id, doc_type, file_url, ocr_json, created_at
+		FROM medical_document
+		WHERE visit_id = #{visitId}
+		ORDER BY created_at DESC
+	</select>
 
-    <!-- SELECT: visitId로 -->
-    <select id="selectByVisitId" parameterType="int" resultMap="MedicalDocumentMap">
-        SELECT id, visit_id, doc_type, file_url, ocr_json, created_at
-        FROM medical_document
-        WHERE visit_id = #{visitId}
-        ORDER BY created_at DESC
-    </select>
-
-    <!-- SELECT: petId로 (visit 조인) -->
-    <select id="selectByPetId" parameterType="int" resultMap="MedicalDocumentMap">
-        SELECT md.id, md.visit_id, md.doc_type, md.file_url, md.ocr_json, md.created_at
-        FROM medical_document md
-                 JOIN visit v ON v.id = md.visit_id
-        WHERE v.pet_id = #{petId}
-        ORDER BY v.visit_date DESC, md.created_at DESC
-    </select>
+	<!-- SELECT: petId로 (visit 조인) -->
+	<!-- ⚠ 안내: Mapper 인터페이스에서 @Param("petId") 사용 권장 -->
+	<select id="selectByPetId" parameterType="int"
+		resultMap="MedicalDocumentMap">
+		SELECT md.id, md.visit_id, md.doc_type, md.file_url, md.ocr_json,
+		md.created_at
+		FROM medical_document md
+		JOIN visit v ON v.id = md.visit_id
+		WHERE v.pet_id = #{petId}
+		ORDER BY v.visit_date DESC, md.created_at DESC
+	</select>
 
 </mapper>
