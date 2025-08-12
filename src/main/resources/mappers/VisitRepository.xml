@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.RSW.repository.VisitRepository">
+
+    <!-- INSERT -->
+    <insert id="insertVisit" parameterType="com.example.domain.Visit">
+        INSERT INTO visit
+            (pet_id, visit_date, hospital, doctor, diagnosis, notes, total_cost)
+        VALUES
+            (#{petId}, #{visitDate}, #{hospital}, #{doctor}, #{diagnosis}, #{notes}, #{totalCost})
+    </insert>
+
+    <!-- UPDATE -->
+    <update id="updateVisit" parameterType="com.example.domain.Visit">
+        UPDATE visit
+        SET
+            visit_date = #{visitDate},
+            hospital = #{hospital},
+            doctor = #{doctor},
+            diagnosis = #{diagnosis},
+            notes = #{notes},
+            total_cost = #{totalCost}
+        WHERE id = #{id}
+    </update>
+
+    <!-- DELETE -->
+    <delete id="deleteVisit" parameterType="int">
+        DELETE FROM visit
+        WHERE id = #{id}
+    </delete>
+
+    <!-- SELECT: petId로 조회 -->
+    <select id="selectVisitsByPetId" parameterType="int" resultType="com.example.domain.Visit">
+        SELECT *
+        FROM visit
+        WHERE pet_id = #{petId}
+        ORDER BY visit_date DESC
+    </select>
+
+</mapper>
