@@ -80,3 +80,6 @@ naver:
   client-secret: "pJh4IlGi2_"
   redirect-uri: "http://localhost:8080/usr/member/naver"
 
+# ✅ [추가] 없으면 기본값 DOCUMENT_TEXT_DETECTION 사용
+gcv:
+  ocrMode: DOCUMENT_TEXT_DETECTION   # TEXT_DETECTION | DOCUMENT_TEXT_DETECTION

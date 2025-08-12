@@ -240,6 +240,19 @@
 			<artifactId>spring-session-data-redis</artifactId>
 		</dependency>
 
+<!-- ✅ [추가] OCR(Tess4J). 서버에서 이미지 인식 -->
+<dependency>
+  <groupId>net.sourceforge.tess4j</groupId>
+  <artifactId>tess4j</artifactId>
+  <version>5.11.0</version> <!-- 서버 JDK 17+/Spring Boot 3.x 호환 -->
+</dependency>
+
+<!-- ✅ [추가] Google Cloud Vision Java 클라이언트 -->
+<dependency>
+  <groupId>com.google.cloud</groupId>
+  <artifactId>google-cloud-vision</artifactId>
+  <version>3.69.0</version>
+</dependency>
 
 	</dependencies>
 
