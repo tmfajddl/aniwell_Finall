@@ -75,6 +75,21 @@ public class UsrMemberController {
     @Autowired
     private RedisTemplate<String, String> redisTemplate;
 
+    // 허용 도메인
+    private static final java.util.Set<String> ALLOWED_EMAIL_DOMAINS =
+            new java.util.HashSet<>(java.util.Arrays.asList(
+                    "naver.com", "gmail.com", "daum.net", "hanmail.net", "nate.com", "aniwell.com", "example.com"
+            ));
+
+    private static boolean isAllowedEmailDomain(String email) {
+        if (email == null) return false;
+        int at = email.lastIndexOf('@');
+        if (at < 0) return false;
+        String domain = email.substring(at + 1).toLowerCase();
+        return ALLOWED_EMAIL_DOMAINS.contains(domain);
+    }
+
+
     @RequestMapping("/usr/member/doLogout")
     public String doLogout(HttpServletRequest req) {
 
@@ -170,13 +185,13 @@ public class UsrMemberController {
             return ResultData.from("F-5", "탈퇴한 회원입니다.");
         }
 
-        // ✅ Spring Security 인증 등록
+        // Spring Security 인증 등록
         CustomUserDetails userDetails = new CustomUserDetails(member);
         UsernamePasswordAuthenticationToken authentication =
                 new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        // ✅ 세션에 Spring Security Context 저장
+        // 세션에 Spring Security Context 저장
         req.getSession().setAttribute("SPRING_SECURITY_CONTEXT", SecurityContextHolder.getContext());
 
         // 기존 rq.login 유지 (세션 기반 호환성)
@@ -232,6 +247,12 @@ public class UsrMemberController {
             return Ut.jsHistoryBack("F-8", "인증명을 입력해");
         }
 
+        // 이메일 정규화 + 형식/도메인 체크
+        String normEmail = normalizeEmail(email);
+        if (!isValidEmail(normEmail) || !isAllowedEmailDomain(normEmail)) {
+            return Ut.jsHistoryBack("F-6", "이메일 형식이 올바르지 않습니다.");
+        }
+
         // 비밀번호 해시화
         String hashedLoginPw = Ut.sha256(loginPw);
 
@@ -239,7 +260,7 @@ public class UsrMemberController {
         int fixedAuthLevel = 1;
 
         // 회원가입 처리
-        ResultData joinRd = memberService.join(loginId, hashedLoginPw, name, nickname, cellphone, email, address, authName, fixedAuthLevel);
+        ResultData joinRd = memberService.join(loginId, hashedLoginPw, name, nickname, cellphone, normEmail, address, authName, fixedAuthLevel);
 
         if (joinRd.isFail()) {
             return Ut.jsHistoryBack(joinRd.getResultCode(), joinRd.getMsg());
@@ -334,6 +355,9 @@ public class UsrMemberController {
         if (!isValidEmail(normEmail)) {
             return Ut.jsHistoryBack("F-6", "이메일 형식이 올바르지 않습니다.");
         }
+        if (!isAllowedEmailDomain(normEmail)) {
+            return Ut.jsHistoryBack("F-6", "이메일 형식이 올바르지 않습니다.");
+        }
         if (!normCellphone.matches("^(010\\d{8}|01[16789]\\d{7})$")) {
             return Ut.jsHistoryBack("F-5", "전화번호 형식이 올바르지 않습니다.");
         }
@@ -411,6 +435,10 @@ public class UsrMemberController {
         // ✅ 정규화 + 형식검증
         String normEmail = normalizeEmail(email);
         if (!isValidEmail(normEmail)) {
+            return ResultData.from("F-3", "이메일 형식이 올바르지 않습니다.", "email", normEmail);
+        }
+
+        if (!isAllowedEmailDomain(normEmail)) {
             return ResultData.from("F-3", "이메일 형식이 올바르지 않습니다.", "email", normEmail);
         }
 
