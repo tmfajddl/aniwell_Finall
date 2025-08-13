@@ -3,97 +3,118 @@
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.example.RSW.repository.LabResultDetailRepository">
-    <!-- 공통 매핑 -->
-    <resultMap id="LabResultDetailMap" type="com.example.domain.LabResultDetail">
-        <id     property="id"          column="id"/>
-        <result property="documentId"  column="document_id"/>
-        <result property="testName"    column="test_name"/>
-        <result property="resultValue" column="result_value"/>
-        <result property="unit"        column="unit"/>
-        <result property="refLow"      column="ref_low"/>
-        <result property="refHigh"     column="ref_high"/>
-        <result property="flag"        column="flag"/>
-        <result property="notes"       column="notes"/>
-    </resultMap>
 
-    <!-- INSERT (단건) -->
-    <insert id="insert" parameterType="com.example.domain.LabResultDetail"
-            useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO lab_result_detail
-        (document_id, test_name, result_value, unit, ref_low, ref_high, flag, notes)
-        VALUES
-            (#{documentId}, #{testName}, #{resultValue}, #{unit},
-             #{refLow}, #{refHigh}, #{flag}, #{notes})
-    </insert>
+<mapper
+	namespace="com.example.RSW.repository.LabResultDetailRepository">
 
-    <!-- INSERT (배치) -->
-    <insert id="insertBatch">
-        INSERT INTO lab_result_detail
-        (document_id, test_name, result_value, unit, ref_low, ref_high, flag, notes)
-        VALUES
-        <foreach collection="list" item="r" separator=",">
-            (#{r.documentId}, #{r.testName}, #{r.resultValue}, #{r.unit},
-            #{r.refLow}, #{r.refHigh}, #{r.flag}, #{r.notes})
-        </foreach>
-    </insert>
+	<!-- 공통 매핑 -->
+	<!-- [수정] type 패키지 경로 교정: com.example.domain → com.example.RSW.vo -->
+	<resultMap id="LabResultDetailMap"
+		type="com.example.RSW.vo.LabResultDetail">
+		<id property="id" column="id" />
+		<result property="documentId" column="document_id" />
+		<result property="testName" column="test_name" />
+		<result property="resultValue" column="result_value" />
+		<result property="unit" column="unit" />
+		<result property="refLow" column="ref_low" />
+		<result property="refHigh" column="ref_high" />
+		<result property="flag" column="flag" />
+		<result property="notes" column="notes" />
+	</resultMap>
 
-    <!-- UPDATE -->
-    <update id="update" parameterType="com.example.domain.LabResultDetail">
-        UPDATE lab_result_detail
-        <set>
-            <if test="documentId  != null">document_id  = #{documentId},</if>
-            <if test="testName    != null and testName != ''">test_name = #{testName},</if>
-            <if test="resultValue != null">result_value = #{resultValue},</if>
-            <if test="unit       != null and unit != ''">unit = #{unit},</if>
-            <if test="refLow     != null">ref_low = #{refLow},</if>
-            <if test="refHigh    != null">ref_high = #{refHigh},</if>
-            <if test="flag       != null and flag != ''">flag = #{flag},</if>
-            <if test="notes      != null">notes = #{notes}</if>
-        </set>
-        WHERE id = #{id}
-    </update>
+	<!-- INSERT (단건) -->
+	<!-- [수정] parameterType 패키지 경로 교정 -->
+	<insert id="insert"
+		parameterType="com.example.RSW.vo.LabResultDetail"
+		useGeneratedKeys="true" keyProperty="id">
+		INSERT INTO lab_result_detail
+		(document_id, test_name, result_value, unit, ref_low, ref_high, flag, notes)
+		VALUES
+		(#{documentId}, #{testName}, #{resultValue}, #{unit},
+		#{refLow}, #{refHigh}, #{flag}, #{notes})
+	</insert>
 
-    <!-- DELETE -->
-    <delete id="delete" parameterType="int">
-        DELETE FROM lab_result_detail WHERE id = #{id}
-    </delete>
 
-    <!-- SELECT: 단건 -->
-    <select id="selectById" parameterType="int" resultMap="LabResultDetailMap">
-        SELECT id, document_id, test_name, result_value, unit, ref_low, ref_high, flag, notes
-        FROM lab_result_detail
-        WHERE id = #{id}
-    </select>
+	<!-- INSERT (배치) -->
+	<!-- (배치는 collection=list 를 사용하므로 parameterType 생략 OK) -->
+	<insert id="insertBatch">
+		INSERT INTO lab_result_detail
+		(document_id, test_name, result_value, unit, ref_low, ref_high, flag, notes)
+		VALUES
+		<foreach collection="list" item="r" separator=",">
+			(#{r.documentId}, #{r.testName}, #{r.resultValue}, #{r.unit},
+			#{r.refLow}, #{r.refHigh}, #{r.flag}, #{r.notes})
+		</foreach>
+	</insert>
 
-    <!-- SELECT: 문서ID로 (검사결과지 1장에 여러 항목) -->
-    <select id="selectByDocumentId" parameterType="int" resultMap="LabResultDetailMap">
-        SELECT id, document_id, test_name, result_value, unit, ref_low, ref_high, flag, notes
-        FROM lab_result_detail
-        WHERE document_id = #{documentId}
-        ORDER BY id ASC
-    </select>
 
-    <!-- SELECT: 방문ID로 (medical_document JOIN) -->
-    <select id="selectByVisitId" parameterType="int" resultMap="LabResultDetailMap">
-        SELECT lrd.id, lrd.document_id, lrd.test_name, lrd.result_value, lrd.unit,
-               lrd.ref_low, lrd.ref_high, lrd.flag, lrd.notes
-        FROM lab_result_detail lrd
-                 JOIN medical_document md ON md.id = lrd.document_id
-        WHERE md.doc_type = 'lab'
-          AND md.visit_id = #{visitId}
-        ORDER BY lrd.id ASC
-    </select>
+	<!-- UPDATE -->
+	<!-- [수정] parameterType 패키지 경로 교정 -->
+	<update id="update"
+		parameterType="com.example.RSW.vo.LabResultDetail">
+		UPDATE lab_result_detail
+		<set>
+			<if test="documentId  != null">document_id = #{documentId},</if>
+			<if test="testName    != null and testName != ''">test_name = #{testName},</if>
+			<if test="resultValue != null">result_value = #{resultValue},</if>
+			<if test="unit       != null and unit != ''">unit = #{unit},</if>
+			<if test="refLow     != null">ref_low = #{refLow},</if>
+			<if test="refHigh    != null">ref_high = #{refHigh},</if>
+			<if test="flag       != null and flag != ''">flag = #{flag},</if>
+			<if test="notes      != null">notes = #{notes}</if>
+		</set>
+		WHERE id = #{id}
+	</update>
 
-    <!-- SELECT: 펫ID로 (visit JOIN) -->
-    <select id="selectByPetId" parameterType="int" resultMap="LabResultDetailMap">
-        SELECT lrd.id, lrd.document_id, lrd.test_name, lrd.result_value, lrd.unit,
-               lrd.ref_low, lrd.ref_high, lrd.flag, lrd.notes
-        FROM lab_result_detail lrd
-                 JOIN medical_document md ON md.id = lrd.document_id
-                 JOIN visit v ON v.id = md.visit_id
-        WHERE md.doc_type = 'lab'
-          AND v.pet_id = #{petId}
-        ORDER BY v.visit_date DESC, lrd.id ASC
-    </select>
+	<!-- DELETE -->
+	<delete id="delete" parameterType="int">
+		DELETE FROM lab_result_detail WHERE id = #{id}
+	</delete>
+
+	<!-- SELECT: 단건 -->
+	<select id="selectById" parameterType="int"
+		resultMap="LabResultDetailMap">
+		SELECT id, document_id, test_name, result_value, unit, ref_low, ref_high,
+		flag, notes
+		FROM lab_result_detail
+		WHERE id = #{id}
+	</select>
+
+	<!-- SELECT: 문서ID로 (검사결과지 1장에 여러 항목) -->
+	<!-- ⚠ 주의: Mapper 인터페이스에서 @Param("documentId") 사용 권장 -->
+	<select id="selectByDocumentId" parameterType="int"
+		resultMap="LabResultDetailMap">
+		SELECT id, document_id, test_name, result_value, unit, ref_low, ref_high,
+		flag, notes
+		FROM lab_result_detail
+		WHERE document_id = #{documentId}
+		ORDER BY id ASC
+	</select>
+
+	<!-- SELECT: 방문ID로 (medical_document JOIN) -->
+	<!-- ⚠ 주의: Mapper 인터페이스에서 @Param("visitId") 사용 권장 -->
+	<select id="selectByVisitId" parameterType="int"
+		resultMap="LabResultDetailMap">
+		SELECT lrd.id, lrd.document_id, lrd.test_name, lrd.result_value, lrd.unit,
+		lrd.ref_low, lrd.ref_high, lrd.flag, lrd.notes
+		FROM lab_result_detail lrd
+		JOIN medical_document md ON md.id = lrd.document_id
+		WHERE md.doc_type = 'lab'
+		AND md.visit_id = #{visitId}
+		ORDER BY lrd.id ASC
+	</select>
+
+	<!-- SELECT: 펫ID로 (visit JOIN) -->
+	<!-- ⚠ 주의: Mapper 인터페이스에서 @Param("petId") 사용 권장 -->
+	<select id="selectByPetId" parameterType="int"
+		resultMap="LabResultDetailMap">
+		SELECT lrd.id, lrd.document_id, lrd.test_name, lrd.result_value, lrd.unit,
+		lrd.ref_low, lrd.ref_high, lrd.flag, lrd.notes
+		FROM lab_result_detail lrd
+		JOIN medical_document md ON md.id = lrd.document_id
+		JOIN visit v ON v.id = md.visit_id
+		WHERE md.doc_type = 'lab'
+		AND v.pet_id = #{petId}
+		ORDER BY v.visit_date DESC, lrd.id ASC
+	</select>
 </mapper>
