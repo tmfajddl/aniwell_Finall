@@ -19,15 +19,51 @@ import java.util.List;
 @Configuration
 public class SecurityConfig {
 
+
+
+    /* ========= 1) API 전용 체인: /api/** =========
+       - 세션 인증 복원 허용(IF_REQUIRED) → 로그인 시 200, 비로그인 시 401
+       - /api/member/**, /api/pet/** 는 인증 필요
+       - 그 외 공개 API가 있으면 /api/public/** 로 두고 permitAll
+       - 로그인 페이지 리다이렉트 없이 401만 반환
+    */
+    @Bean
+    @Order(1)
+    public SecurityFilterChain apiChain(HttpSecurity http) throws Exception {
+        http
+                .securityMatcher("/api/**")
+                .cors(Customizer.withDefaults())
+                .csrf(csrf -> csrf.disable())
+                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers("/api/member/**").authenticated()
+                        .requestMatchers("/api/pet/**").authenticated()
+                        // 공개 API가 필요하면 ↓ 경로로 붙이세요.
+                        .requestMatchers("/api/public/**").permitAll()
+                        .anyRequest().permitAll()
+                )
+                .exceptionHandling(e -> e.authenticationEntryPoint(
+                        new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)
+                ));
+        return http.build();
+    }
+
+    /* ========= 2) 앱 체인: 그 외 전체 =========
+       - 페이지 접근은 기존 정책 유지
+       - /usr/pet/daily/** 만 외부에서 바로 호출 가능하도록 공개(유지)
+    */
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 /* ✅ CORS 켜기 (아래 corsConfigurationSource() 적용) */
                 .cors(Customizer.withDefaults())
                 /* ✅ CSRF 비활성화 (폼로그인은 그대로 유지 가능) */
-                .csrf(csrf -> csrf.disable())
+
 
                 /* 세션 (기존 동작 유지) */
+
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
                         .sessionFixation(sessionFixation -> sessionFixation.none())
@@ -35,6 +71,7 @@ public class SecurityConfig {
 
                 /* iframe 동일 출처 허용 (기존) */
                 .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()))
+
 
                 /* ✅ 인가 규칙 */
                 .authorizeHttpRequests(auth -> auth
@@ -51,12 +88,14 @@ public class SecurityConfig {
                         //.requestMatchers(HttpMethod.DELETE, "/usr/pet/daily/**").permitAll()
                         //.requestMatchers(HttpMethod.GET, "/usr/pet/daily/**").permitAll()
 
+
                         /* 기존 공개 경로들 */
                         .requestMatchers(
                                 "/",
                                 "/usr/home/main",
                                 "/usr/member/login", "/usr/member/doLogin",
                                 "/usr/member/join", "/usr/member/doJoin",
+                                "/usr/member/doFindLoginId", "/usr/member/doFindLoginPw",
                                 "/usr/member/findLoginId", "/usr/member/findLoginPw",
                                 "/usr/member/naver/**", "/usr/member/kakao/**", "/usr/member/google/**",
                                 "/usr/member/social-login",
@@ -69,6 +108,7 @@ public class SecurityConfig {
                                 "/usr/member/getCellphoneDup",
                                 "/favicon.ico" // 파비콘 403 방지
                         ).permitAll()
+
 
                         /* 나머지는 로그인 필요 (기존) */
                         .anyRequest().authenticated()
@@ -99,11 +139,13 @@ public class SecurityConfig {
         return http.build();
     }
 
+
     /* ✅ 공통 CORS: S3(및 필요 오리진)만 정확히 허용해서 /api/** 에 적용 */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration cfg = new CorsConfiguration();
         cfg.setAllowedOrigins(List.of(
+
                 "https://aniwell.s3.ap-northeast-2.amazonaws.com",        // S3 객체 URL(https)
                 "http://aniwell.s3-website.ap-northeast-2.amazonaws.com", // S3 정적 사이트(http, 필요 시)
                 "http://localhost:3001",                                   // 프론트 dev
