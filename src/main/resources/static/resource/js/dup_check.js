@@ -72,7 +72,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-
     // 디바운스(필요 시 사용)
     const debounce = (func, delay = 300) => {
         let timer;
