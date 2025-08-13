@@ -18,6 +18,7 @@
 		<result property="createdAt" column="created_at" />
 	</resultMap>
 
+
 	<!-- INSERT -->
 	<!-- [수정] parameterType 패키지 교정 -->
 	<insert id="insertDocument"
@@ -47,6 +48,7 @@
 	<delete id="deleteDocument" parameterType="int">
 		DELETE FROM medical_document WHERE id = #{id}
 	</delete>
+
 
 	<!-- SELECT 단건 -->
 	<select id="selectById" parameterType="int"

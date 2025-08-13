@@ -5,6 +5,7 @@
 
 <mapper namespace="com.example.RSW.repository.VisitRepository">
 
+
 	<!-- INSERT -->
 	<!-- [수정] VO 패키지 경로: com.example.domain → com.example.RSW.vo -->
 	<insert id="insertVisit"
@@ -31,11 +32,13 @@
 		WHERE id = #{id}
 	</update>
 
+
 	<!-- DELETE -->
 	<delete id="deleteVisit" parameterType="int">
 		DELETE FROM visit
 		WHERE id = #{id}
 	</delete>
+
 
 	<!-- SELECT: petId로 조회 -->
 	<!-- [수정] resultType 패키지 경로 교정 -->
