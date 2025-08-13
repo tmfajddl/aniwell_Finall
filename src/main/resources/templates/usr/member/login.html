@@ -14,6 +14,16 @@
             transition: transform 0.3s ease;
         }
 
+        /* 검증 실패/차단 복구 시 전환 잠시 끄기 */
+        .form-panel-slide.no-anim { transition: none !important; }
+
+        /* 가로 흔들림 방지(선택) */
+        html, body { overflow-x: hidden; }
+        html { scrollbar-gutter: stable; }
+
+        /* 세로 스크롤바 공간을 항상 확보 → 경고 문구 표시 시 좌우 '툭' 방지 */
+        body { overflow-y: scroll; }
+
         .form-step {
             width: 100%;
             padding: 1rem;
@@ -143,13 +153,13 @@
                 <div class="form-panel-slide transition-transform duration-500 w-[200%] h-full py-4"
                      id="slide-panel">
                     <!-- STEP 1 -->
-
                     <div class="relative overflow-hidden py-12 content-center form-step w-1/2 flex flex-col self-start h-full"
                          id="step1">
 
                         <label class="form-wrapper__label" for="loginId">아이디</label>
                         <input class="form-wrapper__input" id="loginId" name="loginId" type="text" required
                                placeholder="ID" th:value="${param.loginId}"/>
+                        <p id="idWarning" class="block text-xs text-red-600 mt-1 hidden"></p>
 
                         <label class="form-wrapper__label" for="loginPw">비밀번호</label>
                         <div class="mb-2">
@@ -188,9 +198,10 @@
                         <label class="form-wrapper__label" for="nickname">닉네임</label>
                         <input class="form-wrapper__input" id="nickname" name="nickname" type="text" required
                                placeholder="NICKNAME" th:value="${param.nickname}"/>
+                        <p id="nicknameWarning" class="block text-xs text-red-600 mt-1 hidden"></p>
 
                         <button type="button" class="z-10 top-46 buttons__signup buttons__signup--sign-up-form "
-                                onclick="goToStep(2)">다음
+                                onclick="tryGoNextFromStep1()">다음
                         </button>
                     </div>
                     <!-- STEP 2 -->
@@ -201,10 +212,12 @@
                         <label class="form-wrapper__label" for="cellphone">전화번호</label>
                         <input class="form-wrapper__input" id="cellphone" name="cellphone" type="text" required
                                placeholder="PHONE NUMBER" th:value="${param.cellphone}"/>
+                        <p id="cellphoneWarning" class="block text-xs text-red-600 mt-1 hidden"></p>
 
                         <label class="form-wrapper__label" for="email">이메일</label>
                         <input class="form-wrapper__input" id="email" name="email" type="email" required
                                placeholder="EMAIL" th:value="${param.email}"/>
+                        <p id="emailWarning" class="block text-xs text-red-600 mt-1 hidden"></p>
 
                         <label class="form-wrapper__label" for="address">주소</label>
                         <div class="flex gap-2">
@@ -241,8 +254,136 @@
 
 <script src="https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
 <script th:src="@{/resource/js/login_join.js}"></script>
+<script th:src="@{/resource/js/validate_pw.js}"></script>
+
 <script>
+    // 보이는 경고문인지 판별
+    function isShown(el){
+        return !!el && !el.classList.contains('hidden');
+    }
+
+    // 슬라이드 애니메이션 1회 비활성화
+    function disableSlideOnce(){
+        const slide = document.querySelector('.form-panel-slide');
+        if (!slide) return;
+
+        // 1) 전환 완전 OFF
+        slide.classList.add('no-anim');      // 클래스 레벨
+        const prevTransition = slide.style.transition;
+        slide.style.transition = 'none';     // 인라인(최우선)
+
+        // 2) 위치 강제 복구
+        slide.style.transform = 'translateX(0)';
+
+        // 3) 강제로 reflow → 현재 프레임에서 전환 확정 중단
+        void slide.offsetHeight;
+
+        // 4) 다음 프레임에 전환 복구
+        requestAnimationFrame(() => {
+            setTimeout(() => {
+                slide.style.transition = prevTransition || ''; // 인라인 복구
+                slide.classList.remove('no-anim');             // 클래스 복구
+            }, 120);
+        });
+    }
+
+    // step1 전용 검증 (빈칸 + 빨간만 에러로 처리)
+    function validateStep1(){
+        const form = document.querySelector('.login-form--register form');
+        if (!form) return { ok:false };
+
+        // step1 필수만
+        const fields = ['loginId','loginPw','loginPwConfirm','name','nickname'];
+        let firstError = null;
+
+        // 1) 빈칸 체크
+        for (const id of fields){
+            const el = form.querySelector('#' + id);
+            if (el && el.value.trim() === ''){
+                firstError = el;
+                break;
+            }
+        }
+
+        // 2) 빨간 테두리 있으면 에러
+        if (!firstError){
+            const redInput = form.querySelector('#step1 input.border-red-500');
+            if (redInput) firstError = redInput;
+        }
+
+        // 3) 경고 텍스트 중 '빨간'만 에러 처리 (성공=초록은 통과)
+        if (!firstError){
+            const warns = [
+                { id:'idWarning',       focus:'#loginId' },
+                { id:'nicknameWarning', focus:'#nickname' },
+                { id:'pwWarning',       focus:'#loginPw' },
+                { id:'pwMessage',       focus:'#loginPwConfirm' }, // 불일치
+            ];
+            for (const {id, focus} of warns){
+                const w = form.querySelector('#' + id);
+                if (!w || w.classList.contains('hidden')) continue;
+                if (w.classList.contains('text-red-600')) {
+                    firstError = form.querySelector(focus) || w;
+                    break;
+                }
+            }
+        }
+
+        return { ok: !firstError, firstError };
+    }
+
+    // step1 빈칸들을 빨간 테두리로 표시, 첫 빈 칸을 리턴
+    function highlightEmptyStep1() {
+        const form = document.querySelector('.login-form--register form');
+        const ids = ['loginId','loginPw','loginPwConfirm','name','nickname'];
+        let first = null;
+
+        ids.forEach(id => {
+            const el = form.querySelector('#' + id);
+            if (!el) return;
+            const empty = el.value.trim() === '';
+            // 빨간/초록 초기화는 하지 않고, "빈칸이면"만 빨간 추가
+            if (empty) {
+                el.classList.add('border-red-500');
+                el.classList.remove('border-green-500');
+                if (!first) first = el;
+            } else {
+                // 값이 생겼으면 빨간 제거(초록/중립은 그대로 유지)
+                el.classList.remove('border-red-500');
+            }
+        });
+
+        return first;
+    }
+
+
+    // 통합 진입점: 통과 시에만 다음 단계
+    function tryGoNextFromStep1(){
+        const { ok, firstError } = validateStep1();
+        if (!ok){
+            const firstEmpty = highlightEmptyStep1();   // 빈 칸 빨간 줄 표시
+            _blockSlideOnce = true; // ✅ 이 프레임에서 모든 goToStep 호출 차단
+            disableSlideOnce();     // 애니메이션 끄기 + 위치 복구
+
+            const slide = document.querySelector('.form-panel-slide');
+            if (slide) slide.style.transform = 'translateX(0)';
+
+            if (firstError) firstError.focus({ preventScroll: true });
+            (firstEmpty || firstError)?.focus({ preventScroll: true });
+            // 120ms 뒤 차단 해제
+            setTimeout(() => { _blockSlideOnce = false; }, 120);
+            return;
+        }
+        goToStep(2); // 통과 시 정상 이동
+    }
+
+</script>
+
+<script>
+    let _blockSlideOnce = false;
+
     function goToStep(step) {
+        if (_blockSlideOnce) return;    // 차단 중이면 아무것도 안 함
         currentStep = step;
         const slide = document.querySelector('.form-panel-slide');
         slide.style.transform = `translateX(${step === 1 ? '0' : '-50%'})`;
@@ -258,6 +399,7 @@
     let startX = 0, isDragging = false;
 
     panel.addEventListener('mousedown', (e) => {
+        if (e.target.closest('#step1 .buttons__signup--sign-up-form')) return;
         startX = e.clientX;
         isDragging = true;
     });
@@ -265,13 +407,14 @@
     panel.addEventListener('mouseup', (e) => {
         if (!isDragging) return;
         const deltaX = e.clientX - startX;
-        if (deltaX < -50 && currentStep === 1) goToStep(2);
+        if (deltaX < -50 && currentStep === 1) tryGoNextFromStep1();
         else if (deltaX > 50 && currentStep === 2) goToStep(1);
         isDragging = false;
     });
 
     // 모바일 터치
     panel.addEventListener('touchstart', (e) => {
+        if (e.target.closest('#step1 .buttons__signup--sign-up-form')) return;
         startX = e.touches[0].clientX;
         isDragging = true;
     });
@@ -280,7 +423,7 @@
         if (!isDragging) return;
         const endX = e.changedTouches[0].clientX;
         const deltaX = endX - startX;
-        if (deltaX < -50 && currentStep === 1) goToStep(2);
+        if (deltaX < -50 && currentStep === 1) tryGoNextFromStep1();
         else if (deltaX > 50 && currentStep === 2) goToStep(1);
         isDragging = false;
     });
@@ -291,12 +434,13 @@
     }
 
     function validateForm() {
-        const phone = document.querySelector('[name="cellphone"]');
-        const phonePattern = /^\d{3}-\d{3,4}-\d{4}$/;
-        if (!phonePattern.test(phone.value)) {
-            alert("전화번호 형식이 올바르지 않습니다. 예: 000-0000-0000");
-            return false;
-        }
+        // dup_check.js에 추가함
+        // const phone = document.querySelector('[name="cellphone"]');
+        // const phonePattern = /^\d{3}-\d{3,4}-\d{4}$/;
+        // if (!phonePattern.test(phone.value)) {
+        //     alert("전화번호 형식이 올바르지 않습니다. 예: 000-0000-0000");
+        //     return false;
+        // }
 
         const addressInput = document.getElementById("address");
         console.log("🚨 address.value:", addressInput?.value);
@@ -310,11 +454,19 @@
 
     // step1에서 Enter 키로 다음 단계 이동
     document.addEventListener('DOMContentLoaded', function () {
+        // "다음" 버튼에서 시작되는 드래그/터치가 스와이프로 인식되지 않게 막기
+        const nextBtn = document.querySelector('#step1 .buttons__signup--sign-up-form');
+        if (nextBtn) {
+            ['mousedown','touchstart'].forEach(evt => {
+                nextBtn.addEventListener(evt, e => e.stopPropagation());
+            });
+        }
+
         document.querySelectorAll('#step1 input').forEach(input => {
             input.addEventListener('keydown', function (e) {
                 if (e.key === 'Enter') {
                     e.preventDefault();
-                    goToStep(2);
+                    tryGoNextFromStep1(); // 검증 후 step2로 이동
                 }
             });
         });
@@ -334,113 +486,6 @@
             }
             e.target.value = result;
         });
-    });
-</script>
-<script>
-    document.addEventListener("DOMContentLoaded", () => {
-        // ✅ 회원가입 폼 선택
-        const joinForm = document.querySelector('.login-form--register form');
-        if (!joinForm) return;
-
-        const pwInput = joinForm.querySelector("#loginPw");
-        const pwConfirmInput = joinForm.querySelector("#loginPwConfirm");
-        const pwMessage = joinForm.querySelector("#pwMessage");
-        const pwWarning = joinForm.querySelector("#pwWarning");
-
-        // 정규식
-        const pwRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>])[A-Za-z\d!@#$%^&*(),.?":{}|<>]{8,16}$/;
-        const sequentialRegex = /(012|123|234|345|456|567|678|789|890)/;
-
-        // ✅ 비밀번호 실시간 유효성 검사
-        pwInput.addEventListener("input", () => {
-            const pw = pwInput.value.trim();
-            pwInput.classList.remove("border-red-500", "border-green-500");
-            pwWarning.classList.add("hidden");
-            pwWarning.textContent = "";
-            pwWarning.classList.remove("text-red-600", "text-green-600");
-
-            if (pw === "") return;
-
-            if (!pwRegex.test(pw)) {
-                pwInput.classList.add("border-red-500");
-                if (pw.length < 8 || pw.length > 16) {
-                    pwWarning.textContent = "비밀번호는 8자리 이상 16자리 이하로 입력해주세요.";
-                } else if (!/[A-Za-z]/.test(pw)) {
-                    pwWarning.textContent = "영문자가 포함되어야 합니다.";
-                } else if (!/\d/.test(pw)) {
-                    pwWarning.textContent = "숫자가 포함되어야 합니다.";
-                } else if (!/[!@#$%^&*(),.?\":{}|<>]/.test(pw)) {
-                    pwWarning.textContent = "특수문자가 포함되어야 합니다.";
-                }
-                pwWarning.classList.add("text-red-600");
-                pwWarning.classList.remove("hidden");
-                return;
-            }
-
-            if (sequentialRegex.test(pw)) {
-                pwInput.classList.add("border-red-500");
-                pwWarning.textContent = "연속된 숫자는 사용할 수 없습니다.";
-                pwWarning.classList.add("text-red-600");
-                pwWarning.classList.remove("hidden");
-                return;
-            }
-
-            pwInput.classList.add("border-green-500");
-            pwWarning.textContent = "사용 가능한 비밀번호입니다.";
-            pwWarning.classList.add("text-green-600");
-            pwWarning.classList.remove("hidden");
-        });
-
-        // ✅ 비밀번호 확인 (일치 여부만)
-        function checkPasswordMatch() {
-            const pw = pwInput.value.trim();
-            const pwConfirm = pwConfirmInput.value.trim();
-
-            pwConfirmInput.classList.remove("border-red-500", "border-green-500");
-            pwMessage.classList.add("hidden");
-            pwMessage.textContent = "";
-            pwMessage.classList.remove("text-red-600", "text-green-600");
-
-            if (pwConfirm === "") return;
-
-            if (pw === pwConfirm) {
-                pwConfirmInput.classList.add("border-green-500");
-                pwMessage.textContent = "비밀번호가 일치합니다.";
-                pwMessage.classList.add("text-green-600");
-                pwMessage.classList.remove("hidden");
-            } else {
-                pwConfirmInput.classList.add("border-red-500");
-                pwMessage.textContent = "비밀번호가 일치하지 않습니다.";
-                pwMessage.classList.add("text-red-600");
-                pwMessage.classList.remove("hidden");
-            }
-        }
-
-        pwInput.addEventListener("keyup", checkPasswordMatch);
-        pwConfirmInput.addEventListener("keyup", checkPasswordMatch);
-
-        // ✅ 비밀번호 보기 토글
-        function togglePassword(input, btn, openIcon, closedIcon) {
-            btn.addEventListener("click", () => {
-                const isPw = input.type === "password";
-                input.type = isPw ? "text" : "password";
-                openIcon.classList.toggle("hidden", !isPw);
-                closedIcon.classList.toggle("hidden", isPw);
-            });
-        }
-
-        togglePassword(
-            pwInput,
-            joinForm.querySelector("#togglePw"),
-            joinForm.querySelector("#iconOpenPw"),
-            joinForm.querySelector("#iconClosedPw")
-        );
-        togglePassword(
-            pwConfirmInput,
-            joinForm.querySelector("#togglePwConfirm"),
-            joinForm.querySelector("#iconOpenPwConfirm"),
-            joinForm.querySelector("#iconClosedPwConfirm")
-        );
     });
 </script>
 
@@ -671,5 +716,7 @@
         if (urlParams.get("social") === "1") processLogin();
     });
 </script>
+<script th:src="@{/resource/js/dup_check.js}"></script>
 
 </body>
+</html>
