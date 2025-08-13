@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Aniwell QR Report</title>
+  <style>
+    :root{
+      --bg:#FFF8F3; --card:#fff; --accent:#FFC4C4; --ok:#16a34a; --down:#ef4444; --muted:#6b7280; --border:#ececec;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);font-family:system-ui,apple sd gothic neo,Segoe UI,sans-serif;display:flex;justify-content:center}
+    .wrap{max-width:980px;width:100%;padding:24px 16px;display:grid;gap:16px}
+    .pill{display:inline-block;background:var(--accent);padding:6px 12px;border-radius:999px;font-size:12px}
+    h1{margin:10px 0 0}
+    .card{background:var(--card);border-radius:18px;box-shadow:0 10px 24px rgba(0,0,0,.06);padding:20px}
+    .hero{display:flex;gap:18px;align-items:center}
+    .hero img{width:110px;height:110px;border-radius:16px;object-fit:cover;border:6px solid #fff;box-shadow:0 6px 18px rgba(0,0,0,.08)}
+    .kv{display:grid;grid-template-columns:110px 1fr;gap:6px 12px;font-size:14px}
+    .muted{color:var(--muted)}
+    .stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+    .stat{border:1px solid var(--border);border-radius:14px;padding:14px}
+    .row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+    .delta.up{color:var(--ok)} .delta.down{color:var(--down)} .delta.same{color:var(--muted)}
+    .delta b{font-weight:700}
+    .cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+    .visit{border:1px solid var(--border);border-radius:14px;padding:14px;display:grid;gap:8px}
+    .btn{appearance:none;border:1px solid var(--border);background:#fff;border-radius:10px;padding:8px 12px;cursor:pointer}
+    .btn:hover{box-shadow:0 6px 16px rgba(0,0,0,.06)}
+    .detail{border-top:1px dashed var(--border);padding-top:10px;display:none}
+    .tag{background:#f6f6f6;border-radius:999px;padding:4px 10px;font-size:12px;display:inline-block;margin-right:6px}
+    table{width:100%;border-collapse:collapse} th,td{padding:8px 10px;border-bottom:1px solid var(--border);text-align:left;font-size:13px}
+    @media (max-width:760px){ .cards{grid-template-columns:1fr} .hero{flex-direction:column;align-items:flex-start} }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div>
+    <span class="pill">QR 리포트</span>
+    <h1 id="title">로딩 중...</h1>
+    <div class="muted" id="subtitle"></div>
+  </div>
+
+  <!-- 상단 펫 정보 -->
+  <section class="card" id="petCard" hidden>
+    <div class="hero">
+      <img id="petPhoto" src="" alt="pet photo">
+      <div>
+        <h2 id="petName" style="margin:0 0 6px"></h2>
+        <div class="kv">
+          <div class="muted">품종</div><div id="petBreed">-</div>
+          <div class="muted">성별</div><div id="petGender">-</div>
+          <div class="muted">생일</div><div id="petBirth">-</div>
+          <div class="muted">몸무게</div><div id="petWeight">-</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 급식/급수 전주 vs 이번주 통계 -->
+  <section class="card">
+    <h3 style="margin:0 0 12px">이번 주 변화</h3>
+    <div class="stats">
+      <div class="stat">
+        <div class="row">
+          <b>급식량</b>
+          <div id="foodDelta" class="delta">-</div>
+        </div>
+        <table style="margin-top:8px">
+          <tbody>
+          <tr><th>전주 평균</th><td id="foodPrev">-</td></tr>
+          <tr><th>이번주 평균</th><td id="foodThis">-</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="stat">
+        <div class="row">
+          <b>급수량</b>
+          <div id="waterDelta" class="delta">-</div>
+        </div>
+        <table style="margin-top:8px">
+          <tbody>
+          <tr><th>전주 평균</th><td id="waterPrev">-</td></tr>
+          <tr><th>이번주 평균</th><td id="waterThis">-</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- 방문 기록 카드 + 상세보기 -->
+  <section class="card">
+    <h3 style="margin:0 0 12px">방문 기록</h3>
+    <div class="cards" id="visitCards"></div>
+    <div id="visitEmpty" class="muted" style="padding:6px 2px" hidden>방문 기록이 없습니다</div>
+  </section>
+</div>
+
+<script>
+  // ===== 설정 =====
+  const API_BASE = 'http://localhost:8080'; // ← 실제 서버 주소로 교체!
+  const FOOD_UNIT = 'g';  // 필요에 따라 변경
+  const WATER_UNIT = 'L'; // 필요에 따라 변경
+
+  const qs = new URLSearchParams(location.search);
+  const petId = qs.get('petId');
+  const selectedVisitId = qs.get('visitId');
+
+  // ===== 유틸 =====
+  const $ = (id) => document.getElementById(id);
+  const safe = (v, d='-') => (v===null || v===undefined || v==='') ? d : v;
+  const num = (v) => (v===null || v===undefined || v==='') ? null : Number(v);
+  const pad = (n)=> String(n).padStart(2,'0');
+  const fmtDateTime = (s)=>{
+    if (!s) return '-';
+    const d = new Date(String(s).replace(' ','T'));
+    if (isNaN(d)) return s;
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  };
+  const ageFromBirth = (birth)=>{
+    if (!birth) return '-';
+    const b = new Date(birth);
+    if (isNaN(b)) return birth;
+    const now = new Date();
+    let y = now.getFullYear() - b.getFullYear();
+    let m = now.getMonth() - b.getMonth();
+    if (m < 0){ y--; m += 12; }
+    return y>0 ? `${y}세 ${m}개월` : `${m}개월`;
+  };
+  // 월요일 기준 주 시작
+  const startOfWeekMon = (d0=new Date())=>{
+    const d = new Date(d0);
+    d.setHours(0,0,0,0);
+    const day = d.getDay(); // 0:Sun..6:Sat
+    const diff = (day===0 ? -6 : 1 - day); // Monday
+    d.setDate(d.getDate() + diff);
+    return d;
+  };
+  const inRange = (t, from, to) => t>=from.getTime() && t<to.getTime();
+
+  // 평균 계산
+  function weeklyAverages(logs, key){
+    const now = new Date();
+    const thisStart = startOfWeekMon(now);
+    const nextStart = new Date(thisStart); nextStart.setDate(thisStart.getDate()+7);
+    const prevStart = new Date(thisStart); prevStart.setDate(thisStart.getDate()-7);
+
+    const pick = (from, to)=>{
+      let sum=0, cnt=0;
+      for(const l of logs){
+        const v = num(l[key]);
+        if (v===null || isNaN(v)) continue;
+        const t = new Date(String(l.logDate).replace(' ','T')).getTime();
+        if (isNaN(t)) continue;
+        if (inRange(t, from, to)){ sum += v; cnt++; }
+      }
+      return cnt ? (sum/cnt) : null;
+    };
+
+    return {
+      prev: pick(prevStart, thisStart),
+      curr: pick(thisStart, nextStart),
+      labels: {
+        thisRange: `${thisStart.getFullYear()}-${pad(thisStart.getMonth()+1)}-${pad(thisStart.getDate())} ~ ${pad(new Date(nextStart-1).getMonth()+1)}-${pad(new Date(nextStart-1).getDate())}`,
+        prevRange: `${prevStart.getFullYear()}-${pad(prevStart.getMonth()+1)}-${pad(prevStart.getDate())} ~ ${pad(new Date(thisStart-1).getMonth()+1)}-${pad(new Date(thisStart-1).getDate())}`
+      }
+    };
+  }
+
+  function renderDelta(el, prev, curr, unit){
+    let cls = 'same', txt = '변화 없음';
+    if (prev===null && curr===null){ el.className='delta same'; el.textContent='데이터 없음'; return; }
+    if (prev===null){ el.className='delta up'; el.textContent=`이번주 ${curr.toFixed(2)}${unit}`; return; }
+    if (curr===null){ el.className='delta same'; el.textContent=`이번주 데이터 없음`; return; }
+
+    const diff = curr - prev;
+    if (Math.abs(diff) < 1e-9){ cls='same'; txt='변화 없음'; }
+    else if (diff > 0){ cls='up';  txt = `▲ ${diff.toFixed(2)}${unit} (+${((diff/prev)*100).toFixed(1)}%)`; }
+    else { cls='down'; txt = `▼ ${Math.abs(diff).toFixed(2)}${unit} (${((diff/prev)*100).toFixed(1)}%)`; }
+    el.className = 'delta ' + cls;
+    el.innerHTML = `<b>${txt}</b>`;
+  }
+
+  // ===== 렌더링 =====
+  function renderPet(pet){
+    $('petCard').hidden = false;
+    $('petName').textContent = `${safe(pet.name)} (${safe(pet.species)})`;
+    $('petBreed').textContent = safe(pet.breed);
+    $('petGender').textContent = safe(pet.gender);
+    $('petBirth').textContent = `${safe(pet.birthDate)} (${ageFromBirth(pet.birthDate)})`;
+    $('petWeight').textContent = pet.weight!=null ? `${pet.weight}` : '-';
+    $('petPhoto').src = pet.photo || 'https://placehold.co/160x160?text=No+Photo';
+    $('subtitle').textContent = `ID #${pet.id}`;
+  }
+
+  function renderStats(logs){
+    const food = weeklyAverages(logs,'foodWeight');
+    const water = weeklyAverages(logs,'waterWeight');
+
+    $('foodPrev').textContent  = (food.prev==null ? '-' : `${food.prev.toFixed(2)} ${FOOD_UNIT}`);
+    $('foodThis').textContent  = (food.curr==null ? '-' : `${food.curr.toFixed(2)} ${FOOD_UNIT}`);
+    $('waterPrev').textContent = (water.prev==null ? '-' : `${water.prev.toFixed(2)} ${WATER_UNIT}`);
+    $('waterThis').textContent = (water.curr==null ? '-' : `${water.curr.toFixed(2)} ${WATER_UNIT}`);
+
+    renderDelta($('foodDelta'),  food.prev,  food.curr,  ` ${FOOD_UNIT}`);
+    renderDelta($('waterDelta'), water.prev, water.curr, ` ${WATER_UNIT}`);
+  }
+
+  function visitCardHTML(v){
+    const date = fmtDateTime(v.visitDate);
+    return `
+      <div class="row" style="justify-content:space-between">
+        <div><b>${safe(v.hospital,'(병원 미입력)')}</b></div>
+        <div class="muted">${date}</div>
+      </div>
+      <div>
+        <span class="tag">의사: ${safe(v.doctor)}</span>
+        <span class="tag">진단: ${safe(v.diagnosis)}</span>
+      </div>
+      ${v.notes ? `<div class="muted" style="margin-top:6px">${v.notes}</div>` : ''}
+      <div class="row" style="margin-top:8px">
+        <button class="btn btn-detail" data-id="${v.id}">상세보기</button>
+      </div>
+      <div class="detail" id="detail-${v.id}">
+        <table>
+          <tbody>
+            <tr><th style="width:110px">방문 ID</th><td>${v.id}</td></tr>
+            <tr><th>병원</th><td>${safe(v.hospital)}</td></tr>
+            <tr><th>의사</th><td>${safe(v.doctor)}</td></tr>
+            <tr><th>진단</th><td>${safe(v.diagnosis)}</td></tr>
+            <tr><th>메모</th><td>${safe(v.notes)}</td></tr>
+          </tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  function renderVisits(visits){
+    const box = $('visitCards');
+    box.innerHTML = '';
+    if (!Array.isArray(visits) || !visits.length){
+      $('visitEmpty').hidden = false; return;
+    }
+    $('visitEmpty').hidden = true;
+
+    // 최신순
+    visits.sort((a,b)=>{
+      const da = a.visitDate ? new Date(String(a.visitDate).replace(' ','T')).getTime() : 0;
+      const db = b.visitDate ? new Date(String(b.visitDate).replace(' ','T')).getTime() : 0;
+      return db - da;
+    });
+
+    visits.forEach(v=>{
+      const card = document.createElement('div');
+      card.className = 'visit';
+      card.innerHTML = visitCardHTML(v);
+      box.appendChild(card);
+    });
+
+    // 상세보기 토글
+    box.querySelectorAll('.btn-detail').forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        const id = btn.getAttribute('data-id');
+        const panel = $('detail-'+id);
+        panel.style.display = panel.style.display==='block' ? 'none' : 'block';
+        if (panel.style.display==='block') panel.scrollIntoView({behavior:'smooth', block:'nearest'});
+      });
+    });
+
+    // URL에 visitId가 있으면 자동 펼치기/강조
+    if (selectedVisitId){
+      const btn = box.querySelector(`.btn-detail[data-id="${selectedVisitId}"]`);
+      if (btn) btn.click();
+    }
+  }
+
+  // ===== 시작 =====
+  (function init(){
+    if (!petId){ $('title').textContent = 'petId가 필요합니다'; return; }
+    $('title').textContent = `펫 #${petId} 리포트`;
+
+    const url = `${API_BASE}/api/pet/report?petId=${petId}${selectedVisitId ? `&visitId=${selectedVisitId}` : ''}`;
+
+    fetch(url,{headers:{'Accept':'application/json'}, mode:'cors'})
+            .then(r=>{ if(!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+            .then(data=>{
+              const pet = data.pet || {};
+              const visits = data.visits || [];
+              const logs = data.logs || [];
+
+              renderPet(pet);
+              renderStats(logs);
+              renderVisits(visits);
+            })
+            .catch(e=>{
+              $('title').textContent = '불러오기 실패';
+              alert(`불러오기 실패: ${e.message}\n요청: ${url}`);
+            });
+  })();
+</script>
+</body>
+</html>
