@@ -11,31 +11,42 @@ import java.util.List;
 @Service
 public class MedicalDocumentService {
 
-    @Autowired
-    private MedicalDocumentRepository medicalDocumentRepository;
+	@Autowired
+	private MedicalDocumentRepository medicalDocumentRepository;
 
-    public int insertDocument(MedicalDocument doc){
-        return medicalDocumentRepository.insertDocument(doc);
-    }
+	public int insertDocument(MedicalDocument doc) {
+		medicalDocumentRepository.insertDocument(doc);
+		return doc.getId();
+	}
 
-    public int updateDocument(MedicalDocument doc){
-        return medicalDocumentRepository.updateDocument(doc);
-    }
+	public int updateDocument(MedicalDocument doc) {
+		return medicalDocumentRepository.updateDocument(doc);
+	}
 
-    public void deleteDocument(@Param("id") int id){
-        medicalDocumentRepository.deleteDocument(id);
-    }
+	public void deleteDocument(@Param("id") int id) {
+		medicalDocumentRepository.deleteDocument(id);
+	}
 
-    public MedicalDocument selectById(@Param("id") int id){
-        return medicalDocumentRepository.selectById(id);
-    }
+	public MedicalDocument selectById(@Param("id") int id) {
+		return medicalDocumentRepository.selectById(id);
+	}
 
-    public List<MedicalDocument> selectByVisitId(@Param("visitId") int visitId){
-        return medicalDocumentRepository.selectByVisitId(visitId);
-    }
+	public List<MedicalDocument> selectByVisitId(@Param("visitId") int visitId) {
+		return medicalDocumentRepository.selectByVisitId(visitId);
+	}
 
-    // visit JOIN 해서 petId로 조회
-    public List<MedicalDocument> selectByPetId(@Param("petId") int petId){
-        return medicalDocumentRepository.selectByPetId(petId);
-    }
+	// visit JOIN 해서 petId로 조회
+	public List<MedicalDocument> selectByPetId(@Param("petId") int petId) {
+		return medicalDocumentRepository.selectByPetId(petId);
+	}
+
+	// [추가]
+	public MedicalDocument findById(int id) {
+		return medicalDocumentRepository.findById(id);
+	}
+
+	public MedicalDocument findLatestByVisitId(int visitId) {
+		return medicalDocumentRepository.findLatestByVisitId(visitId);
+	}
+
 }

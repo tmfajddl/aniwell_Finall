@@ -22,13 +22,12 @@
 	<!-- INSERT -->
 	<!-- [수정] VO 패키지 경로: com.example.domain → com.example.RSW.vo -->
 	<insert id="insertVisit"
-		parameterType="com.example.RSW.vo.Visit">
+		parameterType="com.example.RSW.vo.Visit" useGeneratedKeys="true"
+		keyProperty="id" keyColumn="id">
 		INSERT INTO visit
-		(pet_id, visit_date, hospital, doctor,
-		diagnosis, notes, total_cost)
+		(pet_id, visit_date, hospital, doctor, diagnosis, notes, total_cost)
 		VALUES
-		(#{petId}, #{visitDate},
-		#{hospital}, #{doctor}, #{diagnosis}, #{notes},
+		(#{petId}, #{visitDate}, #{hospital}, #{doctor}, #{diagnosis}, #{notes},
 		#{totalCost})
 	</insert>
 
