@@ -31,6 +31,20 @@
 	<properties>
 		<java.version>17</java.version>
 	</properties>
+
+	<!-- 🔧 [추가] Google Cloud BOM: Cloud/GAX/Auth 등 버전 일괄 정렬 -->
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>com.google.cloud</groupId>
+				<artifactId>libraries-bom</artifactId>
+				<version>26.41.0</version> <!-- 안정 권장 버전 -->
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
+
 	<dependencies>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -127,7 +141,6 @@
 			<artifactId>spring-context-support</artifactId>
 		</dependency>
 
-
 		<!-- thymeleaf -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -177,7 +190,6 @@
 			<artifactId>cloudinary-http44</artifactId>
 			<version>1.36.0</version>
 		</dependency>
-
 
 		<!-- Google OAuth -->
 		<dependency>
@@ -240,6 +252,21 @@
 			<artifactId>spring-session-data-redis</artifactId>
 		</dependency>
 
+		<!-- ✅ [추가] OCR(Tess4J). 서버에서 이미지 인식 -->
+		<dependency>
+		  <groupId>net.sourceforge.tess4j</groupId>
+		  <artifactId>tess4j</artifactId>
+		  <version>5.11.0</version> <!-- 서버 JDK 17+/Spring Boot 3.x 호환 -->
+		</dependency>
+
+		<!-- ✅ [변경] Google Cloud Vision: BOM이 버전 관리 → version 태그 제거 -->
+		<dependency>
+		  <groupId>com.google.cloud</groupId>
+		  <artifactId>google-cloud-vision</artifactId>
+			<!-- (삭제됨) <version>3.69.0</version> -->
+		</dependency>
+
+	
 
 	</dependencies>
 
