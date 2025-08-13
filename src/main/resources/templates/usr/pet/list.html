@@ -60,10 +60,10 @@
 		<div id="comModal"></div>
 
 
-
-		<script>
-			window.petData = [[${pet}]]; // 서버 DTO 그대로 JSON 주입
+		<script th:inline="javascript">
+		  const petData = /*[[${pet}]]*/ null;   // 값이 없으면 null로 주입
 		</script>
+
 		<!-- 원하는 곳에 한번만 포함 -->
 		<style>
 		  .pet-card-wrap { width:420px; margin:0 auto; }
@@ -213,189 +213,151 @@
 
 
 
-
 		<script type="text/babel" th:inline="none">
+		  function App() {
+		    const [pets, setPets] = React.useState([]);
+		    const [loginedMember, setLoginedMember] = React.useState(null);
 
-			function App() {
-				const [pets, setPets] = React.useState([]);
-				const [loginedMember, setLoginedMember] = React.useState(null);
+		    // 로그인 정보 로드
+		    React.useEffect(() => {
+		      fetch('/api/member/myPage')
+		        .then(res => res.json())
+		        .then((data) => {
+		          console.log(data);
+		          setLoginedMember(data);
+		          try {
+		            localStorage.setItem('loginedMember', String(data.id));
+		          } catch (e) {
+		            console.warn('localStorage 저장 실패(loginedMember):', e);
+		          }
+		        });
+		    }, []);
 
-				React.useEffect(() => {
-					fetch('/api/member/myPage')
-						.then(res => res.json())
-						.then((data) => {
-							console.log(data);
-							setLoginedMember(data);
+		    // 회원의 펫 목록 로드
+		    React.useEffect(() => {
+		      if (loginedMember && loginedMember.id) {
+		        fetch(`/api/pet/list?memberId=${loginedMember.id}`)
+		          .then(res => res.json())
+		          .then((data) => {
+		            console.log('petlist: ', data.pets);
+		            setPets(data.pets || []);
+		          });
+		      }
+		    }, [loginedMember]);
 
-							window.localStorage.setItem('loginedMember', data.id);
-						});
-				}, []);
+		    const TOTAL_CARD_COUNT = 3;
+		    const petList = pets.length >= TOTAL_CARD_COUNT
+		      ? pets
+		      : [...pets, ...Array(TOTAL_CARD_COUNT - pets.length).fill(null)];
 
-				React.useEffect(() => {
-					if (loginedMember && loginedMember.id) {
-						fetch(`/api/pet/list?memberId=${loginedMember.id}`)
-							.then(res => res.json())
-							.then((data) => {
-								console.log(data);
-								console.log("petlist: ", data.pets);
-								setPets(data.pets || []);
-							});
-					}
-				}, [loginedMember]);
+		    // 중앙 카드 선택 저장
+		    function saveSelected(sw) {
+		      const el  = sw.slides[sw.activeIndex];                      // 중앙 = activeIndex
+		      const pid = el ? el.getAttribute('data-pet-id') : null;     // placeholder면 null
 
-				const TOTAL_CARD_COUNT = 3;
-				const petList = pets.length >= TOTAL_CARD_COUNT
-					? pets
-					: [...pets, ...Array(TOTAL_CARD_COUNT - pets.length).fill(null)];
+		      if (pid) {
+		        try {
+		          localStorage.setItem('selectedPetId', String(pid));
+		          console.log('selectedPetId 저장됨 =', localStorage.getItem('selectedPetId'));
+		        } catch (e) {
+		          console.warn('localStorage 저장 실패(selectedPetId):', e);
+		        }
+		      } else {
+		        localStorage.removeItem('selectedPetId');
+		        console.log('선택 없음 → selectedPetId 삭제');
+		      }
 
+		      // 중앙 강조 클래스 업데이트(선택사항)
+		      const slidesArr = Array.from(sw.slides);
+		      slidesArr.forEach((sl, idx) => {
+		        if (idx === sw.activeIndex) sl.classList.add('centered');
+		        else sl.classList.remove('centered');
+		      });
+		    }
 
+		    React.useEffect(() => {
+		      const swiper = new Swiper('.mySwiper', {
+		        slidesPerView: 'auto',
+		        centeredSlides: true,
+		        spaceBetween: -30,
+		        loop: false,
+		        grabCursor: true,
+		        effect: 'slide',              // ✅ 하나만 사용 (fade 제거)
+		        speed: 1000,
+		        on: {
+		          init(sw) {
+		            // 저장된 선택 복원
+		            const saved = localStorage.getItem('selectedPetId');
+		            if (saved) {
+		              const slidesArr = Array.from(sw.slides);
+		              const idx = slidesArr.findIndex(el => el.getAttribute('data-pet-id') === saved);
+		              if (idx >= 0) sw.slideTo(idx, 0);
+		            }
+		            saveSelected(sw);
+		          },
+		          progress(sw) {
+		            sw.slides.forEach(slide => {
+		              const p = slide.progress;
+		              const scale = 1 - Math.abs(p) * 0.1;
+		              const blur  = Math.min(Math.abs(p) * 5, 5);
+		              const op    = 1 - Math.abs(p) * 0.5;
+		              slide.style.transform = `scale(${scale})`;
+		              slide.style.filter    = `blur(${blur}px) brightness(${1 - Math.abs(p) * 0.2})`;
+		              slide.style.opacity   = op;
+		              slide.style.zIndex    = `${100 - Math.floor(Math.abs(p) * 100)}`;
+		            });
+		          },
+		          slideChangeTransitionEnd(sw) {
+		            saveSelected(sw);
+		          }
+		        }
+		      });
 
+		      // 레이아웃 지연 보정
+		      requestAnimationFrame(() => swiper.emit('slideChangeTransitionEnd'));
 
+		      return () => swiper.destroy();
+		    }, [pets]);
 
-				React.useEffect(() => {
-					const swiper = new Swiper('.mySwiper', {
-						slidesPerView: 'auto',
-						centeredSlides: true,
-						spaceBetween: -30,
-						effect: 'fade',
-						fadeEffect: {crossFade: true},
-						loop: false,
-						grabCursor: true,
-						effect: 'slide',
-						speed: 1000,
-						on: {
+		    return (
+		      <div className="w-full flex justify-center overflow-visible">
+		        <div className="swiper mySwiper max-w-[800px] overflow-visible">
+		          <div className="swiper-wrapper">
+		            {petList.map((pet, idx) =>
+		              pet ? (
+		                <div
+		                  className="swiper-slide w-[420px]"
+		                  key={pet.id}
+		                  data-pet-id={pet.id}
+		                >
+		                  <PetIdCardLite pet={pet} />
+		                </div>
+		              ) : (
+		                <div
+		                  className="swiper-slide w-[420px] opacity-30 flex justify-center"
+		                  key={`empty-${idx}`}
+		                >
+		                  <div className="ani-card bg-gray-100 w-[400px] rounded-xl shadow flex items-center justify-center text-gray-500">
+		                    <img
+		                      src="/img/default-card.png"
+		                      alt="등록된 펫 없음"
+		                      className="w-full h-full opacity-60"
+		                      loading="lazy"
+		                    />
+		                  </div>
+		                </div>
+		              )
+		            )}
+		          </div>
+		        </div>
+		      </div>
+		    );
+		  }
 
-							progress(swiper) {
-								swiper.slides.forEach(slide => {
-									const progress = slide.progress;
-									const scale = 1 - Math.abs(progress) * 0.1;
-									const blur = Math.min(Math.abs(progress) * 5, 5);
-									const opacity = 1 - Math.abs(progress) * 0.5;
-
-									slide.style.transform = `scale(${scale})`;
-									slide.style.filter = `blur(${blur}px) brightness(${1 - Math.abs(progress) * 0.2})`;
-									slide.style.opacity = opacity;
-									slide.style.zIndex = `${100 - Math.floor(Math.abs(progress) * 100)}`;
-								});
-							},
-							slideChangeTransitionEnd() {
-								const allSlides = document.querySelectorAll('.swiper-slide');
-								const browserCenterX = window.innerWidth / 2;
-
-								let closestSlide = null;
-								let closestIndex = 0;
-								let closestDistance = Infinity;
-
-								allSlides.forEach((slide, idx) => {
-									const rect = slide.getBoundingClientRect();
-									const slideCenter = rect.left + rect.width / 2;
-									const distance = Math.abs(slideCenter - browserCenterX);
-
-									if (distance < closestDistance) {
-										closestDistance = distance;
-										closestSlide = slide;
-										closestIndex = idx;
-									}
-								});
-
-								// 👉 중앙 슬라이드의 petId를 찾기 위해 data-속성 활용 추천
-								const petId = closestSlide.getAttribute("data-pet-id");
-								const pet = pets.find(p => p.id.toString() === petId);
-								if (!petId) {
-									console.log("❗ 중앙 카드가 비어있습니다.");
-									localStorage.removeItem('selectedPetId');
-									return;
-								}
-								if (pet) {
-									console.log("✅ 현재 중앙에 있는 펫:", pet.id, pet.name);
-									window.localStorage.setItem('selectedPetId', pet.id);
-								}
-
-								const distantIndices = [];
-								for (let i = 0; i < allSlides.length; i++) {
-									if (Math.abs(i - closestIndex) >= 2) {
-										distantIndices.push(i);
-									}
-								}
-
-								allSlides.forEach((slide, idx) => {
-									if (!distantIndices.includes(idx)) {
-										if (slide.classList.contains('is-distant')) {
-											slide.classList.remove('is-distant');
-											slide.classList.add('is-distant-leaving');
-											setTimeout(() => {
-												slide.classList.remove('is-distant-leaving');
-											}, 500);
-										}
-									}
-								});
-
-								requestAnimationFrame(() => {
-									distantIndices.forEach(index => {
-										const slide = swiper.slides[index];
-										if (slide) {
-											slide.classList.remove('is-distant-leaving');
-											slide.classList.add('is-distant');
-										}
-									});
-								});
-								// 이전에 있던 중앙 카드 클래스 제거
-								document.querySelectorAll('.swiper-slide.centered').forEach(s => s.classList.remove('centered'));
-
-								// 새 중앙 카드에 강조 클래스 부여
-								closestSlide.classList.add('centered');
-							},
-						}
-					});
-
-					setTimeout(() => {
-						swiper.emit('slideChangeTransitionEnd');
-						console.log('초기 흐림효과 적용');
-					}, 10);
-					return () => swiper.destroy(); // cleanup
-				}, [pets]);
-
-				return (
-					<div className="w-full flex justify-center overflow-visible">
-						<div className="swiper mySwiper max-w-[800px] overflow-visible">
-							<div className="swiper-wrapper">
-								{petList.map((pet, idx) =>
-									pet ? (
-										<div
-											className="swiper-slide w-[420px]"
-											key={pet.id}
-											data-pet-id={pet.id}
-										>
-											<PetIdCardLite pet={pet} />
-										</div>
-									) : (
-										<div
-											className="swiper-slide w-[420px] opacity-30 flex justify-center"
-											key={`empty-${idx}`}
-										>
-											<div className="ani-card bg-gray-100 w-[400px] rounded-xl shadow flex items-center justify-center text-gray-500">
-												<img
-													src="/img/default-card.png"
-													alt="등록된 펫 없음"
-													className="w-full h-full opacity-60"
-													loading="lazy"
-												/>
-											</div>
-										</div>
-									)
-								)}
-
-							</div>
-						</div>
-					</div>
-
-				);
-			}
-
-			const root = ReactDOM.createRoot(document.getElementById("root"));
-			root.render(<App />);
-
+		  const root = ReactDOM.createRoot(document.getElementById("root"));
+		  root.render(<App />);
 		</script>
+
 
 		<script>
 			window.addEventListener('message', function (event) {
