@@ -112,18 +112,7 @@ public class MemberService {
 
 
         // 회원 저장 (원문 비번 null, 전화번호는 digits)
-        memberRepository.doJoin(
-                loginId,
-                encodedPw,
-                null,   // 원문 비번 저장 금지
-                name,
-                nickname,
-                digits,
-                email,
-                address,
-                authName,
-                authLevel
-        );
+        memberRepository.doJoin(loginId, encodedPw, name, nickname, digits, email, address, authName, authLevel);
 
         // 최근 삽입된 회원 ID 조회
         int id = memberRepository.getLastInsertId();
