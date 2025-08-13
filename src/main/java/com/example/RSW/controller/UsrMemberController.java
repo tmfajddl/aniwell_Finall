@@ -75,6 +75,21 @@ public class UsrMemberController {
     @Autowired
     private RedisTemplate<String, String> redisTemplate;
 
+    // 허용 도메인
+    private static final java.util.Set<String> ALLOWED_EMAIL_DOMAINS =
+            new java.util.HashSet<>(java.util.Arrays.asList(
+                    "naver.com", "gmail.com", "daum.net", "hanmail.net", "nate.com", "aniwell.com", "example.com"
+            ));
+
+    private static boolean isAllowedEmailDomain(String email) {
+        if (email == null) return false;
+        int at = email.lastIndexOf('@');
+        if (at < 0) return false;
+        String domain = email.substring(at + 1).toLowerCase();
+        return ALLOWED_EMAIL_DOMAINS.contains(domain);
+    }
+
+
     @RequestMapping("/usr/member/doLogout")
     public String doLogout(HttpServletRequest req) {
 
@@ -170,13 +185,13 @@ public class UsrMemberController {
             return ResultData.from("F-5", "탈퇴한 회원입니다.");
         }
 
-        // ✅ Spring Security 인증 등록
+        // Spring Security 인증 등록
         CustomUserDetails userDetails = new CustomUserDetails(member);
         UsernamePasswordAuthenticationToken authentication =
                 new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        // ✅ 세션에 Spring Security Context 저장
+        // 세션에 Spring Security Context 저장
         req.getSession().setAttribute("SPRING_SECURITY_CONTEXT", SecurityContextHolder.getContext());
 
         // 기존 rq.login 유지 (세션 기반 호환성)
@@ -232,6 +247,12 @@ public class UsrMemberController {
             return Ut.jsHistoryBack("F-8", "인증명을 입력해");
         }
 
+        // 이메일 정규화 + 형식/도메인 체크
+        String normEmail = normalizeEmail(email);
+        if (!isValidEmail(normEmail) || !isAllowedEmailDomain(normEmail)) {
+            return Ut.jsHistoryBack("F-6", "이메일 형식이 올바르지 않습니다.");
+        }
+
         // 비밀번호 해시화
         String hashedLoginPw = Ut.sha256(loginPw);
 
@@ -239,7 +260,7 @@ public class UsrMemberController {
         int fixedAuthLevel = 1;
 
         // 회원가입 처리
-        ResultData joinRd = memberService.join(loginId, hashedLoginPw, name, nickname, cellphone, email, address, authName, fixedAuthLevel);
+        ResultData joinRd = memberService.join(loginId, hashedLoginPw, name, nickname, cellphone, normEmail, address, authName, fixedAuthLevel);
 
         if (joinRd.isFail()) {
             return Ut.jsHistoryBack(joinRd.getResultCode(), joinRd.getMsg());
@@ -293,6 +314,14 @@ public class UsrMemberController {
         return "OK";
     }
 
+    private static String normalizeEmail(String email) {
+        return email == null ? null : email.trim().toLowerCase();
+    }
+
+    private static boolean isValidEmail(String email) {
+        // 대부분 메일 서비스 커버 (한글/공백/잘못된 TLD 차단)
+        return email != null && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
 
     @RequestMapping("/usr/member/modify")
     public String showmyModify() {
@@ -316,7 +345,42 @@ public class UsrMemberController {
         if (Ut.isEmptyOrNull(nickname)) return Ut.jsHistoryBack("F-4", "닉네임을 입력하세요.");
         if (Ut.isEmptyOrNull(cellphone)) return Ut.jsHistoryBack("F-5", "전화번호를 입력하세요.");
         if (Ut.isEmptyOrNull(email)) return Ut.jsHistoryBack("F-6", "이메일을 입력하세요.");
-        if (Ut.isEmptyOrNull(email)) return Ut.jsHistoryBack("F-7", "주소를 입력하세요.");
+        if (Ut.isEmptyOrNull(address)) return Ut.jsHistoryBack("F-7", "주소를 입력하세요.");
+
+        // 정규화
+        String normCellphone = cellphone.replaceAll("\\D", "");      // 숫자만
+        String normEmail = normalizeEmail(email);                    // trim + lower
+
+        // 형식 검증
+        if (!isValidEmail(normEmail)) {
+            return Ut.jsHistoryBack("F-6", "이메일 형식이 올바르지 않습니다.");
+        }
+        if (!isAllowedEmailDomain(normEmail)) {
+            return Ut.jsHistoryBack("F-6", "이메일 형식이 올바르지 않습니다.");
+        }
+        if (!normCellphone.matches("^(010\\d{8}|01[16789]\\d{7})$")) {
+            return Ut.jsHistoryBack("F-5", "전화번호 형식이 올바르지 않습니다.");
+        }
+
+        int memberId = rq.getLoginedMemberId();
+
+        // 본인 제외 중복 체크
+        Member emailOwner = memberService.getMemberByEmail(normEmail);
+        if (emailOwner != null && emailOwner.getId() != memberId) {
+            return Ut.jsHistoryBack("F-6", "이미 사용 중인 이메일입니다.");
+        }
+
+        Member nicknameOwner = memberService.getMemberByNickname(nickname);
+        if (nicknameOwner != null && nicknameOwner.getId() != memberId) {
+            return Ut.jsHistoryBack("F-4", "이미 사용 중인 닉네임입니다.");
+        }
+
+        Member phoneOwner = memberService.getMemberByCellphone(normCellphone);
+        if (phoneOwner != null && phoneOwner.getId() != memberId) {
+            return Ut.jsHistoryBack("F-5", "이미 사용 중인 전화번호입니다.");
+        }
+
+
         String photoUrl = null;
 
         // 클라우디너리 업로드
@@ -329,14 +393,11 @@ public class UsrMemberController {
             }
         }
 
-        int memberId = rq.getLoginedMemberId();
-
-
         ResultData modifyRd;
         if (Ut.isEmptyOrNull(loginPw)) {
-            modifyRd = memberService.modifyWithoutPw(memberId, name, nickname, cellphone, email, photoUrl, address);
+            modifyRd = memberService.modifyWithoutPw(memberId, name, nickname, normCellphone, normEmail, photoUrl, address);
         } else {
-            modifyRd = memberService.modify(memberId, loginPw, name, nickname, cellphone, email, photoUrl, address);
+            modifyRd = memberService.modify(memberId, loginPw, name, nickname, normCellphone, normEmail, photoUrl, address);
         }
 
         Member updatedMember = memberService.getMemberById(memberId);
@@ -357,10 +418,81 @@ public class UsrMemberController {
         Member existsMember = memberService.getMemberByLoginId(loginId);
 
         if (existsMember != null) {
-            return ResultData.from("F-2", "해당 아이디는 이미 사용중이야", "loginId", loginId);
+            return ResultData.from("F-2", "해당 아이디는 이미 사용중입니다.", "loginId", loginId);
         }
 
-        return ResultData.from("S-1", "사용 가능!", "loginId", loginId);
+        return ResultData.from("S-1", "사용 가능한 아이디입니다.", "loginId", loginId);
+    }
+
+    @RequestMapping("/usr/member/getEmailDup")
+    @ResponseBody
+    public ResultData getEmailDup(HttpServletRequest req, @RequestParam String email) {
+
+        if (Ut.isEmpty(email)) {
+            return ResultData.from("F-1", "이메일을 입력해주세요");
+        }
+
+        // ✅ 정규화 + 형식검증
+        String normEmail = normalizeEmail(email);
+        if (!isValidEmail(normEmail)) {
+            return ResultData.from("F-3", "이메일 형식이 올바르지 않습니다.", "email", normEmail);
+        }
+
+        if (!isAllowedEmailDomain(normEmail)) {
+            return ResultData.from("F-3", "이메일 형식이 올바르지 않습니다.", "email", normEmail);
+        }
+
+        Member existsMember = memberService.getMemberByEmail(normEmail); // ← 서비스/레포는 소문자 비교 권장
+
+        // 본인 제외 (수정 화면에서 자기 이메일이면 사용 가능 처리)
+        Rq rq = (Rq) req.getAttribute("rq");
+        Integer meId = (rq != null && rq.isLogined()) ? rq.getLoginedMemberId() : null;
+
+        if (existsMember != null && (meId == null || existsMember.getId() != meId)) {
+            return ResultData.from("F-2", "이미 사용 중인 이메일입니다.", "email", normEmail);
+        }
+
+        return ResultData.from("S-1", "사용 가능한 이메일입니다.", "email", normEmail);
+    }
+
+    @RequestMapping("/usr/member/getNicknameDup")
+    @ResponseBody
+    public ResultData getNicknameDup(String nickname) {
+        if (Ut.isEmpty(nickname)) {
+            return ResultData.from("F-1", "닉네임을 입력해주세요");
+        }
+
+        Member existsMember = memberService.getMemberByNickname(nickname);
+
+        if (existsMember != null) {
+            return ResultData.from("F-2", "이미 사용 중인 닉네임입니다.", "nickname", nickname);
+        }
+
+        return ResultData.from("S-1", "사용 가능한 닉네임입니다.", "nickname", nickname);
+    }
+
+    @RequestMapping("/usr/member/getCellphoneDup")
+    @ResponseBody
+    public ResultData getCellphoneDup(String cellphone) {
+        if (Ut.isEmpty(cellphone)) {
+            return ResultData.from("F-1", "전화번호를 입력해주세요.");
+        }
+
+        // 숫자만 남김 (하이픈, 공백 등 제거)
+        String digits = cellphone.replaceAll("\\D", "");
+
+        // 서버에서도 한 번 검증
+        if (!digits.matches("^(010\\d{8}|01[16789]\\d{7})$")) {
+            return ResultData.from("F-3", "전화번호 형식이 올바르지 않습니다.", "cellphone", digits);
+        }
+
+        Member existsMember = memberService.getMemberByCellphone(digits);
+
+        if (existsMember != null) {
+            return ResultData.from("F-2", "이미 사용 중인 전화번호입니다.", "cellphone", digits);
+        }
+
+        return ResultData.from("S-1", "사용 가능한 전화번호입니다.", "cellphone", digits);
     }
 
     @RequestMapping("/usr/member/findLoginId")
@@ -374,10 +506,10 @@ public class UsrMemberController {
     public ResultData doFindLoginId(@RequestParam(defaultValue = "/usr/member/login") String afterFindLoginIdUri,
                                 String name, String email) {
 
-        Member member = memberService.getMemberByNameAndEmail(name, email);
+        Member member = memberService.getMemberByNameAndEmail(name, normalizeEmail(email)); // 정규화 전달
 
         if (member == null) {
-            return ResultData.from("F-1", "해당 아이디 없");
+            return ResultData.from("F-1", "해당하는 아이디가 없습니다.");
         }
 
         return ResultData.from("S-1", "getLoginId",member.getLoginId());
@@ -398,11 +530,12 @@ public class UsrMemberController {
         Member member = memberService.getMemberByLoginId(loginId);
 
         if (member == null) {
-            return ResultData.from("F-1", "너는 없는 사람이야");
+            return ResultData.from("F-1", "존재하지 않는 회원입니다.");
         }
 
-        if (member.getEmail().equals(email) == false) {
-            return ResultData.from("F-2", "일치하는 이메일이 없는데?");
+        String normEmail = normalizeEmail(email);
+        if (!normalizeEmail(member.getEmail()).equals(normEmail)) { // 정규화 후 비교
+            return ResultData.from("F-2", "일치하는 이메일이 없습니다.");
         }
 
         ResultData notifyTempLoginPwByEmailRd = memberService.notifyTempLoginPwByEmail(member);
@@ -823,6 +956,7 @@ public class UsrMemberController {
             out.println("window.opener.postMessage('socialLoginSuccess', '*');");
             out.println("window.close();");
             out.println("</script>");
+
 
         } catch (Exception e) {
             e.printStackTrace();
