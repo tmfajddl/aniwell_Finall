@@ -11,9 +11,11 @@
 	<insert id="insertVisit"
 		parameterType="com.example.RSW.vo.Visit">
 		INSERT INTO visit
-		(pet_id, visit_date, hospital, doctor, diagnosis, notes, total_cost)
+		(pet_id, visit_date, hospital, doctor,
+		diagnosis, notes, total_cost)
 		VALUES
-		(#{petId}, #{visitDate}, #{hospital}, #{doctor}, #{diagnosis}, #{notes},
+		(#{petId}, #{visitDate},
+		#{hospital}, #{doctor}, #{diagnosis}, #{notes},
 		#{totalCost})
 	</insert>
 
@@ -24,10 +26,12 @@
 		UPDATE visit
 		SET
 		visit_date = #{visitDate},
-		hospital = #{hospital},
+		hospital =
+		#{hospital},
 		doctor = #{doctor},
 		diagnosis = #{diagnosis},
-		notes = #{notes},
+		notes =
+		#{notes},
 		total_cost = #{totalCost}
 		WHERE id = #{id}
 	</update>
@@ -36,7 +40,8 @@
 	<!-- DELETE -->
 	<delete id="deleteVisit" parameterType="int">
 		DELETE FROM visit
-		WHERE id = #{id}
+		WHERE id
+		= #{id}
 	</delete>
 
 
@@ -47,7 +52,8 @@
 		SELECT *
 		FROM visit
 		WHERE pet_id = #{petId}
-		ORDER BY visit_date DESC
+		ORDER BY
+		visit_date DESC
 	</select>
 
 </mapper>

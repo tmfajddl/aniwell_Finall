@@ -10,24 +10,29 @@ import java.util.List;
 @Service
 public class VisitService {
 
-    @Autowired
-    private VisitRepository visitRepository;
+	@Autowired
+	private VisitRepository visitRepository;
 
-    public int insertVisit(Visit visit){
-        return visitRepository.insertVisit(visit);
-    }
+	// [수정] 생성된 PK를 반환하도록 교정
+	public int insertVisit(Visit visit) {
+		// 🔸 여기서 MyBatis가 INSERT 수행
+		// (VisitRepository.xml의 <insert>에 useGeneratedKeys="true" keyProperty="id" 필수)
+		visitRepository.insertVisit(visit);
 
-    public int updateVisit(Visit visit){
-        return visitRepository.updateVisit(visit);
-    }
+		// 🔸 위 옵션 덕분에 visit.id(생성된 PK)가 객체에 주입됨
+		return visit.getId(); // ✅ 영향 행수(1)가 아닌, '생성된 PK'를 반환
+	}
 
-    public void deleteVisit(int id){
-        visitRepository.deleteVisit(id);
-    }
+	public int updateVisit(Visit visit) {
+		return visitRepository.updateVisit(visit);
+	}
 
-    public List<Visit> selectVisitsByPetId(int petId){
-        return visitRepository.selectVisitsByPetId(petId);
-    }
+	public void deleteVisit(int id) {
+		visitRepository.deleteVisit(id);
+	}
 
+	public List<Visit> selectVisitsByPetId(int petId) {
+		return visitRepository.selectVisitsByPetId(petId);
+	}
 
 }

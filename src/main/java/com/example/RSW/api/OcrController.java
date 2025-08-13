@@ -12,12 +12,19 @@ import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Value; // application.yml 설정값 주입
 import org.springframework.web.bind.annotation.PostMapping; // POST 엔드포인트 매핑
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping; // 컨트롤러 베이스 경로 매핑
 import org.springframework.web.bind.annotation.RestController; // REST 컨트롤러 선언
 import org.springframework.web.bind.annotation.RequestParam; // multipart 파라미터 바인딩
 import org.springframework.web.multipart.MultipartFile; // 업로드 파일 수신
 
 import com.example.RSW.vo.ResultData; // ✅ 프로젝트의 ResultData 경로에 맞게 유지(성공/실패 표준 응답)
+import com.example.RSW.vo.OcrSaveVo; // ✅ [추가]
+import com.example.RSW.service.MedicalDocumentService;
+import com.example.RSW.service.VisitService;
+import com.example.RSW.vo.MedicalDocument; // ✅ [추가]
+import com.example.RSW.vo.Visit; // ✅ [추가]
+import com.fasterxml.jackson.databind.ObjectMapper; // ✅ [추가]
 
 // ⬇️ Google Cloud Vision SDK (GCV) 사용을 위한 임포트
 import com.google.cloud.vision.v1.AnnotateImageRequest; // 이미지 요청 객체
@@ -38,6 +45,8 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
+import lombok.RequiredArgsConstructor;
 
 // ⬇️ [보존용 주석] Tess4J 기반 사용 시 필요했던 임포트 (현재는 GCV 사용으로 미사용)
 // import java.nio.file.Files;
@@ -73,6 +82,83 @@ public class OcrController {
 	// - DOCUMENT_TEXT_DETECTION: 영수증/문서(표/여러 줄 텍스트) 권장
 	@Value("${gcv.ocrMode:DOCUMENT_TEXT_DETECTION}")
 	private String gcvOcrMode;
+
+	// 📌 의료 문서(진단서, 영수증 등) 관련 비즈니스 로직을 처리하는 서비스
+	private final MedicalDocumentService medicalDocumentService;
+	// 📌 방문(visit) 관련 비즈니스 로직을 처리하는 서비스
+	private final VisitService visitService;
+	// 📌 JSON 직렬화/역직렬화를 담당하는 Jackson ObjectMapper
+	// - LocalDateTime 등 Java 8 날짜/시간 타입 처리 가능 (스프링 빈으로 주입)
+	private final ObjectMapper objectMapper;
+
+	/*
+	 * 📌 생성자 주입(Constructor Injection) - final 필드(불변성 보장)는 반드시 생성자에서 한 번만 초기화 가능 -
+	 * 스프링이 MedicalDocumentService, VisitService, ObjectMapper 빈을 자동 주입
+	 */
+	public OcrController(MedicalDocumentService medicalDocumentService, VisitService visitService,
+			ObjectMapper objectMapper) {
+		this.medicalDocumentService = medicalDocumentService;
+		this.visitService = visitService;
+		this.objectMapper = objectMapper;
+	}
+
+	// ✅ [추가] VO 기반 OCR 텍스트 저장
+	// - 요청: OcrSaveVo(JSON)
+	// - 응답: { resultCode, msg, data: { visitId, documentId } }
+	@PostMapping("/save")
+	public ResultData<Map<String, Object>> saveOcrText(@RequestBody OcrSaveVo vo) {
+		// 1) 유효성
+		if (vo.getText() == null || vo.getText().isBlank()) {
+			return ResultData.from("F-EMPTY", "OCR 텍스트가 비어있습니다.", "data", null);
+		}
+		if (vo.getVisitId() == null && vo.getPetId() == null) {
+			return ResultData.from("F-NO-TARGET", "visitId 또는 petId가 필요합니다.", "data", null);
+		}
+
+		try {
+			// 2) visitId 결정 (없으면 신규 생성)
+			Integer visitId = vo.getVisitId();
+			if (visitId == null) {
+				Visit visit = new Visit();
+				visit.setPetId(vo.getPetId());
+				visit.setVisitDate(vo.getVisitDate() != null ? vo.getVisitDate() : LocalDateTime.now());
+				visit.setHospital(vo.getHospital());
+				visit.setDoctor(vo.getDoctor());
+				visit.setDiagnosis(vo.getDiagnosis());
+				visit.setNotes(vo.getNotes());
+				// totalCost는 영수증 파싱 단계에서 별도 반영 예정이라면 null 허용
+				visitId = visitService.insertVisit(visit); // useGeneratedKeys 필요(아래 3, 4 참고)
+			}
+
+			// 3) MedicalDocument 생성 (ocr_json에 문자열로 저장)
+			Map<String, Object> payload = new HashMap<>();
+			payload.put("text", vo.getText().trim());
+			Map<String, Object> meta = new HashMap<>();
+			meta.put("engine", "gcv"); // 현재 GCV 사용
+			meta.put("ts", LocalDateTime.now().toString());
+			payload.put("meta", meta);
+			String ocrJson = objectMapper.writeValueAsString(payload);
+
+			MedicalDocument doc = new MedicalDocument();
+			doc.setVisitId(visitId);
+			doc.setDocType(vo.getDocType() != null ? vo.getDocType() : "other");
+			doc.setFileUrl(vo.getFileUrl());
+			doc.setOcrJson(ocrJson);
+
+			int documentId = medicalDocumentService.insertDocument(doc);
+
+			Map<String, Object> data = new HashMap<>();
+			data.put("visitId", visitId);
+			data.put("documentId", documentId);
+			return ResultData.from("S-OCR-SAVE", "OCR 텍스트가 저장되었습니다.", "data", data);
+
+		} catch (Exception e) {
+			Map<String, Object> err = new HashMap<>();
+			err.put("errorType", e.getClass().getSimpleName());
+			err.put("error", e.getMessage());
+			return ResultData.from("F-OCR-SAVE", "OCR 텍스트 저장 중 오류가 발생했습니다.", "data", err);
+		}
+	}
 
 	/**
 	 * ✅ 영수증 이미지에서 텍스트를 추출하는 엔드포인트 - 요청: multipart/form-data; 필드명 "file" 에 이미지 파일 첨부
