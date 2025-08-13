@@ -5,7 +5,7 @@
 
 <mapper namespace="com.example.RSW.repository.PrescriptionDetailRepository">
     <!-- 공통 매핑 -->
-    <resultMap id="PrescriptionDetailMap" type="com.example.domain.PrescriptionDetail">
+    <resultMap id="PrescriptionDetailMap" type="com.example.RSW.repository.PrescriptionDetailRepository">
         <id     property="id"            column="id"/>
         <result property="documentId"    column="document_id"/>
         <result property="drugName"      column="drug_name"/>
@@ -17,7 +17,7 @@
     </resultMap>
 
     <!-- INSERT (단건) -->
-    <insert id="insert" parameterType="com.example.domain.PrescriptionDetail"
+    <insert id="insert" parameterType="com.example.RSW.repository.PrescriptionDetailRepository"
             useGeneratedKeys="true" keyProperty="id">
         INSERT INTO prescription_detail
         (document_id, drug_name, dose_value, dose_unit, freq_per_day, duration_days, notes)
@@ -37,7 +37,7 @@
     </insert>
 
     <!-- UPDATE -->
-    <update id="update" parameterType="com.example.domain.PrescriptionDetail">
+    <update id="update" parameterType="com.example.RSW.repository.PrescriptionDetailRepository">
         UPDATE prescription_detail
         <set>
             <if test="documentId   != null">document_id   = #{documentId},</if>

@@ -5,7 +5,7 @@
 
 <mapper namespace="com.example.RSW.repository.LabResultDetailRepository">
     <!-- 공통 매핑 -->
-    <resultMap id="LabResultDetailMap" type="com.example.domain.LabResultDetail">
+    <resultMap id="LabResultDetailMap" type="com.example.RSW.repository.LabResultDetailRepository">
         <id     property="id"          column="id"/>
         <result property="documentId"  column="document_id"/>
         <result property="testName"    column="test_name"/>
@@ -18,7 +18,7 @@
     </resultMap>
 
     <!-- INSERT (단건) -->
-    <insert id="insert" parameterType="com.example.domain.LabResultDetail"
+    <insert id="insert" parameterType="com.example.RSW.repository.LabResultDetailRepository"
             useGeneratedKeys="true" keyProperty="id">
         INSERT INTO lab_result_detail
         (document_id, test_name, result_value, unit, ref_low, ref_high, flag, notes)
@@ -39,7 +39,7 @@
     </insert>
 
     <!-- UPDATE -->
-    <update id="update" parameterType="com.example.domain.LabResultDetail">
+    <update id="update" parameterType="com.example.RSW.repository.LabResultDetailRepository">
         UPDATE lab_result_detail
         <set>
             <if test="documentId  != null">document_id  = #{documentId},</if>
