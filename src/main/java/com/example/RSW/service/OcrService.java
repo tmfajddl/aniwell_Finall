@@ -21,6 +21,14 @@ import com.google.cloud.vision.v1.Image;
 import com.google.cloud.vision.v1.ImageAnnotatorClient;
 import com.google.protobuf.ByteString;
 
+//✅ [추가] 언어 힌트용
+import com.google.cloud.vision.v1.ImageContext;
+
+//✅ [추가 - 선택] 타임아웃/재시도 설정용
+import com.google.api.gax.retrying.RetrySettings;
+import com.google.cloud.vision.v1.ImageAnnotatorSettings;
+import java.time.Duration; // (컴파일 오류 시 org.threeten.bp.Duration 으로 교체)
+
 @Service
 public class OcrService {
 
@@ -37,16 +45,29 @@ public class OcrService {
 	 */
 	public Map<String, Object> extractText(MultipartFile file) throws Exception {
 		// 1) 업로드 파일 바이트 → GCV Image 변환
-		ByteString imgBytes = ByteString.readFrom(file.getInputStream()); // 입력 스트림을 모두 읽어 바이트화
-		Image img = Image.newBuilder().setContent(imgBytes).build(); // GCV Image 객체 생성
+		// ✅ [교체] 파일 검증 + 안전한 바이트 로드
+		if (file == null || file.isEmpty()) {
+			throw new IllegalArgumentException("이미지 파일이 비어있습니다."); // 입력값 보호
+		}
+		ByteString imgBytes = ByteString.copyFrom(file.getBytes()); // 스트림 대신 바이트 배열 사용(리소스 안전)
+		Image img = Image.newBuilder().setContent(imgBytes).build(); // GCV Image 생성(동일)
 
 		// 2) OCR 모드 선택: TEXT_DETECTION(간판/짧은문구) vs DOCUMENT_TEXT_DETECTION(영수증/문서)
 		Type type = "TEXT_DETECTION".equalsIgnoreCase(gcvOcrMode) ? Feature.Type.TEXT_DETECTION
 				: Feature.Type.DOCUMENT_TEXT_DETECTION; // 기본: 문서형
 
 		// 3) 기능(Feature) 지정 및 요청 생성
+		// ✅ [교체] 언어 힌트(ko/en) 추가하여 인식률 개선
 		Feature feat = Feature.newBuilder().setType(type).build();
-		AnnotateImageRequest req = AnnotateImageRequest.newBuilder().addFeatures(feat).setImage(img).build();
+
+		// ⬇️ 추가: 이미지 컨텍스트에 언어 힌트 세팅
+		ImageContext ctx = ImageContext.newBuilder().addLanguageHints("ko") // 한국어
+				.addLanguageHints("en") // 영어 혼용 대비
+				.build();
+
+		AnnotateImageRequest req = AnnotateImageRequest.newBuilder().addFeatures(feat).setImage(img)
+				.setImageContext(ctx) // ← 힌트 적용
+				.build();
 
 		String text;
 
