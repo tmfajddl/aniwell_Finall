@@ -5,9 +5,29 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Aniwell QR Report</title>
   <style>
+    /* 기본값 */
     :root{
-      --bg:#FFF8F3; --card:#fff; --accent:#FFC4C4; --ok:#16a34a; --down:#ef4444; --muted:#6b7280; --border:#ececec; --chip:#f6f6f6;
+      --bg:#FFF8F3;       /* 기본(중립) 배경 */
+      --card:#fff;
+      --accent:#FFC4C4;
+      --chip:#f6f6f6;
+      --ok:#16a34a; --down:#ef4444; --muted:#6b7280; --border:#ececec;
     }
+
+    /* 수컷(파랑 테마) */
+    html[data-theme="male"]{
+      --bg:#F3F8FF;       /* ⬅️ 연한 파랑 배경 */
+      --accent:#BFD9FF;   /* 포인트 */
+      --chip:#EEF4FF;
+    }
+
+    /* 암컷(핑크 테마) */
+    html[data-theme="female"]{
+      --bg:#FFF3F7;       /* ⬅️ 연한 핑크 배경 */
+      --accent:#FFC4DF;
+      --chip:#FFF0F6;
+    }
+
     *{box-sizing:border-box}
     body{margin:0;background:var(--bg);font-family:system-ui,apple sd gothic neo,Segoe UI,sans-serif;display:flex;justify-content:center}
     .wrap{max-width:980px;width:100%;padding:24px 16px;display:grid;gap:16px}
@@ -157,7 +177,7 @@
   const API_BASE = 'http://localhost:8080';      // 개발(http)일 때
 
   const FOOD_UNIT = 'g';
-  const WATER_UNIT = 'L';
+  const WATER_UNIT = 'mL';
 
   const qs = new URLSearchParams(location.search);
   const petId = qs.get('petId');
@@ -331,6 +351,17 @@
     return `<div class="thumbs">${items}</div>`;
   }
 
+  function applyThemeByGender(gender){
+    const g = String(gender||'').toLowerCase();
+    const isMale   = ['수컷','남','남아','m','male'].some(k => g.includes(k));
+    const isFemale = ['암컷','여','여아','f','female'].some(k => g.includes(k));
+    const root = document.documentElement;
+    if (isMale)   root.setAttribute('data-theme','male');
+    else if (isFemale) root.setAttribute('data-theme','female');
+    else root.removeAttribute('data-theme'); // 기본 테마
+  }
+
+
   /* 상단/통계 렌더 */
   function renderPet(pet){
     $('petCard').hidden = false;
@@ -341,6 +372,8 @@
     $('petWeight').textContent = pet.weight!=null ? `${pet.weight}` : '-';
     $('petPhoto').src = pet.photo || 'https://placehold.co/160x160?text=No+Photo';
     $('subtitle').textContent = `ID #${pet.id}`;
+    applyThemeByGender(pet.gender);
+
   }
 
   function renderStats(logs){
@@ -460,7 +493,7 @@
   /* 시작 */
   (function init(){
     if (!petId){ $('title').textContent = 'petId가 필요합니다'; return; }
-    $('title').textContent = `펫 #${petId} 리포트`;
+    $('title').textContent = '로딩 중...';  // 임시
 
     const url = `${API_BASE}/api/pet/report?petId=${petId}${selectedVisitId ? `&visitId=${selectedVisitId}` : ''}`;
 
@@ -471,6 +504,11 @@
               const visits = data.visits || [];
               const logs = data.logs || [];
 
+              // ✅ 제목을 이름으로 (없으면 ID로 폴백)
+              const displayName = (pet.name && pet.name.trim()) ? pet.name : `펫 #${petId}`;
+              $('title').textContent = `${displayName} 리포트`;
+              document.title = `${displayName} 리포트`; // 탭 제목도 같이
+
               renderPet(pet);
               renderStats(logs);
               renderVisits(visits);
@@ -480,6 +518,7 @@
               alert(`불러오기 실패: ${e.message}\n요청: ${url}`);
             });
   })();
+
 </script>
 </body>
 </html>
