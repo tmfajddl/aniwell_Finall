@@ -174,19 +174,40 @@ $(function () {
 			type: "POST",
 			data: { name, email },
 			success: function (res) {
-				const getLoginId = res?.data1 || "아이디 없음";
+				// ✅ 성공(S-)만 성공 알림
+				if (res && typeof res.resultCode === "string" && res.resultCode.startsWith("S-")) {
+					const getLoginId = res.data1 || res?.data?.loginId || "";
+					Swal.fire({
+						icon: "success",
+						title: "아이디 찾기 결과",
+						text: `아이디는 [${getLoginId}] 입니다`
+					});
+					closeFindIdIframe();
+					return;
+				}
+
+				// ✅ 없음/불일치(F-1 또는 F-404)는 사용자 친화 문구로 통일
+				if (res?.resultCode === "F-1" || res?.resultCode === "F-404") {
+					Swal.fire({
+						icon: "error",
+						title: "일치하는 정보가 없습니다",
+						text: "일치하는 이름 또는 이메일이 없습니다."
+					});
+					return;
+				}
+
+				// ✅ 그 외 서버 메시지 노출
 				Swal.fire({
-					icon: "success",
-					title: "아이디 찾기 결과",
-					text: `아이디는 [${getLoginId}] 입니다`
+					icon: "error",
+					title: "요청 실패",
+					text: res?.msg || "서버 오류가 발생했습니다."
 				});
-				closeFindIdIframe();
 			},
 			error: function (err) {
 				Swal.fire({
 					icon: "error",
 					title: "요청 실패",
-					text: err.responseText || "서버 오류가 발생했습니다."
+					text: err?.responseText || "서버 오류가 발생했습니다."
 				});
 			}
 		});
@@ -228,27 +249,27 @@ document.addEventListener("click", function (event) {
     Ajax: Find PW
 =========================== */
 $(function () {
-	const $form = $("#findPwForm"); // ⚠️ 폼 ID (iframe 아님)
+	const $form = $("#findPwForm");
 	if ($form.length === 0) return;
 
 	$form.on("submit", function (e) {
 		e.preventDefault();
 
-		const loginId =
-			($form.find('[name="loginId"]').val() || "").trim() || ($("#loginId").val() || "").trim();
-		const email =
-			($form.find('[name="email"]').val() || "").trim() || ($("#email").val() || "").trim();
+		const loginId = ($form.find('[name="loginId"]').val() || $("#loginId").val() || "").trim();
+		const emailRaw = ($form.find('[name="email"]').val() || $("#email").val() || "").trim();
 
 		if (!loginId) {
 			Swal.fire({ icon: "warning", title: "아이디를 입력해주세요" });
 			$form.find('[name="loginId"]').focus();
 			return;
 		}
-		if (!email) {
+		if (!emailRaw) {
 			Swal.fire({ icon: "warning", title: "이메일을 입력해주세요" });
 			$form.find('[name="email"]').focus();
 			return;
 		}
+
+		const email = emailRaw.toLowerCase(); // 🔹 프론트에서 정규화
 
 		$.ajax({
 			url: "/usr/member/doFindLoginPw",
@@ -262,13 +283,25 @@ $(function () {
 						text: "메일로 임시 비밀번호를 발송했습니다."
 					});
 					closeFindPwIframe();
-				} else {
+					return;
+				}
+
+				// 🔹 아이디 없음/이메일 불일치/Not found → 동일 안내
+				if (res?.resultCode === "F-1" || res?.resultCode === "F-2" || res?.resultCode === "F-404") {
 					Swal.fire({
 						icon: "error",
-						title: "실패",
-						text: res?.msg || "일치하는 정보가 없습니다."
+						title: "일치하는 정보가 없습니다",
+						text: "해당하는 아이디 또는 이메일이 없습니다."
 					});
+					return;
 				}
+
+				// 기타 실패 메시지
+				Swal.fire({
+					icon: "error",
+					title: "요청 실패",
+					text: res?.msg || "요청을 처리하지 못했습니다."
+				});
 			},
 			error: function (err) {
 				Swal.fire({
