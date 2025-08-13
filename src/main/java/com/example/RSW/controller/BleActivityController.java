@@ -45,6 +45,7 @@ public class BleActivityController {
 
     // ✅ BLE 활동 리스트 조회 (JSP용)
     @GetMapping("/usr/pet/activity")
+    @ResponseBody
     public String showBleActivityList(@RequestParam("petId") int petId, Model model) {
         List<PetBleActivity> activities = bleService.getActivitiesByPetId(petId);
 
