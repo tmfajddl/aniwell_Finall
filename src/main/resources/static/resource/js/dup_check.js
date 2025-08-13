@@ -4,6 +4,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const joinForm = document.querySelector('.login-form--register form');
     if (!joinForm) return;
 
+    // 이모지/픽토그램 + ZWJ/변이 선택자
+    const EMOJI_RE = /[\p{Extended_Pictographic}\u200D\uFE0F]/u;
+
     // 한글 입력(IME 조합/붙여넣기 포함) 차단
     function preventKoreanInput(input) {
         let isComposing = false;
@@ -118,15 +121,44 @@ document.addEventListener("DOMContentLoaded", () => {
             // 로컬 유효성 플래그
             let localInvalid = false;
 
+            // ===== 아이디 유효성: 이모지 → 특수문자 → 시작/길이 → 영문+숫자 =====
             if (field === "loginId") {
-                if (!/^[A-Za-z]/.test(value)) {
-                    showWarning("아이디는 영문자로 시작해야 합니다.");
-                    localInvalid = true;
-                } else if (value.length < 6 || value.length > 12) {
-                    showWarning("아이디는 6자 이상 12자 이하로 입력해주세요.");
+                const hasEmoji   = EMOJI_RE.test(value);
+                const hasSpecial = /[^A-Za-z0-9]/.test(value); // 영문/숫자 외 포함
+
+                // 1) 이모지 차단
+                if (hasEmoji) {
+                    showWarning("아이디에 이모티콘은 사용할 수 없습니다.");
                     localInvalid = true;
                 }
+                // 2) 특수문자 차단
+                else if (hasSpecial) {
+                    showWarning("아이디에 특수문자는 사용할 수 없습니다.");
+                    localInvalid = true;
+                }
+
+                // 3) 시작문자/길이
+                if (!localInvalid) {
+                    if (!/^[A-Za-z]/.test(value)) {
+                        showWarning("아이디는 영문자로 시작해야 합니다.");
+                        localInvalid = true;
+                    } else if (value.length < 6 || value.length > 12) {
+                        showWarning("아이디는 6자 이상 12자 이하로 입력해주세요.");
+                        localInvalid = true;
+                    }
+                }
+
+                // 4) 영문+숫자 조합 필수
+                if (!localInvalid) {
+                    const hasLetter = /[A-Za-z]/.test(value);
+                    const hasDigit  = /\d/.test(value);
+                    if (!(hasLetter && hasDigit)) {
+                        showWarning("아이디는 영문과 숫자를 반드시 조합해서 입력해주세요.");
+                        localInvalid = true;
+                    }
+                }
             }
+
 
             if (field === "email") {
                 // 공백 제거 & 소문자 변환
@@ -162,8 +194,8 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             if (field === "cellphone") {
-                const digitsOnly = value.replace(/\D/g, "");                // 010, 011, 016, 017, 018, 019 허용
-                // 010 → 11자리, 그 외 01X(1,6,7,8,9) → 10자리
+                const digitsOnly = value.replace(/\D/g, "");
+                // 010 → 11자리, 011/016/017/018/019 → 10자리
                 const isValid = /^(010\d{8}|01[16789]\d{7})$/.test(digitsOnly);
 
                 if (!isValid) {
@@ -216,7 +248,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const nameInput = joinForm.querySelector('#name');
     if (nameInput) {
         const toNeutral = () => {
-            nameInput.classList.remove('border-green-500', 'border-red-500'); // ← 둘 다 제거하면 기본 노란줄로 복귀
+            nameInput.classList.remove('border-green-500', 'border-red-500');
         };
         const toSuccess = () => {
             nameInput.classList.add('border-green-500');
@@ -225,12 +257,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const applyNameStyle = () => {
             if (nameInput.value.trim().length > 0) toSuccess();
-            else toNeutral(); // ← 비어있으면 노란줄 유지
+            else toNeutral();
         };
 
         nameInput.addEventListener('input', applyNameStyle);
         nameInput.addEventListener('blur', applyNameStyle);
-        applyNameStyle(); // 초기값 반영
+        applyNameStyle();
     }
 
 });
