@@ -65,12 +65,12 @@
 
 
 	<!-- DELETE -->
-	<delete id="delete" parameterType="long">
+	<delete id="delete" parameterType="int">
 		DELETE FROM prescription_detail WHERE id = #{id}
 	</delete>
 
 	<!-- SELECT: 기본 -->
-	<select id="selectById" parameterType="long"
+	<select id="selectById" parameterType="int"
 		resultMap="PrescriptionDetailMap">
 		SELECT id, document_id, drug_name, dose_value, dose_unit, freq_per_day,
 		duration_days, notes
@@ -80,7 +80,7 @@
 
 	<!-- SELECT: 문서ID로 (처방전 1장에 여러 항목) -->
 	<!-- ⚠ 단일 기본형 파라미터를 이름으로 참조하므로 Mapper 인터페이스에 @Param("documentId") 권장 -->
-	<select id="selectByDocumentId" parameterType="long"
+	<select id="selectByDocumentId" parameterType="int"
 		resultMap="PrescriptionDetailMap">
 		SELECT id, document_id, drug_name, dose_value, dose_unit, freq_per_day,
 		duration_days, notes
@@ -91,7 +91,7 @@
 
 	<!-- SELECT: 방문ID로 (medical_document JOIN) -->
 	<!-- ⚠ Mapper 인터페이스에 @Param("visitId") 권장 -->
-	<select id="selectByVisitId" parameterType="long"
+	<select id="selectByVisitId" parameterType="int"
 		resultMap="PrescriptionDetailMap">
 		SELECT pd.id, pd.document_id, pd.drug_name, pd.dose_value, pd.dose_unit,
 		pd.freq_per_day, pd.duration_days, pd.notes
@@ -104,7 +104,7 @@
 
 	<!-- SELECT: 펫ID로 (visit JOIN) -->
 	<!-- ⚠ Mapper 인터페이스에 @Param("petId") 권장 -->
-	<select id="selectByPetId" parameterType="long"
+	<select id="selectByPetId" parameterType="int"
 		resultMap="PrescriptionDetailMap">
 		SELECT pd.id, pd.document_id, pd.drug_name, pd.dose_value, pd.dose_unit,
 		pd.freq_per_day, pd.duration_days, pd.notes
