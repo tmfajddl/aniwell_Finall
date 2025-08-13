@@ -3,6 +3,7 @@
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
+
 <mapper
 	namespace="com.example.RSW.repository.PrescriptionDetailRepository">
 	<!-- 공통 매핑 -->
@@ -31,6 +32,7 @@
 		#{durationDays}, #{notes})
 	</insert>
 
+
 	<!-- INSERT (배치) -->
 	<!-- (배치는 collection=list 사용이므로 parameterType 생략 OK) -->
 	<insert id="insertBatch">
@@ -42,6 +44,7 @@
 			#{r.freqPerDay}, #{r.durationDays}, #{r.notes})
 		</foreach>
 	</insert>
+
 
 	<!-- UPDATE -->
 	<!-- [수정] parameterType 패키지 교정 -->
@@ -59,6 +62,7 @@
 		</set>
 		WHERE id = #{id}
 	</update>
+
 
 	<!-- DELETE -->
 	<delete id="delete" parameterType="long">
