@@ -52,6 +52,21 @@ public class PetController {
 	@Autowired
 	private Cloudinary cloudinary;
 
+	@Autowired
+	private VisitService visitService;
+
+	@Autowired
+	private PetHealthService petHealthService;
+
+	@Autowired
+	private LabResultDetailService labResultDetailService;
+
+	@Autowired
+	private PrescriptionDetailService prescriptionDetailService;
+
+	@Autowired
+	private MedicalDocumentService medicalDocumentService;
+
 	//추천 장소 리스트 불러오기
 	@GetMapping("/usr/pet/recommend/list")
 	@ResponseBody
@@ -715,5 +730,45 @@ public class PetController {
 
 		return Map.of("resultCode", "S-1", "calendarEvent", calendarEvent);
 	}
+
+	@GetMapping("/api/pet/report")
+	@ResponseBody
+	public Map<String, Object> getReport(@RequestParam int petId) {
+		// 기본
+		Pet pet = petService.getPetsById(petId);
+		List<Visit> visits = visitService.selectVisitsByPetId(petId);
+		List<PetHealthLog> logs = petHealthService.getLogsByPetId(petId);
+
+		// 방문별 상세 합치기
+		List<Map<String, Object>> visitBlocks = new ArrayList<>();
+		for (Visit v : visits) {
+			int vid = v.getId(); // int여도 long으로 자동 승격됨
+
+			List<PrescriptionDetail> pres = prescriptionDetailService.selectByVisitId(vid);
+			List<LabResultDetail>    labs = labResultDetailService.selectByVisitId(vid);
+			List<MedicalDocument>    docs = medicalDocumentService.selectByVisitId(vid);
+
+			Map<String, Object> m = new LinkedHashMap<>();
+			m.put("id",         v.getId());
+			m.put("visitDate",  v.getVisitDate());
+			m.put("hospital",   v.getHospital());
+			m.put("doctor",     v.getDoctor());
+			m.put("diagnosis",  v.getDiagnosis());
+			m.put("notes",      v.getNotes());
+			m.put("totalCost",  v.getTotalCost());
+			m.put("prescriptions", pres != null ? pres : Collections.emptyList());
+			m.put("labResults",    labs != null ? labs : Collections.emptyList());
+			m.put("documents",     docs != null ? docs : Collections.emptyList());
+
+			visitBlocks.add(m);
+		}
+
+		Map<String, Object> body = new LinkedHashMap<>();
+		body.put("pet",    pet);          // VO 그대로 반환
+		body.put("visits", visitBlocks);  // 방문별 상세 포함
+		body.put("logs",   logs);         // 필요 시 나중에 DTO로 전환 가능
+		return body;
+	}
+
 
 }
