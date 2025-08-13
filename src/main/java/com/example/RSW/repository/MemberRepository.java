@@ -18,18 +18,18 @@ public interface MemberRepository {
                @Param("authName") String authName,
                @Param("authLevel") int authLevel);
 
-    public Member getMemberById(int id);
+    Member getMemberById(int id);
 
-    public int getLastInsertId();
+    int getLastInsertId();
 
-    public Member getMemberByLoginId(String loginId);
+    Member getMemberByLoginId(String loginId);
 
-    public Member getMemberByNameAndEmail(String name, String email);
+    Member getMemberByNameAndEmail(@Param("name") String name, @Param("email") String email);
 
-    public void modify(int loginedMemberId, String loginPw, String name, String nickname, String cellphone,
-                       String email, String photo, String address);
+    void modify(int loginedMemberId, String loginPw, String name, String nickname, String cellphone,
+                String email, String photo, String address);
 
-    public void modifyWithoutPw(int loginedMemberId, String name, String nickname, String cellphone, String email, String photo, String address);
+    void modifyWithoutPw(int loginedMemberId, String name, String nickname, String cellphone, String email, String photo, String address);
 
     void withdraw(int id);
 

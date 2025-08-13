@@ -1,82 +1,121 @@
-window.addEventListener("load",start)
+// DOM 준비 후 시작
+window.addEventListener("load", start);
 
-function start(){
-    
+function start() {
+	/* ===========================
+        Elements Selectors
+    ============================ */
+	const elm = {
+		arrow: document.querySelector(".form-container__arrow"),
+		overlay: document.querySelector(".overlay"),
+		title: document.querySelector(".title"),
+		signUpButton: document.querySelector(".buttons__signup"),
+		loginButton: document.querySelector(".buttons__signup--login"),
+		loginForm: document.querySelector(".login-form"),
+		registerForm: document.querySelector(".login-form--register")
+	};
+
+	/* ===========================
+        Properties Object
+    ============================ */
+	const props = {
+		left: "left: 20px;",
+		bottom: "bottom: -500px;",
+		transition1: "transition: bottom 1s;",
+		transition2: "transition: bottom 2s;",
+		opacity0: "opacity: 0;",
+		opacity1: "opacity: 1;",
+		trnsDelay: "transition-delay: 1s;",
+		zIndex: "z-index: 6;",
+		left0: "left: 0;",
+		trnsDelay0: "transition-delay: 0s;",
+		zIndex0: "z-index: 0;",
+		leftM120: "left: -120px;"
+	};
+
+	/* ===========================
+        Elements Array
+    ============================ */
+	// null 요소는 제외해서 transition 시 에러 방지
+	const elms = [
+		elm.arrow,
+		elm.overlay,
+		elm.title,
+		elm.signUpButton,
+		elm.loginButton,
+		elm.loginForm,
+		elm.registerForm
+	].filter(Boolean);
+
+	function transition(elements, properties) {
+		const len = Math.min(elements.length, properties.length);
+		for (let i = 0; i < len; i++) {
+			// setAttribute 전에 요소 존재 보장
+			const node = elements[i];
+			if (node) node.setAttribute("style", String(properties[i]));
+		}
+	}
+
+	/* ===========================
+        Events (존재할 때만 바인딩)
+    ============================ */
+	const signUpBtn = document.getElementById("signUp");
+	if (signUpBtn) {
+		signUpBtn.onclick = function () {
+			const properties = [
+				props.left,
+				props.opacity0,
+				props.opacity0,
+				`${props.transition1} ${props.bottom}`,
+				`${props.transition2} ${props.bottom}`,
+				props.opacity0,
+				`${props.opacity1} ${props.trnsDelay} ${props.zIndex}`
+			];
+			transition(elms, properties);
+		};
+	}
+
+	const loginBtn = document.getElementById("login");
+	if (loginBtn) {
+		loginBtn.onclick = function () {
+			const properties = [
+				props.left,
+				props.opacity0,
+				props.opacity0,
+				`${props.transition1} ${props.bottom}`,
+				`${props.transition2} ${props.bottom}`,
+				`${props.opacity1} ${props.trnsDelay} ${props.zIndex}`,
+				props.opacity0
+			];
+			transition(elms, properties);
+		};
+	}
+
+	const arrowClick = document.getElementById("arrowClick");
+	if (arrowClick) {
+		arrowClick.onclick = function () {
+			const properties = [
+				props.leftM120,
+				props.opacity1,
+				props.opacity1,
+				props.opacity1,
+				props.opacity1,
+				`${props.opacity0} ${props.trnsDelay0} ${props.zIndex0}`,
+				`${props.opacity0} ${props.trnsDelay0} ${props.zIndex0}`
+			];
+			transition(elms, properties);
+		};
+	}
+}
+
 /* ===========================
-    Elements Selectors
-============================ */
-
-  const elm = {
-    arrow: document.querySelector(".form-container__arrow"),
-    overlay: document.querySelector(".overlay"),
-    title: document.querySelector(".title"),
-    signUpButton: document.querySelector(".buttons__signup"),
-    loginButton: document.querySelector(".buttons__signup--login"),
-    loginForm: document.querySelector(".login-form"),
-    registerForm: document.querySelector(".login-form--register")
-  }
-  
-/* ===========================
-    Properties Object
-============================ */
-
-  const props = {
-    left: "left: 20px;",
-    bottom: "bottom: -500px;",
-    transition1: "transition: bottom 1s;",
-    transition2: "transition: bottom 2s;",
-    opacity0: "opacity: 0;",
-    opacity1: "opacity: 1;",
-    trnsDelay: "transition-delay: 1s;",
-    zIndex: "z-index: 6;",
-    left0: "left: 0;",
-    trnsDelay0: "transition-delay: 0s;",
-    zIndex0: "z-index: 0;",
-    leftM120: "left: -120px;"
-  }
-  
-/* ===========================
-    Elements Array
-============================ */
-
-  const elms = [elm.arrow, elm.overlay, elm.title, elm.signUpButton, elm.loginButton, elm.loginForm, elm.registerForm]
-  
-  function transition (elements, props){
-    for (let i = 0; i < elements.length; i++){
-      elements[i].setAttribute("style", `${props[i]}`)
-    }
-  } 
-
-/* ===========================
-    Events
-============================ */
-
-  document.getElementById("signUp").onclick = function (){
-
-    const properties = [props.left, props.opacity0, props.opacity0, `${props.transition1} ${props.bottom}`, `${props.transition2} ${props.bottom}`, props.opacity0, `${props.opacity1} ${props.trnsDelay} ${props.zIndex}`]
-  
-    transition(elms, properties)
-  }
-
-  document.getElementById("login").onclick = function (){
-
-    const properties = [props.left, props.opacity0, props.opacity0, `${props.transition1} ${props.bottom}`, `${props.transition2} ${props.bottom}`, `${props.opacity1} ${props.trnsDelay} ${props.zIndex}`, props.opacity0]
-  
-    transition(elms, properties)
-  }
-
-  document.getElementById("arrowClick").onclick = function (){
-
-    const properties = [props.leftM120, props.opacity1, props.opacity1, props.opacity1, props.opacity1, `${props.opacity0} ${props.trnsDelay0} ${props.zIndex0}`, `${props.opacity0} ${props.trnsDelay0} ${props.zIndex0}`]
-  
-    transition(elms, properties)
-  }
-} 
-
+    Find ID / PW Modals
+=========================== */
 
 function openFindIdIframe() {
 	const modal = document.getElementById("findModal");
 	const iframe = document.getElementById("findIdIframe");
+	if (!modal || !iframe) return;
 	iframe.src = "/usr/member/findLoginId";
 	modal.classList.remove("hidden");
 }
@@ -84,142 +123,158 @@ function openFindIdIframe() {
 function closeFindIdIframe() {
 	const modal = document.getElementById("findModal");
 	const iframe = document.getElementById("findIdIframe");
-
+	if (!modal || !iframe) return;
 	modal.classList.add("hidden");
 	iframe.src = "";
 }
 
 function openFindPwIframe() {
-	document.getElementById("findPwModal").classList.remove("hidden");
-	document.getElementById("findPwForm").src = "/usr/member/findLoginPw"; // iframe src
+	const modal = document.getElementById("findPwModal");
+	const iframe = document.getElementById("findPwIframe"); // ⚠️ iframe ID 분리
+	if (!modal || !iframe) return;
+	iframe.src = "/usr/member/findLoginPw";
+	modal.classList.remove("hidden");
 }
 
 function closeFindPwIframe() {
-	const modal = document.getElementById("findPwModal"); // 수정
-	const iframe = document.getElementById("findPwForm");
-
+	const modal = document.getElementById("findPwModal");
+	const iframe = document.getElementById("findPwIframe"); // ⚠️ iframe ID 분리
+	if (!modal || !iframe) return;
 	modal.classList.add("hidden");
 	iframe.src = "";
 }
 
+/* ===========================
+    Ajax: Find ID
+=========================== */
+$(function () {
+	const $form = $("#findIdForm");
+	if ($form.length === 0) return;
 
+	$form.on("submit", function (e) {
+		e.preventDefault();
 
-$(function() {
-	$('#findIdForm').on('submit', function(e) {
-		e.preventDefault(); // 기본 폼 전송 막기
+		// 같은 페이지에 같은 ID가 여러 개일 위험을 줄이기 위해 폼 스코프 사용
+		const name = ($form.find('[name="name"]').val() || "").trim() || ($("#name").val() || "").trim();
+		const email = ($form.find('[name="email"]').val() || "").trim() || ($("#email").val() || "").trim();
 
-		const name = $('#name').val().trim();
-		const email = $('#email').val().trim();
-
-		if (name.length === 0) {
-			Swal.fire({ icon: 'warning', title: '이름을 입력해주세요' });
-			$('#name').focus();
+		if (!name) {
+			Swal.fire({ icon: "warning", title: "이름을 입력해주세요" });
+			$form.find('[name="name"]').focus();
 			return;
 		}
-
-		if (email.length === 0) {
-			Swal.fire({ icon: 'warning', title: '이메일을 입력해주세요' });
-			$('#email').focus();
+		if (!email) {
+			Swal.fire({ icon: "warning", title: "이메일을 입력해주세요" });
+			$form.find('[name="email"]').focus();
 			return;
 		}
 
 		$.ajax({
-			url: '/usr/member/doFindLoginId',
-			type: 'POST',
-			data: {
-				name: name,
-				email: email
-			},
-			success: function(res) {
-				const getLoginId = res.data1 || "아이디 없음";
-
+			url: "/usr/member/doFindLoginId",
+			type: "POST",
+			data: { name, email },
+			success: function (res) {
+				const getLoginId = res?.data1 || "아이디 없음";
 				Swal.fire({
-					icon: 'success',
-					title: '아이디 찾기 결과',
+					icon: "success",
+					title: "아이디 찾기 결과",
 					text: `아이디는 [${getLoginId}] 입니다`
 				});
-
 				closeFindIdIframe();
 			},
-			error: function(err) {
+			error: function (err) {
 				Swal.fire({
-					icon: 'error',
-					title: '요청 실패',
-					text: err.responseText || '서버 오류가 발생했습니다.'
+					icon: "error",
+					title: "요청 실패",
+					text: err.responseText || "서버 오류가 발생했습니다."
 				});
 			}
 		});
 	});
 });
 
-document.addEventListener("click", function(event) {
+/* ===========================
+    바깥 클릭 시 닫기
+=========================== */
+document.addEventListener("click", function (event) {
+	// ID 모달
 	const idModal = document.getElementById("findModal");
 	const idContent = document.getElementById("findModalContent");
-
-	if (idModal && idContent &&
+	if (
+		idModal &&
+		idContent &&
 		!idModal.classList.contains("hidden") &&
 		idModal.contains(event.target) &&
-		!idContent.contains(event.target)) {
+		!idContent.contains(event.target)
+	) {
 		closeFindIdIframe();
 	}
 
+	// PW 모달 (ID 오타 수정: findPwModalContent)
 	const pwModal = document.getElementById("findPwModal");
-	const pwContent = document.getElementById("findModalContent");
-
-	if (pwModal && pwContent &&
+	const pwContent = document.getElementById("findPwModalContent");
+	if (
+		pwModal &&
+		pwContent &&
 		!pwModal.classList.contains("hidden") &&
 		pwModal.contains(event.target) &&
-		!pwContent.contains(event.target)) {
+		!pwContent.contains(event.target)
+	) {
 		closeFindPwIframe();
 	}
 });
 
+/* ===========================
+    Ajax: Find PW
+=========================== */
+$(function () {
+	const $form = $("#findPwForm"); // ⚠️ 폼 ID (iframe 아님)
+	if ($form.length === 0) return;
 
-$(function() {
-	$('#findPwForm').on('submit', function(e) {
-		e.preventDefault(); // ✅ 기본 제출 막기
+	$form.on("submit", function (e) {
+		e.preventDefault();
 
-		const loginId = $('#loginId').val()?.trim();
-		const email = $('#email').val()?.trim();
+		const loginId =
+			($form.find('[name="loginId"]').val() || "").trim() || ($("#loginId").val() || "").trim();
+		const email =
+			($form.find('[name="email"]').val() || "").trim() || ($("#email").val() || "").trim();
 
 		if (!loginId) {
-			Swal.fire({ icon: 'warning', title: '아이디를 입력해주세요' });
-			$('#loginId').focus();
+			Swal.fire({ icon: "warning", title: "아이디를 입력해주세요" });
+			$form.find('[name="loginId"]').focus();
 			return;
 		}
-
 		if (!email) {
-			Swal.fire({ icon: 'warning', title: '이메일을 입력해주세요' });
-			$('#email').focus();
+			Swal.fire({ icon: "warning", title: "이메일을 입력해주세요" });
+			$form.find('[name="email"]').focus();
 			return;
 		}
 
 		$.ajax({
-			url: '/usr/member/doFindLoginPw',
-			type: 'POST',
+			url: "/usr/member/doFindLoginPw",
+			type: "POST",
 			data: { loginId, email },
-			success: function(res) {
-				if (res.resultCode?.startsWith('S-')) {
+			success: function (res) {
+				if (res?.resultCode?.startsWith("S-")) {
 					Swal.fire({
-						icon: 'success',
-						title: '임시 비밀번호 발송',
-						text: '메일로 임시 비밀번호를 발송했습니다.'
+						icon: "success",
+						title: "임시 비밀번호 발송",
+						text: "메일로 임시 비밀번호를 발송했습니다."
 					});
-
 					closeFindPwIframe();
 				} else {
 					Swal.fire({
-						icon: 'error',
-						title: '실패',
-						text: res.msg || '일치하는 정보가 없습니다.'
+						icon: "error",
+						title: "실패",
+						text: res?.msg || "일치하는 정보가 없습니다."
 					});
 				}
 			},
-			error: function(err) {
+			error: function (err) {
 				Swal.fire({
-					icon: 'error',
-					title: '서버 오류',
-					text: err.responseText || '요청 중 문제가 발생했습니다.'
+					icon: "error",
+					title: "서버 오류",
+					text: err.responseText || "요청 중 문제가 발생했습니다."
 				});
 			}
 		});
