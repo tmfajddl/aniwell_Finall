@@ -229,13 +229,14 @@
 
 				<div class="bg-white p-4 rounded-xl shadow h-1/3 flex relative ">
 					<!-- ⛳️ 기존: <canvas id="myChart_Sc" ...> 제거 -->
-
 					<!-- ✅ 활동 타임라인 시작 -->
 					<div id="activityTimeline" class="w-full">
 						<div class="flex items-center justify-between mb-2">
 							<h3 class="text-lg font-bold text-gray-800">🕒 활동 타임라인</h3>
 							<!-- 패널에 이미 #datePicker 가 있으니 여기선 안 넣습니다 -->
 						</div>
+						<!-- ✅ 범례 -->
+						<div id="activityLegend" class="flex items-center gap-6 text-gray-600 text-sm mb-1"></div>
 
 						<div id="activityChartWrapper"
 							class="overflow-x-auto mt-2 border-t border-dashed border-gray-300">
@@ -1197,117 +1198,171 @@
 
 
 		</script>
+
+
 		<script th:inline="javascript">
-			const selectedPetId = localStorage.getItem('selectedPetId');
-			(() => {
-				const dateInput = document.getElementById('datePicker'); // UI용 날짜 선택(서버에는 전송하지 않음)
-				const timeGrid = document.getElementById('activityTimeGrid');
-				const chartArea = document.getElementById('activityChartArea');
-				const noDataEl = document.getElementById('activityNoData');
+			// DOM 참조
+			const legendEl = document.getElementById('activityLegend');
+			const timeGrid = document.getElementById('activityTimeGrid');
+			const chartArea = document.getElementById('activityChartArea');
+			const noDataEl = document.getElementById('activityNoData');
 
-				const COLORS = {"거실": "#fff8b5", "침실": "#d3f8e2", "기타": "#e0eafc"};
-				const PX_PER_HOUR = 80;
-				const MIN_BAR_PX = 4;
+			// 색상/상수
+			const COLORS = {"거실": "#fff8b5", "침실": "#d3f8e2", "기타": "#e0eafc"};
+			const PX_PER_HOUR = 80;
+			const MIN_BAR_PX = 4;
 
-				const pad2 = (n) => String(n).padStart(2, '0');
-				const fmtTime = (d) => `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
-				const fmtDuration = (sec) => {
-					sec = Math.max(0, sec | 0);
-					const m = Math.floor(sec / 60), s = sec % 60;
-					return `${m}분 ${s}초 머묾`;
-				};
+			// 포맷터
+			const pad2 = n => String(n).padStart(2, '0');
+			const fmtTime = d => `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+			const fmtDuration = sec => {
+				sec = Math.max(0, sec | 0);
+				const m = Math.floor(sec / 60), s = sec % 60;
+				return `${m}분 ${s}초 머묾`;
+			};
 
-				// 시간 눈금 렌더
-				function renderTimeGrid() {
-					timeGrid.innerHTML = '';
-					for (let h = 0; h <= 24; h++) {
-						const label = document.createElement('div');
-						label.className = 'absolute text-xs text-gray-600';
-						label.style.left = `${h * PX_PER_HOUR}px`;
-						label.textContent = `${pad2(h)}:00`;
-						timeGrid.appendChild(label);
-					}
+			// 시간 눈금
+			function renderTimeGrid() {
+				timeGrid.innerHTML = '';
+				for (let h = 0; h <= 24; h++) {
+					const label = document.createElement('div');
+					label.className = 'absolute text-xs text-gray-600 -translate-x-1/2';
+					label.style.left = `${h * PX_PER_HOUR}px`;
+					label.textContent = `${pad2(h)}:00`;
+					timeGrid.appendChild(label);
 				}
+			}
 
-				// 활동 타임라인 렌더
-				function renderChart(list) {
-					chartArea.innerHTML = '';
-
-					const rows = Math.max(Array.isArray(list) ? list.length : 0, 5);
-					for (let i = 0; i < rows; i++) {
-						const row = document.createElement('div');
-						row.className = 'relative h-[50px] bg-white';
-						chartArea.appendChild(row);
-					}
-
-					if (!Array.isArray(list) || list.length === 0) {
-						noDataEl.classList.remove('hidden');
-						return;
-					}
-					noDataEl.classList.add('hidden');
-
-					list.sort((a, b) => new Date(a.enteredAt) - new Date(b.enteredAt));
-					const startOfDay = new Date(list[0].enteredAt);
-					startOfDay.setHours(0, 0, 0, 0);
-
-					list.forEach((it, idx) => {
-						const entered = new Date(it.enteredAt);
-						const exited = new Date(it.exitedAt);
-						const durSec = (exited - entered) / 1000;
-						const offSec = (entered - startOfDay) / 1000;
-
-						const leftPx = (offSec / 3600) * PX_PER_HOUR;
-						const widthPx = Math.max((durSec / 3600) * PX_PER_HOUR, MIN_BAR_PX);
-
-						const bar = document.createElement('div');
-						bar.className = 'absolute h-[30px] rounded-[20px]';
-						bar.style.left = `${leftPx}px`;
-						bar.style.width = `${widthPx}px`;
-						bar.style.backgroundColor = COLORS[it.zoneName] || COLORS['기타'];
-						bar.setAttribute('data-tooltip',
-							`${fmtTime(entered)} ~ ${fmtTime(exited)}\n${fmtDuration(durSec)}`
-						);
-
-						chartArea.children[idx].appendChild(bar);
-					});
-				}
-
-				// ✅ 서버 요청 (컨트롤러에 맞춤: petId만 전달, 응답 키 activities/activitiesJson)
-				function loadActivities() {
-					$.ajax({
-						url: '/usr/petJ/activity',
-						type: 'GET',
-						data: {petId: selectedPetId},
-						dataType: 'json',
-						cache: false,
-						success: function (json) {
-							let list = [];
-							if (Array.isArray(json?.activities)) {
-								list = json.activities;
-							} else if (typeof json?.activitiesJson === 'string') {
-								try {list = JSON.parse(json.activitiesJson);} catch {list = [];}
-							}
-							renderChart(Array.isArray(list) ? list : []);
-						},
-						error: function (xhr, status, error) {
-							console.error('[loadActivities] AJAX Error:', status, error);
-							renderChart([]);
-						}
-					});
-				}
-
-				// 초기 세팅
-				renderTimeGrid();
-				const today = new Date().toISOString().split('T')[0];
-				if (dateInput && !dateInput.value) dateInput.value = today;
-				loadActivities();
-
-				// 날짜 변경 시(서버에 전달하지 않지만 UI 갱신 트리거로 사용)
-				dateInput?.addEventListener('change', () => {
-					loadActivities();
+			// 범례
+			function renderLegend(zones) {
+				legendEl.innerHTML = '';
+				const ORDER = ['거실', '침실', '기타'];
+				const sorted = ORDER.filter(z => zones.includes(z)).concat(zones.filter(z => !ORDER.includes(z)));
+				sorted.forEach(z => {
+					const item = document.createElement('div');
+					item.className = 'flex items-center gap-2';
+					const swatch = document.createElement('span');
+					swatch.className = 'inline-block w-8 h-3 rounded';
+					swatch.style.backgroundColor = COLORS[z] || COLORS['기타'];
+					const label = document.createElement('span');
+					label.textContent = z;
+					item.appendChild(swatch);
+					item.appendChild(label);
+					legendEl.appendChild(item);
 				});
+			}
+
+			// 커스텀 툴팁
+			const tooltipEl = (() => {
+				const el = document.createElement('div');
+				el.id = 'activityTooltip';
+				el.className = 'hidden fixed z-50 bg-gray-900/95 text-white text-xs px-2.5 py-2 rounded-lg shadow-lg pointer-events-none';
+				document.body.appendChild(el);
+				return el;
 			})();
+			function showTip(evt, html) {
+				tooltipEl.innerHTML = html;
+				tooltipEl.classList.remove('hidden');
+				const offset = 14;
+				tooltipEl.style.left = `${evt.clientX + offset}px`;
+				tooltipEl.style.top = `${evt.clientY - offset}px`;
+			}
+			function hideTip() {tooltipEl.classList.add('hidden');}
+
+			// 차트 렌더 (존별 1줄)
+			function renderChart(list) {
+				chartArea.innerHTML = '';
+
+				if (!Array.isArray(list) || list.length === 0) {
+					noDataEl?.classList.remove('hidden');
+					renderLegend([]);
+					return;
+				}
+				noDataEl?.classList.add('hidden');
+
+				list.sort((a, b) => new Date(a.enteredAt) - new Date(b.enteredAt));
+				const startOfDay = new Date(list[0].enteredAt);
+				startOfDay.setHours(0, 0, 0, 0);
+
+				const ORDER = ['거실', '침실', '기타'];
+				const zones = Array.from(new Set(list.map(x => x.zoneName)))
+					.sort((a, b) => {
+						const ai = ORDER.indexOf(a), bi = ORDER.indexOf(b);
+						return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+					});
+
+				renderLegend(zones);
+
+				zones.forEach(() => {
+					const row = document.createElement('div');
+					row.className = 'relative h-[44px] bg-white';
+					chartArea.appendChild(row);
+				});
+
+				list.forEach(it => {
+					const zIdx = zones.indexOf(it.zoneName);
+					if (zIdx < 0) return;
+					const rowEl = chartArea.children[zIdx];
+
+					const entered = new Date(it.enteredAt);
+					const exited = new Date(it.exitedAt);
+					const durSec = Math.max(0, (exited - entered) / 1000);
+					const offSec = Math.max(0, (entered - startOfDay) / 1000);
+
+					const leftPx = (offSec / 3600) * PX_PER_HOUR;
+					const widthPx = Math.max((durSec / 3600) * PX_PER_HOUR, MIN_BAR_PX);
+
+					const bar = document.createElement('div');
+					bar.className = 'absolute h-[26px] rounded-[16px] z-10';
+					bar.style.top = '9px';
+					bar.style.left = `${leftPx}px`;
+					bar.style.width = `${widthPx}px`;
+					bar.style.backgroundColor = COLORS[it.zoneName] || COLORS['기타'];
+
+					const tipHtml = `
+		        <div class="font-medium">${it.zoneName}</div>
+		        <div class="opacity-80">${fmtTime(entered)} ~ ${fmtTime(exited)}</div>
+		        <div class="opacity-80">${fmtDuration(durSec)}</div>
+		      `;
+					bar.addEventListener('mouseenter', (e) => showTip(e, tipHtml));
+					bar.addEventListener('mousemove', (e) => showTip(e, tipHtml));
+					bar.addEventListener('mouseleave', hideTip);
+
+					rowEl.appendChild(bar);
+				});
+			}
+
+			// 서버 호출
+			async function loadActivities() {
+				try {
+					const pid = window.petId ?? (Number(localStorage.getItem('selectedPetId')) || null);
+					const url = `/usr/petJ/activity${pid ? `?petId=${pid}` : ''}`;
+					const res = await fetch(url, {headers: {'Accept': 'application/json'}});
+					if (!res.ok) throw new Error(`HTTP ${res.status}`);
+					const json = await res.json();
+
+					let list = [];
+					if (Array.isArray(json?.data1)) list = json.data1;
+					else if (typeof json?.data2 === 'string' && json.data2.trim()) {
+						try {list = JSON.parse(json.data2);} catch { }
+					}
+					list = (list || []).filter(x => x?.enteredAt && x?.exitedAt);
+					renderChart(list);
+				} catch (e) {
+					console.error('[loadActivities] error:', e);
+					renderChart([]);
+				}
+			}
+
+			// 초기화
+			renderTimeGrid();
+			loadActivities();
+
+			// 외부에서 재호출용
+			window.__reloadActivityTimeline = loadActivities;
 		</script>
+
+
 
 
 
