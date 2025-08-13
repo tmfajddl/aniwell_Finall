@@ -52,6 +52,18 @@ public class PetController {
 	@Autowired
 	private Cloudinary cloudinary;
 
+	@Autowired
+	private VisitService visitService;
+
+	@Autowired
+	private PetHealthService petHealthService;
+
+	@Autowired
+	private LabResultDetailService labResultDetailService;
+
+	@Autowired
+	private PrescriptionDetailService prescriptionDetailService;
+
 	//추천 장소 리스트 불러오기
 	@GetMapping("/usr/pet/recommend/list")
 	@ResponseBody
@@ -715,5 +727,21 @@ public class PetController {
 
 		return Map.of("resultCode", "S-1", "calendarEvent", calendarEvent);
 	}
+
+	@GetMapping("/api/pet/report")
+	@ResponseBody
+	public Map<String, Object> getReport(
+			@RequestParam int petId) {
+
+		Pet pet = petService.getPetsById(petId);
+		List<Visit> visits = visitService.selectVisitsByPetId(petId);
+		List<PetHealthLog> logs = petHealthService.getLogsByPetId(petId);
+		Map<String, Object> body = new HashMap<>();
+		body.put("pet", pet);
+		body.put("visits", visits);
+		body.put("logs", logs);
+		return body;
+	}
+
 
 }
