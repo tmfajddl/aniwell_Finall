@@ -49,6 +49,11 @@ public class MemberService {
         this.memberRepository = memberRepository;
     }
 
+    // 로그인 비교용(BCrypt)
+    public boolean matchesRawPw(String raw, String encoded) {
+        return passwordEncoder.matches(raw, encoded);
+    }
+
     public ResultData notifyTempLoginPwByEmail(Member actor) {
         String title = "[" + siteName + "] 임시 패스워드 발송";
         String tempPassword = Ut.getTempPassword(6);
@@ -75,23 +80,39 @@ public class MemberService {
     public ResultData<Integer> join(String loginId, String loginPw, String name, String nickname, String cellphone,
                                     String email, String address, String authName, int authLevel) {
 
-        // 아이디 중복 체크
-        Member existsMember = getMemberByLoginId(loginId);
-        if (existsMember != null) {
+
+        // 아이디 중복
+        if (getMemberByLoginId(loginId) != null) {
             return ResultData.from("F-7", Ut.f("이미 사용중인 아이디(%s)입니다", loginId));
         }
 
+        // 이메일 중복
+        if (getMemberByEmail(email) != null) {
+            return ResultData.from("F-9", "이미 사용 중인 이메일입니다.");
+        }
+
+        // 닉네임 중복
+        if (getMemberByNickname(nickname) != null) {
+            return ResultData.from("F-10", "이미 사용 중인 닉네임입니다.");
+        }
+
+        // 전화번호 숫자만 추출 + 중복
+        String digits = cellphone == null ? "" : cellphone.replaceAll("\\D", "");
+        if (getMemberByCellphone(digits) != null) {
+            return ResultData.from("F-11", "이미 사용 중인 전화번호입니다.");
+        }
+
         // 이름과 이메일 중복 체크
-        existsMember = getMemberByNameAndEmail(name, email);
-        if (existsMember != null) {
+        if (getMemberByNameAndEmail(name, email) != null) {
             return ResultData.from("F-8", Ut.f("이미 사용중인 이름(%s)과 이메일(%s)입니다", name, email));
         }
 
         // ✅ 비밀번호 암호화
         String encodedPw = passwordEncoder.encode(loginPw);
 
-        // 회원가입 처리 (필수 컬럼을 테이블에 맞게 추가)
-        memberRepository.doJoin(loginId, encodedPw, loginPw, name, nickname, cellphone, email, address, authName, authLevel);
+
+        // 회원 저장 (원문 비번 null, 전화번호는 digits)
+        memberRepository.doJoin(loginId, encodedPw, name, nickname, digits, email, address, authName, authLevel);
 
         // 최근 삽입된 회원 ID 조회
         int id = memberRepository.getLastInsertId();
@@ -118,20 +139,28 @@ public class MemberService {
     public ResultData modify(int loginedMemberId, String loginPw, String name, String nickname, String cellphone,
                              String email, String photo, String address) {
 
-        if (loginPw != null && !loginPw.trim().isEmpty()) {
-            loginPw = passwordEncoder.encode(loginPw);
-        }
-        memberRepository.modify(loginedMemberId, loginPw, name, nickname, cellphone, email, photo, address);
+        String encoded = loginPw != null && !loginPw.trim().isEmpty()
+                ? passwordEncoder.encode(loginPw)
+                : null;
+
+        String digits = cellphone == null ? null : cellphone.replaceAll("\\D", "");
+
+        memberRepository.modify(loginedMemberId, encoded, name, nickname, digits, email, photo, address);
 
         return ResultData.from("S-1", "회원정보 수정 완료");
     }
+
 
     public ResultData modifyWithoutPw(int loginedMemberId, String name, String nickname, String cellphone,
                                       String email, String photo, String address) {
-        memberRepository.modifyWithoutPw(loginedMemberId, name, nickname, cellphone, email, photo, address);
+
+        String digits = cellphone == null ? null : cellphone.replaceAll("\\D", "");
+
+        memberRepository.modifyWithoutPw(loginedMemberId, name, nickname, digits, email, photo, address);
 
         return ResultData.from("S-1", "회원정보 수정 완료");
     }
+
 
     public ResultData withdrawMember(int id) {
         memberRepository.withdraw(id);
@@ -183,7 +212,6 @@ public class MemberService {
 
         return memberRepository.getMemberBySocial(provider, socialId);
     }
-
 
 
     // ✅ 이메일 기반 소셜 가입
@@ -267,7 +295,10 @@ public class MemberService {
         }
 
         if (Boolean.FALSE.equals(isLockAcquired)) {
-            try { Thread.sleep(300); } catch (InterruptedException ignored) {}
+            try {
+                Thread.sleep(300);
+            } catch (InterruptedException ignored) {
+            }
             if (redisTemplate != null) {
                 try {
                     return redisTemplate.opsForValue().get(redisKey);
@@ -337,4 +368,17 @@ public class MemberService {
 
         return member;
     }
+
+    public Member getMemberByNickname(String nickname) {
+        return memberRepository.getMemberByNickname(nickname);
+    }
+
+    public Member getMemberByEmail(String email) {
+        return memberRepository.getMemberByEmail(email);
+    }
+
+    public Member getMemberByCellphone(String cellphone) {
+        return memberRepository.getMemberByCellphone(cellphone);
+    }
+
 }
