@@ -504,7 +504,7 @@ public class UsrMemberController {
     @RequestMapping("/usr/member/doFindLoginId")
     @ResponseBody
     public ResultData doFindLoginId(@RequestParam(defaultValue = "/usr/member/login") String afterFindLoginIdUri,
-                                String name, String email) {
+                                @RequestParam("name") String name, @RequestParam("email") String email) {
 
         Member member = memberService.getMemberByNameAndEmail(name, normalizeEmail(email)); // 정규화 전달
 
@@ -512,7 +512,7 @@ public class UsrMemberController {
             return ResultData.from("F-1", "해당하는 아이디가 없습니다.");
         }
 
-        return ResultData.from("S-1", "getLoginId",member.getLoginId());
+        return ResultData.from("S-1", "아이디 찾기 성공", "data1", member.getLoginId());
     }
 
 
@@ -538,7 +538,8 @@ public class UsrMemberController {
             return ResultData.from("F-2", "일치하는 이메일이 없습니다.");
         }
 
-        ResultData notifyTempLoginPwByEmailRd = memberService.notifyTempLoginPwByEmail(member);
+        ResultData
+                notifyTempLoginPwByEmailRd = memberService.notifyTempLoginPwByEmail(member);
 
         return ResultData.from(notifyTempLoginPwByEmailRd.getResultCode(), notifyTempLoginPwByEmailRd.getMsg(),
                 afterFindLoginPwUri);

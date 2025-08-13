@@ -12,6 +12,44 @@
 	<link rel="stylesheet" th:href="@{/resource/css/common.css}">
 	<link rel="stylesheet" th:href="@{/resource/css/global.css}">
 	<script th:src="@{/resource/js/calendar.js}"></script>
+
+	<style>
+		#activityTimeline .bar-row {
+			position: relative;
+			height: 50px;
+			background: #fff;
+		}
+
+		#activityTimeline .bars {
+			height: 30px;
+			border-radius: 20px;
+			position: absolute;
+		}
+
+		#activityTimeline .time-label {
+			position: absolute;
+			font-size: 12px;
+			color: #666;
+			top: 0;
+			transform: translateX(-50%);
+		}
+
+		#activityTimeline .bars:hover::after {
+			content: attr(data-tooltip);
+			position: absolute;
+			top: -35px;
+			left: 0;
+			white-space: nowrap;
+			background: #444;
+			color: #fff;
+			padding: 5px 8px;
+			border-radius: 5px;
+			font-size: 12px;
+			z-index: 10;
+		}
+	</style>
+
+
 </head>
 
 <body class="bg-gradient-to-b from-[#e4f0b9] to-[#fcdca9] h-screen min-h-[100dvh] min-w-[1400px]">
@@ -21,7 +59,7 @@
 
 		<!-- Main content -->
 		<!-- Main content -->
-		<main class="main_page h-full overflow-hidden min-h-0 box-border grid-cols-12 flex-1 p-6 pt-8 grid  gap-8">
+		<main class="main_page h-full overflow-y-auto min-h-0 box-border grid-cols-12 flex-1 p-6 pt-8 grid  gap-8">
 
 			<!-- 왼쪽 8칸: 차트 + 감정분석 + 캘린더 -->
 			<section class="col-span-12 xl:col-span-8 flex flex-col gap-2  w-full">
@@ -116,9 +154,9 @@
 
 				<!-- 주변 펫살 보기 -->
 				<div class="flex gap-2 w-full grid-cols-2 ">
-					<div id="summaryCard"
+					<a th:href="@{/usr/pet/qr}"
 						class="flex-1 hover:shadow-md transition-shadow duration-300 font-semibold cursor-pointer shadow block bg-gradient-to-r from-[#EEE8CD] to-[#F4FBCC] rounded-xl p-3 text-sm text-center font-semibold transition">
-						행동반경 보기</div>
+						QR 레포트</a>
 					<a th:href="@{/usr/pet/petPlace}"
 						class="flex-1 hover:shadow-md transition-shadow duration-300 font-semibold cursor-pointer shadow block bg-gradient-to-r from-[#EEE8CD] to-[#F4FBCC] rounded-xl p-3 text-sm text-center font-semibold transition">
 						주변 펫샵 알아보기 </a>
@@ -189,61 +227,31 @@
 				</div>
 
 
-				<div class=" bg-white p-4 rounded-xl shadow h-1/3 flex">
-					<canvas id="myChart_Sc" class=" w-full h-full"></canvas>
-					<div id="feedingPanel"
-						class="fixed top-0 right-0 w-[95%] h-full bg-white shadow-xl z-40 transform translate-x-full transition-transform duration-300 rounded-l-[40px] flex flex-col p-6 overflow-auto">
+				<div class="bg-white p-4 rounded-xl shadow min-h-content flex relative ">
+					<!-- ⛳️ 기존: <canvas id="myChart_Sc" ...> 제거 -->
+					<!-- ✅ 활동 타임라인 시작 -->
+					<div id="activityTimeline" class="w-full">
+						<div class="flex items-center justify-between mb-2">
+							<h3 class="text-lg font-bold text-gray-800">🕒 활동 타임라인</h3>
+							<!-- 패널에 이미 #datePicker 가 있으니 여기선 안 넣습니다 -->
+						</div>
+						<!-- ✅ 범례 -->
+						<div id="activityLegend" class="flex items-center gap-6 text-gray-600 text-sm mb-1"></div>
 
-						<!-- 닫기 버튼 -->
-						<button onclick="closeFeedingPanel()"
-							class="absolute top-4 left-4 text-3xl text-gray-500 hover:text-black font-bold">×</button>
-
-						<h2 class="text-xl font-bold text-gray-700 text-center mb-6 mt-10">📝 하루 건강 리포트</h2>
-
-						<!-- 날짜 선택 -->
-						<div class="text-center mb-4">
-							<input type="date" id="datePicker" class="border rounded px-3 py-2 shadow-sm" />
+						<div id="activityChartWrapper"
+							class="overflow-x-auto mt-2 border-t border-dashed border-gray-300">
+							<!-- 시간 눈금 -->
+							<div id="activityTimeGrid" class="relative h-5 border-b border-dashed min-w-[1920px]"></div>
+							<!-- 바 차트 행들이 들어갈 영역 -->
+							<div id="activityChartArea" class="min-w-[1920px] flex flex-col gap-2 py-4"></div>
 						</div>
 
-						<!-- 1. 사료 차트 -->
-						<div class="h-[200px] mb-10 w-full px-4">
-							<h3 class="text-lg font-bold text-gray-800 mb-2">🍚 사료</h3>
-							<div class="w-full h-full bg-white rounded-xl shadow p-4">
-								<canvas id="weightChart" class="w-full h-full"></canvas>
-							</div>
-						</div>
-
-						<!-- 2. 물 섭취량 차트 -->
-						<div class="h-[200px] mb-10 w-full px-4">
-							<h3 class="text-lg font-bold text-gray-800 mb-2">💧 물</h3>
-							<div class="w-full h-full bg-white rounded-xl shadow p-4">
-								<canvas id="waterChart" class="w-full h-full"></canvas>
-							</div>
-						</div>
-
-						<!-- 3. 배변 횟수 -->
-						<div class="h-[300px]">
-							<h3 class="text-lg font-bold text-gray-800 mb-2">🚽 배변</h3>
-							<div class="overflow-y-auto max-h-[250px]">
-								<table class="w-full max-w-2xl mx-auto text-sm border border-gray-300 rounded-lg">
-									<thead class="bg-gray-100">
-										<tr>
-											<th class="p-2 border">시간</th>
-											<th class="p-2 border">배변 종류</th>
-										</tr>
-									</thead>
-									<tbody id="poopTableBody">
-										<!-- JavaScript로 행 추가됨 -->
-									</tbody>
-								</table>
-							</div>
-						</div>
 					</div>
-
-
+					<div id="activityNoData" class="hidden text-center text-gray-500 left-[45%] top-[45%] absolute">
+						오늘 활동이 없습니다
+					</div>
 				</div>
-
-
+				<!-- ✅ 활동 타임라인 끝 -->
 
 
 
@@ -414,6 +422,7 @@
 		</main>
 		<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
 		<script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+		<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 
 		<script th:inline="javascript">
 			const todayStr = new Date().toISOString().split("T")[0];
@@ -1066,11 +1075,10 @@
 			}
 		</script>
 
-
 		<script>
-			const ctx_Sc = document.getElementById('myChart_Sc').getContext('2d');
+			const ctx = document.getElementById('myChart').getContext('2d');
 
-			const myChart_Sc = new Chart(ctx_Sc, {
+			const myChart = new Chart(ctx, {
 				type: 'bar',
 				data: {
 					labels: ['월', '화', '수', '목', '금', '토', '일'], // 초기값
@@ -1124,11 +1132,11 @@
 			fetch(`/usr/pet/health/week-stats?petId=${petId}`)
 				.then(res => res.json())
 				.then(data => {
-					myChart_Sc.data.labels = data.labels;
-					myChart_Sc.data.datasets[0].data = data.food;
-					myChart_Sc.data.datasets[1].data = data.water;
-					myChart_Sc.data.datasets[2].data = data.score;
-					myChart_Sc.update();
+					myChart.data.labels = data.labels;
+					myChart.data.datasets[0].data = data.food;
+					myChart.data.datasets[1].data = data.water;
+					myChart.data.datasets[2].data = data.score;
+					myChart.update();
 
 					const todayIdx = new Date().getDay();
 					const yesterdayIdx = (todayIdx + 6) % 7;
@@ -1179,9 +1187,9 @@
 
 
 					document.getElementById("summaryCard").innerHTML = `
-			${summary}<br>
-			<button class="text-blue-600 mt-1 underline" onclick="openFeedingPanel()">행동분석보기 &gt;</button>
-		`;
+					${summary}<br>
+					<button class="text-blue-600 mt-1 underline" onclick="openFeedingPanel()">행동분석보기 &gt;</button>
+				`;
 				})
 				.catch(err => {
 					console.error("🚨 요약 데이터 실패:", err);
@@ -1190,130 +1198,174 @@
 
 
 		</script>
-		
-		<script>
-					const ctx = document.getElementById('myChart').getContext('2d');
 
-					const myChart = new Chart(ctx, {
-						type: 'bar',
-						data: {
-							labels: ['월', '화', '수', '목', '금', '토', '일'], // 초기값
-							datasets: [
-								{
-									label: '식사량',
-									data: [], // 서버에서 채움
-									backgroundColor: 'rgba(244, 211, 94, 0.8)',
-									borderRadius: {topLeft: 100, bottomRight: 40},
-									barPercentage: 0.6,
-									borderSkipped: false,
-									categoryPercentage: 0.7
-								},
-								{
-									label: '물 섭취량',
-									data: [],
-									backgroundColor: 'rgba(127, 176, 105, 0.8)',
-									borderRadius: {topLeft: 100, bottomRight: 40},
-									barPercentage: 0.6,
-									borderSkipped: false,
-									categoryPercentage: 0.7
-								},
-								{
-									label: '최종 점수',
-									data: [],
-									backgroundColor: 'rgba(79, 109, 122, 0.8)',
-									borderRadius: {topLeft: 100, bottomRight: 40},
-									borderSkipped: false,
-									barPercentage: 0.6,
-									categoryPercentage: 0.7
-								}
-							]
-						},
-						options: {
-							responsive: true,
-							maintainAspectRatio: false,
-							plugins: {
-								legend: {position: 'top'},
-								title: {display: false}
-							},
-							scales: {
-								y: {
-									beginAtZero: true,
-									max: 20
-								}
-							}
-						}
+
+		<script th:inline="javascript">
+			// DOM 참조
+			const legendEl = document.getElementById('activityLegend');
+			const timeGrid = document.getElementById('activityTimeGrid');
+			const chartArea = document.getElementById('activityChartArea');
+			const noDataEl = document.getElementById('activityNoData');
+
+			// 색상/상수
+			const COLORS = {"거실": "#fff8b5", "침실": "#d3f8e2", "기타": "#e0eafc"};
+			const PX_PER_HOUR = 80;
+			const MIN_BAR_PX = 4;
+
+			// 포맷터
+			const pad2 = n => String(n).padStart(2, '0');
+			const fmtTime = d => `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+			const fmtDuration = sec => {
+				sec = Math.max(0, sec | 0);
+				const m = Math.floor(sec / 60), s = sec % 60;
+				return `${m}분 ${s}초 머묾`;
+			};
+
+			// 시간 눈금
+			function renderTimeGrid() {
+				timeGrid.innerHTML = '';
+				for (let h = 0; h <= 24; h++) {
+					const label = document.createElement('div');
+					label.className = 'absolute text-xs text-gray-600 -translate-x-1/2';
+					label.style.left = `${h * PX_PER_HOUR}px`;
+					label.textContent = `${pad2(h)}:00`;
+					timeGrid.appendChild(label);
+				}
+			}
+
+			// 범례
+			function renderLegend(zones) {
+				legendEl.innerHTML = '';
+				const ORDER = ['거실', '침실', '기타'];
+				const sorted = ORDER.filter(z => zones.includes(z)).concat(zones.filter(z => !ORDER.includes(z)));
+				sorted.forEach(z => {
+					const item = document.createElement('div');
+					item.className = 'flex items-center gap-2';
+					const swatch = document.createElement('span');
+					swatch.className = 'inline-block w-8 h-3 rounded';
+					swatch.style.backgroundColor = COLORS[z] || COLORS['기타'];
+					const label = document.createElement('span');
+					label.textContent = z;
+					item.appendChild(swatch);
+					item.appendChild(label);
+					legendEl.appendChild(item);
+				});
+			}
+
+			// 커스텀 툴팁
+			const tooltipEl = (() => {
+				const el = document.createElement('div');
+				el.id = 'activityTooltip';
+				el.className = 'hidden fixed z-50 bg-gray-900/95 text-white text-xs px-2.5 py-2 rounded-lg shadow-lg pointer-events-none';
+				document.body.appendChild(el);
+				return el;
+			})();
+			function showTip(evt, html) {
+				tooltipEl.innerHTML = html;
+				tooltipEl.classList.remove('hidden');
+				const offset = 14;
+				tooltipEl.style.left = `${evt.clientX + offset}px`;
+				tooltipEl.style.top = `${evt.clientY - offset}px`;
+			}
+			function hideTip() {tooltipEl.classList.add('hidden');}
+
+			// 차트 렌더 (존별 1줄)
+			function renderChart(list) {
+				chartArea.innerHTML = '';
+
+				if (!Array.isArray(list) || list.length === 0) {
+					noDataEl?.classList.remove('hidden');
+					renderLegend([]);
+					return;
+				}
+				noDataEl?.classList.add('hidden');
+
+				list.sort((a, b) => new Date(a.enteredAt) - new Date(b.enteredAt));
+				const startOfDay = new Date(list[0].enteredAt);
+				startOfDay.setHours(0, 0, 0, 0);
+
+				const ORDER = ['거실', '침실', '기타'];
+				const zones = Array.from(new Set(list.map(x => x.zoneName)))
+					.sort((a, b) => {
+						const ai = ORDER.indexOf(a), bi = ORDER.indexOf(b);
+						return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
 					});
 
-					// ✅ 실제 데이터 fetch 및 적용
-					fetch(`/usr/pet/health/week-stats?petId=${petId}`)
-						.then(res => res.json())
-						.then(data => {
-							myChart.data.labels = data.labels;
-							myChart.data.datasets[0].data = data.food;
-							myChart.data.datasets[1].data = data.water;
-							myChart.data.datasets[2].data = data.score;
-							myChart.update();
+				renderLegend(zones);
 
-							const todayIdx = new Date().getDay();
-							const yesterdayIdx = (todayIdx + 6) % 7;
+				zones.forEach(() => {
+					const row = document.createElement('div');
+					row.className = 'relative h-[44px] bg-white';
+					chartArea.appendChild(row);
+				});
 
-							const foodDiff = (data.food[todayIdx] ?? 0) - (data.food[yesterdayIdx] ?? 0);
-							const waterDiff = (data.water[todayIdx] ?? 0) - (data.water[yesterdayIdx] ?? 0);
-							const scoreDiff = (data.score[todayIdx] ?? 0) - (data.score[yesterdayIdx] ?? 0);
+				list.forEach(it => {
+					const zIdx = zones.indexOf(it.zoneName);
+					if (zIdx < 0) return;
+					const rowEl = chartArea.children[zIdx];
 
-							const diffs = [
-								{
-									type: 'water',
-									label: '물을',
-									value: waterDiff,
-									unit: 'ml',
-									upText: '더 마셨어요',
-									downText: '덜 마셨어요'
-								},
-								{
-									type: 'food',
-									label: '사료를',
-									value: foodDiff,
-									unit: 'g',
-									upText: '더 먹었어요',
-									downText: '덜 먹었어요'
-								},
-								{
-									type: 'score',
-									label: '점수가',
-									value: scoreDiff,
-									unit: '점',
-									upText: '올랐어요',
-									downText: '내려갔어요'
-								}
-							];
+					const entered = new Date(it.enteredAt);
+					const exited = new Date(it.exitedAt);
+					const durSec = Math.max(0, (exited - entered) / 1000);
+					const offSec = Math.max(0, (entered - startOfDay) / 1000);
 
-							const maxDiff = diffs.reduce((prev, curr) => {
-								return Math.abs(curr.value) > Math.abs(prev.value) ? curr : prev;
-							});
+					const leftPx = (offSec / 3600) * PX_PER_HOUR;
+					const widthPx = Math.max((durSec / 3600) * PX_PER_HOUR, MIN_BAR_PX);
 
-							let summary = '';
-							if (maxDiff.value === 0) {
-								summary = `오늘은 ${maxDiff.label} 어제와 같아요!`;
-							} else {
-								const amount = Math.abs(maxDiff.value).toFixed(1);
-								const direction = maxDiff.value > 0 ? maxDiff.upText : maxDiff.downText;
-								summary = `오늘은 어제보다 ${maxDiff.label} ${amount}${maxDiff.unit} ${direction}`;
-							}
+					const bar = document.createElement('div');
+					bar.className = 'absolute h-[26px] rounded-[16px] z-10';
+					bar.style.top = '9px';
+					bar.style.left = `${leftPx}px`;
+					bar.style.width = `${widthPx}px`;
+					bar.style.backgroundColor = COLORS[it.zoneName] || COLORS['기타'];
+
+					const tipHtml = `
+		        <div class="font-medium">${it.zoneName}</div>
+		        <div class="opacity-80">${fmtTime(entered)} ~ ${fmtTime(exited)}</div>
+		        <div class="opacity-80">${fmtDuration(durSec)}</div>
+		      `;
+					bar.addEventListener('mouseenter', (e) => showTip(e, tipHtml));
+					bar.addEventListener('mousemove', (e) => showTip(e, tipHtml));
+					bar.addEventListener('mouseleave', hideTip);
+
+					rowEl.appendChild(bar);
+				});
+			}
+
+			// 서버 호출
+			async function loadActivities() {
+				try {
+					const pid = window.petId ?? (Number(localStorage.getItem('selectedPetId')) || null);
+					const url = `/usr/petJ/activity${pid ? `?petId=${pid}` : ''}`;
+					const res = await fetch(url, {headers: {'Accept': 'application/json'}});
+					if (!res.ok) throw new Error(`HTTP ${res.status}`);
+					const json = await res.json();
+
+					let list = [];
+					if (Array.isArray(json?.data1)) list = json.data1;
+					else if (typeof json?.data2 === 'string' && json.data2.trim()) {
+						try {list = JSON.parse(json.data2);} catch { }
+					}
+					list = (list || []).filter(x => x?.enteredAt && x?.exitedAt);
+					renderChart(list);
+				} catch (e) {
+					console.error('[loadActivities] error:', e);
+					renderChart([]);
+				}
+			}
+
+			// 초기화
+			renderTimeGrid();
+			loadActivities();
+
+			// 외부에서 재호출용
+			window.__reloadActivityTimeline = loadActivities;
+		</script>
 
 
-							document.getElementById("summaryCard").innerHTML = `
-					${summary}<br>
-					<button class="text-blue-600 mt-1 underline" onclick="openFeedingPanel()">행동분석보기 &gt;</button>
-				`;
-						})
-						.catch(err => {
-							console.error("🚨 요약 데이터 실패:", err);
-						});
 
 
 
-				</script>
 
 		<script th:src="@{/resource/js/calendar.js}"></script>
 
