@@ -7,7 +7,7 @@
 
 
     <!-- 공통 컬럼 매핑 -->
-    <resultMap id="MedicalDocumentMap" type="com.example.domain.MedicalDocument">
+    <resultMap id="MedicalDocumentMap" type="com.example.RSW.repository.MedicalDocumentRepository">
         <id     property="id"        column="id"/>
         <result property="visitId"   column="visit_id"/>
         <result property="docType"   column="doc_type"/>
@@ -17,7 +17,7 @@
     </resultMap>
 
     <!-- INSERT -->
-    <insert id="insertDocument" parameterType="com.example.domain.MedicalDocument"
+    <insert id="insertDocument" parameterType="com.example.RSW.repository.MedicalDocumentRepository"
             useGeneratedKeys="true" keyProperty="id">
         INSERT INTO medical_document
             (visit_id, doc_type, file_url, ocr_json)
@@ -26,7 +26,7 @@
     </insert>
 
     <!-- UPDATE (부분 수정 지원) -->
-    <update id="updateDocument" parameterType="com.example.domain.MedicalDocument">
+    <update id="updateDocument" parameterType="com.example.RSW.repository.MedicalDocumentRepository">
         UPDATE medical_document
         <set>
             <if test="visitId != null">visit_id = #{visitId},</if>

@@ -6,7 +6,7 @@
 <mapper namespace="com.example.RSW.repository.VisitRepository">
 
     <!-- INSERT -->
-    <insert id="insertVisit" parameterType="com.example.domain.Visit">
+    <insert id="insertVisit" parameterType="com.example.RSW.repository.VisitRepository">
         INSERT INTO visit
             (pet_id, visit_date, hospital, doctor, diagnosis, notes, total_cost)
         VALUES
@@ -14,7 +14,7 @@
     </insert>
 
     <!-- UPDATE -->
-    <update id="updateVisit" parameterType="com.example.domain.Visit">
+    <update id="updateVisit" parameterType="com.example.RSW.repository.VisitRepository">
         UPDATE visit
         SET
             visit_date = #{visitDate},
@@ -33,7 +33,7 @@
     </delete>
 
     <!-- SELECT: petId로 조회 -->
-    <select id="selectVisitsByPetId" parameterType="int" resultType="com.example.domain.Visit">
+    <select id="selectVisitsByPetId" parameterType="int" resultType="com.example.RSW.repository.VisitRepository">
         SELECT *
         FROM visit
         WHERE pet_id = #{petId}
