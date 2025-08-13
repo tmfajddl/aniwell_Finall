@@ -33,6 +33,7 @@ public class SecurityConfig {
                                 "/usr/home/main",
                                 "/usr/member/login", "/usr/member/doLogin",
                                 "/usr/member/join", "/usr/member/doJoin",
+                                "/usr/member/doFindLoginId", "/usr/member/doFindLoginPw",
                                 "/usr/member/findLoginId", "/usr/member/findLoginPw",
                                 "/usr/member/naver/**", "/usr/member/kakao/**", "/usr/member/google/**",
                                 "/usr/member/social-login",
