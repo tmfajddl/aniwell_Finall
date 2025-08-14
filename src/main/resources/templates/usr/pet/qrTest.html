@@ -69,7 +69,7 @@
         }
 
         // 3) QR PNG 주소
-        const src = `${join(API_BASE, '/api/qr')}?${qs.toString()}`;
+        const src = `/api/qr?${qs.toString()}`;
 
         // 4) 표시/다운로드/새창 열기
         img.src = src;
