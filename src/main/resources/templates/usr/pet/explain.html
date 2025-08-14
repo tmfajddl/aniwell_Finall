@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8" />
+    <title>보호자 설명 생성 (JSON → Markdown)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- 선택: CDN으로 Markdown 렌더러 (없어도 실행됨; 없으면 그냥 프리텍스트로 표시) -->
+    <script defer src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        :root { --fg:#111; --muted:#666; --bg:#f6f7fb; --card:#fff; --accent:#4f46e5;}
+        *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.5 system-ui, -apple-system, Segoe UI, Roboto;}
+        header{padding:20px 16px}
+        .wrap{max-width:1100px;margin:0 auto;padding:0 16px 48px}
+        .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+        .card{background:var(--card);border-radius:14px;box-shadow:0 2px 18px rgba(0,0,0,.06);padding:16px}
+        textarea{width:100%;min-height:340px;font:12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;resize:vertical;padding:12px;border:1px solid #ddd;border-radius:10px;background:#fafafa}
+        .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 0}
+        button{appearance:none;border:0;border-radius:10px;padding:10px 14px;background:var(--accent);color:#fff;font-weight:700;cursor:pointer}
+        button.secondary{background:#e5e7eb;color:#111;font-weight:600}
+        .status{margin-left:auto;color:var(--muted);display:flex;align-items:center;gap:8px}
+        .spinner{width:14px;height:14px;border:2px solid #ddd;border-top-color:var(--accent);border-radius:50%;display:inline-block;animation:spin 1s linear infinite}
+        @keyframes spin{to{transform:rotate(360deg)}}
+        #out{min-height:340px;background:#fff;border:1px solid #eee;border-radius:10px;padding:16px;overflow:auto}
+        pre{white-space:pre-wrap;word-break:break-word}
+        .hint{color:var(--muted);font-size:12px;margin-top:8px}
+    </style>
+</head>
+<body>
+<header class="wrap">
+    <h1 style="margin:0 0 10px;">보호자 설명 생성</h1>
+    <div class="hint">좌측에 JSON을 붙여넣고 <b>설명 생성</b>을 누르면, 우측에 보호자 친화 설명(Markdown)이 표시됩니다.</div>
+</header>
+
+<div class="wrap grid">
+    <section class="card">
+        <h3 style="margin:0 0 8px;">입력 JSON</h3>
+        <textarea id="jsonInput" spellcheck="false" placeholder='{
+  "document": { "provider": "Aniwell Clinic", "date": "2025-08-10" },
+  "labs": [
+    { "code": "ALT", "value": 486.5, "unit": "U/L", "ref_low": 28, "ref_high": 106 },
+    { "code": "BUN", "value": 23,  "unit": "mg/dL", "ref_low": 16, "ref_high": 36 }
+  ],
+  "prescriptions": [
+    { "drug": "Amoxicillin", "dose": 50, "dose_unit": "mg", "freq": "BID", "route": "PO", "days": 7 }
+  ],
+  "meta": { "notes": "식욕 저하, 구토 없음" }
+}'></textarea>
+
+        <div class="toolbar">
+            <button class="secondary" type="button" id="btnSample">샘플 넣기</button>
+            <button class="secondary" type="button" id="btnFormat">자동 정렬</button>
+            <button type="button" id="btnExplain">설명 생성</button>
+            <div class="status" id="status"></div>
+        </div>
+        <div class="hint">JSON 형식 오류가 있으면 먼저 <b>자동 정렬</b>로 확인하세요.</div>
+    </section>
+
+    <section class="card">
+        <h3 style="margin:0 0 8px;">출력 (Markdown)</h3>
+        <div id="out"><div class="hint">아직 결과가 없습니다.</div></div>
+    </section>
+</div>
+
+<script>
+    const $ = (sel)=>document.querySelector(sel);
+    const input = $('#jsonInput');
+    const out = $('#out');
+    const statusEl = $('#status');
+    const sample = {
+        document: { provider: "Aniwell Clinic", date: "2025-08-10" },
+        labs: [
+            { code: "ALT", name: "ALT", value: 486.5, unit: "U/L", ref_low: 28, ref_high: 106 },
+            { code: "BUN", name: "BUN", value: 23, unit: "mg/dL", ref_low: 16, ref_high: 36 }
+        ],
+        prescriptions: [
+            { drug: "Amoxicillin", dose: 50, dose_unit: "mg", freq: "BID", route: "PO", days: 7 }
+        ],
+        meta: { notes: "식욕 저하, 구토 없음" }
+    };
+
+    $('#btnSample').onclick = ()=>{
+        input.value = JSON.stringify(sample, null, 2);
+        out.innerHTML = '<div class="hint">샘플을 입력했습니다. 설명 생성을 눌러보세요.</div>';
+    };
+
+    $('#btnFormat').onclick = ()=>{
+        try {
+            const obj = JSON.parse(input.value);
+            input.value = JSON.stringify(obj, null, 2);
+            toast('형식 정상 · 자동 정렬 완료');
+        } catch {
+            toast('JSON 형식 오류: 따옴표/쉼표/중괄호 확인', true);
+        }
+    };
+
+    $('#btnExplain').onclick = async ()=>{
+        let obj;
+        try {
+            obj = JSON.parse(input.value);
+        } catch {
+            toast('JSON 형식 오류: 먼저 자동 정렬을 눌러 확인하세요', true);
+            return;
+        }
+        setBusy(true);
+        try {
+            const res = await fetch('/api/ai/explain', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(obj)
+            });
+            const data = await res.json().catch(()=> ({}));
+            const md = data.markdown || '서버 응답이 비었습니다.';
+            renderMarkdown(md);
+            toast('완료');
+        } catch (e) {
+            renderMarkdown(`설명 생성 실패: ${e}`);
+            toast('오류', true);
+        } finally {
+            setBusy(false);
+        }
+    };
+
+    function renderMarkdown(md){
+        if (window.marked && typeof marked.parse === 'function') {
+            out.innerHTML = marked.parse(md);
+        } else {
+            out.innerHTML = '<pre>'+escapeHtml(md)+'</pre>';
+        }
+    }
+    function escapeHtml(s){ return s.replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m])); }
+    function setBusy(b){
+        statusEl.innerHTML = b ? '<span class="spinner"></span> 생성 중...' : '';
+    }
+    function toast(msg, err){
+        statusEl.innerHTML = (err ? '⚠️ ' : '✅ ') + msg;
+        setTimeout(()=>{ statusEl.innerHTML=''; }, 2500);
+    }
+</script>
+</body>
+</html>

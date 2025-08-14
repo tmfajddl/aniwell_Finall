@@ -108,3 +108,7 @@ aniwell:
   api:
     default: https://seed-wesley-worried-highs.trycloudflare.com
     # CloudFront 쓰면 여기를 CloudFront 도메인으로 교체
+
+openai:
+  api-base: https://api.openai.com/v1
+  api-key:

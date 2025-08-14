@@ -38,4 +38,5 @@ public class MedicalDocumentService {
     public List<MedicalDocument> selectByPetId(@Param("petId") int petId){
         return medicalDocumentRepository.selectByPetId(petId);
     }
+
 }
