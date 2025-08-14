@@ -39,4 +39,13 @@ public class MedicalDocumentService {
         return medicalDocumentRepository.selectByPetId(petId);
     }
 
+
+    public MedicalDocument findById(int id) {
+        return medicalDocumentRepository.findById(id);
+    }
+
+    public MedicalDocument findLatestByVisitId(int visitId) {
+        return medicalDocumentRepository.findLatestByVisitId(visitId);
+    }
 }
+

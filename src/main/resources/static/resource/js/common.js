@@ -46,25 +46,30 @@ function App_app() {
 
 };
 
-let authLevel = null;
 const mId = localStorage.getItem("loginedMember");
 const memberPhotoDiv = document.getElementById('memberPhoto');
 const defaultPhoto = "/img/default-pet.png";
 
+
+function applyUserUI(data) {
+	const level = Number(data.authLevel);
+	const adminEl = document.getElementById('adminPage');
+	const vetEl = document.getElementById('vetPage');
+
+	// 7이면 관리자만 보이기, 3이면 수의사만 보이기
+	adminEl.classList.toggle('hidden', level !== 7);
+	vetEl.classList.toggle('hidden', level !== 3);
+}
+
 function e() {
+
 	$.ajax({
 		type: "GET",
 		url: `/api/member/getUsrInfo`,
 		data: { memberId: mId },
 		success: function(data) {
 			authLevel = data.authLevel;
-			if (authLevel === 7) {
-				$("#adminPage").removeClass("hidden");
-			}
-			if (authLevel === 3) {
-				$("#vetPage").removeClass("hidden");
-			}
-
+			applyUserUI(data);
 			const photoUrl = typeof data.photo === 'string' && data.photo.trim() !== ""
 				? data.photo
 				: defaultPhoto;
@@ -78,6 +83,8 @@ function e() {
 			// 이전 내용 초기화 후 삽입
 			memberPhotoDiv.innerHTML = "";
 			memberPhotoDiv.appendChild(img);
+
+			f = true;
 		},
 		error: function(err) {
 			console.error("getUsrInfo 실패", err);
@@ -194,86 +201,86 @@ function connectWebSocket() {
 	});
 }
 
-function openModal() {
+function memberOpenModal() {
 	document.getElementById("myModal").classList.remove("hidden");
 }
 
-function closeModal() {
+function memberCloseModal() {
 	document.getElementById("myModal").classList.add("hidden");
 }
 
 function logout() {
-  Swal.fire({
-    title: '로그아웃 하시겠습니까?',
-    icon: 'warning',
-    showCancelButton: true,
-    confirmButtonText: '네, 로그아웃',
-    cancelButtonText: '취소',
-    reverseButtons: true
-  }).then((result) => {
-    if (result.isConfirmed) {
-      // ✅ 확인 버튼 누르면 진행
-      Swal.fire({
-        title: '로그아웃 중...',
-        timer: 500,
-        didOpen: () => {
-          Swal.showLoading();
-        },
-        allowOutsideClick: false,
-        showConfirmButton: false
-      });
+	Swal.fire({
+		title: '로그아웃 하시겠습니까?',
+		icon: 'warning',
+		showCancelButton: true,
+		confirmButtonText: '네, 로그아웃',
+		cancelButtonText: '취소',
+		reverseButtons: true
+	}).then((result) => {
+		if (result.isConfirmed) {
+			// ✅ 확인 버튼 누르면 진행
+			Swal.fire({
+				title: '로그아웃 중...',
+				timer: 500,
+				didOpen: () => {
+					Swal.showLoading();
+				},
+				allowOutsideClick: false,
+				showConfirmButton: false
+			});
 
-      setTimeout(() => {
-        fetch('/usr/member/doLogout', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
-          }
-        })
-        .then(res => {
-          if (!res.ok) throw new Error("서버 응답 오류");
-          return res.text();
-        })
-        .then(() => {
-          closeModal();
-          location.href = '/';
-        })
-        .catch(err => {
-          Swal.fire({
-            icon: 'error',
-            title: '❌ 로그아웃 실패',
-            text: err.message
-          });
-        });
-      }, 500);
-    }
-  });
+			setTimeout(() => {
+				fetch('/usr/member/doLogout', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/x-www-form-urlencoded'
+					}
+				})
+					.then(res => {
+						if (!res.ok) throw new Error("서버 응답 오류");
+						return res.text();
+					})
+					.then(() => {
+						memberCloseModal();
+						location.href = '/';
+					})
+					.catch(err => {
+						Swal.fire({
+							icon: 'error',
+							title: '❌ 로그아웃 실패',
+							text: err.message
+						});
+					});
+			}, 500);
+		}
+	});
 }
 
 
 
 function submitCertificate() {
-  Swal.fire({
-    icon: 'info',
-    title: '인증서 제출 페이지로 이동합니다',
-    showConfirmButton: false,
-    timer: 500,
-    timerProgressBar: true,
-    didOpen: () => {
-      Swal.showLoading();
-    }
-  });
+	Swal.fire({
+		icon: 'info',
+		title: '인증서 제출 페이지로 이동합니다',
+		showConfirmButton: false,
+		timer: 500,
+		timerProgressBar: true,
+		didOpen: () => {
+			Swal.showLoading();
+		}
+	});
 
-  closeModal(); // 모달 닫기
+	memberCloseModal(); // 모달 닫기
 
-  setTimeout(() => {
-    window.location.href = "/usr/member/myCert";
-  }, 500);
+	setTimeout(() => {
+		window.location.href = "/usr/member/myCert";
+	}, 500);
 }
 
 
 document.getElementById("myModal").addEventListener("click", (e) => {
-	if (e.target.id === "myModal") closeModal();
+	if (e.target.id === "myModal") memberCloseModal();
 });
 
 

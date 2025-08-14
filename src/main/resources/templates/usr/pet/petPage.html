@@ -144,7 +144,7 @@
 					</div>
 
 
-					<div id="summaryCard"
+					<div id="summaryCardMain"
 						class="relative bg-gradient-to-r from-[#DFF8E5] to-[#F4FBCC] rounded-xl p-4 text-center shadow hover:shadow-md transition-shadow duration-300 font-semibold cursor-pointer">
 						<!-- 동적으로 텍스트가 삽입될 예정 -->
 					</div>
@@ -154,7 +154,7 @@
 
 				<!-- 주변 펫살 보기 -->
 				<div class="flex gap-2 w-full grid-cols-2 ">
-					<a th:href="@{/usr/pet/qr}"
+					<a th:href="@{/usr/pet/qr(petId=${pet.id})}"
 						class="flex-1 hover:shadow-md transition-shadow duration-300 font-semibold cursor-pointer shadow block bg-gradient-to-r from-[#EEE8CD] to-[#F4FBCC] rounded-xl p-3 text-sm text-center font-semibold transition">
 						QR 레포트</a>
 					<a th:href="@{/usr/pet/petPlace}"
@@ -163,7 +163,6 @@
 					<a th:href="@{/usr/pet/gallery(petId=${pet.id})}"
 						class="flex-1 hover:shadow-md transition-shadow duration-300 font-semibold cursor-pointer shadow block bg-gradient-to-r from-[#EEE8CD] to-[#F4FBCC] rounded-xl p-3 text-sm text-center font-semibold transition">
 						감정 갤러리 </a>
-
 					<a th:href="@{/usr/pet/daily(petId=${pet.id})}"
 						class="flex-1 hover:shadow-md transition-shadow duration-300 font-semibold cursor-pointer shadow block bg-gradient-to-r from-[#EEE8CD] to-[#F4FBCC] rounded-xl p-3 text-sm text-center font-semibold transition">
 						감정 일기 </a>
@@ -1186,9 +1185,9 @@
 					}
 
 
-					document.getElementById("summaryCard").innerHTML = `
+					document.getElementById("summaryCardMain").innerHTML = `
 					${summary}<br>
-					<button class="text-blue-600 mt-1 underline" onclick="openFeedingPanel()">행동분석보기 &gt;</button>
+					<button class="text-blue-600 mt-1 underline" onclick="openFeedingPanel(event)">행동분석보기 &gt;</button>
 				`;
 				})
 				.catch(err => {

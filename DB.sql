@@ -69,6 +69,11 @@ CREATE TABLE walk_crew_member
     joinedAt DATETIME NOT NULL
 );
 
+-- 신청상태를 확인하기 위한 컬럼 
+ALTER TABLE walk_crew_member
+ADD COLUMN status VARCHAR(20) NOT NULL DEFAULT 'pending'
+COMMENT '크루 신청 상태 (pending, approved, rejected)';
+
 
 -- 북마크 테이블
 CREATE TABLE bookmark
@@ -246,7 +251,7 @@ CREATE TABLE Qna
 );
 
 -- 자주 묻는 질문 구분(1= 자주 묻는 질문, 0 = 일반 질문)
-ALTER TABLE qna ADD COLUMN isFaq TINYINT(1) NOT NULL DEFAULT 0;
+ALTER TABLE Qna ADD COLUMN isFaq TINYINT(1) NOT NULL DEFAULT 0;
 UPDATE Qna SET isSecret = 0 WHERE isSecret NOT IN (0, 1);
 UPDATE Qna SET isSecret = 1 WHERE id IN (1, 2, 3); -- 비밀글
 UPDATE Qna SET isSecret = 0 WHERE id IN (4, 5, 6, 11); -- 공개글
@@ -278,7 +283,7 @@ CREATE TABLE vet_certificate
     approved   TINYINT(1) UNSIGNED NOT NULL DEFAULT 0 COMMENT '승인 여부 (0=대기, 1=승인, 2=거절)',
 
     -- FK 연결
-    FOREIGN KEY (memberId) REFERENCES MEMBER(id) ON DELETE CASCADE
+    FOREIGN KEY (memberId) REFERENCES member(id) ON DELETE CASCADE
 );
 
 -- 백신 종류 및 주기 테이블
@@ -327,6 +332,109 @@ isRead BOOLEAN NOT NULL DEFAULT FALSE  -- 읽음 여부
 );
 
 ALTER TABLE notification ADD senderId INT(10) UNSIGNED DEFAULT NULL;
+
+create table vet_certificate(
+id int(10) unsigned not null primary key auto_increment,
+memberId int(10) unsigned not null comment '회원 ID (FK)',
+fileName varchar(255) not null comment '업로드된 원본 파일명',
+filepath varchar(500) not null comment '서버 저장 경로',
+uploadedAt datetime not null,
+approved tinyint(1) unsigned not null default 0 comment '승인 여부 (0=대기, 1=승인, 2=거절)'
+);
+
+-- ｍｅｍｂｅｒ테이블에　컬럼　추가
+ALTER TABLE member
+ADD COLUMN vetCertUrl VARCHAR(255),
+ADD COLUMN vetCertApproved TINYINT DEFAULT 0;
+
+ALTER TABLE member
+ADD COLUMN socialProvider VARCHAR(20) DEFAULT NULL,
+ADD COLUMN socialId VARCHAR(100) DEFAULT NULL;
+
+select * from notification;
+select * from vet_certificate;
+select * from member;
+DESC member;
+
+ALTER TABLE member ADD COLUMN uid VARCHAR(255);
+
+-- article에 이미지저장용 컬럼 추가
+ALTER TABLE article ADD COLUMN imageUrl VARCHAR(500);
+ALTER TABLE article ADD COLUMN scheduleDate DATE AFTER regDate;
+
+-- walk_crew에 이미지저장용 컬럼 추가
+ALTER TABLE walk_crew ADD COLUMN imageUrl VARCHAR(500);
+
+-- 크루멤버 계급 컬럼 추가
+ALTER TABLE walk_crew_member
+ADD COLUMN `role` VARCHAR(20) NOT NULL DEFAULT 'member' COMMENT '크루 역할: leader=크루장, subleader=부크루장, member=일반멤버';
+
+-- 일정 참가자 정보 담기
+CREATE TABLE schedule_participant (
+  id INT(10) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  scheduleId INT(10) UNSIGNED NOT NULL,     -- article.id (일정)
+  memberId INT(10) UNSIGNED NOT NULL,       -- 참가한 회원
+  regDate DATETIME DEFAULT NOW(),           -- 참가일
+  UNIQUE(scheduleId, memberId),             -- 중복 참가 방지
+  FOREIGN KEY (scheduleId) REFERENCES article(id) ON DELETE CASCADE,
+  FOREIGN KEY (memberId) REFERENCES member(id) ON DELETE CASCADE
+);
+
+## 처방전 / 진단서 / 검사결과지 DB
+
+-- 방문기록
+CREATE TABLE visit (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  pet_id BIGINT NOT NULL,                       -- 반려동물 PK (pet.id)
+  visit_date DATETIME NOT NULL,                 -- 방문 일자·시간
+  hospital VARCHAR(150),                        -- 병원명
+  doctor VARCHAR(100),                          -- 담당 수의사
+  diagnosis VARCHAR(255),                       -- 진단명
+  notes TEXT,                                    -- 메모
+  total_cost DECIMAL(12,2) UNSIGNED,             -- 총 진료비
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_visit_pet_date (pet_id, visit_date)
+);
+
+-- 문서 원본 저장
+CREATE TABLE medical_document (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  visit_id BIGINT NOT NULL,                      -- visit.id
+  doc_type ENUM('receipt','prescription','lab','diagnosis') NOT NULL,
+  file_url VARCHAR(255) NOT NULL,                 -- 업로드된 파일 경로 (S3/서버)
+  ocr_json JSON,                                  -- OCR 분석 결과 (텍스트·구조 데이터)
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_doc_visit (visit_id)
+);
+
+-- 처방전 상세
+CREATE TABLE prescription_detail (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  document_id BIGINT NOT NULL,                   -- medical_document.id (doc_type='prescription')
+  drug_name VARCHAR(150) NOT NULL,               -- 약품명
+  dose_value DECIMAL(10,3),                      -- 용량 수치
+  dose_unit ENUM('mg','g','mL','IU','tablet','drop'),
+  freq_per_day DECIMAL(5,2),                     -- 하루 복용 횟수
+  duration_days SMALLINT,                        -- 복용 기간(일)
+  notes VARCHAR(255),                            -- 비고
+  INDEX idx_prescription_doc (document_id)
+);
+
+-- 검사결과지 상세
+CREATE TABLE lab_result_detail (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  document_id BIGINT NOT NULL,                   -- medical_document.id (doc_type='lab')
+  test_name VARCHAR(150) NOT NULL,               -- 검사 항목명
+  result_value DECIMAL(12,4),                    -- 결과값
+  unit VARCHAR(30),                              -- 단위
+  ref_low DECIMAL(12,4),                         -- 참고범위 최소
+  ref_high DECIMAL(12,4),                        -- 참고범위 최대
+  flag ENUM('L','N','H'),                        -- L=저하, N=정상, H=상승
+  notes VARCHAR(255),
+  INDEX idx_lab_doc (document_id),
+  INDEX idx_lab_test (test_name)
+);
 
 ############# 📜 테스트용 코드 ###################
 
@@ -390,7 +498,7 @@ INSERT INTO `walk_crew_member` (`memberId`, `crewId`, `joinedAt`) VALUES
 (1, 1, NOW());
 
 -- ✅ QnA
-INSERT INTO `qna` (`memberId`, `title`, `body`, `isSecret`, `isFromUser`, `isAnswered`, `orderNo`, `regDate`, `updateDate`, `isActive`)
+INSERT INTO Qna (`memberId`, `title`, `body`, `isSecret`, `isFromUser`, `isAnswered`, `orderNo`, `regDate`, `updateDate`, `isActive`)
 VALUES
 (1, '강아지는 언제부터 예방접종을 시작해야 하나요?', '보통 생후 6~8주부터 시작하며, 이후 매년 추가 접종이 필요합니다.', FALSE, FALSE, TRUE, 1, NOW(), NOW(), TRUE),
 (1, '고양이 중성화 수술은 언제 하는 게 좋나요?', '암컷은 생후 6개월 전후, 수컷은 생후 5~6개월에 하는 것이 일반적입니다.', FALSE, FALSE, TRUE, 2, NOW(), NOW(), TRUE),
@@ -403,87 +511,64 @@ INSERT INTO `vaccine_schedule` (`vaccineName`, `intervalMonths`, `type`, `descri
 ('Distemper', 12, 'Initial', '강아지의 심각한 바이러스성 질병 예방'),
 ('Leptospirosis', 12, 'Annual', '물과 흙을 통해 퍼지는 세균 감염 예방');
 
-
 ############# 📜 테스트용 코드 ###################
 
 
 ############# 💣 트리거 ###################
-
--- ✅ 백신 자동 계산 트리거(insert)
+-- :흰색_확인_표시: INSERT 트리거: 백신 접종 등록 시 자동으로 예정일 계산
 DELIMITER $$
-
 CREATE TRIGGER `auto_set_next_due_date`
 BEFORE INSERT ON `pet_vaccination`
 FOR EACH ROW
 BEGIN
   DECLARE v_interval INT;
-
-  SELECT `intervalMonths` INTO v_interval
-  FROM `vaccine_schedule`
-  WHERE `vaccineName` = NEW.`vaccineName`
-  LIMIT 1;
-
-  IF v_interval IS NOT NULL THEN
-    SET NEW.`nextDueDate` = DATE_ADD(NEW.`injectionDate`, INTERVAL v_interval MONTH);
-  ELSE
-    SET NEW.`nextDueDate` = NULL;
+  -- 백엔드에서 NULL로 명시하지 않은 경우에만 계산
+  IF NEW.nextDueDate IS NOT NULL THEN
+    SELECT intervalMonths INTO v_interval
+    FROM vaccine_schedule
+    WHERE vaccineName = NEW.vaccineName
+    LIMIT 1;
+    IF v_interval IS NOT NULL THEN
+      SET NEW.nextDueDate = DATE_ADD(NEW.injectionDate, INTERVAL v_interval MONTH);
+    ELSE
+      SET NEW.nextDueDate = NULL;
+    END IF;
   END IF;
 END$$
-
 DELIMITER ;
-
--- ✅ 백신 자동 계산 트리거(update)
+-- :흰색_확인_표시: UPDATE 트리거: 백신 접종 정보 수정 시 자동으로 예정일 재계산
 DELIMITER $$
-
 CREATE TRIGGER `auto_set_next_due_date_before_update`
 BEFORE UPDATE ON `pet_vaccination`
 FOR EACH ROW
 BEGIN
   DECLARE v_interval INT;
-
-  SELECT `intervalMonths` INTO v_interval
-  FROM `vaccine_schedule`
-  WHERE `vaccineName` = NEW.`vaccineName`
-  LIMIT 1;
-
-  IF v_interval IS NOT NULL THEN
-    SET NEW.`nextDueDate` = DATE_ADD(NEW.`injectionDate`, INTERVAL v_interval MONTH);
-  ELSE
-    SET NEW.`nextDueDate` = NULL;
+  -- 백엔드에서 NULL로 명시하지 않은 경우에만 계산
+  IF NEW.nextDueDate IS NOT NULL THEN
+    SELECT intervalMonths INTO v_interval
+    FROM vaccine_schedule
+    WHERE vaccineName = NEW.vaccineName
+    LIMIT 1;
+    IF v_interval IS NOT NULL THEN
+      SET NEW.nextDueDate = DATE_ADD(NEW.injectionDate, INTERVAL v_interval MONTH);
+    ELSE
+      SET NEW.nextDueDate = NULL;
+    END IF;
   END IF;
 END$$
-
 DELIMITER ;
-
--- ✅ 댓글 수 자동 증가/감소 트리거
-ALTER TABLE `article` ADD COLUMN `repliesCount` INT(10) UNSIGNED NOT NULL DEFAULT 0;
-
-DELIMITER $$
-
-CREATE TRIGGER `trg_reply_count_update`
-AFTER INSERT ON `reply`
-FOR EACH ROW
-BEGIN
-  IF NEW.`relTypeCode` = 'article' THEN
-    UPDATE `article`
-    SET `repliesCount` = `repliesCount` + 1
-    WHERE `id` = NEW.`relId`;
-  END IF;
-END$$
-
-CREATE TRIGGER `trg_reply_count_delete`
-AFTER DELETE ON `reply`
-FOR EACH ROW
-BEGIN
-  IF OLD.`relTypeCode` = 'article' THEN
-    UPDATE `article`
-    SET `repliesCount` = `repliesCount` - 1
-    WHERE `id` = OLD.`relId`;
-  END IF;
-END$$
-
-DELIMITER ;
-
-
 
 ############# 💣 트리거 ###################
+
+
+
+
+
+
+
+
+
+
+
+
+
