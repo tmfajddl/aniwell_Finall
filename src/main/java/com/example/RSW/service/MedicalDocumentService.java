@@ -38,4 +38,13 @@ public class MedicalDocumentService {
     public List<MedicalDocument> selectByPetId(@Param("petId") int petId){
         return medicalDocumentRepository.selectByPetId(petId);
     }
+
+
+    public MedicalDocument findById(int id) {
+        return medicalDocumentRepository.findById(id);
+    }
+
+    public MedicalDocument findLatestByVisitId(int visitId) {
+        return medicalDocumentRepository.findLatestByVisitId(visitId);
+    }
 }

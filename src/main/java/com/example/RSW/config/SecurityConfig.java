@@ -3,7 +3,7 @@ package com.example.RSW.config;
 import org.junit.jupiter.api.Order;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.annotation.Order;
+
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.config.Customizer;
@@ -21,9 +21,6 @@ import java.util.List;
 
 @Configuration
 public class SecurityConfig {
-
-
-
 
     /* ========= 1) API 전용 체인: /api/** =========
        - 세션 인증 복원 허용(IF_REQUIRED) → 로그인 시 200, 비로그인 시 401
@@ -64,6 +61,11 @@ public class SecurityConfig {
                 /* ✅ CORS 켜기 (아래 corsConfigurationSource() 적용) */
                 .cors(Customizer.withDefaults())
                 /* ✅ CSRF 비활성화 (폼로그인은 그대로 유지 가능) */
+                .csrf(csrf -> csrf
+                        .ignoringRequestMatchers("/usr/member/doCheckPw")
+                        .ignoringRequestMatchers("/usr/member/doModify")
+                        .ignoringRequestMatchers("/usr/member/doLogout")
+                )
                 /* 세션 (기존 동작 유지) */
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
