@@ -10,25 +10,24 @@ import java.util.List;
 @Service
 public class VisitService {
 
-	@Autowired
-	private VisitRepository visitRepository;
+    @Autowired
+    private VisitRepository visitRepository;
 
-	// [수정] 생성된 PK를 반환하도록 교정
-	public int insertVisit(Visit visit) {
-		visitRepository.insertVisit(visit);
-		return visit.getId();
-	}
+    public int insertVisit(Visit visit){
+        return visitRepository.insertVisit(visit);
+    }
 
-	public int updateVisit(Visit visit) {
-		return visitRepository.updateVisit(visit);
-	}
+    public int updateVisit(Visit visit){
+        return visitRepository.updateVisit(visit);
+    }
 
-	public void deleteVisit(int id) {
-		visitRepository.deleteVisit(id);
-	}
+    public void deleteVisit(int id){
+        visitRepository.deleteVisit(id);
+    }
 
-	public List<Visit> selectVisitsByPetId(int petId) {
-		return visitRepository.selectVisitsByPetId(petId);
-	}
+    public List<Visit> selectVisitsByPetId(int petId){
+        return visitRepository.selectVisitsByPetId(petId);
+    }
+
 
 }

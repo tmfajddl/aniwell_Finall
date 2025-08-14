@@ -23,12 +23,11 @@
 	<!-- [수정] parameterType 패키지 교정 -->
 	<insert id="insertDocument"
 		parameterType="com.example.RSW.vo.MedicalDocument"
-		useGeneratedKeys="true" keyProperty="id" keyColumn="id">
-		INSERT INTO
-		medical_document
-		(visit_id, doc_type, file_url, ocr_json, created_at)
+		useGeneratedKeys="true" keyProperty="id">
+		INSERT INTO medical_document
+		(visit_id, doc_type, file_url, ocr_json)
 		VALUES
-		(#{visitId}, #{docType}, #{fileUrl}, #{ocrJson}, NOW())
+		(#{visitId}, #{docType}, #{fileUrl}, #{ocrJson})
 	</insert>
 
 	<!-- UPDATE (부분 수정 지원) -->
@@ -47,16 +46,14 @@
 
 	<!-- DELETE -->
 	<delete id="deleteDocument" parameterType="int">
-		DELETE FROM
-		medical_document WHERE id = #{id}
+		DELETE FROM medical_document WHERE id = #{id}
 	</delete>
 
 
 	<!-- SELECT 단건 -->
 	<select id="selectById" parameterType="int"
 		resultMap="MedicalDocumentMap">
-		SELECT id, visit_id, doc_type, file_url, ocr_json,
-		created_at
+		SELECT id, visit_id, doc_type, file_url, ocr_json, created_at
 		FROM medical_document
 		WHERE id = #{id}
 	</select>
@@ -65,46 +62,22 @@
 	<!-- ⚠ 안내: Mapper 인터페이스에서 @Param("visitId") 사용 권장(단일 int 파라미터 이름 바인딩 보장) -->
 	<select id="selectByVisitId" parameterType="int"
 		resultMap="MedicalDocumentMap">
-		SELECT id, visit_id, doc_type, file_url, ocr_json,
-		created_at
+		SELECT id, visit_id, doc_type, file_url, ocr_json, created_at
 		FROM medical_document
 		WHERE visit_id = #{visitId}
-		ORDER BY
-		created_at DESC
+		ORDER BY created_at DESC
 	</select>
 
 	<!-- SELECT: petId로 (visit 조인) -->
 	<!-- ⚠ 안내: Mapper 인터페이스에서 @Param("petId") 사용 권장 -->
 	<select id="selectByPetId" parameterType="int"
 		resultMap="MedicalDocumentMap">
-		SELECT md.id, md.visit_id, md.doc_type, md.file_url,
-		md.ocr_json,
+		SELECT md.id, md.visit_id, md.doc_type, md.file_url, md.ocr_json,
 		md.created_at
 		FROM medical_document md
-		JOIN visit v ON v.id
-		= md.visit_id
+		JOIN visit v ON v.id = md.visit_id
 		WHERE v.pet_id = #{petId}
-		ORDER BY v.visit_date DESC,
-		md.created_at DESC
-	</select>
-
-
-	<!-- [추가] 단건 -->
-	<select id="findById" parameterType="int"
-		resultMap="MedicalDocumentMap">
-		SELECT id, visit_id, doc_type, file_url, ocr_json, created_at
-		FROM medical_document
-		WHERE id = #{id}
-	</select>
-
-	<!-- [추가] 방문 최신 문서 -->
-	<select id="findLatestByVisitId" parameterType="int"
-		resultMap="MedicalDocumentMap">
-		SELECT id, visit_id, doc_type, file_url, ocr_json, created_at
-		FROM medical_document
-		WHERE visit_id = #{visitId}
-		ORDER BY id DESC
-		LIMIT 1
+		ORDER BY v.visit_date DESC, md.created_at DESC
 	</select>
 
 </mapper>

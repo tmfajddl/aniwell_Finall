@@ -18,15 +18,20 @@ import java.util.*;
 @RequestMapping("/api/qr")
 public class QrController {
 
-    @Value("${aniwell.qr.base:}")   // 스킴 포함된 절대 URL 권장 (예: https://.../qr.html)
+    @Value("${aniwell.qr.base:}")        // 예: https://aniwell.s3.ap-northeast-2.amazonaws.com/qr.html
     private String qrBase;
 
-    // 디버그용: base/target 확인
+    @Value("${aniwell.api.default:}")    // 예: https://<trycloudflare-도메인>
+    private String defaultApiBase;
+
     @GetMapping(value="/debug", produces = MediaType.APPLICATION_JSON_VALUE)
     public Map<String,Object> debug(@RequestParam Map<String,String> all, HttpServletRequest req) {
-        Map<String,String> q = new LinkedHashMap<>(all); q.remove("size");
+        Map<String,String> q = new LinkedHashMap<>(all);
+        q.remove("size");
+        ensureApiParam(q, req);
         Map<String,Object> out = new LinkedHashMap<>();
         out.put("base", resolveBase(req));
+        out.put("apiBase", resolveApiBase(req));
         out.put("params", q);
         out.put("target", buildTarget(resolveBase(req), q));
         return out;
@@ -41,9 +46,10 @@ public class QrController {
         Map<String,String> q = new LinkedHashMap<>(all);
         q.remove("size");
 
-        String base = resolveBase(req);
-        String target = buildTarget(base, q);
+        // ✅ 항상 api 파라미터 보장
+        ensureApiParam(q, req);
 
+        String target = buildTarget(resolveBase(req), q);
         if (target == null || target.isBlank()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .contentType(MediaType.TEXT_PLAIN)
@@ -53,12 +59,9 @@ public class QrController {
         Map<EncodeHintType,Object> hints = new HashMap<>();
         hints.put(EncodeHintType.CHARACTER_SET, "UTF-8");
         hints.put(EncodeHintType.MARGIN, 1);
-        hints.put(EncodeHintType.ERROR_CORRECTION,
-                com.google.zxing.qrcode.decoder.ErrorCorrectionLevel.M);
+        hints.put(EncodeHintType.ERROR_CORRECTION, com.google.zxing.qrcode.decoder.ErrorCorrectionLevel.M);
 
-        BitMatrix m = new MultiFormatWriter()
-                .encode(target, BarcodeFormat.QR_CODE, size, size, hints);
-
+        BitMatrix m = new MultiFormatWriter().encode(target, BarcodeFormat.QR_CODE, size, size, hints);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         MatrixToImageWriter.writeToStream(m, "PNG", baos);
 
@@ -68,21 +71,26 @@ public class QrController {
                 .body(baos.toByteArray());
     }
 
-    // base 해석 (스킴 없거나 상대경로여도 동작)
+    private void ensureApiParam(Map<String,String> q, HttpServletRequest req) {
+        if (!q.containsKey("api") || q.get("api") == null || q.get("api").isBlank()) {
+            q.put("api", resolveApiBase(req));
+        }
+    }
+
     private String resolveBase(HttpServletRequest req) {
         String base = (qrBase == null) ? "" : qrBase.trim();
         if (base.isEmpty()) {
-            // 폴백: 현재 서버의 /usr/pet/qr
-            return ServletUriComponentsBuilder.fromCurrentContextPath()
-                    .path("/usr/pet/qr").toUriString();
+            return ServletUriComponentsBuilder.fromCurrentContextPath().path("/usr/pet/qr").toUriString();
         }
-        if (base.startsWith("http://") || base.startsWith("https://")) {
-            return base;
-        }
-        // '/qr.html' 같은 상대 경로도 허용
+        if (base.startsWith("http://") || base.startsWith("https://")) return base;
         return ServletUriComponentsBuilder.fromCurrentContextPath()
-                .path(base.startsWith("/") ? base : "/" + base)
-                .toUriString();
+                .path(base.startsWith("/") ? base : "/" + base).toUriString();
+    }
+
+    // ⚠️ default가 비었으면 "현재 요청의 오리진(=터널/도메인)"을 자동 사용
+    private String resolveApiBase(HttpServletRequest req) {
+        if (defaultApiBase != null && !defaultApiBase.isBlank()) return defaultApiBase.trim();
+        return ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
     }
 
     private String buildTarget(String base, Map<String,String> q) {

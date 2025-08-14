@@ -6,24 +6,23 @@
 <mapper namespace="com.example.RSW.repository.VisitRepository">
 
 	<resultMap id="VisitMap" type="com.example.RSW.vo.Visit">
-		<id column="id" property="id" />
-		<result column="pet_id" property="petId" />
-		<result column="visit_date" property="visitDate" />  <!-- ★ -->
-		<result column="hospital" property="hospital" />
-		<result column="doctor" property="doctor" />
-		<result column="diagnosis" property="diagnosis" />
-		<result column="notes" property="notes" />
-		<result column="total_cost" property="totalCost" />
-		<result column="created_at" property="createdAt" />
-		<result column="updated_at" property="updatedAt" />
+		<id     column="id"          property="id"/>
+		<result column="pet_id"      property="petId"/>
+		<result column="visit_date"  property="visitDate"/>  <!-- ★ -->
+		<result column="hospital"    property="hospital"/>
+		<result column="doctor"      property="doctor"/>
+		<result column="diagnosis"   property="diagnosis"/>
+		<result column="notes"       property="notes"/>
+		<result column="total_cost"  property="totalCost"/>
+		<result column="created_at"  property="createdAt"/>
+		<result column="updated_at"  property="updatedAt"/>
 	</resultMap>
 
 
 	<!-- INSERT -->
 	<!-- [수정] VO 패키지 경로: com.example.domain → com.example.RSW.vo -->
 	<insert id="insertVisit"
-		parameterType="com.example.RSW.vo.Visit" useGeneratedKeys="true"
-		keyProperty="id" keyColumn="id">
+		parameterType="com.example.RSW.vo.Visit">
 		INSERT INTO visit
 		(pet_id, visit_date, hospital, doctor, diagnosis, notes, total_cost)
 		VALUES
@@ -38,12 +37,10 @@
 		UPDATE visit
 		SET
 		visit_date = #{visitDate},
-		hospital =
-		#{hospital},
+		hospital = #{hospital},
 		doctor = #{doctor},
 		diagnosis = #{diagnosis},
-		notes =
-		#{notes},
+		notes = #{notes},
 		total_cost = #{totalCost}
 		WHERE id = #{id}
 	</update>
@@ -52,23 +49,18 @@
 	<!-- DELETE -->
 	<delete id="deleteVisit" parameterType="int">
 		DELETE FROM visit
-		WHERE id
-		= #{id}
+		WHERE id = #{id}
 	</delete>
 
 
 	<!-- SELECT: petId로 조회 -->
 	<!-- [수정] resultType 패키지 경로 교정 -->
-	<select id="selectVisitsByPetId" parameterType="int"
-		resultMap="VisitMap">
-		SELECT id, pet_id, visit_date, hospital, doctor, diagnosis,
-		notes,
-		total_cost, created_at, updated_at
+	<select id="selectVisitsByPetId" parameterType="int" resultMap="VisitMap">
+		SELECT id, pet_id, visit_date, hospital, doctor, diagnosis, notes,
+			   total_cost, created_at, updated_at
 		FROM visit
-		WHERE pet_id =
-		#{petId}
-		ORDER BY
-		visit_date DESC, id DESC
+		WHERE pet_id = #{petId}
+		ORDER BY visit_date DESC, id DESC
 	</select>
 
 </mapper>
