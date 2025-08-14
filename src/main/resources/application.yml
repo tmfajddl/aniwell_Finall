@@ -101,3 +101,8 @@ gcv:
       }
     path: ""     # ❌ API 키 문자열을 넣는 곳이 아닙니다. (JSON 파일 경로일 때만 사용)
     base64: ""   # JSON을 base64로 넣을 때만 사용 (이번엔 미사용)
+
+aniwell:
+  qr:
+    base: https://aniwell.s3.ap-northeast-2.amazonaws.com/qr.html
+    # CloudFront 쓰면 여기를 CloudFront 도메인으로 교체

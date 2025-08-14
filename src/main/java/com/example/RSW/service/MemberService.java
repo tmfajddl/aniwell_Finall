@@ -80,7 +80,6 @@ public class MemberService {
     public ResultData<Integer> join(String loginId, String loginPw, String name, String nickname, String cellphone,
                                     String email, String address, String authName, int authLevel) {
 
-
         // 아이디 중복
         if (getMemberByLoginId(loginId) != null) {
             return ResultData.from("F-7", Ut.f("이미 사용중인 아이디(%s)입니다", loginId));
