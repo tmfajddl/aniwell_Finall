@@ -154,7 +154,7 @@
 
 				<!-- 주변 펫살 보기 -->
 				<div class="flex gap-2 w-full grid-cols-2 ">
-					<a th:href="@{/usr/pet/qr}"
+					<a th:href="@{/usr/pet/qr(petId=${pet.id})}"
 						class="flex-1 hover:shadow-md transition-shadow duration-300 font-semibold cursor-pointer shadow block bg-gradient-to-r from-[#EEE8CD] to-[#F4FBCC] rounded-xl p-3 text-sm text-center font-semibold transition">
 						QR 레포트</a>
 					<a th:href="@{/usr/pet/petPlace}"
