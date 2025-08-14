@@ -48,3 +48,4 @@ public class MedicalDocumentService {
         return medicalDocumentRepository.findLatestByVisitId(visitId);
     }
 }
+
