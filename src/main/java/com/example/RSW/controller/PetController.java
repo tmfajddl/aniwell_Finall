@@ -741,4 +741,14 @@ public class PetController {
 		return "usr/pet/qrTest"; // → templates/usr/pet/qr.html
 	}
 
+	@RequestMapping("/usr/pet/explain")
+	public String showPage() {
+		return "usr/pet/explain"; // → templates/usr/pet/qr.html
+	}
+
+	@RequestMapping("/usr/pet/prescriptions")
+	public String showPages() {
+		return "usr/pet/prescriptions"; // → templates/usr/pet/qr.html
+	}
+
 }
