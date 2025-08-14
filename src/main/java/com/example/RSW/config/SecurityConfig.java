@@ -3,7 +3,7 @@ package com.example.RSW.config;
 import org.junit.jupiter.api.Order;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.annotation.Order;
+
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.config.Customizer;
@@ -21,8 +21,6 @@ import java.util.List;
 
 @Configuration
 public class SecurityConfig {
-
-
 
     /* ========= 1) API 전용 체인: /api/** =========
        - 세션 인증 복원 허용(IF_REQUIRED) → 로그인 시 200, 비로그인 시 401
@@ -63,10 +61,12 @@ public class SecurityConfig {
                 /* ✅ CORS 켜기 (아래 corsConfigurationSource() 적용) */
                 .cors(Customizer.withDefaults())
                 /* ✅ CSRF 비활성화 (폼로그인은 그대로 유지 가능) */
-
-
+                .csrf(csrf -> csrf
+                        .ignoringRequestMatchers("/usr/member/doCheckPw")
+                        .ignoringRequestMatchers("/usr/member/doModify")
+                        .ignoringRequestMatchers("/usr/member/doLogout")
+                )
                 /* 세션 (기존 동작 유지) */
-
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
                         .sessionFixation(sessionFixation -> sessionFixation.none())
@@ -112,7 +112,6 @@ public class SecurityConfig {
                                 "/favicon.ico" // 파비콘 403 방지
                         ).permitAll()
 
-
                         /* 나머지는 로그인 필요 (기존) */
                         .anyRequest().authenticated()
                 )
@@ -142,13 +141,11 @@ public class SecurityConfig {
         return http.build();
     }
 
-
     /* ✅ 공통 CORS: S3(및 필요 오리진)만 정확히 허용해서 /api/** 에 적용 */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration cfg = new CorsConfiguration();
         cfg.setAllowedOrigins(List.of(
-
                 "https://aniwell.s3.ap-northeast-2.amazonaws.com",        // S3 객체 URL(https)
                 "http://aniwell.s3-website.ap-northeast-2.amazonaws.com", // S3 정적 사이트(http, 필요 시)
                 "http://localhost:3001",                                   // 프론트 dev

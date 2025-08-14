@@ -80,4 +80,22 @@
 		ORDER BY v.visit_date DESC, md.created_at DESC
 	</select>
 
+	<!-- [추가] 단건 -->
+	<select id="findById" parameterType="int"
+			resultMap="MedicalDocumentMap">
+		SELECT id, visit_id, doc_type, file_url, ocr_json, created_at
+		FROM medical_document
+		WHERE id = #{id}
+	</select>
+
+	<!-- [추가] 방문 최신 문서 -->
+	<select id="findLatestByVisitId" parameterType="int"
+			resultMap="MedicalDocumentMap">
+		SELECT id, visit_id, doc_type, file_url, ocr_json, created_at
+		FROM medical_document
+		WHERE visit_id = #{visitId}
+		ORDER BY id DESC
+			LIMIT 1
+		ORDER BY v.visit_date DESC, md.created_at DESC
+	</select>
 </mapper>
