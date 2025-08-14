@@ -1,0 +1,106 @@
+server:
+  port: 8080
+
+spring:
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    #   username: 구글 계정
+    #   password: 구글 계정 앱 비밀번호
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+  oauth2:
+    google:
+      client-id: ""
+      client-secret: ""
+      redirect-uri: "http://localhost:8080/usr/member/google"
+
+  session:
+    store-type: none   # Redis 비활성화
+#    store-type: redis # Redis 활성화
+
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+      - org.springframework.boot.autoconfigure.session.SessionAutoConfiguration
+
+  thymeleaf:
+    prefix: classpath:/templates/
+    suffix: .html
+    mode: HTML
+    encoding: UTF-8
+    content-type: text/html
+    cache: false
+    check-template-location: true
+
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://aniwell.crg6u0s2maw3.ap-northeast-2.rds.amazonaws.com:3306/aniwell?serverTimezone=Asia/Seoul
+    username: KJM
+    password: aniwell1234
+
+mybatis:
+  type-aliases-package: com.example.RSW.vo
+  mapper-locations: classpath:/mappers/**/*.xml
+
+custom:
+  siteName: aniwell
+  siteMainUri: http://localhost:8080
+  emailFrom: no-reply@localhost
+  emailFromName: aniwell
+
+  redis:
+    enabled: true                # false면 Redis 완전 비활성화 / true - Redis 활성화
+    use-personal: true           # true: 개인 Redis / false: 팀 공유 Redis
+    personal-host: 100.114.185.63
+    personal-port: 6379
+    shared-host: 100.65.187.38
+    shared-port: 6379
+    password: aniwell1234
+
+
+kakao:
+  rest-api-key: "79f2a3a73883a82595a2202187f96cc5"    # 로그인
+  javascript-key: "dfd275f49b78960a0458d6f6294cbde2"
+  client-secret: "61Ng1JnIKgkQRXgxaJOpY9wo4gffwvn2"
+  redirect-uri: "http://localhost:8080/usr/member/kakao"  #로그인 redirect URI
+
+cloudinary:
+    cloud_name: dfiqktimk
+    api_key: 145284189636895
+    api_secret: 4TS23PL5HMWPolljcIRqitpWwU0
+
+naver:
+  client-id: "ZdyW5GGtNSgCCaduup7_"
+  client-secret: "pJh4IlGi2_"
+  redirect-uri: "http://localhost:8080/usr/member/naver"
+
+# ✅ [추가] 없으면 기본값 DOCUMENT_TEXT_DETECTION 사용
+# ✅ [수정본] SDK(서비스계정 JSON) 방식 — json 만 사용, path/base64 는 비움
+gcv:
+  ocrMode: DOCUMENT_TEXT_DETECTION   # TEXT_DETECTION | DOCUMENT_TEXT_DETECTION
+  credentials:
+    json: |-
+      { 
+        
+      }
+
+    path: ""
+    base64: ""
+
+# [추가] 없으면 생성
+app:
+  upload:
+    base-dir: uploads    # 필요 시 절대경로로 변경 (/var/aniwell/uploads 등) 
+    path: ""     # ❌ API 키 문자열을 넣는 곳이 아닙니다. (JSON 파일 경로일 때만 사용)
+    base64: ""   # JSON을 base64로 넣을 때만 사용 (이번엔 미사용)
+
+aniwell:
+  qr:
+    base: https://aniwell.s3.ap-northeast-2.amazonaws.com/qr.html
+    # CloudFront 쓰면 여기를 CloudFront 도메인으로 교체
