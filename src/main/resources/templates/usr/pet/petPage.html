@@ -144,7 +144,7 @@
 					</div>
 
 
-					<div id="summaryCard"
+					<div id="summaryCardMain"
 						class="relative bg-gradient-to-r from-[#DFF8E5] to-[#F4FBCC] rounded-xl p-4 text-center shadow hover:shadow-md transition-shadow duration-300 font-semibold cursor-pointer">
 						<!-- 동적으로 텍스트가 삽입될 예정 -->
 					</div>
@@ -1185,9 +1185,9 @@
 					}
 
 
-					document.getElementById("summaryCard").innerHTML = `
+					document.getElementById("summaryCardMain").innerHTML = `
 					${summary}<br>
-					<button class="text-blue-600 mt-1 underline" onclick="openFeedingPanel()">행동분석보기 &gt;</button>
+					<button class="text-blue-600 mt-1 underline" onclick="openFeedingPanel(event)">행동분석보기 &gt;</button>
 				`;
 				})
 				.catch(err => {

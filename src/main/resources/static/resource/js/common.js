@@ -202,11 +202,11 @@ function connectWebSocket() {
 }
 
 function openModal() {
-	document.getElementById("myModal").classList.remove("hidden");
+	document.getElementById("memberOpenModal").classList.remove("hidden");
 }
 
 function closeModal() {
-	document.getElementById("myModal").classList.add("hidden");
+	document.getElementById("memberOpenModal").classList.add("hidden");
 }
 
 function logout() {
