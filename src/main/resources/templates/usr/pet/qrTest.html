@@ -2,40 +2,90 @@
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>QR 만들기</title>
-    <style>
-        body{margin:0;font-family:system-ui;display:grid;place-items:center;min-height:100vh;background:#f7f7fb}
-        .box{background:#fff;border:1px solid #eee;border-radius:14px;padding:18px;box-shadow:0 8px 18px rgba(0,0,0,.06);text-align:center}
-        .btn{appearance:none;border:1px solid #e5e7eb;background:#111;color:#fff;border-radius:10px;padding:10px 16px;cursor:pointer}
-        .btn:disabled{opacity:.6;cursor:not-allowed}
-        #qrImg{margin-top:12px;width:240px;height:240px;border:1px solid #ececec;border-radius:12px;display:none}
-        .row{margin-top:8px;display:flex;gap:8px;justify-content:center}
-        .link{padding:6px 10px;border:1px solid #e5e7eb;border-radius:8px;text-decoration:none;color:#111;background:#fff}
-    </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>QR 만들기</title>
+<style>
+body {
+	margin: 0;
+	font-family: system-ui;
+	display: grid;
+	place-items: center;
+	min-height: 100vh;
+	background: #f7f7fb
+}
+
+.box {
+	background: #fff;
+	border: 1px solid #eee;
+	border-radius: 14px;
+	padding: 18px;
+	box-shadow: 0 8px 18px rgba(0, 0, 0, .06);
+	text-align: center
+}
+
+.btn {
+	appearance: none;
+	border: 1px solid #e5e7eb;
+	background: #111;
+	color: #fff;
+	border-radius: 10px;
+	padding: 10px 16px;
+	cursor: pointer
+}
+
+.btn:disabled {
+	opacity: .6;
+	cursor: not-allowed
+}
+
+#qrImg {
+	margin-top: 12px;
+	width: 240px;
+	height: 240px;
+	border: 1px solid #ececec;
+	border-radius: 12px;
+	display: none
+}
+
+.row {
+	margin-top: 8px;
+	display: flex;
+	gap: 8px;
+	justify-content: center
+}
+
+.link {
+	padding: 6px 10px;
+	border: 1px solid #e5e7eb;
+	border-radius: 8px;
+	text-decoration: none;
+	color: #111;
+	background: #fff
+}
+</style>
 </head>
 <body>
-<div class="box">
-    <h2 style="margin:0 0 10px">QR 생성</h2>
-    <button id="btnMakeQr" class="btn">QR 만들기</button>
+	<div class="box">
+		<h2 style="margin: 0 0 10px">QR 생성</h2>
+		<button id="btnMakeQr" class="btn">QR 만들기</button>
 
-    <img id="qrImg" alt="QR">
+		<img id="qrImg" alt="QR">
 
-    <div id="btnRow" class="row" style="display:none">
-        <a id="qrDownload" class="link" download="aniwell-qr.png">다운로드</a>
-        <a id="qrOpen" class="link" target="_blank" rel="noopener">새 창으로 열기</a>
-    </div>
-</div>
+		<div id="btnRow" class="row" style="display: none">
+			<a id="qrDownload" class="link" download="aniwell-qr.png">다운로드</a>
+			<a id="qrOpen" class="link" target="_blank" rel="noopener">새 창으로 열기</a>
+		</div>
+	</div>
 
-<!-- 서버에서 넘긴 값 -->
-<script th:inline="javascript">
+	<!-- 서버에서 넘긴 값 -->
+	<script th:inline="javascript">
     /* 서버에서 내려준 값이 없으면 JS null로 떨어지게 */
     const PET_ID   = /*[[${petId}]]*/ null;
     const VISIT_ID = /*[[${visitId}]]*/ null;
 </script>
 
-<script>
+	<script>
     // --- API BASE 결정: ?api=... 이 있으면 그 값 사용, 없으면 같은 오리진 사용 ---
     const pageQS   = new URLSearchParams(location.search);
     const API_BASE = (pageQS.get('api') || '').replace(/\/+$/, ''); // 예: https://api.aniwell.kr

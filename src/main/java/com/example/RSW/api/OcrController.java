@@ -386,6 +386,7 @@ public class OcrController {
 					text = "";
 				}
 			}
+			Map<String, Object> guess = suggestDocTypeWithConfidence(text); // ✅ [추가] 자동 판별 결과 생성
 
 			// 7) React에서 다루기 쉬운 JSON 스키마로 가공 (text + confidence)
 			Map<String, Object> payload = new HashMap<>();
@@ -394,6 +395,8 @@ public class OcrController {
 			payload.put("mode", type.name()); // 🔧 [추가] 사용한 OCR 모드 확인용(개발 편의)
 			payload.put("fileUrl", fileUrl); // [추가] 프론트가 저장 시 같이 넘길 URL
 			payload.put("storage", fileUrl.startsWith("http") ? "cloudinary" : "local");
+			payload.put("suggestedDocType", (String) guess.get("type"));
+			payload.put("suggestedConfidence", guess.get("confidence"));
 
 			// 8) 표준 성공 응답(ResultData)로 감싸서 반환
 			// ⬇️ [유지/확인] 프로젝트의 ResultData 시그니처에 맞춰 data 키 사용
@@ -437,11 +440,24 @@ public class OcrController {
 			Map<String, Object> ocrMeta = new HashMap<>();
 
 			try {
-				String json = (doc.getOcrJson() == null) ? "{}" : doc.getOcrJson();
-				com.fasterxml.jackson.databind.JsonNode n = objectMapper.readTree(doc.getOcrJson());
+				String json = (doc.getOcrJson() == null || doc.getOcrJson().isBlank()) ? "{}" : doc.getOcrJson();
+
+				com.fasterxml.jackson.databind.JsonNode n = objectMapper.readTree(json); // ✅ [수정] doc.getOcrJson() →
+																							// json
 				text = n.path("text").asText(null);
+
+				// ✅ [추가] meta(engine/ts) 파싱하여 프런트에 전달
+				com.fasterxml.jackson.databind.JsonNode meta = n.path("meta");
+				if (meta != null && meta.isObject()) {
+					if (meta.hasNonNull("engine"))
+						ocrMeta.put("engine", meta.get("engine").asText());
+					if (meta.hasNonNull("ts"))
+						ocrMeta.put("ts", meta.get("ts").asText());
+				}
 			} catch (Exception ignore) {
 			}
+
+			Map<String, Object> guess = suggestDocTypeWithConfidence(text);
 
 			// ✅ 저장소 표시(cloudinary/local)
 			String storage = (doc.getFileUrl() != null && doc.getFileUrl().startsWith("http")) ? "cloudinary" : "local";
@@ -455,7 +471,8 @@ public class OcrController {
 			out.put("ocrMeta", ocrMeta);
 			out.put("text", text);
 			out.put("createdAt", doc.getCreatedAt());
-
+			out.put("suggestedDocType", (String) guess.get("type"));
+			out.put("suggestedConfidence", guess.get("confidence"));
 			return ResultData.from("S-OK", "문서 조회 성공", "data", out);
 
 		} catch (Exception e) {
@@ -464,6 +481,116 @@ public class OcrController {
 			err.put("error", e.getMessage());
 			return ResultData.from("F-ERROR", "문서 조회 중 오류가 발생했습니다.", "data", err);
 		}
+	}
+
+	// ✅ 4종(영수증/처방전/검사결과지/진단서) 자동 분류 + 신뢰도 계산
+//  반환: type ∈ {receipt, prescription, lab, diagnosis}, confidence(0~1)
+//  디버깅용 점수도 함께 반환(receiptScore, prescriptionScore, labScore, diagnosisScore)
+	private Map<String, Object> suggestDocTypeWithConfidence(String text) {
+		Map<String, Object> out = new HashMap<>();
+		if (text == null || text.isBlank()) {
+			out.put("type", "diagnosis"); // 텍스트가 전혀 없으면 무난히 진단서로 가정
+			out.put("confidence", 0.5);
+			out.put("receiptScore", 0);
+			out.put("prescriptionScore", 0);
+			out.put("labScore", 0);
+			out.put("diagnosisScore", 0);
+			return out;
+		}
+
+		String t = text.toLowerCase();
+
+		// ── 1) 키워드 세트 ───────────────────────────────────────────────
+		String[] receiptHints = { "과세", "면세", "합계", "청구 총액", "총액", "원금액", "vat", "부가세", "영수증", "단가", "수량", "금액", "청구",
+				"거래명세서", "승인번호", "신용카드", "현금영수증", "카드사" };
+		String[] diagnosisHints = { "진단서", "환자명", "등록번호", "생년월일", "성별", "보호자", "의사", "면허", "면허번호", "병명", "진단명", "소견",
+				"의학적 소견", "발급일", "발행일", "의료기관", "직인" };
+		String[] labHints = { // Chemistry/CBC/UA 등 공통
+				"검사결과", "정상범위", "reference range", "chemistry", "cbc", "urinalysis", "wbc", "rbc", "hgb", "hct", "plt",
+				"glucose", "alt", "ast", "alp", "ggt", "bun", "crea", "creatinine", "albumin", "globulin",
+				"cholesterol", "triglyceride", "sdma", "lactate", "phos", "calcium", "phosphorus", "anion gap" };
+		String[] prescriptionHints = { "처방전", "처방", "복용", "용법", "용량", "투약", "mg", "ml", "tablet", "tab", "cap", "정",
+				"캡슐", "1일", "1회", "bid", "tid", "qid", "sid", "q12h", "q24h", "q8h", "q6h", "po", "p.o", "prn", "아침",
+				"점심", "저녁", "취침전", "일분량", "일수", "일간" };
+
+		int sReceipt = 0, sDiag = 0, sLab = 0, sRx = 0;
+
+		for (String k : receiptHints)
+			if (t.contains(k))
+				sReceipt += 2;
+		for (String k : diagnosisHints)
+			if (t.contains(k))
+				sDiag += 2;
+		for (String k : labHints)
+			if (t.contains(k))
+				sLab += 2;
+		for (String k : prescriptionHints)
+			if (t.contains(k))
+				sRx += 2;
+
+		// ── 2) 패턴 가산점 ───────────────────────────────────────────────
+		// (a) 금액/천단위 → 영수증
+		java.util.regex.Pattern pAmount = java.util.regex.Pattern.compile("\\b\\d{1,3}(?:[.,]\\d{3})+(?:\\s*원)?\\b");
+		java.util.regex.Matcher mAmount = pAmount.matcher(text);
+		int amountHits = 0;
+		while (mAmount.find())
+			amountHits++;
+		sReceipt += Math.min(amountHits, 6);
+
+		// (b) 단위 → 검사결과지(단위가 많이 등장)
+		java.util.regex.Pattern pUnits = java.util.regex.Pattern
+				.compile("(?i)(mg/dl|g/dl|mmol/l|µg/dl|ug/dl|ng/ml|u/l|iu/l|pmol/l|k/µl|10\\^\\d+/l|%)");
+		java.util.regex.Matcher mUnits = pUnits.matcher(text);
+		int unitHits = 0;
+		while (mUnits.find())
+			unitHits++;
+		sLab += Math.min(unitHits, 8);
+
+		// (c) 범위표기 → 검사결과지
+		java.util.regex.Pattern pRange = java.util.regex.Pattern
+				.compile("\\b\\d+(?:\\.\\d+)?\\s*[-~–]\\s*\\d+(?:\\.\\d+)?\\b");
+		java.util.regex.Matcher mRange = pRange.matcher(text);
+		int rangeHits = 0;
+		while (mRange.find())
+			rangeHits++;
+		sLab += Math.min(rangeHits, 6);
+
+		// (d) 복약 스케줄(1일2회, q12h 등) → 처방전
+		java.util.regex.Pattern pSched = java.util.regex.Pattern
+				.compile("(?i)(1\\s*일\\s*\\d+\\s*회|q(?:6|8|12|24)h|bid|tid|qid|sid|po|p\\.o|prn)");
+		java.util.regex.Matcher mSched = pSched.matcher(t);
+		int schedHits = 0;
+		while (mSched.find())
+			schedHits++;
+		sRx += Math.min(schedHits * 2, 8);
+
+		// ── 3) 최종 결정 ─────────────────────────────────────────────────
+		int total = sReceipt + sDiag + sLab + sRx;
+		int maxScore = Math.max(Math.max(sReceipt, sDiag), Math.max(sLab, sRx));
+
+		String type;
+		if (maxScore == 0)
+			type = "diagnosis"; // 완전 모호하면 진단서로 기본값
+		else if (maxScore == sReceipt)
+			type = "receipt";
+		else if (maxScore == sRx)
+			type = "prescription";
+		else if (maxScore == sLab)
+			type = "lab";
+		else
+			type = "diagnosis";
+
+		double conf = (total == 0) ? 0.5 : (1.0 * maxScore) / total;
+		if (conf < 0.5)
+			conf = 0.5;
+
+		out.put("type", type);
+		out.put("confidence", Math.round(conf * 100) / 100.0);
+		out.put("receiptScore", sReceipt);
+		out.put("prescriptionScore", sRx);
+		out.put("labScore", sLab);
+		out.put("diagnosisScore", sDiag);
+		return out;
 	}
 
 }
