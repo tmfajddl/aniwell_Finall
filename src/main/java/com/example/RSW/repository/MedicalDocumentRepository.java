@@ -21,4 +21,8 @@ public interface MedicalDocumentRepository {
 
     // visit JOIN 해서 petId로 조회
     List<MedicalDocument> selectByPetId(@Param("petId") int petId);
+
+    MedicalDocument findById(int id);
+
+    MedicalDocument findLatestByVisitId(int visitId);
 }
