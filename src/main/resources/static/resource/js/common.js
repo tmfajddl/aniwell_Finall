@@ -205,7 +205,7 @@ function memberOpenModal() {
 	document.getElementById("myModal").classList.remove("hidden");
 }
 
-function membertCloseModal() {
+function memberCloseModal() {
 	document.getElementById("myModal").classList.add("hidden");
 }
 
@@ -242,7 +242,7 @@ function logout() {
 						return res.text();
 					})
 					.then(() => {
-						membertCloseModal();
+						memberCloseModal();
 						location.href = '/';
 					})
 					.catch(err => {
@@ -271,7 +271,7 @@ function submitCertificate() {
 		}
 	});
 
-	membertCloseModal(); // 모달 닫기
+	memberCloseModal(); // 모달 닫기
 
 	setTimeout(() => {
 		window.location.href = "/usr/member/myCert";
@@ -280,7 +280,7 @@ function submitCertificate() {
 
 
 document.getElementById("myModal").addEventListener("click", (e) => {
-	if (e.target.id === "myModal") membertCloseModal();
+	if (e.target.id === "myModal") memberCloseModal();
 });
 
 
