@@ -201,12 +201,12 @@ function connectWebSocket() {
 	});
 }
 
-function openModal() {
-	document.getElementById("memberOpenModal").classList.remove("hidden");
+function memberOpenModal() {
+	document.getElementById("myModal").classList.remove("hidden");
 }
 
-function closeModal() {
-	document.getElementById("memberOpenModal").classList.add("hidden");
+function membertCloseModal() {
+	document.getElementById("myModal").classList.add("hidden");
 }
 
 function logout() {
@@ -242,7 +242,7 @@ function logout() {
 						return res.text();
 					})
 					.then(() => {
-						closeModal();
+						membertCloseModal();
 						location.href = '/';
 					})
 					.catch(err => {
@@ -271,7 +271,7 @@ function submitCertificate() {
 		}
 	});
 
-	closeModal(); // 모달 닫기
+	membertCloseModal(); // 모달 닫기
 
 	setTimeout(() => {
 		window.location.href = "/usr/member/myCert";
@@ -280,7 +280,7 @@ function submitCertificate() {
 
 
 document.getElementById("myModal").addEventListener("click", (e) => {
-	if (e.target.id === "myModal") closeModal();
+	if (e.target.id === "myModal") membertCloseModal();
 });
 
 
