@@ -173,8 +173,11 @@
 
 				<div class=" bg-white p-4 rounded-xl shadow h-1/3 flex">
 					<canvas id="myChart" class=" w-full h-full"></canvas>
-					<div id="feedingPanel"
-						class="fixed top-0 right-0 w-[95%] h-full bg-white shadow-xl z-40 transform translate-x-full transition-transform duration-300 rounded-l-[40px] flex flex-col p-6 overflow-auto">
+					<div id="feedingPanel" class="fixed top-0 right-0 
+					w-[95%] h-full bg-white shadow-xl 
+					z-40 transform translate-x-full 
+					transition-transform duration-300 
+					rounded-l-[40px] flex flex-col p-6 overflow-auto">
 
 						<!-- 닫기 버튼 -->
 						<button onclick="closeFeedingPanel()"
@@ -626,24 +629,37 @@
 					});
 			}
 
-			function openFeedingPanel() {
-				document.getElementById("feedingPanel").classList.remove("translate-x-full");
+			function openFeedingPanel(e) {
+				if (e) e.stopPropagation();               // 카드 전체 클릭과 충돌 방지
+				const panel = document.getElementById('feedingPanel');
+				panel.classList.remove('translate-x-full', 'invisible', 'pointer-events-none');
+
+				// 기존 로직 유지
 				setTimeout(() => {
 					if (dateInput) {
 						dateInput.value = todayStr;
 						loadDataAndDraw(todayStr);
-						dateInput.addEventListener("change", () => {
-							disconnectWebSocket();
-							loadDataAndDraw(dateInput.value);
-						});
+						// 리스너 중복 방지: 한 번만 등록
+						if (!dateInput.__bound) {
+							dateInput.addEventListener('change', () => {
+								disconnectWebSocket();
+								loadDataAndDraw(dateInput.value);
+							});
+							dateInput.__bound = true;
+						}
 					}
-				}, 100);
+				}, 50);
 			}
 
 			function closeFeedingPanel() {
-				document.getElementById("feedingPanel").classList.add("translate-x-full");
+				const panel = document.getElementById('feedingPanel');
+				panel.classList.add('translate-x-full', 'invisible', 'pointer-events-none');
 				disconnectWebSocket();
+
+				// 혹시 렌더가 꼬였으면 안전하게 다시 그리기
+				if (window.__reloadActivityTimeline) window.__reloadActivityTimeline();
 			}
+
 		</script>
 
 		<script th:inline="javascript">
@@ -1187,7 +1203,11 @@
 
 					document.getElementById("summaryCardMain").innerHTML = `
 					${summary}<br>
-					<button class="text-blue-600 mt-1 underline" onclick="openFeedingPanel(event)">행동분석보기 &gt;</button>
+					<button class="text-blue-600 mt-1 underline"
+					        onclick="event.stopPropagation(); openFeedingPanel(event)">
+					  행동분석보기 &gt;
+					</button>
+
 				`;
 				})
 				.catch(err => {
