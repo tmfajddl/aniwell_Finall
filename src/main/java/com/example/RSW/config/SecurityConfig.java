@@ -1,5 +1,6 @@
 package com.example.RSW.config;
 
+import org.junit.jupiter.api.Order;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
