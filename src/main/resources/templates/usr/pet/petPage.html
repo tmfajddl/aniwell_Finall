@@ -52,7 +52,7 @@
 
 </head>
 
-<body class="bg-gradient-to-b from-[#e4f0b9] to-[#fcdca9] h-screen min-h-[100dvh] min-w-[1400px]">
+<body class="bg-gradient-to-b from-[#e4f0b9] to-[#fcdca9] h-screen min-h-dvh min-w-[1400px]">
 	<div class="flex h-screen w-full">
 		<!-- Sidebar -->
 		<div th:replace="common :: siteHeader" class=""></div>
@@ -154,6 +154,9 @@
 
 				<!-- 주변 펫살 보기 -->
 				<div class="flex gap-2 w-full grid-cols-2 ">
+					<a th:href="@{/usr/pet/qr(petId=${pet.id})}"
+											class="flex-1 hover:shadow-md transition-shadow duration-300 font-semibold cursor-pointer shadow block bg-gradient-to-r from-[#EEE8CD] to-[#F4FBCC] rounded-xl p-3 text-sm text-center font-semibold transition">
+											진단서 다운받기</a>
 					<a th:href="@{/usr/pet/qr(petId=${pet.id})}"
 						class="flex-1 hover:shadow-md transition-shadow duration-300 font-semibold cursor-pointer shadow block bg-gradient-to-r from-[#EEE8CD] to-[#F4FBCC] rounded-xl p-3 text-sm text-center font-semibold transition">
 						QR 레포트</a>
