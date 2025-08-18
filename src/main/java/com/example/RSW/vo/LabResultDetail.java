@@ -2,6 +2,8 @@ package com.example.RSW.vo;
 
 import lombok.Data;
 
+import java.time.LocalDate;
+
 @Data
 public class LabResultDetail {
     private int id;
@@ -13,4 +15,6 @@ public class LabResultDetail {
     private Double refHigh;
     private String flag;         // 'L','N','H'
     private String notes;
+
+    private LocalDate resultDate;
 }

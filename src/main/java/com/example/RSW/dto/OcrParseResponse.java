@@ -1,34 +1,36 @@
 package com.example.RSW.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 import java.util.List;
 import java.util.Map;
 
-/**
- * React 친화 JSON 응답용 DTO docType: 문서 유형(LAB/RECEIPT/PRESCRIPTION/DIAGNOSIS)
- * groups : 날짜별 그룹 [{ date, items[] }] ascii : 사람이 보기 쉬운 텍스트 표(옵션)
- */
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class OcrParseResponse {
-	private DocType docType;
-	private List<Group> groups;
-	private String ascii;
 
-	public enum DocType {
-		RECEIPT, PRESCRIPTION, LAB, DIAGNOSIS, UNKNOWN
+	public enum DocType { LAB, RECEIPT, PRESCRIPTION, DIAGNOSIS, UNKNOWN }
+
+	private final DocType docType;
+	private final List<Group> groups;
+	private final String ascii;
+
+	public OcrParseResponse(DocType docType, List<Group> groups, String ascii) {
+		this.docType = docType;
+		this.groups = groups;
+		this.ascii = ascii;
 	}
 
-	@Data
-	@NoArgsConstructor
-	@AllArgsConstructor
+	public DocType getDocType() { return docType; }
+	public List<Group> getGroups() { return groups; }
+	public String getAscii() { return ascii; }
+
 	public static class Group {
-		private String date; // yyyy-MM-dd or yyyy-MM-dd HH:mm:ss
-		private List<Map<String, Object>> items; // 문서타입별 동적 필드
-	}
+		private final String date;
+		private final List<Map<String, Object>> items;
 
+		public Group(String date, List<Map<String, Object>> items) {
+			this.date = date;
+			this.items = items;
+		}
+
+		public String getDate() { return date; }
+		public List<Map<String, Object>> getItems() { return items; }
+	}
 }

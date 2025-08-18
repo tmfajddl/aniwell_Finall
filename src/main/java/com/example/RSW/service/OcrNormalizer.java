@@ -7,20 +7,25 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
  * medical_document.ocr_json → 표준 ExplainRequest 정규화
- * - JSON(labs/prescriptions) 우선
- * - 텍스트만 있을 때 폴백 파서로 검사(lab) 추출
- * - 오입력된 doc_type(receipt 등)도 텍스트가 검사형이면 lab으로 전환
+ * - 이제부터는 JSON(groups) 우선
+ * - groups가 없거나 비면 텍스트 폴백 파서
+ * - 오입력된 doc_type이라도 내용이 검사형이면 lab로 전환
  */
 @Service
 public class OcrNormalizer {
 
     private final ObjectMapper om = new ObjectMapper();
+
+    /* ==================== 엔트리 ==================== */
 
     public ExplainRequest fromDocument(MedicalDocument doc) {
         var document = new ExplainRequest.Document(providerFrom(doc), dateFrom(doc));
@@ -32,29 +37,58 @@ public class OcrNormalizer {
             JsonNode root = (doc.getOcrJson()!=null && !doc.getOcrJson().isBlank())
                     ? om.readTree(doc.getOcrJson()) : om.createObjectNode();
 
+            // 타입 결정: ocr_json.docType → 문서 docType → 텍스트 휴리스틱
+            String type = safe(text(root.get("docType")));
+            if (type.isBlank()) type = safe(doc.getDocType());
             String rawText = text(root.get("text"));
-            String type = safe(doc.getDocType());
-
-            // 텍스트 내용이 검사 형태면 강제로 lab 처리
             if (!"lab".equals(type) && looksLikeLabText(rawText)) type = "lab";
 
+            // ===== 1) groups 우선 처리 =====
+            JsonNode groups = root.get("groups");
+            boolean handledByGroups = false;
+
+            if (groups != null && groups.isArray() && groups.size() > 0) {
+                // 그룹 중 아이템이 있는 최신 그룹 선별
+                JsonNode best = pickBestGroup(groups);
+                if (best != null) {
+                    String grpDate = text(best.get("date"));
+                    JsonNode items = best.get("items");
+                    if (items != null && items.isArray()) {
+                        if ("lab".equals(type) || looksLikeGroupIsLab(items)) {
+                            labs.addAll(toLabsFromGroupItems(items));
+                            handledByGroups = true;
+                            notes = "OCR groups 기준 파싱됨 · date=" + (grpDate==null? "-" : grpDate)
+                                    + " · items=" + items.size();
+                            return assemble(document, labs, rxs, notes);
+                        }
+                        // TODO: prescription/receipt 형태로 groups를 저장하는 스펙이 생기면 여기 확장
+                    }
+                }
+            }
+
+            // ===== 2) groups로 처리 못했으면 과거 로직 유지 =====
             switch (type) {
                 case "lab" -> {
-                    if (root.has("labs") && root.get("labs").isArray()) {
-                        for (JsonNode l : root.get("labs")) {
-                            labs.add(new ExplainRequest.Lab(
-                                    text(l.get("code")), text(l.get("name")),
-                                    dbl(l.get("value")), text(l.get("unit")),
-                                    dbl(l.get("ref_low")), dbl(l.get("ref_high"))
-                            ));
+                    if (!handledByGroups) {
+                        // 과거 포맷(labs 배열) 지원
+                        if (root.has("labs") && root.get("labs").isArray()) {
+                            for (JsonNode l : root.get("labs")) {
+                                labs.add(new ExplainRequest.Lab(
+                                        text(l.get("code")), text(l.get("name")),
+                                        dbl(l.get("value")), text(l.get("unit")),
+                                        dbl(l.get("ref_low")), dbl(l.get("ref_high"))
+                                ));
+                            }
+                            notes = "이전 labs 배열 포맷에서 파싱됨";
+                        } else if (!rawText.isBlank()) {
+                            labs.addAll(parseLabText(rawText));
+                            notes = "텍스트 폴백 파싱됨";
+                        } else {
+                            notes = "내용이 없습니다.";
                         }
-                    } else if (!rawText.isBlank()) {
-                        labs.addAll(parseLabText(rawText));
+                    } else {
+                        notes = "OCR groups 기준 파싱됨";
                     }
-
-                    notes = text(root.at("/meta/notes"));
-                    if ((notes == null || notes.isBlank()) && !rawText.isBlank())
-                        notes = "없음";
                 }
                 case "prescription" -> {
                     if (root.has("prescriptions") && root.get("prescriptions").isArray()) {
@@ -68,14 +102,17 @@ public class OcrNormalizer {
                                     intOrNull(p.get("days"))
                             ));
                         }
+                        notes = "처방전 JSON에서 파싱됨";
                     } else if (root.has("drugs") && root.get("drugs").isArray()) {
                         for (JsonNode n : root.get("drugs")) {
                             String drug = text(n);
                             if (!drug.isBlank())
                                 rxs.add(new ExplainRequest.Prescription(drug, null, null, null, null, null));
                         }
+                        notes = "단순 약품명 배열에서 파싱됨";
+                    } else {
+                        notes = (rawText.isBlank() ? "내용이 없습니다." : "처방 JSON이 없어 텍스트 파서는 생략");
                     }
-                    notes = text(root.at("/meta/notes"));
                 }
                 case "receipt" -> {
                     if (!rawText.isBlank() && looksLikeLabText(rawText)) {
@@ -92,15 +129,122 @@ public class OcrNormalizer {
                     notes = (root.isMissingNode() || root.size()==0) ? null : ("원본 JSON: " + root.toString());
                 }
             }
+
+            return assemble(document, labs, rxs, notes);
+
         } catch (Exception e) {
             notes = "정규화 오류: " + e.getMessage();
+            return assemble(document, new ArrayList<>(), new ArrayList<>(), notes);
         }
+    }
 
+    private ExplainRequest assemble(ExplainRequest.Document document,
+                                    List<ExplainRequest.Lab> labs,
+                                    List<ExplainRequest.Prescription> rxs,
+                                    String notes) {
         return new ExplainRequest(
                 document,
                 new ExplainRequest.Pet(null,null,null,null,null,null), // 펫은 어셈블러에서 주입
                 labs, rxs, new ExplainRequest.Meta(notes)
         );
+    }
+
+    /* ==================== groups → labs ==================== */
+
+    /** groups 배열 중에서 가장 최근(파싱 성공한 최대 날짜) & items 있는 그룹을 선택 */
+    private JsonNode pickBestGroup(JsonNode groups) {
+        JsonNode best = null;
+        LocalDateTime bestDt = null;
+
+        for (JsonNode g : groups) {
+            JsonNode items = g.get("items");
+            if (items == null || !items.isArray() || items.size()==0) continue;
+
+            String d = text(g.get("date"));
+            LocalDateTime dt = parseDateFlexible(d);
+            if (dt == null) {
+                // 날짜가 없으면, 일단 후보로만 (날짜가 있는 그룹을 우선)
+                if (best == null) best = g;
+                continue;
+            }
+            if (bestDt == null || dt.isAfter(bestDt)) {
+                bestDt = dt;
+                best = g;
+            }
+        }
+        // 모두 날짜 파싱 실패이거나 전부 비었으면 null
+        return best;
+    }
+
+    private LocalDateTime parseDateFlexible(String s) {
+        if (s == null || s.isBlank()) return null;
+        List<DateTimeFormatter> fmts = List.of(
+                DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"),
+                DateTimeFormatter.ISO_DATE_TIME,         // 2024-04-08T16:34:08[.SSS]
+                DateTimeFormatter.ofPattern("yyyy-MM-dd")// 2024-04-08
+        );
+        for (DateTimeFormatter f : fmts) {
+            try {
+                // 날짜만 있으면 00:00:00으로 보정
+                if (f == fmts.get(2)) {
+                    return LocalDate.parse(s, f).atStartOfDay();
+                }
+                return LocalDateTime.parse(s, f);
+            } catch (DateTimeParseException ignore) {}
+        }
+        return null;
+    }
+
+    /** 해당 items가 검사 항목 형태인지 간단 점검 */
+    private boolean looksLikeGroupIsLab(JsonNode items) {
+        if (items == null || !items.isArray()) return false;
+        int score = 0;
+        for (JsonNode it : items) {
+            if (it.hasNonNull("name")) score++;
+            if (it.has("value")) score++;
+            if (it.has("unit")) score++;
+            if (it.has("ref_low") || it.has("ref_high") || it.has("refRange")) score++;
+            if (score >= 3) return true;
+        }
+        return false;
+    }
+
+    /** 단일 그룹의 items → labs (동일 name은 '마지막 값'이 우선) */
+    private List<ExplainRequest.Lab> toLabsFromGroupItems(JsonNode items) {
+        LinkedHashMap<String, ExplainRequest.Lab> map = new LinkedHashMap<>();
+        for (JsonNode it : items) {
+            String name = text(it.get("name"));
+            if (name.isBlank()) continue;
+
+            Double val  = dbl(it.get("value"));
+            String unit = text(it.get("unit"));
+
+            // ref_low/ref_high 없으면 refRange 문자열에서 추출 시도
+            Double lo = dbl(it.get("ref_low"));
+            Double hi = dbl(it.get("ref_high"));
+            if ((lo == null || hi == null) && it.hasNonNull("refRange")) {
+                double[] lr = parseRefRangeString(text(it.get("refRange")));
+                if (lo == null) lo = (lr[0] != Double.NaN ? lr[0] : null);
+                if (hi == null) hi = (lr[1] != Double.NaN ? lr[1] : null);
+            }
+
+            ExplainRequest.Lab row = new ExplainRequest.Lab(name, name, val, unit, lo, hi);
+            // 동일 항목명은 '마지막 등장' 값으로 교체
+            map.put(name, row);
+        }
+        return new ArrayList<>(map.values());
+    }
+
+    /** "a ~ b" 혹은 "a-b" 에서 숫자 2개를 뽑아낸다. 실패 시 NaN */
+    private double[] parseRefRangeString(String s) {
+        if (s == null) return new double[]{Double.NaN, Double.NaN};
+        Matcher m = Pattern.compile("([-+]?\\d+(?:\\.\\d+)?)\\s*[~\\-–]\\s*([-+]?\\d+(?:\\.\\d+)?)").matcher(s);
+        if (m.find()) {
+            try {
+                return new double[]{ Double.parseDouble(m.group(1)), Double.parseDouble(m.group(2)) };
+            } catch (Exception ignore) {}
+        }
+        return new double[]{Double.NaN, Double.NaN};
     }
 
     /* ==================== 텍스트 감지 ==================== */
@@ -115,22 +259,19 @@ public class OcrNormalizer {
         return s.matches("(?s).*\\b(alt|ast|bun|crea|creatinine|ggt|bilirubin|glucose|cholesterol|albumin|amylase|lipase|sdma|fpl|ammonia|alkp|hct|hgb|po2|pco2|tco2|ph)\\b.*");
     }
 
-    /* ==================== 폴백 라인 파서 ==================== */
+    /* ==================== 텍스트 폴백 파서 (기존 개선 버전 유지) ==================== */
 
     /**
      * 상태 기반 라인 파서
      * - name → (optional: 숫자, ~, 단위, 범위) → 값(▲/▼/=) ...
      * - 여러 값이 나오면 "마지막 값" 채택(최근 측정치 가정)
      */
-    // OcrNormalizer.java 안의 기존 parseLabText(...) 를 아래로 전체 교체
     private List<ExplainRequest.Lab> parseLabText(String body) {
         var out = new ArrayList<ExplainRequest.Lab>();
 
         String curName = null;
         String unit = null;
         Double refLo = null, refHi = null;
-
-        // ✨ 새로 추가: 줄 단위 임시 보관 (lo 후보)
         Double pendingLo = null;
 
         Pattern NAME = Pattern.compile("^[A-Za-z가-힣\\[\\]()+/\\-_.\\s]+$");
@@ -145,7 +286,6 @@ public class OcrNormalizer {
             String line = rawLine.trim();
             if (line.isEmpty()) continue;
 
-            // 헤더/잡음
             if (line.matches("(?i)^(검사명|정상범위|chemistry|hematology|storage:|urinalysis|hormone analysis).*$")) continue;
             if (line.equals("~") || line.equals("~ 0")) continue;
 
@@ -157,7 +297,7 @@ public class OcrNormalizer {
             }
             if (curName == null) continue;
 
-            // 2) 범위 (lo~hi, lo-hi, "lo hi (unit)")
+            // 2) 범위
             Matcher m;
             m = RANGE_TILDE_UNIT.matcher(line);
             if (m.find()) {
@@ -181,50 +321,43 @@ public class OcrNormalizer {
                 continue;
             }
 
-            // 3) 단위만 한 줄
+            // 3) 단위만
             Matcher um = UNIT_ONLY.matcher(line);
             if (um.find()) {
                 unit = um.group(1).trim();
                 continue;
             }
 
-            // 4-a) 숫자만 한 줄 → ✨ lo 후보로 임시 저장
+            // 4-a) 숫자만 → lo 후보
             if (JUST_NUM.matcher(line).matches() && refLo == null && refHi == null) {
                 pendingLo = tryD(line);
                 continue;
             }
 
-            // 4-b) "숫자 (단위)" 한 줄
+            // 4-b) "숫자 (단위)" → 값 or 분할범위 결합
             Matcher nu = NUM_WITH_UNIT.matcher(line);
             if (nu.find()) {
                 Double num = tryD(nu.group(1));
                 String u = nu.group(2).trim();
-                // ✨ 직전이 숫자만 한 줄이었다면 → [pendingLo, num]을 참고범위로 확정
                 if (pendingLo != null && refLo == null && refHi == null) {
-                    refLo = pendingLo;
-                    refHi = num;
-                    unit = u;
-                    pendingLo = null;
-                    continue; // 값으로 추가하지 않고 범위만 세팅
+                    refLo = pendingLo; refHi = num; unit = u; pendingLo = null;
+                    continue;
                 }
-                // 그 외에는 '값'으로 간주
                 unit = (unit==null ? u : unit);
                 addOrReplace(out, curName, num, unit, refLo, refHi);
                 continue;
             }
 
-            // 5) 값 라인 (1.02(▼), 262(A), *2+(200), !(500) 등)
+            // 5) 값 라인 (*2+(200), !(500), 1.02(▼), 262(A) 등)
             Value v = extractValue(line);
             if (v != null) {
                 addOrReplace(out, curName, v.num, unit, refLo, refHi);
-                // 값이 들어갔으면 pendingLo는 의미 없으니 클리어
                 pendingLo = null;
             }
         }
 
         return out;
     }
-
 
     /** 결과 목록에서 동일 항목 이름이 이미 있으면 "마지막 값"으로 교체 */
     private void addOrReplace(List<ExplainRequest.Lab> out, String name, Double val, String unit,
@@ -240,19 +373,15 @@ public class OcrNormalizer {
 
     /** *2+(200), !(500), 1.02(▼), 262(A), -9.3(▼) 등에서 숫자/플래그 추출 */
     private Value extractValue(String line) {
-        // 1) 괄호 속 숫자가 있으면 그걸 우선 사용 (UA: *2+(200), !(500) 등)
         Matcher parenNum = Pattern.compile(".*\\(([-+]?\\d+(?:\\.\\d+)?)\\)\\s*(?:\\(([▲▼=AV])\\))?$").matcher(line);
         if (parenNum.matches()) {
             Double n = tryD(parenNum.group(1));
-            String f = normalizeFlag(parenNum.group(2));
-            return new Value(n, f);
+            return new Value(n, normalizeFlag(parenNum.group(2)));
         }
-        // 2) 숫자 + (플래그)
         Matcher numFlag = Pattern.compile("^\\s*([-+]?\\d+(?:\\.\\d+)?)\\s*\\(([▲▼=AV])\\)\\s*$").matcher(line);
         if (numFlag.matches()) {
             return new Value(tryD(numFlag.group(1)), normalizeFlag(numFlag.group(2)));
         }
-        // 3) 숫자만 있는 라인
         Matcher justNum = Pattern.compile("^\\s*([-+]?\\d+(?:\\.\\d+)?)\\s*$").matcher(line);
         if (justNum.matches()) {
             return new Value(tryD(justNum.group(1)), null);
@@ -285,7 +414,7 @@ public class OcrNormalizer {
                 if (!p.isBlank()) return p;
             }
         } catch (Exception ignore) {}
-        return "Aniwell Clinic";
+        return "Aniwell";
     }
 
     private String dateFrom(MedicalDocument doc) {
