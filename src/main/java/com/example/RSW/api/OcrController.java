@@ -53,7 +53,6 @@ import java.nio.file.Paths;
 import java.util.UUID;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 
@@ -135,6 +134,8 @@ public class OcrController {
 	// - 응답: { resultCode, msg, data: { visitId, documentId } }
 	@PostMapping("/save")
 	public ResultData<Map<String, Object>> saveOcrText(@RequestBody OcrSaveVo vo) {
+		vo.setDocType(normalizeDocType(vo.getDocType(), vo.getText()));
+
 		// 1) 유효성
 		if (vo.getText() == null || vo.getText().isBlank()) {
 			return ResultData.from("F-EMPTY", "OCR 텍스트가 비어있습니다.", "data", null);
@@ -419,7 +420,8 @@ public class OcrController {
 			payload.put("suggestedConfidence", guess.get("confidence"));
 
 			// ✅ [추가] 파싱 결과 포함 (프론트가 즉시 사용 가능)
-			payload.put("docType", parsed.getDocType()); // enum (RECEIPT/PRESCRIPTION/LAB/DIAGNOSIS/UNKNOWN)
+			payload.put("docType", parsed.getDocType().name().toLowerCase()); // enum
+																				// (RECEIPT/PRESCRIPTION/LAB/DIAGNOSIS/UNKNOWN)
 			payload.put("groups", parsed.getGroups()); // [{ date, items[] }]
 			payload.put("ascii", parsed.getAscii()); // 사람이 보기 쉬운 요약(옵션)
 
@@ -643,20 +645,30 @@ public class OcrController {
 	public ResultData<Map<String, Object>> saveWithFile(@RequestParam("file") MultipartFile file,
 			@RequestParam("text") String text, @RequestParam(value = "visitId", required = false) Integer visitId,
 			@RequestParam(value = "petId", required = false) Integer petId,
-			@RequestParam(value = "docType", required = false, defaultValue = "diagnosis") String docType) {
+			// ▼ 기본값을 auto 로 바꿉니다.
+			@RequestParam(value = "docType", required = false, defaultValue = "auto") String docType) {
+		// [추가] 비어있는 파일/텍스트 가드(선택)
+		if (file == null || file.isEmpty()) {
+			return ResultData.from("F-OCR-SAVE", "업로드된 파일이 비어 있습니다.", "data", null);
+		}
+		if (text == null || text.trim().isEmpty()) {
+			return ResultData.from("F-OCR-SAVE", "저장할 OCR 텍스트가 없습니다.", "data", null);
+		}
+
 		try {
-			// 1) 파일 저장 후 URL 확보 (Cloudinary 우선, 실패 시 로컬)
 			String fileUrl = saveFileAndReturnUrl(file.getBytes(), file.getOriginalFilename());
 
-			// 2) 기존 JSON 저장 로직 재사용을 위해 VO 구성
+			// [추가] docType 자동 판정
+			String effectiveDocType = normalizeDocType(docType, text); // ▼ 아래 헬퍼 참조
+
+			// [수정] vo에 auto가 아니라 effectiveDocType을 넣어 저장시키도록 변경
 			com.example.RSW.vo.OcrSaveVo vo = new com.example.RSW.vo.OcrSaveVo();
 			vo.setText(text);
 			vo.setVisitId(visitId);
 			vo.setPetId(petId);
-			vo.setDocType(docType);
+			vo.setDocType(effectiveDocType); // ← 핵심
 			vo.setFileUrl(fileUrl);
 
-			// 3) 기존 saveOcrText 재사용
 			return saveOcrText(vo);
 		} catch (Exception e) {
 			Map<String, Object> err = new java.util.HashMap<>();
@@ -664,6 +676,17 @@ public class OcrController {
 			err.put("error", e.getMessage());
 			return com.example.RSW.vo.ResultData.from("F-OCR-SAVE", "save-with-file 처리 중 오류", "data", err);
 		}
+	}
+
+	private String normalizeDocType(String docType, String text) {
+		// 사용자가 명시한 경우 그대로 사용
+		if (docType != null && !docType.isBlank() && !"auto".equalsIgnoreCase(docType)) {
+			return docType.trim().toLowerCase();
+		}
+		// [수정] 간단판 ocrFormatService.suggestDocType(...) 대신 정교한 분류기로 교체
+		Map<String, Object> guess = suggestDocTypeWithConfidence(text);
+		String suggested = (String) guess.get("type");
+		return (suggested == null || suggested.isBlank()) ? "receipt" : suggested.toLowerCase();
 	}
 
 }

@@ -54,7 +54,8 @@ body {
 	<!-- - 자동 분류가 어려운 경우 사용자가 선택 가능하도록 추가 -->
 	<label for="docType" style="margin-left: 8px;">문서 유형</label>
 	<select id="docType">
-		<option value="receipt" selected>영수증 (receipt)</option>
+		<option value="auto" selected>자동 (추천 사용)</option>
+		<!-- <option value="receipt" selected>영수증 (receipt)</option> -->
 		<option value="prescription">처방전 (prescription)</option>
 		<option value="lab">검사결과 (lab)</option>
 		<option value="diagnosis">진단서 (diagnosis)</option>
@@ -106,6 +107,11 @@ body {
     const $save = document.getElementById('btnSaveOcr');
     const $docType = document.getElementById('docType'); // [추가] 문서 유형 선택 참조
 
+    
+    // [추가] 사용자가 드롭다운을 직접 바꿨는지 추적하는 플래그
+    let __userTouchedDocType = false;
+    $docType?.addEventListener('change', () => { __userTouchedDocType = true; });
+    
     // 버튼 비활성/활성 토글 유틸
     function toggleBusy(isBusy) {
       $run.disabled = isBusy;
