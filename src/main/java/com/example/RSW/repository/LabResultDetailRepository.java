@@ -10,7 +10,7 @@ import java.util.List;
 public interface LabResultDetailRepository {
     int insert(LabResultDetail row);
 
-    int[] insertBatch(@Param("list") List<LabResultDetail> list);
+    int insertBatch(@Param("list") List<LabResultDetail> list);
 
     int update(LabResultDetail row);
 
@@ -25,4 +25,6 @@ public interface LabResultDetailRepository {
 
     // visit JOIN 으로 펫ID 기준
     List<LabResultDetail> selectByPetId(@Param("petId") int petId);
+
+    void deleteByDocumentId(int documentId);
 }

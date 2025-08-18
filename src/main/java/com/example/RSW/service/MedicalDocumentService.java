@@ -15,7 +15,8 @@ public class MedicalDocumentService {
 	private MedicalDocumentRepository medicalDocumentRepository;
 
 	public int insertDocument(MedicalDocument doc) {
-		return medicalDocumentRepository.insertDocument(doc);
+			int rows = medicalDocumentRepository.insertDocument(doc); // rows 무시
+			return doc.getId();
 	}
 
 	public int updateDocument(MedicalDocument doc) {
