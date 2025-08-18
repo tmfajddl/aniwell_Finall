@@ -87,16 +87,18 @@ gcv:
   credentials:
     json: |-
       { 
-     
+        "type": "service_account",
+        "project_id": "aniwell-2a90b",
+        "private_key_id": "",
+        "private_key": "-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n",
+        "client_email": "firebase-adminsdk-fbsvc@aniwell-2a90b.iam.gserviceaccount.com",
+        "client_id": "...",
+        "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+        "token_uri": "https://oauth2.googleapis.com/token",
+        "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+        "client_x509_cert_url": "...",
+        "universe_domain": "googleapis.com"
       }
-
-    path: ""
-    base64: ""
-
-# [추가] 없으면 생성
-app:
-  upload:
-    base-dir: uploads    # 필요 시 절대경로로 변경 (/var/aniwell/uploads 등) 
     path: ""     # ❌ API 키 문자열을 넣는 곳이 아닙니다. (JSON 파일 경로일 때만 사용)
     base64: ""   # JSON을 base64로 넣을 때만 사용 (이번엔 미사용)
 

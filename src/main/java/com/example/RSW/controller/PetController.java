@@ -746,9 +746,9 @@ public class PetController {
 		return "usr/pet/explain"; // → templates/usr/pet/qr.html
 	}
 
-	@RequestMapping("/usr/pet/prescriptions")
+	@RequestMapping("/usr/pet/convert")
 	public String showPages() {
-		return "usr/pet/prescriptions"; // → templates/usr/pet/qr.html
+		return "usr/pet/convert"; // → templates/usr/pet/qr.html
 	}
 
 }

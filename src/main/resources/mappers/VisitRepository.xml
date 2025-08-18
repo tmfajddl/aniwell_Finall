@@ -72,4 +72,15 @@
 		visit_date DESC, id DESC
 	</select>
 
+
+
+	<select id="selectVisitById" parameterType="int" resultMap="VisitMap">
+		SELECT id, pet_id, visit_date, hospital, doctor, diagnosis, notes,
+			   total_cost, created_at, updated_at
+		FROM visit
+		WHERE id = #{id}
+		ORDER BY visit_date DESC, id DESC
+	</select>
+
 </mapper>
+
