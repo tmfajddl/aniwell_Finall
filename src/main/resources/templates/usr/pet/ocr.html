@@ -50,6 +50,17 @@ body {
 	<button id="run" type="button" class="btn">OCR 실행</button>
 	<button id="btnSaveOcr" type="button" class="btn">OCR 저장</button>
 
+	<!-- [추가] 문서 유형 선택: receipt / prescription / lab / diagnosis -->
+	<!-- - 자동 분류가 어려운 경우 사용자가 선택 가능하도록 추가 -->
+	<label for="docType" style="margin-left: 8px;">문서 유형</label>
+	<select id="docType">
+		<option value="auto" selected>자동 (추천 사용)</option>
+		<!-- <option value="receipt" selected>영수증 (receipt)</option> -->
+		<option value="prescription">처방전 (prescription)</option>
+		<option value="lab">검사결과 (lab)</option>
+		<option value="diagnosis">진단서 (diagnosis)</option>
+	</select>
+
 	<div id="out" aria-live="polite"></div>
 
 	<script>
@@ -94,11 +105,22 @@ body {
     const $out  = document.getElementById('out');
     const $run  = document.getElementById('run');
     const $save = document.getElementById('btnSaveOcr');
+    const $docType = document.getElementById('docType'); // [추가] 문서 유형 선택 참조
 
+    
+    // [추가] 사용자가 드롭다운을 직접 바꿨는지 추적하는 플래그
+    let __userTouchedDocType = false;
+    $docType?.addEventListener('change', () => { __userTouchedDocType = true; });
+    
     // 버튼 비활성/활성 토글 유틸
     function toggleBusy(isBusy) {
       $run.disabled = isBusy;
       $save.disabled = isBusy;
+    }
+
+    // [추가] 공통 data 추출 유틸
+    function pickData(json) {
+      return json?.data ?? json?.data1 ?? json?.data2 ?? json?.data3 ?? null;
     }
 
     // =========================
@@ -126,20 +148,18 @@ body {
           const text = await res.text().catch(() => '');
           throw new Error(`HTTP ${res.status} ${res.statusText}${text ? ' - ' + text : ''}`);
         }
-        const json = await res.json(); // { resultCode, msg, data1?, data?, text? ... }
+        const json = await res.json(); // { resultCode, msg, data? / data1? / ... }
 
-        // 4) 화면 출력(디버그 보기 좋게)
+        // [수정] 공통 data 객체 추출 후 사용
+        const data = pickData(json) || {};
         $out.textContent = JSON.stringify(json, null, 2);
 
-        // 5) 텍스트 + 파일URL 추출 보관(서버 응답 구조에 따라 안전 탐색)
-        //    - text: data1.text → data.text → text
-        //    - fileUrl: data1.fileUrl → data.fileUrl (없으면 그대로 null 유지 → 폴백)
-        __lastOcrText     = (json?.data1?.text)    || (json?.data?.text)    || (json?.text) || null;
-        __uploadedFileUrl = (json?.data1?.fileUrl) || (json?.data?.fileUrl) || __uploadedFileUrl || null;
+        // [수정] 안전 접근
+        __lastOcrText     = data?.text ?? json?.text ?? null;
+        __uploadedFileUrl = data?.fileUrl ?? __uploadedFileUrl ?? null;
 
-        if (!__lastOcrText) {
-          console.warn('응답에서 OCR 텍스트를 찾지 못했습니다. 응답 구조를 확인하세요.');
-        }
+        // [추가] 간단 미리보기(문서유형/그룹) 렌더링
+        renderParsed(data);
       } catch (e) {
         console.error(e);
         $out.textContent = '요청 실패: ' + (e?.message || e);
@@ -147,6 +167,23 @@ body {
         toggleBusy(false);
       }
     };
+
+    // [추가] 문서유형/그룹 요약 렌더(있을 때만)
+    function renderParsed(data) {
+      if (!data) return;
+      const docType = data.docType ?? data.suggestedDocType;
+      const groups  = Array.isArray(data.groups) ? data.groups : null;
+      if (!docType && !groups) return;
+      const lines = [];
+      if (docType) lines.push(`\n\n[docType] ${docType}`);
+      if (groups) {
+        lines.push(`[groups.length] ${groups.length}`);
+        groups.slice(0,3).forEach((g, i) => {
+          lines.push(`- group#${i+1} date=${g?.date} items=${Array.isArray(g?.items) ? g.items.length : 0}`);
+        });
+      }
+      $out.textContent += '\n' + lines.join('\n');
+    }
 
     // =========================
     // ✅ OCR 저장: 이미지+텍스트 함께 저장
@@ -164,7 +201,8 @@ body {
       const visitId = parseNumOrNull(getQueryParam('visitId'));
 
       // 공통 메타 (필요 시 화면에서 입력받아 추가 가능)
-      const docType = 'receipt';
+      // const docType = 'receipt';
+      const docType = ($docType?.value || 'receipt'); // [수정] 드롭다운 선택값 사용(기본 receipt)
 
       const csrf = getCsrf();
       toggleBusy(true);
@@ -242,5 +280,41 @@ body {
     // =========================
     document.getElementById('btnSaveOcr')?.addEventListener('click', saveOcr);
   </script>
+
+	<script>
+  // [추가] TS 안전 파서 (초과 소수자릿수 잘라내기: JS Date는 ms(3자리)까지만 안전)
+  function normalizeTs(ts) {
+    if (!ts) return null;
+    return ts.replace(/(\.\d{3})\d+$/, '$1');
+  }
+
+  // 기존 renderParsed 아래 부분만 보강
+  // [수정] renderParsed: 메타/URL도 덧붙여 출력 (기존 라인 유지 + 추가 라인만)
+  function renderParsed(data) {
+    if (!data) return;
+    const docType = data.docType ?? data.suggestedDocType;
+    const groups  = Array.isArray(data.groups) ? data.groups : null;
+
+    const lines = [];
+    if (docType) lines.push(`\n\n[docType] ${docType}`);
+    if (groups) {
+      lines.push(`[groups.length] ${groups.length}`);
+      groups.slice(0,3).forEach((g, i) => {
+        lines.push(`- group#${i+1} date=${g?.date} items=${Array.isArray(g?.items) ? g.items.length : 0}`);
+      });
+    }
+
+    // [추가] 메타/파일 미리보기
+    if (data.createdAt) lines.push(`[createdAt] ${data.createdAt}`);
+    if (data.ocrMeta?.engine) lines.push(`[engine] ${data.ocrMeta.engine}`);
+    if (data.ocrMeta?.ts) lines.push(`[ts] ${normalizeTs(data.ocrMeta.ts)}`);
+    if (data.storage) lines.push(`[storage] ${data.storage}`);
+    if (data.fileUrl) lines.push(`[fileUrl] ${data.fileUrl}`);
+
+    if (lines.length) $out.textContent += '\n' + lines.join('\n');
+  }
+</script>
+
+
 </body>
 </html>

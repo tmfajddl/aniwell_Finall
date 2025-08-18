@@ -1,5 +1,6 @@
 package com.example.RSW.service;
 
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -128,29 +129,177 @@ public class VetDocAiService {
     /** Responses API 출력 안전 파서 */
     @SuppressWarnings("unchecked")
     private String extractText(Map<?,?> resp) {
+        // 1) output_text 헬퍼
         Object ot = resp.get("output_text");
         if (ot instanceof String s && !s.isBlank()) return s;
 
+        // 2) output[] 경로 (Responses API)
         Object out = resp.get("output");
         if (out instanceof List<?> list && !list.isEmpty()) {
-            Object msg = list.get(0);
-            if (msg instanceof Map<?,?> m1) {
+            StringBuilder sb = new StringBuilder();
+            for (Object item : list) {
+                if (!(item instanceof Map<?,?> m1)) continue;
                 Object content = m1.get("content");
                 if (content instanceof List<?> parts) {
-                    StringBuilder sb = new StringBuilder();
                     for (Object p : parts) {
-                        if (p instanceof Map<?,?> m2) {
-                            Object t = m2.get("text");
-                            if (t instanceof String s) sb.append(s);
+                        if (!(p instanceof Map<?,?> m2)) continue;
+                        String type = String.valueOf(m2.get("type"));
+                        if (!"text".equals(type) && !"output_text".equals(type)) continue;
+
+                        Object textNode = m2.get("text");
+                        if (textNode instanceof Map<?,?> tm) {
+                            Object v = tm.get("value");
+                            if (v instanceof String s) sb.append(s);
+                        } else if (textNode instanceof String s) {
+                            sb.append(s);
                         }
                     }
-                    String s = sb.toString().trim();
-                    if (!s.isEmpty()) return s;
+                }
+            }
+            String s = sb.toString().trim();
+            if (!s.isEmpty()) return s;
+        }
+
+        // 3) (호환) chat.completions 스타일
+        Object choices = resp.get("choices");
+        if (choices instanceof List<?> ch && !ch.isEmpty()) {
+            Object first = ch.get(0);
+            if (first instanceof Map<?,?> fm) {
+                Object msg = fm.get("message");
+                if (msg instanceof Map<?,?> mm) {
+                    Object c = mm.get("content");
+                    if (c instanceof String s) return s;
                 }
             }
         }
         return null;
     }
 
+    private static final ObjectMapper LENIENT_OM = new ObjectMapper();
+    static {
+        LENIENT_OM.configure(JsonParser.Feature.ALLOW_SINGLE_QUOTES, true);
+        LENIENT_OM.configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true);
+        LENIENT_OM.configure(JsonParser.Feature.ALLOW_COMMENTS, true);
+        LENIENT_OM.configure(JsonParser.Feature.ALLOW_TRAILING_COMMA, true);
+    }
+
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> mapToTableJsonLoose(Object payload) {
+        try {
+            // 1) 원본 JSON 문자열화
+            String raw = om.writerWithDefaultPrettyPrinter().writeValueAsString(payload);
+
+            // 2) 지시문: 스키마 강제 없이, "JSON만" 출력하도록 강하게 요구
+            String INSTRUCTIONS = """
+        너는 입력 JSON을 읽고, 아래 테이블/칼럼 정의에 맞춘 "테이블별 행 배열" JSON만 생성한다.
+
+        테이블/칼럼:
+        - medical_document: { pet_id(int), visit_id(int|null), doc_type('lab'|'prescription'|'memo'),
+                              source(string, 기본 'ai'), visit_date('yyyy-MM-dd'|null) }
+          • 각 행에 임시 식별자 _ref (예: "D1") 추가 (실제 PK 아님)
+        - lab_result_detail: { document_ref(string), test_name(string), result_value(number|null),
+                               unit(string|null), ref_low(number|null), ref_high(number|null),
+                               flag('L'|'N'|'H'), notes(string|null) }
+          • "123 U/L" → result_value=123, unit="U/L"; "10-100" → ref_low=10, ref_high=100
+        - prescription_detail: { document_ref(string), drug_name(string), dose_value(number|null),
+                                 dose_unit(string|null), frequency(string|null),
+                                 duration_days(int|null), route(string|null), notes(string|null) }
+          • "20 mg" → dose_value=20, dose_unit="mg"
+
+        출력 형식(아래 3개 키만 사용):
+        {
+          "medical_document": [ ... ],
+          "lab_result_detail": [ ... ],
+          "prescription_detail": [ ... ]
+        }
+
+        규칙:
+        - 오직 JSON만 출력. 코드블록/마크다운/설명/주석 금지.
+        - 지정 키 외 임의 키 금지.
+        - 값이 없으면 null 또는 필드 생략 가능. 최상위 3키는 항상 포함(빈 배열 허용).
+        """;
+
+            // 3) Responses API 호출 바디 (스키마/format 지정 안 함 → 스키마 오류 회피)
+            Map<String, Object> body = Map.of(
+                    "model", "gpt-4o-mini",
+                    "instructions", INSTRUCTIONS,
+                    "input", java.util.List.of(
+                            Map.of("role", "user", "content", java.util.List.of(
+                                    Map.of("type", "input_text",
+                                            "text", "아래 원본 JSON을 테이블별 행으로 매핑해줘:\n\n" + raw)
+                            ))
+                    )
+            );
+
+            Map<?,?> resp = callResponses(body);
+            String out = extractText(resp);
+            if (out == null || out.isBlank()) throw new RuntimeException("빈 응답");
+
+            // 4) 1차: 바로 파싱 시도
+            Map<String, Object> parsed;
+            try {
+                parsed = om.readValue(out, Map.class);
+            } catch (Exception ignore) {
+                // 5) 2차: ```json ... ``` 제거 + 가장 큰 { ... } 블록만 뽑아서 관대 파싱
+                String cleaned = stripCodeFences(out);
+                String objectOnly = largestJsonObject(cleaned);
+                parsed = LENIENT_OM.readValue(objectOnly, Map.class);
+            }
+
+            // 6) 안정화: 최상위 3키만 유지 + 배열 형태 보정
+            Map<String, Object> result = new java.util.LinkedHashMap<>();
+            result.put("medical_document", asArray(parsed.get("medical_document")));
+            result.put("lab_result_detail", asArray(parsed.get("lab_result_detail")));
+            result.put("prescription_detail", asArray(parsed.get("prescription_detail")));
+            return result;
+
+        } catch (Exception e) {
+            throw new RuntimeException("매핑(스키마없음) 실패: " + e.getMessage(), e);
+        }
+    }
+
+    // 없는/단일 객체 값을 배열로 보정
+    @SuppressWarnings("unchecked")
+    private java.util.List<Object> asArray(Object v) {
+        if (v == null) return java.util.List.of();
+        if (v instanceof java.util.List) return (java.util.List<Object>) v;
+        return java.util.List.of(v);
+    }
+
+    // ```...``` 또는 ```json ...``` 코드펜스 제거
+    private String stripCodeFences(String s) {
+        return s.replaceAll("(?s)```(?:json)?\\s*", "")
+                .replaceAll("(?s)```\\s*", "")
+                .trim();
+    }
+
+    // 문자열에서 가장 큰 JSON 객체 { ... } 블록 하나만 추출
+    private String largestJsonObject(String s) {
+        int bestStart = -1, bestEnd = -1, depth = 0, start = -1;
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            if (c == '{') {
+                if (depth == 0) start = i;
+                depth++;
+            } else if (c == '}') {
+                depth--;
+                if (depth == 0 && start >= 0) {
+                    if (bestStart == -1 || (i - start) > (bestEnd - bestStart)) {
+                        bestStart = start; bestEnd = i;
+                    }
+                    start = -1;
+                }
+            }
+        }
+        if (bestStart >= 0 && bestEnd > bestStart) return s.substring(bestStart, bestEnd + 1);
+        return s; // 못 찾으면 원문 반환(파서가 에러 처리)
+    }
+
+    public String explain(com.example.RSW.dto.ExplainRequest req, boolean detailed) {
+        return explainJson(req, detailed); // 이미 있는 메서드를 재사용
+    }
+    public String explain(com.example.RSW.dto.ExplainRequest req) {
+        return explain(req, true);
+    }
 
 }

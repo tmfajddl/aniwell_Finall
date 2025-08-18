@@ -1,141 +1,419 @@
 <!doctype html>
 <html lang="ko">
 <head>
-    <meta charset="utf-8" />
-    <title>보호자 설명 생성 (JSON → Markdown)</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <!-- 선택: CDN으로 Markdown 렌더러 (없어도 실행됨; 없으면 그냥 프리텍스트로 표시) -->
+    <meta charset="utf-8"/>
+    <title>보호자 리포트</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <!-- 외부 라이브러리 -->
     <script defer src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js"></script>
+
     <style>
-        :root { --fg:#111; --muted:#666; --bg:#f6f7fb; --card:#fff; --accent:#4f46e5;}
-        *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.5 system-ui, -apple-system, Segoe UI, Roboto;}
-        header{padding:20px 16px}
-        .wrap{max-width:1100px;margin:0 auto;padding:0 16px 48px}
+        :root{
+            --ink:#0f172a; --mut:#64748b; --bg:#f6f7fb; --card:#fff;
+            --primary:#4f46e5; --ok:#16a34a; --high:#ef4444; --low:#0ea5e9; --warn:#f59e0b;
+            --line:#e5e7eb; --zebra:#fafafa;
+        }
+        *{box-sizing:border-box}
+        body{margin:0;background:var(--bg);color:var(--ink);
+            font:14px/1.55 'Pretendard','Noto Sans KR',system-ui,-apple-system,Segoe UI,Roboto}
+        .wrap{max-width:1100px;margin:0 auto;padding:18px 16px 40px}
         .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-        .card{background:var(--card);border-radius:14px;box-shadow:0 2px 18px rgba(0,0,0,.06);padding:16px}
-        textarea{width:100%;min-height:340px;font:12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;resize:vertical;padding:12px;border:1px solid #ddd;border-radius:10px;background:#fafafa}
-        .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 0}
-        button{appearance:none;border:0;border-radius:10px;padding:10px 14px;background:var(--accent);color:#fff;font-weight:700;cursor:pointer}
-        button.secondary{background:#e5e7eb;color:#111;font-weight:600}
-        .status{margin-left:auto;color:var(--muted);display:flex;align-items:center;gap:8px}
-        .spinner{width:14px;height:14px;border:2px solid #ddd;border-top-color:var(--accent);border-radius:50%;display:inline-block;animation:spin 1s linear infinite}
+        .card{background:var(--card);border-radius:16px;box-shadow:0 10px 30px rgba(2,6,23,.06);padding:16px}
+        h1{margin:0 0 12px;font-size:22px;letter-spacing:-.2px}
+        input,button,textarea{font:inherit}
+
+        button{appearance:none;border:0;border-radius:12px;padding:10px 14px;background:var(--primary);
+            color:#fff;font-weight:700;cursor:pointer;box-shadow:0 6px 14px rgba(79,70,229,.18)}
+        button.secondary{background:#e5e7eb;color:#111;box-shadow:none}
+        .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+        .hint{color:var(--mut);font-size:12px}
+        .status{margin-left:auto;color:var(--mut);display:flex;align-items:center;gap:8px}
+        .spinner{width:14px;height:14px;border:2px solid #e2e8f0;border-top-color:var(--primary);
+            border-radius:50%;display:inline-block;animation:spin 1s linear infinite}
         @keyframes spin{to{transform:rotate(360deg)}}
-        #out{min-height:340px;background:#fff;border:1px solid #eee;border-radius:10px;padding:16px;overflow:auto}
-        pre{white-space:pre-wrap;word-break:break-word}
-        .hint{color:var(--muted);font-size:12px;margin-top:8px}
+
+        textarea{width:100%;min-height:320px;background:#fbfbfd;border:1px solid var(--line);
+            border-radius:12px;padding:10px;font:12px ui-monospace,Menlo,Consolas,monospace}
+
+        .tabs{display:flex;gap:6px}
+        .tab{padding:8px 12px;border-radius:10px;border:1px solid var(--line);background:#f8fafc;cursor:pointer;font-weight:600}
+        .tab.active{background:#eef2ff;border-color:#c7d2fe;color:#3730a3}
+        .view{border:1px solid var(--line);border-radius:14px;min-height:320px;background:#fff;overflow:auto;padding:0}
+        .view.hidden{display:none}
+
+        /* ---------- Report (A4) ---------- */
+        .report-page{width:210mm;min-height:297mm;margin:0 auto;background:#fff;padding:18mm 16mm;border-radius:8px}
+        .report-header{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin-bottom:14px}
+        .brand{font-weight:900;font-size:18px;letter-spacing:-.3px;color:var(--primary)}
+        .brand small{display:block;color:var(--mut);font-weight:600;font-size:12px;margin-top:2px}
+        .meta{font-size:12px;color:var(--mut)}
+
+        .section{margin:18px 0 0}
+        .section h3{margin:0 0 10px;font-size:16px;letter-spacing:-.2px}
+
+        table{width:100%;border-collapse:separate;border-spacing:0;font-size:12px}
+        thead th{position:sticky;top:0;background:#f8fafc;border-bottom:1px solid var(--line);text-align:left;padding:9px 10px;font-weight:800}
+        tbody td{border-bottom:1px solid var(--line);padding:9px 10px}
+        tbody tr:nth-child(odd){background:var(--zebra)}
+
+        /* --- polish --- */
+        .muted{ color: var(--mut); }
+        .report-title{ margin:0; font-size:20px; letter-spacing:-.2px }
+
+        .tag{
+            display:inline-flex; align-items:center; gap:6px;
+            padding:3px 10px; border-radius:999px; font-weight:800; font-size:11px;
+            border:1px solid var(--line);
+        }
+        .tag.ok  { color:#065f46; background:#ecfdf5; border-color:#d1fae5; }
+        .tag.high{ color:#991b1b; background:#fef2f2; border-color:#fee2e2; }
+        .tag.low { color:#0c4a6e; background:#eff6ff; border-color:#dbeafe; }
+
+        .pet-card{
+            display:grid; grid-template-columns:92px 1fr; gap:8px 14px;
+            border:1px solid var(--line); border-radius:12px; padding:10px 12px;
+            background:linear-gradient(180deg,#f8fafc,#fff);
+        }
+        .kvs{display:grid;grid-template-columns:120px 1fr;gap:8px 14px;font-size:13px}
+        .card-soft{border:1px solid var(--line);border-radius:12px;padding:12px;background:#fcfcff}
+
+        .t-num{text-align:right}
+        table{ border-radius:12px; overflow:hidden; }
+        tbody tr{ page-break-inside: avoid; }
+        thead th{ background:#f8fafc; }
+
+        .md{font-size:13px;color:#111}
+        .md h1,.md h2,.md h3{margin:14px 0 8px}
+        .md p{margin:6px 0}
+        .md ul{margin:6px 0 6px 18px}
+        .disclaimer{margin-top:10px;font-size:11px;color:#6b7280}
+
+        /* 인쇄 최적화 */
+        @media print{
+            body{background:#fff}
+            .grid{display:block}
+            .card{box-shadow:none}
+            .tabs,.row > .hint{display:none}
+            .view{border:0}
+            .report-page{border-radius:0;padding:12mm 12mm}
+            thead th{position:static}
+        }
     </style>
 </head>
 <body>
-<header class="wrap">
-    <h1 style="margin:0 0 10px;">보호자 설명 생성</h1>
-    <div class="hint">좌측에 JSON을 붙여넣고 <b>설명 생성</b>을 누르면, 우측에 보호자 친화 설명(Markdown)이 표시됩니다.</div>
-</header>
+<div class="wrap">
+    <h1>보호자 리포트</h1>
 
-<div class="wrap grid">
-    <section class="card">
-        <h3 style="margin:0 0 8px;">입력 JSON</h3>
-        <textarea id="jsonInput" spellcheck="false" placeholder='{
-  "document": { "provider": "Aniwell Clinic", "date": "2025-08-10" },
-  "labs": [
-    { "code": "ALT", "value": 486.5, "unit": "U/L", "ref_low": 28, "ref_high": 106 },
-    { "code": "BUN", "value": 23,  "unit": "mg/dL", "ref_low": 16, "ref_high": 36 }
-  ],
-  "prescriptions": [
-    { "drug": "Amoxicillin", "dose": 50, "dose_unit": "mg", "freq": "BID", "route": "PO", "days": 7 }
-  ],
-  "meta": { "notes": "식욕 저하, 구토 없음" }
-}'></textarea>
+    <div class="row" style="margin-bottom:10px">
+        <label>문서 ID</label>
+        <input id="docIdInput" type="number" placeholder="예: 12"/>
+        <button class="secondary" id="btnLoad">불러오기</button>
+        <span class="hint">또는 URL에 <b>?docId=12</b>처럼 붙여 들어오면 자동 로드됩니다.</span>
+        <span class="status" id="status"></span>
+    </div>
 
-        <div class="toolbar">
-            <button class="secondary" type="button" id="btnSample">샘플 넣기</button>
-            <button class="secondary" type="button" id="btnFormat">자동 정렬</button>
-            <button type="button" id="btnExplain">설명 생성</button>
-            <div class="status" id="status"></div>
-        </div>
-        <div class="hint">JSON 형식 오류가 있으면 먼저 <b>자동 정렬</b>로 확인하세요.</div>
-    </section>
+    <div class="grid">
+        <section class="card">
+            <h3 style="margin:0 0 8px;">합쳐진 JSON (문서+펫)</h3>
+            <textarea id="jsonInput" spellcheck="false" placeholder="문서 ID를 불러오면 여기에 표시됩니다."></textarea>
+            <div class="row" style="margin-top:8px">
+                <button id="btnExplain">설명 생성</button>
+                <button class="secondary" id="btnFormat">자동 정렬</button>
+            </div>
+        </section>
 
-    <section class="card">
-        <h3 style="margin:0 0 8px;">출력 (Markdown)</h3>
-        <div id="out"><div class="hint">아직 결과가 없습니다.</div></div>
-    </section>
+        <section class="card">
+            <div class="row" style="justify-content:space-between;margin-bottom:6px">
+                <div class="row" style="gap:10px">
+                    <h3 style="margin:0">출력</h3>
+                    <div class="tabs">
+                        <div class="tab active" data-tab="md">Markdown</div>
+                        <div class="tab" data-tab="report">Report</div>
+                    </div>
+                </div>
+                <div class="row" style="gap:8px">
+                    <button class="secondary" id="btnPdf" disabled>PDF로 저장</button>
+                </div>
+            </div>
+
+            <div id="view-md" class="view"><div class="muted" style="padding:14px">아직 결과가 없습니다.</div></div>
+            <div id="view-report" class="view hidden"><div id="reportRoot" class="report-page"></div></div>
+        </section>
+    </div>
 </div>
 
-
 <script>
-    const $ = (sel)=>document.querySelector(sel);
-    const input = $('#jsonInput');
-    const out = $('#out');
+    const $ = s => document.querySelector(s);
     const statusEl = $('#status');
-    const sample = {
-        document: { provider: "Aniwell Clinic", date: "2025-08-10" },
-        labs: [
-            { code: "ALT", name: "ALT", value: 486.5, unit: "U/L", ref_low: 28, ref_high: 106 },
-            { code: "BUN", name: "BUN", value: 23, unit: "mg/dL", ref_low: 16, ref_high: 36 }
-        ],
-        prescriptions: [
-            { drug: "Amoxicillin", dose: 50, dose_unit: "mg", freq: "BID", route: "PO", days: 7 }
-        ],
-        meta: { notes: "식욕 저하, 구토 없음" }
-    };
+    const viewMd = $('#view-md');
+    const viewReport = $('#view-report');
+    const reportRoot = $('#reportRoot');
+    const btnPdf = $('#btnPdf');
 
-    $('#btnSample').onclick = ()=>{
-        input.value = JSON.stringify(sample, null, 2);
-        out.innerHTML = '<div class="hint">샘플을 입력했습니다. 설명 생성을 눌러보세요.</div>';
-    };
+    function toast(msg, err){ statusEl.innerHTML = (err?'⚠️ ':'✅ ') + msg; setTimeout(()=>statusEl.innerHTML='', 2200); }
+    function setBusy(b, t){ statusEl.innerHTML = b ? `<span class="spinner"></span> ${t||'로딩 중...'}` : ''; }
+    function escapeHtml(s){ return String(s??'').replace(/[&<>"']/g,m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m])); }
+    function num(n){ return (Number(n)).toLocaleString(undefined,{maximumFractionDigits:4}); }
+    function isNum(v){ return v!==null && v!=='' && !Number.isNaN(Number(v)); }
+    function pad2(n){ return String(n).padStart(2,'0'); }
+    function txt(s){ return escapeHtml(s==null? '' : String(s)); }
 
-    $('#btnFormat').onclick = ()=>{
-        try {
-            const obj = JSON.parse(input.value);
-            input.value = JSON.stringify(obj, null, 2);
-            toast('형식 정상 · 자동 정렬 완료');
-        } catch {
-            toast('JSON 형식 오류: 따옴표/쉼표/중괄호 확인', true);
+    function switchTab(which){
+        if (which==='md'){ $('#view-md').classList.remove('hidden'); $('#view-report').classList.add('hidden'); }
+        else { $('#view-report').classList.remove('hidden'); $('#view-md').classList.add('hidden'); }
+        document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===which));
+    }
+    document.querySelector('.tab[data-tab="md"]').onclick=()=>switchTab('md');
+    document.querySelector('.tab[data-tab="report"]').onclick=()=>switchTab('report');
+
+    function renderMarkdown(md){
+        if (window.marked && typeof marked.parse==='function') viewMd.innerHTML = marked.parse(md||'');
+        else viewMd.innerHTML = '<pre style="padding:14px">'+escapeHtml(md||'')+'</pre>';
+    }
+
+    // --- 나이 표시: "X개월" / "X세 Y개월"
+    function formatAge(pet, refDate){
+        if (!pet) return '-';
+        let y = toInt(pet.age);
+        let m = toInt(pet.ageMonths ?? pet.age_months);
+
+        // 개월 없고 생일 있으면 계산
+        if ((y == null || m == null) && pet.birthDate){
+            const ref = refDate ? new Date(refDate) : new Date();
+            const b   = new Date(pet.birthDate);
+            if (!isNaN(b)) {
+                let months = (ref.getFullYear()-b.getFullYear())*12 + (ref.getMonth()-b.getMonth());
+                if (ref.getDate() < b.getDate()) months -= 1;
+                if (months < 0) months = 0;
+                if (y == null) y = Math.floor(months/12);
+                if (m == null) m = months % 12;
+            }
         }
+        y = Math.max(0, y ?? 0);
+        if (m != null) m = Math.max(0, Math.min(11, m));
+
+        if ((y === 0 || pet.age == null) && (m ?? 0) > 0) return `${m}개월`;
+        if ((m ?? 0) > 0) return `${y}세 ${m}개월`;
+        return (pet.age == null ? '-' : `${y}세`);
+
+        function toInt(v){ const n = Number(v); return Number.isFinite(n) ? Math.trunc(n) : null; }
+    }
+
+    function renderReport(obj, md){
+        obj = obj||{};
+        const doc  = obj.document||{};
+        const pet  = obj.pet||{};
+        const labs = Array.isArray(obj.labs)? obj.labs : [];
+        const meds = Array.isArray(obj.prescriptions)? obj.prescriptions : [];
+        const notes = (obj.meta&&obj.meta.notes)||'';
+
+        // --- labs -> rows + 판정 ---
+        const rows = labs.map(l=>{
+            const lo  = (l.ref_low  ?? l.refLow  ?? null);  const loN = (lo!==null && lo!=='') ? Number(lo) : null;
+            const hi  = (l.ref_high ?? l.refHigh ?? null);  const hiN = (hi!==null && hi!=='') ? Number(hi) : null;
+            const val = (l.value    ?? null);               const vN  = (val!==null && val!=='')? Number(val): null;
+            let flag='ok';
+            if (vN!=null && (loN!=null || hiN!=null)){
+                if (hiN!=null && vN>hiN) flag='high';
+                else if (loN!=null && vN<loN) flag='low';
+            }
+            return { name:l.name||l.code||'', value:vN, unit:l.unit||'', lo:loN, hi:hiN, flag };
+        });
+        const abn = rows.filter(r=>r.flag!=='ok');
+
+        // 요약 텍스트
+        const abnText = abn.length
+            ? abn.map(r=>`${r.name}${r.value!=null?' '+r.value.toLocaleString():''}${r.unit?' '+r.unit:''} (${r.flag==='high'?'상승':'저하'})`).join(', ')
+            : '특이 소견 없음';
+
+        // 마크다운
+        const mdHtml = (window.marked && typeof marked.parse==='function')
+            ? marked.parse(md||'')
+            : '<pre>'+escapeHtml(md||'')+'</pre>';
+
+        // 생성 시각
+        const now = new Date();
+        const generatedAt = `${now.getFullYear()}-${pad2(now.getMonth()+1)}-${pad2(now.getDate())} ${pad2(now.getHours())}:${pad2(now.getMinutes())}`;
+
+        // --- 템플릿 ---
+        reportRoot.innerHTML = `
+      <div class="report-header">
+        <div>
+          <div class="brand">Aniwell Report<small>반려동물 보호자 설명서</small></div>
+          <div class="meta" style="margin-top:6px">
+            의료기관: <b>${txt(doc.provider||'-')}</b><br/>
+            문서일자: ${txt(doc.date||'-')} · 생성시각: ${txt(generatedAt)}
+          </div>
+        </div>
+        <div class="pet-card">
+          <div>이름</div><div>${txt(pet.name||'-')}</div>
+          <div>종</div><div>${txt(pet.species||'-')}</div>
+          <div>나이</div><div>${formatAge(pet, doc.date)}</div>
+          <div>성별</div><div>${txt(pet.sex||'-')}</div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h3>요약</h3>
+        <div class="card-soft" style="display:grid;grid-template-columns:120px 1fr;gap:8px 14px">
+          <div><b>이상 개수</b></div>
+          <div>
+            ${abn.length ? `<span class="tag high">이상 ${abn.length}개</span>` : `<span class="tag ok">특이 소견 없음</span>`}
+            <span class="tag">총 ${rows.length}항목</span>
+          </div>
+          <div><b>이상 항목</b></div><div>${txt(abnText)}</div>
+          <div><b>메모</b></div><div>${txt(notes||'-')}</div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h3>검사 결과</h3>
+        ${rows.length ? `
+        <div style="border:1px solid var(--line);border-radius:12px;overflow:hidden">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:28%">항목</th>
+                <th style="width:18%">결과</th>
+                <th style="width:22%">참고범위</th>
+                <th style="width:14%">판정</th>
+                <th>비고</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rows.map(r=>{
+            const ref = (r.lo!=null? r.lo.toLocaleString():'–') + ' ~ ' + (r.hi!=null? r.hi.toLocaleString():'–');
+            const val = (r.value!=null? r.value.toLocaleString() + (r.unit? ' '+txt(r.unit):'') : '-');
+            const badge = r.flag==='ok' ? '<span class="tag ok">정상</span>' : (r.flag==='high' ? '<span class="tag high">상승</span>' : '<span class="tag low">저하</span>');
+            return `
+                  <tr>
+                    <td>${txt(r.name)}</td>
+                    <td>${val}</td>
+                    <td>${ref}</td>
+                    <td>${badge}</td>
+                    <td class="muted"></td>
+                  </tr>`;
+        }).join('')}
+            </tbody>
+          </table>
+        </div>` : `<div class="muted">표시할 검사 결과가 없습니다.</div>`}
+      </div>
+
+      <div class="section">
+        <h3>투약/처방</h3>
+        ${meds.length ? `
+        <div style="border:1px solid var(--line);border-radius:12px;overflow:hidden">
+          <table>
+            <thead>
+              <tr><th style="width:32%">약품명</th><th style="width:18%">용량</th><th style="width:22%">용법</th><th style="width:12%">기간</th><th>비고</th></tr>
+            </thead>
+            <tbody>
+              ${meds.map(m=>{
+            const dose=(m.dose!=null? Number(m.dose).toLocaleString():'' )+(m.dose_unit? ' '+txt(m.dose_unit):'');
+            const freq=[m.freq,m.route].filter(Boolean).join(' / ');
+            const days=(m.days!=null? `${Number(m.days).toLocaleString()}일`:'-');
+            return `<tr>
+                  <td>${txt(m.drug||'-')}</td>
+                  <td>${dose||'-'}</td>
+                  <td>${freq||'-'}</td>
+                  <td>${days}</td>
+                  <td class="muted"></td>
+                </tr>`;
+        }).join('')}
+            </tbody>
+          </table>
+        </div>` : `<div class="muted">표시할 처방 내역이 없습니다.</div>`}
+      </div>
+
+      <div class="section">
+        <h3>AI 설명</h3>
+        <div class="md">${mdHtml}</div>
+        <div class="muted" style="margin-top:8px">※ 본 문서는 보호자 이해를 돕기 위한 설명 자료이며, 최종 의학적 판단은 담당 수의사의 소견을 따릅니다.</div>
+      </div>
+    `;
+    }
+
+    async function loadDoc(id){
+        setBusy(true,'불러오는 중…');
+        try{
+            const structured = await fetch(`/api/ai/doc/${id}/structured`).then(r=>r.json());
+            $('#jsonInput').value = JSON.stringify(structured,null,2);
+
+            const explained = await fetch(`/api/ai/doc/${id}/explain`).then(r=>r.json());
+            const md = explained.markdown || '';
+            renderMarkdown(md);
+            renderReport(structured, md);
+            btnPdf.disabled = false;
+            switchTab('report'); // 보고서 탭으로
+            toast('로드 완료');
+        }catch(e){
+            toast('로드 실패: '+e, true);
+        }finally{
+            setBusy(false);
+        }
+    }
+
+    $('#btnLoad').onclick = ()=>{
+        const id = Number($('#docIdInput').value);
+        if(!id){ toast('문서 ID를 입력하세요', true); return; }
+        loadDoc(id);
     };
 
     $('#btnExplain').onclick = async ()=>{
-        let obj;
-        try {
-            obj = JSON.parse(input.value);
-        } catch {
-            toast('JSON 형식 오류: 먼저 자동 정렬을 눌러 확인하세요', true);
-            return;
-        }
-        setBusy(true);
-        try {
-            const res = await fetch('/api/ai/explain', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(obj)
+        try{
+            const obj = JSON.parse($('#jsonInput').value||'{}');
+            setBusy(true,'설명 생성 중…');
+            const res = await fetch('/api/ai/explain?detailed=true',{
+                method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(obj)
             });
-            const data = await res.json().catch(()=> ({}));
-            const md = data.markdown || '서버 응답이 비었습니다.';
+            const data = await res.json();
+            const md = data.markdown || '';
             renderMarkdown(md);
+            renderReport(obj, md);
+            btnPdf.disabled = false;
+            switchTab('report');
             toast('완료');
-        } catch (e) {
-            renderMarkdown(`설명 생성 실패: ${e}`);
-            toast('오류', true);
-        } finally {
+        }catch(e){
+            toast('오류: '+e, true);
+        }finally{
             setBusy(false);
         }
     };
 
-    function renderMarkdown(md){
-        if (window.marked && typeof marked.parse === 'function') {
-            out.innerHTML = marked.parse(md);
-        } else {
-            out.innerHTML = '<pre>'+escapeHtml(md)+'</pre>';
-        }
-    }
-    function escapeHtml(s){ return s.replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m])); }
-    function setBusy(b){
-        statusEl.innerHTML = b ? '<span class="spinner"></span> 생성 중...' : '';
-    }
-    function toast(msg, err){
-        statusEl.innerHTML = (err ? '⚠️ ' : '✅ ') + msg;
-        setTimeout(()=>{ statusEl.innerHTML=''; }, 2500);
-    }
+    $('#btnFormat').onclick = ()=>{
+        try{
+            const o=JSON.parse($('#jsonInput').value||'{}');
+            $('#jsonInput').value=JSON.stringify(o,null,2);
+            toast('자동 정렬 완료');
+        } catch { toast('JSON 형식 오류', true); }
+    };
+
+    btnPdf.onclick = async ()=>{
+        if(!window.html2pdf){ toast('PDF 라이브러리 로드 중', true); return; }
+        switchTab('report');
+        const obj = JSON.parse($('#jsonInput').value||'{}');
+        const provider = (obj.document&&obj.document.provider)||'Report';
+        const date = (obj.document&&obj.document.date)||new Date().toISOString().slice(0,10);
+        const fileName = `${provider}_${date}_설명서.pdf`.replace(/[^\w가-힣_.-]+/g,'_');
+
+        const opt = {
+            margin: [0,0,0,0],                 // ★ 마진 0 → 더 이상 잘리지 않음
+            filename: fileName,
+            image: { type:'jpeg', quality:0.98 },
+            html2canvas: { scale: 2.5, useCORS: true },
+            jsPDF: { unit:'mm', format:'a4', orientation:'portrait' },
+            pagebreak: { mode: ['css','legacy'] }  // 표 행 분리 최소화
+        };
+
+        await html2pdf().from(reportRoot).set(opt).save();
+    };
+
+    (function initFromQuery(){
+        const p=new URLSearchParams(location.search);
+        const id=p.get('docId');
+        if(id){ $('#docIdInput').value=id; loadDoc(id).catch(()=>{}); }
+    })();
 </script>
 </body>
 </html>

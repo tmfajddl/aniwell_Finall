@@ -16,4 +16,6 @@ public interface VisitRepository {
     void deleteVisit(int id);
 
     List<Visit> selectVisitsByPetId(int petId);
+
+    Visit selectVisitById(int id);
 }
