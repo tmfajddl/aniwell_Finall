@@ -7,15 +7,11 @@
 
 package com.example.RSW.api;
 
-import java.util.HashMap; // 응답 payload(Map) 생성을 위함
-import java.util.Map;
+import java.util.*;
 
+import com.example.RSW.service.LabResultDetailService;
 import org.springframework.beans.factory.annotation.Value; // application.yml 설정값 주입
-import org.springframework.web.bind.annotation.PostMapping; // POST 엔드포인트 매핑
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping; // 컨트롤러 베이스 경로 매핑
-import org.springframework.web.bind.annotation.RestController; // REST 컨트롤러 선언
-import org.springframework.web.bind.annotation.RequestParam; // multipart 파라미터 바인딩
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile; // 업로드 파일 수신
 
 import com.example.RSW.vo.ResultData; // ✅ 프로젝트의 ResultData 경로에 맞게 유지(성공/실패 표준 응답)
@@ -50,10 +46,8 @@ import lombok.RequiredArgsConstructor;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.UUID;
+
 import org.springframework.util.StringUtils;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 
@@ -111,6 +105,9 @@ public class OcrController {
 	@Value("${app.upload.base-dir:uploads}")
 	private String baseUploadDir;
 
+	@Autowired
+	private LabResultDetailService labResultDetailService;
+
 	// 📌 의료 문서(진단서, 영수증 등) 관련 비즈니스 로직을 처리하는 서비스
 	private final MedicalDocumentService medicalDocumentService;
 	// 📌 방문(visit) 관련 비즈니스 로직을 처리하는 서비스
@@ -135,83 +132,153 @@ public class OcrController {
 	// - 응답: { resultCode, msg, data: { visitId, documentId } }
 	@PostMapping("/save")
 	public ResultData<Map<String, Object>> saveOcrText(@RequestBody OcrSaveVo vo) {
-		// 1) 유효성
-		if (vo.getText() == null || vo.getText().isBlank()) {
-			return ResultData.from("F-EMPTY", "OCR 텍스트가 비어있습니다.", "data", null);
+		// 1) what we actually have
+		boolean hasText   = vo.getText() != null && !vo.getText().isBlank();
+		boolean hasGroups = vo.getGroups() != null && !vo.getGroups().isEmpty();
+
+		if (!hasText && !hasGroups) {
+			return ResultData.from("F-EMPTY", "저장할 그룹/텍스트가 없습니다.", "data", null);
 		}
 		if (vo.getVisitId() == null && vo.getPetId() == null) {
 			return ResultData.from("F-NO-TARGET", "visitId 또는 petId가 필요합니다.", "data", null);
 		}
 
+		// 2) docType 결정: groups가 있으면 그걸로 우선 추정 → 그다음 normalize
+		String dt = vo.getDocType();
+		if ((dt == null || "auto".equalsIgnoreCase(dt)) && hasGroups) {
+			dt = guessDocTypeFromGroups(vo.getGroups()); // ⬅️ 헬퍼
+		}
+		dt = normalizeDocType(dt, hasText ? vo.getText() : null);
+		vo.setDocType(dt);
+
+		// 2.5) diagnosis 그룹이면 Visit 칸 자동 채우기(병원/의사/진단/비고/날짜)
+		if ("diagnosis".equalsIgnoreCase(vo.getDocType()) && hasGroups) {
+			hydrateVisitFromDiagnosisGroups(vo);        // ⬅️ 헬퍼
+		}
+
 		try {
-			// ✅ [추가] docType 안전 보정 (ENUM/체크 제약 대비)
-			String rawDocType = vo.getDocType();
-			String safeDocType = (rawDocType == null) ? "diagnosis" : rawDocType.toLowerCase();
+			String safeDocType = (vo.getDocType() == null) ? "diagnosis" : vo.getDocType().toLowerCase();
 			switch (safeDocType) {
-			case "receipt":
-			case "prescription":
-			case "lab":
-			case "diagnosis":
-			case "other":
-				break;
-			default:
-				safeDocType = "diagnosis";
+				case "receipt","prescription","lab","diagnosis","other" -> {}
+				default -> safeDocType = "diagnosis";
 			}
 
-			// ✅ [추가] fileUrl NOT NULL 제약 대비(스키마에 따라 필요)
-			// - medical_document.file_url 이 NOT NULL 이라면 빈 문자열로 대체
 			String safeFileUrl = (vo.getFileUrl() == null || vo.getFileUrl().isBlank()) ? "" : vo.getFileUrl();
 
-			// 2) visitId 결정 (없으면 신규 생성)
 			Integer visitId = vo.getVisitId();
 			if (visitId == null) {
 				Visit visit = new Visit();
-				visit.setPetId(vo.getPetId()); // ⚠ visit.pet_id 가 NOT NULL 이면 null 금지
-				visit.setVisitDate(vo.getVisitDate() != null ? vo.getVisitDate() : LocalDateTime.now()); // ⚠ DATETIME
-																											// NOT NULL
-																											// 보호
+				visit.setPetId(vo.getPetId());
+				visit.setVisitDate(vo.getVisitDate() != null ? vo.getVisitDate() : LocalDateTime.now());
 				visit.setHospital(vo.getHospital());
 				visit.setDoctor(vo.getDoctor());
 				visit.setDiagnosis(vo.getDiagnosis());
 				visit.setNotes(vo.getNotes());
-
-				visitId = visitService.insertVisit(visit); // useGeneratedKeys + keyProperty 필요
-				// ✅ [추가] PK 생성 검증 (NULL/FALSE 방지)
-				if (visitId == null || visitId <= 0) {
-					throw new IllegalStateException(
-							"Visit PK가 생성되지 않았습니다. Mapper의 useGeneratedKeys/keyProperty 설정을 확인하세요.");
-				}
+				visitId = visitService.insertVisit(visit);
+				if (visitId == null || visitId <= 0) throw new IllegalStateException("Visit PK 생성 실패");
 			}
 
-			// 3) MedicalDocument 생성 (ocr_json에 문자열로 저장)
-			Map<String, Object> payload = new HashMap<>();
-			payload.put("text", vo.getText().trim());
-			Map<String, Object> meta = new HashMap<>();
-			meta.put("engine", "gcv"); // 현재 GCV 사용
+			// 3) 저장 payload(text 또는 groups)
+			Map<String,Object> payload = new java.util.LinkedHashMap<>();
+			Map<String,Object> meta = new java.util.LinkedHashMap<>();
+			meta.put("engine", "gcv");
 			meta.put("ts", LocalDateTime.now().toString());
 			payload.put("meta", meta);
-			String ocrJson = objectMapper.writeValueAsString(payload); // ⚠ NULL 아님
+			if (hasGroups) payload.put("groups", vo.getGroups());
+			else          payload.put("text", vo.getText().trim());
+
+			String ocrJson = objectMapper.writeValueAsString(payload);
 
 			MedicalDocument doc = new MedicalDocument();
-			doc.setVisitId(visitId); // ⚠ FK NOT NULL 보호
-			doc.setDocType(safeDocType); // ✅ 보정된 docType
-			doc.setFileUrl(safeFileUrl); // ✅ NOT NULL 대비(스키마에 따라)
-			doc.setOcrJson(ocrJson); // ✅ NULL 금지
+			doc.setVisitId(visitId);
+			doc.setDocType(safeDocType);
+			doc.setFileUrl(safeFileUrl);
+			doc.setOcrJson(ocrJson);
 
-			int documentId = medicalDocumentService.insertDocument(doc); // useGeneratedKeys 필요
+			int documentId = medicalDocumentService.insertDocument(doc);
 
-			Map<String, Object> data = new HashMap<>();
+			// 4) lab이면 최신 그룹을 lab_result_detail로 펼쳐 저장
+			int labRows = 0;
+			if ("lab".equalsIgnoreCase(safeDocType)) {
+				try { labRows = labResultDetailService.upsertLatestGroup(documentId, ocrJson); }
+				catch (Exception ignore) { ignore.printStackTrace(); }
+			}
+
+			Map<String, Object> data = new java.util.HashMap<>();
 			data.put("visitId", visitId);
 			data.put("documentId", documentId);
-			return ResultData.from("S-OCR-SAVE", "OCR 텍스트가 저장되었습니다.", "data", data);
+			data.put("fileUrl", vo.getFileUrl());
+			data.put("labRows", labRows);
+			return ResultData.from("S-OCR-SAVE", "OCR 데이터가 저장되었습니다.", "data", data);
 
 		} catch (Exception e) {
-			Map<String, Object> err = new HashMap<>();
+			Map<String, Object> err = new java.util.HashMap<>();
 			err.put("errorType", e.getClass().getSimpleName());
 			err.put("error", e.getMessage());
-			return ResultData.from("F-OCR-SAVE", "OCR 텍스트 저장 중 오류가 발생했습니다.", "data", err);
+			return ResultData.from("F-OCR-SAVE", "OCR 저장 중 오류", "data", err);
 		}
 	}
+
+	private void hydrateVisitFromDiagnosisGroups(OcrSaveVo vo){
+		if (vo.getGroups()==null || vo.getGroups().isEmpty()) return;
+
+		// 가장 알찬 그룹 하나 선택
+		Map<String,Object> best = null;
+		for (var g : vo.getGroups()){
+			Object items = g.get("items");
+			if (items instanceof java.util.List<?> list && !list.isEmpty()){
+				best = g; break;
+			}
+		}
+		if (best == null) return;
+
+		// items -> Map<String,String>
+		Map<String,String> kv = new LinkedHashMap<>();
+		Object items = best.get("items");
+		if (items instanceof java.util.List) {
+			for (Object o : (java.util.List<?>) items) {
+				if (!(o instanceof java.util.Map)) continue;
+
+				@SuppressWarnings("unchecked")
+				java.util.Map<?,?> mm = (java.util.Map<?,?>) o;
+
+				String key = java.util.Objects.toString(mm.get("key"), "").trim();
+				String val = java.util.Objects.toString(mm.get("value"), "").trim();
+
+				if (key.isEmpty() || val.isEmpty()) continue;
+				kv.put(key.toLowerCase(java.util.Locale.ROOT), val);
+			}
+		}
+
+
+		// 병원/의사/진단
+		if (kv.containsKey("hospital"))  vo.setHospital(kv.get("hospital"));
+		if (kv.containsKey("doctor"))    vo.setDoctor(kv.get("doctor"));
+		if (kv.containsKey("diagnosis")) vo.setDiagnosis(kv.get("diagnosis"));
+
+		// ✅ notes: prognosis + others + (option) therapy
+		List<String> notesBits = new ArrayList<>();
+		if (kv.containsKey("prognosis")) notesBits.add("예후: " + kv.get("prognosis"));
+		if (kv.containsKey("others"))    notesBits.add("기타: " + kv.get("others"));
+		if (kv.containsKey("therapy"))   notesBits.add("치료: " + kv.get("therapy"));
+		if (!notesBits.isEmpty()) vo.setNotes(String.join(" · ", notesBits));
+
+		// ✅ visitDate: diagnosisDate > onsetDate > group.date (YYYY-MM-DD)
+		String d = kv.get("diagnosisdate");
+		if (d == null || d.isBlank()) d = kv.get("onsetdate");
+		if ((d == null || d.isBlank()) && best.get("date") instanceof String ds) d = ds;
+
+		if (d != null && !d.isBlank()) {
+			try {
+				java.time.LocalDate dd = (d.length() > 10)
+						? java.time.LocalDate.parse(d.substring(0,10))
+						: java.time.LocalDate.parse(d);
+				vo.setVisitDate(dd.atStartOfDay()); // 시간 없으니 00:00:00
+			} catch (Exception ignore) { /* 파싱 실패 시 그냥 패스 */ }
+		}
+	}
+
+
 
 	// [추가 - 클래스 내부 아무 곳(메서드 아래 추천)]
 	/** 원본 이미지를 저장하고 /files/**로 접근 가능한 URL을 반환한다. */
@@ -419,7 +486,8 @@ public class OcrController {
 			payload.put("suggestedConfidence", guess.get("confidence"));
 
 			// ✅ [추가] 파싱 결과 포함 (프론트가 즉시 사용 가능)
-			payload.put("docType", parsed.getDocType()); // enum (RECEIPT/PRESCRIPTION/LAB/DIAGNOSIS/UNKNOWN)
+			payload.put("docType", parsed.getDocType().name().toLowerCase()); // enum
+																				// (RECEIPT/PRESCRIPTION/LAB/DIAGNOSIS/UNKNOWN)
 			payload.put("groups", parsed.getGroups()); // [{ date, items[] }]
 			payload.put("ascii", parsed.getAscii()); // 사람이 보기 쉬운 요약(옵션)
 
@@ -445,68 +513,71 @@ public class OcrController {
 	@GetMapping("/doc")
 	public ResultData<Map<String, Object>> getDoc(
 			@RequestParam(value = "documentId", required = false) Integer documentId,
-			@RequestParam(value = "visitId", required = false) Integer visitId) {
+			@RequestParam(value = "visitId",    required = false) Integer visitId) {
 		try {
 			if (documentId == null && visitId == null) {
 				return ResultData.from("F-BAD-REQ", "documentId 또는 visitId가 필요합니다.", "data", null);
 			}
-
-			// ⚠ 아래 메서드는 서비스에 없으면 2)절대로 추가해 주세요.
-			MedicalDocument doc = (documentId != null) ? medicalDocumentService.findById(documentId)
+			MedicalDocument doc = (documentId != null)
+					? medicalDocumentService.findById(documentId)
 					: medicalDocumentService.findLatestByVisitId(visitId);
-
 			if (doc == null) {
 				return ResultData.from("F-NOT-FOUND", "문서를 찾을 수 없습니다.", "data", null);
 			}
 
-			// ocr_json에서 텍스트만 꺼내 프론트 친화 JSON으로 가공
 			String text = null;
-
-			Map<String, Object> ocrMeta = new HashMap<>();
+			Map<String, Object> ocrMeta = new java.util.HashMap<>();
+			java.util.List<java.util.Map<String,Object>> groups = null;
 
 			try {
 				String json = (doc.getOcrJson() == null || doc.getOcrJson().isBlank()) ? "{}" : doc.getOcrJson();
+				com.fasterxml.jackson.databind.JsonNode root = objectMapper.readTree(json);
 
-				com.fasterxml.jackson.databind.JsonNode n = objectMapper.readTree(json); // ✅ [수정] doc.getOcrJson() →
-																							// json
-				text = n.path("text").asText(null);
+				// text
+				text = root.path("text").asText(null);
 
-				// ✅ [추가] meta(engine/ts) 파싱하여 프런트에 전달
-				com.fasterxml.jackson.databind.JsonNode meta = n.path("meta");
+				// meta
+				com.fasterxml.jackson.databind.JsonNode meta = root.path("meta");
 				if (meta != null && meta.isObject()) {
-					if (meta.hasNonNull("engine"))
-						ocrMeta.put("engine", meta.get("engine").asText());
-					if (meta.hasNonNull("ts"))
-						ocrMeta.put("ts", meta.get("ts").asText());
+					if (meta.hasNonNull("engine")) ocrMeta.put("engine", meta.get("engine").asText());
+					if (meta.hasNonNull("ts"))     ocrMeta.put("ts", meta.get("ts").asText());
 				}
-			} catch (Exception ignore) {
-			}
 
+				// ✅ groups
+				com.fasterxml.jackson.databind.JsonNode gnode = root.path("groups");
+				if (gnode != null && gnode.isArray()) {
+					groups = objectMapper.convertValue(
+							gnode,
+							new com.fasterxml.jackson.core.type.TypeReference<java.util.List<java.util.Map<String,Object>>>() {}
+					);
+				}
+			} catch (Exception ignore) {}
+
+			String storage = (doc.getFileUrl() != null && doc.getFileUrl().startsWith("http")) ? "cloudinary" : "local";
 			Map<String, Object> guess = suggestDocTypeWithConfidence(text);
 
-			// ✅ 저장소 표시(cloudinary/local)
-			String storage = (doc.getFileUrl() != null && doc.getFileUrl().startsWith("http")) ? "cloudinary" : "local";
-
-			Map<String, Object> out = new HashMap<>();
+			Map<String, Object> out = new java.util.HashMap<>();
 			out.put("documentId", doc.getId());
-			out.put("visitId", doc.getVisitId());
-			out.put("docType", doc.getDocType());
-			out.put("fileUrl", doc.getFileUrl());
-			out.put("storage", storage);
-			out.put("ocrMeta", ocrMeta);
-			out.put("text", text);
-			out.put("createdAt", doc.getCreatedAt());
+			out.put("visitId",    doc.getVisitId());
+			out.put("docType",    doc.getDocType());
+			out.put("fileUrl",    doc.getFileUrl());
+			out.put("storage",    storage);
+			out.put("ocrMeta",    ocrMeta);
+			out.put("text",       text);    // 하위호환
+			out.put("groups",     groups);  // ✅ 신규
+			out.put("createdAt",  doc.getCreatedAt());
 			out.put("suggestedDocType", (String) guess.get("type"));
 			out.put("suggestedConfidence", guess.get("confidence"));
 			return ResultData.from("S-OK", "문서 조회 성공", "data", out);
 
 		} catch (Exception e) {
-			Map<String, Object> err = new HashMap<>();
+			Map<String, Object> err = new java.util.HashMap<>();
 			err.put("errorType", e.getClass().getSimpleName());
 			err.put("error", e.getMessage());
 			return ResultData.from("F-ERROR", "문서 조회 중 오류가 발생했습니다.", "data", err);
 		}
 	}
+
 
 	// ✅ [추가] suggestedDocType(문자열) → OcrParseResponse.DocType(enum) 변환
 	// ⛳ 위치: 컨트롤러 "클래스 내부"에 반드시 넣으세요. (extract() '아래'에 배치 완료)
@@ -640,30 +711,86 @@ public class OcrController {
 	// [추가] OCR 텍스트 + 원본 파일 동시 저장 (폴백용)
 	// 주석: 기존 코드는 유지하고, 아래 메서드만 추가합니다.
 	@PostMapping(value = "/save-with-file", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-	public ResultData<Map<String, Object>> saveWithFile(@RequestParam("file") MultipartFile file,
-			@RequestParam("text") String text, @RequestParam(value = "visitId", required = false) Integer visitId,
-			@RequestParam(value = "petId", required = false) Integer petId,
-			@RequestParam(value = "docType", required = false, defaultValue = "diagnosis") String docType) {
+	public ResultData<Map<String, Object>> saveWithFile(
+			@RequestPart("file") MultipartFile file,
+			@RequestPart(value = "text",   required = false) String text,
+			@RequestPart(value = "groups", required = false) String groupsJson,
+			@RequestPart(value = "visitId", required = false) Integer visitId,
+			@RequestPart(value = "petId",   required = false) Integer petId,
+			@RequestPart(value = "docType", required = false) String docType
+	) {
+		if (file == null || file.isEmpty()) {
+			return ResultData.from("F-OCR-SAVE", "업로드된 파일이 비어 있습니다.", "data", null);
+		}
+
+		java.util.List<java.util.Map<String,Object>> groups = null;
+		boolean hasGroups = false;
 		try {
-			// 1) 파일 저장 후 URL 확보 (Cloudinary 우선, 실패 시 로컬)
+			if (groupsJson != null && !groupsJson.isBlank()) {
+				groups = objectMapper.readValue(
+						groupsJson,
+						new com.fasterxml.jackson.core.type.TypeReference<java.util.List<java.util.Map<String,Object>>>() {}
+				);
+				hasGroups = (groups != null && !groups.isEmpty());
+			}
+		} catch (Exception ignore) {}
+
+		boolean hasText = (text != null && !text.isBlank());
+		if (!hasText && !hasGroups) {
+			return ResultData.from("F-OCR-SAVE", "저장할 그룹/텍스트가 없습니다.", "data", null);
+		}
+
+		try {
 			String fileUrl = saveFileAndReturnUrl(file.getBytes(), file.getOriginalFilename());
 
-			// 2) 기존 JSON 저장 로직 재사용을 위해 VO 구성
-			com.example.RSW.vo.OcrSaveVo vo = new com.example.RSW.vo.OcrSaveVo();
-			vo.setText(text);
+			// ✅ auto이고 groups가 있으면 실무상 대부분 lab → lab로 고정
+			String effectiveDocType =
+					(!"auto".equalsIgnoreCase(docType)) ? docType
+							: (hasGroups ? "lab" : normalizeDocType("auto", text));
+
+			OcrSaveVo vo = new OcrSaveVo();
+			vo.setText(hasText ? text : null);
+			vo.setGroups(groups);                 // ✅ 핵심
 			vo.setVisitId(visitId);
 			vo.setPetId(petId);
-			vo.setDocType(docType);
+			vo.setDocType(effectiveDocType);
 			vo.setFileUrl(fileUrl);
 
-			// 3) 기존 saveOcrText 재사용
 			return saveOcrText(vo);
 		} catch (Exception e) {
 			Map<String, Object> err = new java.util.HashMap<>();
 			err.put("errorType", e.getClass().getSimpleName());
 			err.put("error", e.getMessage());
-			return com.example.RSW.vo.ResultData.from("F-OCR-SAVE", "save-with-file 처리 중 오류", "data", err);
+			return ResultData.from("F-OCR-SAVE", "save-with-file 처리 중 오류", "data", err);
 		}
 	}
+
+	private String normalizeDocType(String docType, String text) {
+		// 사용자가 명시한 경우 그대로 사용
+		if (docType != null && !docType.isBlank() && !"auto".equalsIgnoreCase(docType)) {
+			return docType.trim().toLowerCase();
+		}
+		// [수정] 간단판 ocrFormatService.suggestDocType(...) 대신 정교한 분류기로 교체
+		Map<String, Object> guess = suggestDocTypeWithConfidence(text);
+		String suggested = (String) guess.get("type");
+		return (suggested == null || suggested.isBlank()) ? "receipt" : suggested.toLowerCase();
+	}
+
+	@SuppressWarnings("unchecked")
+	private String guessDocTypeFromGroups(java.util.List<java.util.Map<String,Object>> groups){
+		if (groups == null || groups.isEmpty()) return "diagnosis";
+		Object itemsObj = groups.get(0).get("items");
+		if (itemsObj instanceof java.util.List<?> list && !list.isEmpty()){
+			Object first = list.get(0);
+			if (first instanceof java.util.Map<?,?> m){
+				// lab 형태: {name, value, unit, ref_low, ref_high, ...}
+				if (m.containsKey("name") && (m.containsKey("value") || m.containsKey("ref_low"))) return "lab";
+				// diagnosis 형태: {key:"doctor"/"hospital"/..., value:"..."}
+				if (m.containsKey("key") && m.containsKey("value")) return "diagnosis";
+			}
+		}
+		return "diagnosis";
+	}
+
 
 }
