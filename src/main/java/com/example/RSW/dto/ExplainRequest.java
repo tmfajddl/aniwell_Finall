@@ -32,10 +32,12 @@ public class ExplainRequest {
 
     @Data @NoArgsConstructor @AllArgsConstructor
     public static class Pet {
-        private String name;       // 펫 이름
-        private String species;    // 종(고양이/강아지 등)
-        private Integer age;       // 만 나이(년)
-        private String sex;        // "M"/"F" 등
+        private String name;
+        private String species;
+        private Integer age;        // 년(만 연세)
+        private String sex;
+        private Integer ageMonths;  // 개월(0..11)  ← 추가
+        private String birthDate;   // "yyyy-MM-dd" (표시/디버그용, 선택)
     }
 
     @Data @NoArgsConstructor @AllArgsConstructor

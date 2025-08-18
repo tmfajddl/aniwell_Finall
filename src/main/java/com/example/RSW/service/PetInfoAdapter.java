@@ -1,57 +1,79 @@
 package com.example.RSW.service;
 
-
 import com.example.RSW.dto.ExplainRequest;
 import com.example.RSW.vo.Pet;
 
-import java.time.*;
-import java.time.temporal.ChronoUnit;
+import java.time.LocalDate;
+import java.time.Period;
+import java.time.ZoneId;
 import java.util.Date;
 
-public class PetInfoAdapter {
+/** Pet 엔터티 → ExplainRequest.Pet 변환 어댑터 */
+public final class PetInfoAdapter {
+    private PetInfoAdapter() {}
 
-    /**
-     * 펫 정보를 리포트용 DTO로 변환.
-     * @param pet     DB의 Pet VO
-     * @param refDate 기준 날짜(문서일자 등). null이면 오늘 날짜 기준으로 나이 계산
-     */
-    public static ExplainRequest.Pet toExplainPet(Pet pet, LocalDate refDate) {
-        if (pet == null) {
-            return new ExplainRequest.Pet(null, null, null, null);
+    /** ref: 문서 기준 날짜(없으면 today) */
+    public static ExplainRequest.Pet toExplainPet(Pet p, LocalDate ref) {
+        if (p == null) {
+            return new ExplainRequest.Pet(null, null, null, null, null, null);
         }
-        Integer ageYears = calcAgeYears(pet.getBirthDate(), refDate);
-        String sex = normalizeSex(pet.getGender());
-        // species는 그대로 사용(영문/국문 그대로). breed/weight는 다음 단계에서 확장 가능.
+
+        LocalDate birth = toLocalDate(p.getBirthDate()); // <-- 안전 변환
+        Integer years = null;
+        Integer months = null;
+
+        if (birth != null) {
+            if (ref == null) ref = LocalDate.now();
+            if (ref.isBefore(birth)) {
+                years = 0;
+                months = 0;
+            } else {
+                Period period = Period.between(birth, ref);
+                years  = Math.max(0, period.getYears());
+                months = Math.max(0, period.getMonths());
+            }
+        }
+
         return new ExplainRequest.Pet(
-                safe(pet.getName()),
-                safe(pet.getSpecies()),
-                ageYears,
-                sex
+                p.getName(),
+                mapSpecies(p.getSpecies()),
+                years,                          // 생일 없으면 null
+                mapSex(p.getGender()),
+                months,                         // 개월(0~11) 또는 null
+                (birth != null ? birth.toString() : null)
         );
     }
 
-    /** birthDate로 만 나이(정수, 년) 계산 */
-    public static Integer calcAgeYears(Date birthDate, LocalDate ref) {
-        if (birthDate == null) return null;
-        LocalDate birth = Instant.ofEpochMilli(birthDate.getTime())
-                .atZone(ZoneId.systemDefault())
-                .toLocalDate();
-        LocalDate base = (ref != null) ? ref : LocalDate.now();
-        if (birth.isAfter(base)) return 0; // 미래 생일 방지
-        long years = ChronoUnit.YEARS.between(birth, base);
-        return (int) years;
+    /** Date 타입 안전 변환 (java.sql.Date / Timestamp / util.Date 모두 지원) */
+    private static LocalDate toLocalDate(Date d){
+        if (d == null) return null;
+
+        // java.sql.Date: toInstant() 금지, 전용 메서드 사용
+        if (d instanceof java.sql.Date) {
+            return ((java.sql.Date) d).toLocalDate();
+        }
+        // java.sql.Timestamp
+        if (d instanceof java.sql.Timestamp) {
+            return ((java.sql.Timestamp) d).toInstant()
+                    .atZone(ZoneId.systemDefault()).toLocalDate();
+        }
+        // java.util.Date
+        return d.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
     }
 
-    /** 성별 문자열을 M/F 로 정규화 (null-safe) */
-    public static String normalizeSex(String gender) {
-        if (gender == null) return null;
-        String g = gender.trim().toLowerCase();
-        // 흔한 표기들 대응
-        if (g.matches("m|male|남|수컷|boy|♂|m\\.?")) return "M";
-        if (g.matches("f|female|여|암컷|girl|♀|f\\.?")) return "F";
-        // “중성화” 같은 정보는 다음 단계에서 별도 표기로 달아줄 수 있음
-        return gender; // 원문 유지
+    private static String mapSex(String g){
+        if (g == null) return null;
+        String s = g.trim().toUpperCase();
+        if ("M".equals(s) || "MALE".equals(s)) return "M";
+        if ("F".equals(s) || "FEMALE".equals(s)) return "F";
+        return s;
     }
 
-    private static String safe(String s){ return (s == null || s.isBlank()) ? null : s; }
+    private static String mapSpecies(String s){
+        if (s == null) return null;
+        String t = s.trim().toLowerCase();
+        if ("cat".equals(t) || "고양이".equals(t)) return "고양이";
+        if ("dog".equals(t) || "개".equals(t) || "강아지".equals(t)) return "개";
+        return s.trim();
+    }
 }
