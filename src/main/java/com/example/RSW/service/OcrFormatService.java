@@ -882,5 +882,4 @@ public class OcrFormatService {
 		t = t.replaceAll("[\\s·•ㆍ:：\\-–—]*[\\(\\[\\{]?$", "").trim();
 		return t;
 	}
-
 }

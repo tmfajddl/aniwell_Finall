@@ -48,6 +48,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.GetMapping;
+
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 
@@ -791,6 +793,5 @@ public class OcrController {
 		}
 		return "diagnosis";
 	}
-
 
 }
