@@ -65,6 +65,7 @@ public class SecurityConfig {
                         .ignoringRequestMatchers("/usr/member/doCheckPw")
                         .ignoringRequestMatchers("/usr/member/doModify")
                         .ignoringRequestMatchers("/usr/member/doLogout")
+                        .ignoringRequestMatchers("/usr/member/doFindLoginId", "/usr/member/doFindLoginPw")
                 )
                 /* 세션 (기존 동작 유지) */
                 .sessionManagement(session -> session

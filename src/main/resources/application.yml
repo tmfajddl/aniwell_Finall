@@ -3,16 +3,13 @@ server:
 
 spring:
   mail:
-    host: smtp.gmail.com
+    host: smtp.sendgrid.net
     port: 587
-    #   username: 구글 계정
-    #   password: 구글 계정 앱 비밀번호
+    username: apikey
+    password:
     properties:
-      mail:
-        smtp:
-          auth: true
-          starttls:
-            enable: true
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
 
   oauth2:
     google:
@@ -51,7 +48,7 @@ mybatis:
 custom:
   siteName: aniwell
   siteMainUri: http://localhost:8080
-  emailFrom: no-reply@localhost
+  emailFrom: ryuj7338@gmail.com
   emailFromName: aniwell
 
   redis:
@@ -61,7 +58,7 @@ custom:
     personal-port: 6379
     shared-host: 100.65.187.38
     shared-port: 6379
-    password: aniwell1234
+    password: ${aniwell1234}
 
 
 kakao:
@@ -71,9 +68,9 @@ kakao:
   redirect-uri: "http://localhost:8080/usr/member/kakao"  #로그인 redirect URI
 
 cloudinary:
-    cloud_name: dfiqktimk
-    api_key: 145284189636895
-    api_secret: 4TS23PL5HMWPolljcIRqitpWwU0
+    cloud_name: "dfiqktimk"
+    api_key: "145284189636895"
+    api_secret: "4TS23PL5HMWPolljcIRqitpWwU0"
 
 naver:
   client-id: "ZdyW5GGtNSgCCaduup7_"

@@ -177,7 +177,7 @@ public class UsrMemberController {
             return ResultData.from("F-3", Ut.f("%s는(은) 존재하지 않는 아이디입니다.", loginId));
         }
 
-        if (!member.getLoginPw().equals(Ut.sha256(loginPw))) {
+        if (!memberService.matchesRawPw(loginPw, member.getLoginPw())) {
             return ResultData.from("F-4", "비밀번호가 일치하지 않습니다.");
         }
 
