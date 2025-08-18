@@ -4,53 +4,107 @@
     <meta charset="utf-8"/>
     <title>보호자 리포트</title>
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <!-- 외부 라이브러리 -->
     <script defer src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js"></script>
+
     <style>
-        :root{--fg:#111;--mut:#667085;--bg:#f6f7fb;--card:#fff;--accent:#4f46e5}
-        *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.5 system-ui,-apple-system,Segoe UI,Roboto}
+        :root{
+            --ink:#0f172a; --mut:#64748b; --bg:#f6f7fb; --card:#fff;
+            --primary:#4f46e5; --ok:#16a34a; --high:#ef4444; --low:#0ea5e9; --warn:#f59e0b;
+            --line:#e5e7eb; --zebra:#fafafa;
+        }
+        *{box-sizing:border-box}
+        body{margin:0;background:var(--bg);color:var(--ink);
+            font:14px/1.55 'Pretendard','Noto Sans KR',system-ui,-apple-system,Segoe UI,Roboto}
         .wrap{max-width:1100px;margin:0 auto;padding:18px 16px 40px}
         .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-        .card{background:var(--card);border-radius:14px;box-shadow:0 2px 18px rgba(0,0,0,.06);padding:16px}
-        h1{margin:0 0 10px}
+        .card{background:var(--card);border-radius:16px;box-shadow:0 10px 30px rgba(2,6,23,.06);padding:16px}
+        h1{margin:0 0 12px;font-size:22px;letter-spacing:-.2px}
         input,button,textarea{font:inherit}
-        input[type="number"],input[type="text"]{width:120px;padding:8px 10px;border:1px solid #e5e7eb;border-radius:10px;background:#fff}
-        button{appearance:none;border:0;border-radius:10px;padding:10px 14px;background:var(--accent);color:#fff;font-weight:700;cursor:pointer}
-        button.secondary{background:#e5e7eb;color:#111}
-        .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+
+        button{appearance:none;border:0;border-radius:12px;padding:10px 14px;background:var(--primary);
+            color:#fff;font-weight:700;cursor:pointer;box-shadow:0 6px 14px rgba(79,70,229,.18)}
+        button.secondary{background:#e5e7eb;color:#111;box-shadow:none}
+        .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
         .hint{color:var(--mut);font-size:12px}
-        textarea{width:100%;min-height:320px;background:#fafafa;border:1px solid #eee;border-radius:10px;padding:10px;font:12px ui-monospace,Menlo,Consolas,monospace}
-        .tabs{display:flex;gap:6px}
-        .tab{padding:8px 12px;border-radius:8px;border:1px solid #ddd;background:#f8fafc;cursor:pointer;font-weight:600}
-        .tab.active{background:#eef2ff;border-color:#c7d2fe;color:#1e1b4b}
-        .view{border:1px solid #eee;border-radius:10px;min-height:320px;background:#fff;overflow:auto;padding:16px}
-        .hidden{display:none}
         .status{margin-left:auto;color:var(--mut);display:flex;align-items:center;gap:8px}
-        .spinner{width:14px;height:14px;border:2px solid #ddd;border-top-color:var(--accent);border-radius:50%;display:inline-block;animation:spin 1s linear infinite}
+        .spinner{width:14px;height:14px;border:2px solid #e2e8f0;border-top-color:var(--primary);
+            border-radius:50%;display:inline-block;animation:spin 1s linear infinite}
         @keyframes spin{to{transform:rotate(360deg)}}
 
-        /* Report(A4) */
-        .report-page{width:210mm;min-height:297mm;margin:0 auto;background:#fff;padding:18mm 16mm;border:1px solid #e5e7eb;border-radius:8px;box-shadow:0 1px 10px rgba(0,0,0,.05)}
-        .report-header{display:flex;justify-content:space-between;gap:16px;margin-bottom:14px}
-        .report-title{margin:0;font-size:20px}
-        .meta{font-size:12px;color:#555}
-        .kvs{display:grid;grid-template-columns:120px 1fr;gap:6px 10px;font-size:13px}
-        .section{margin:16px 0 0}
-        .section h3{margin:0 0 8px;font-size:16px}
-        table{width:100%;border-collapse:collapse;font-size:12px}
-        th,td{border:1px solid #e5e7eb;padding:8px 10px;text-align:left}
-        th{background:#f9fafb}
-        .tag{display:inline-block;padding:.1rem .5rem;border-radius:999px;font-size:11px;border:1px solid #e5e7eb;background:#f3f4f6}
-        .tag.ok{color:#064e3b;background:#ecfdf5;border-color:#d1fae5}
-        .tag.high{color:#7f1d1d;background:#fef2f2;border-color:#fee2e2}
-        .tag.low{color:#0c4a6e;background:#eff6ff;border-color:#dbeafe}
-        .muted{color:#6b7280}
-        @media print{body{background:#fff}.grid{display:block}.card{box-shadow:none}.tabs{display:none}.view{border:0;padding:0}.report-page{border:0;box-shadow:none;margin:0;width:auto;min-height:auto;padding:0}}
+        textarea{width:100%;min-height:320px;background:#fbfbfd;border:1px solid var(--line);
+            border-radius:12px;padding:10px;font:12px ui-monospace,Menlo,Consolas,monospace}
+
+        .tabs{display:flex;gap:6px}
+        .tab{padding:8px 12px;border-radius:10px;border:1px solid var(--line);background:#f8fafc;cursor:pointer;font-weight:600}
+        .tab.active{background:#eef2ff;border-color:#c7d2fe;color:#3730a3}
+        .view{border:1px solid var(--line);border-radius:14px;min-height:320px;background:#fff;overflow:auto;padding:0}
+        .view.hidden{display:none}
+
+        /* ---------- Report (A4) ---------- */
+        .report-page{width:210mm;min-height:297mm;margin:0 auto;background:#fff;padding:18mm 16mm;border-radius:8px}
+        .report-header{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin-bottom:14px}
+        .brand{font-weight:900;font-size:18px;letter-spacing:-.3px;color:var(--primary)}
+        .brand small{display:block;color:var(--mut);font-weight:600;font-size:12px;margin-top:2px}
+        .meta{font-size:12px;color:var(--mut)}
+
+        .section{margin:18px 0 0}
+        .section h3{margin:0 0 10px;font-size:16px;letter-spacing:-.2px}
+
+        table{width:100%;border-collapse:separate;border-spacing:0;font-size:12px}
+        thead th{position:sticky;top:0;background:#f8fafc;border-bottom:1px solid var(--line);text-align:left;padding:9px 10px;font-weight:800}
+        tbody td{border-bottom:1px solid var(--line);padding:9px 10px}
+        tbody tr:nth-child(odd){background:var(--zebra)}
+
+        /* --- polish --- */
+        .muted{ color: var(--mut); }
+        .report-title{ margin:0; font-size:20px; letter-spacing:-.2px }
+
+        .tag{
+            display:inline-flex; align-items:center; gap:6px;
+            padding:3px 10px; border-radius:999px; font-weight:800; font-size:11px;
+            border:1px solid var(--line);
+        }
+        .tag.ok  { color:#065f46; background:#ecfdf5; border-color:#d1fae5; }
+        .tag.high{ color:#991b1b; background:#fef2f2; border-color:#fee2e2; }
+        .tag.low { color:#0c4a6e; background:#eff6ff; border-color:#dbeafe; }
+
+        .pet-card{
+            display:grid; grid-template-columns:92px 1fr; gap:8px 14px;
+            border:1px solid var(--line); border-radius:12px; padding:10px 12px;
+            background:linear-gradient(180deg,#f8fafc,#fff);
+        }
+        .kvs{display:grid;grid-template-columns:120px 1fr;gap:8px 14px;font-size:13px}
+        .card-soft{border:1px solid var(--line);border-radius:12px;padding:12px;background:#fcfcff}
+
+        .t-num{text-align:right}
+        table{ border-radius:12px; overflow:hidden; }
+        tbody tr{ page-break-inside: avoid; }
+        thead th{ background:#f8fafc; }
+
+        .md{font-size:13px;color:#111}
+        .md h1,.md h2,.md h3{margin:14px 0 8px}
+        .md p{margin:6px 0}
+        .md ul{margin:6px 0 6px 18px}
+        .disclaimer{margin-top:10px;font-size:11px;color:#6b7280}
+
+        /* 인쇄 최적화 */
+        @media print{
+            body{background:#fff}
+            .grid{display:block}
+            .card{box-shadow:none}
+            .tabs,.row > .hint{display:none}
+            .view{border:0}
+            .report-page{border-radius:0;padding:12mm 12mm}
+            thead th{position:static}
+        }
     </style>
 </head>
 <body>
 <div class="wrap">
     <h1>보호자 리포트</h1>
+
     <div class="row" style="margin-bottom:10px">
         <label>문서 ID</label>
         <input id="docIdInput" type="number" placeholder="예: 12"/>
@@ -83,7 +137,7 @@
                 </div>
             </div>
 
-            <div id="view-md" class="view"><div class="muted">아직 결과가 없습니다.</div></div>
+            <div id="view-md" class="view"><div class="muted" style="padding:14px">아직 결과가 없습니다.</div></div>
             <div id="view-report" class="view hidden"><div id="reportRoot" class="report-page"></div></div>
         </section>
     </div>
@@ -115,106 +169,169 @@
 
     function renderMarkdown(md){
         if (window.marked && typeof marked.parse==='function') viewMd.innerHTML = marked.parse(md||'');
-        else viewMd.innerHTML = '<pre>'+escapeHtml(md||'')+'</pre>';
+        else viewMd.innerHTML = '<pre style="padding:14px">'+escapeHtml(md||'')+'</pre>';
     }
+
+    // --- 나이 표시: "X개월" / "X세 Y개월"
+    function formatAge(pet, refDate){
+        if (!pet) return '-';
+        let y = toInt(pet.age);
+        let m = toInt(pet.ageMonths ?? pet.age_months);
+
+        // 개월 없고 생일 있으면 계산
+        if ((y == null || m == null) && pet.birthDate){
+            const ref = refDate ? new Date(refDate) : new Date();
+            const b   = new Date(pet.birthDate);
+            if (!isNaN(b)) {
+                let months = (ref.getFullYear()-b.getFullYear())*12 + (ref.getMonth()-b.getMonth());
+                if (ref.getDate() < b.getDate()) months -= 1;
+                if (months < 0) months = 0;
+                if (y == null) y = Math.floor(months/12);
+                if (m == null) m = months % 12;
+            }
+        }
+        y = Math.max(0, y ?? 0);
+        if (m != null) m = Math.max(0, Math.min(11, m));
+
+        if ((y === 0 || pet.age == null) && (m ?? 0) > 0) return `${m}개월`;
+        if ((m ?? 0) > 0) return `${y}세 ${m}개월`;
+        return (pet.age == null ? '-' : `${y}세`);
+
+        function toInt(v){ const n = Number(v); return Number.isFinite(n) ? Math.trunc(n) : null; }
+    }
+
     function renderReport(obj, md){
         obj = obj||{};
-        const doc = obj.document||{};
-        const pet = obj.pet||{};
+        const doc  = obj.document||{};
+        const pet  = obj.pet||{};
         const labs = Array.isArray(obj.labs)? obj.labs : [];
         const meds = Array.isArray(obj.prescriptions)? obj.prescriptions : [];
         const notes = (obj.meta&&obj.meta.notes)||'';
 
-        const labRows = labs.map(l=>{
-            const lo=isNum(l.ref_low)?Number(l.ref_low):null, hi=isNum(l.ref_high)?Number(l.ref_high):null;
-            const val=isNum(l.value)?Number(l.value):null;
-            let flag='ok'; if(val!=null && (lo!=null||hi!=null)){ if(hi!=null&&val>hi)flag='high'; else if(lo!=null&&val<lo)flag='low'; }
-            return { code:l.code||l.name||'', value:val, unit:l.unit||'', lo, hi, flag };
+        // --- labs -> rows + 판정 ---
+        const rows = labs.map(l=>{
+            const lo  = (l.ref_low  ?? l.refLow  ?? null);  const loN = (lo!==null && lo!=='') ? Number(lo) : null;
+            const hi  = (l.ref_high ?? l.refHigh ?? null);  const hiN = (hi!==null && hi!=='') ? Number(hi) : null;
+            const val = (l.value    ?? null);               const vN  = (val!==null && val!=='')? Number(val): null;
+            let flag='ok';
+            if (vN!=null && (loN!=null || hiN!=null)){
+                if (hiN!=null && vN>hiN) flag='high';
+                else if (loN!=null && vN<loN) flag='low';
+            }
+            return { name:l.name||l.code||'', value:vN, unit:l.unit||'', lo:loN, hi:hiN, flag };
         });
+        const abn = rows.filter(r=>r.flag!=='ok');
 
-        const abn = labRows.filter(r=>r.flag!=='ok');
-        const abnSummary = abn.length ? abn.map(r=>`${r.code}${r.value!=null?' '+r.value:''}${r.unit?' '+r.unit:''} (${r.flag==='high'?'상승':'저하'})`).join(', ') : '특이 소견 없음';
+        // 요약 텍스트
+        const abnText = abn.length
+            ? abn.map(r=>`${r.name}${r.value!=null?' '+r.value.toLocaleString():''}${r.unit?' '+r.unit:''} (${r.flag==='high'?'상승':'저하'})`).join(', ')
+            : '특이 소견 없음';
 
+        // 마크다운
+        const mdHtml = (window.marked && typeof marked.parse==='function')
+            ? marked.parse(md||'')
+            : '<pre>'+escapeHtml(md||'')+'</pre>';
+
+        // 생성 시각
         const now = new Date();
         const generatedAt = `${now.getFullYear()}-${pad2(now.getMonth()+1)}-${pad2(now.getDate())} ${pad2(now.getHours())}:${pad2(now.getMinutes())}`;
-        const mdHtml = (window.marked && typeof marked.parse==='function') ? marked.parse(md||'') : '<pre>'+escapeHtml(md||'')+'</pre>';
 
+        // --- 템플릿 ---
         reportRoot.innerHTML = `
-    <div class="report-header">
-      <div>
-        <h2 class="report-title">보호자 설명서</h2>
-        <div class="meta">
-          의료기관: <b>${txt(doc.provider||'')}</b><br/>
-          문서일자: ${txt(doc.date||'')}<br/>
-          생성시각: ${txt(generatedAt)}
+      <div class="report-header">
+        <div>
+          <div class="brand">Aniwell Report<small>반려동물 보호자 설명서</small></div>
+          <div class="meta" style="margin-top:6px">
+            의료기관: <b>${txt(doc.provider||'-')}</b><br/>
+            문서일자: ${txt(doc.date||'-')} · 생성시각: ${txt(generatedAt)}
+          </div>
         </div>
-      </div>
-      <div class="meta" style="text-align:right">
-        <div><b>반려동물 정보</b></div>
-        <div class="kvs" style="grid-template-columns:90px 1fr;margin-top:6px">
+        <div class="pet-card">
           <div>이름</div><div>${txt(pet.name||'-')}</div>
           <div>종</div><div>${txt(pet.species||'-')}</div>
-          <div>나이</div><div>${pet.age!=null? txt(pet.age)+'세':'-'}</div>
+          <div>나이</div><div>${formatAge(pet, doc.date)}</div>
           <div>성별</div><div>${txt(pet.sex||'-')}</div>
         </div>
       </div>
-    </div>
 
-    <div class="section">
-      <h3>요약</h3>
-      <div class="kvs">
-        <b>이상 소견</b><div>${abn.length? `<span class="tag high">${abn.length}개</span>` : '<span class="tag ok">없음</span>'}</div>
-        <b>이상 항목</b><div>${txt(abnSummary)}</div>
-        <b>메모</b><div>${txt(notes||'-')}</div>
+      <div class="section">
+        <h3>요약</h3>
+        <div class="card-soft" style="display:grid;grid-template-columns:120px 1fr;gap:8px 14px">
+          <div><b>이상 개수</b></div>
+          <div>
+            ${abn.length ? `<span class="tag high">이상 ${abn.length}개</span>` : `<span class="tag ok">특이 소견 없음</span>`}
+            <span class="tag">총 ${rows.length}항목</span>
+          </div>
+          <div><b>이상 항목</b></div><div>${txt(abnText)}</div>
+          <div><b>메모</b></div><div>${txt(notes||'-')}</div>
+        </div>
       </div>
-    </div>
 
-    <div class="section">
-      <h3>검사 결과</h3>
-      ${labRows.length ? `
-      <table>
-        <thead><tr><th style="width:22%">항목</th><th style="width:18%">결과</th><th style="width:22%">참고범위</th><th style="width:15%">판정</th><th>비고</th></tr></thead>
-        <tbody>
-          ${labRows.map(r=>`
-            <tr>
-              <td>${txt(r.code)}</td>
-              <td>${r.value!=null? num(r.value)+(r.unit?' '+txt(r.unit):''):'-'}</td>
-              <td>${(r.lo!=null? num(r.lo):'–')} ~ ${(r.hi!=null? num(r.hi):'–')}</td>
-              <td>${r.flag==='ok' ? '<span class="tag ok">정상</span>' : (r.flag==='high' ? '<span class="tag high">상승</span>' : '<span class="tag low">저하</span>')}</td>
-              <td class="muted"></td>
-            </tr>`).join('')}
-        </tbody>
-      </table>` : `<div class="muted">표시할 검사 결과가 없습니다.</div>`}
-    </div>
-
-    <div class="section">
-      <h3>투약/처방</h3>
-      ${meds.length ? `
-      <table>
-        <thead><tr><th style="width:32%">약품명</th><th style="width:18%">용량</th><th style="width:18%">용법</th><th style="width:12%">기간</th><th>비고</th></tr></thead>
-        <tbody>
-          ${meds.map(m=>{
-            const dose=(m.dose!=null? num(m.dose):'')+(m.dose_unit? ' '+txt(m.dose_unit):'');
-            const freq=[m.freq,m.route].filter(Boolean).join(' / ');
-            const days=m.days!=null? `${num(m.days)}일`:'-';
-            return `<tr>
-              <td>${txt(m.drug||'-')}</td>
-              <td>${dose||'-'}</td>
-              <td>${freq||'-'}</td>
-              <td>${days}</td>
-              <td class="muted"></td>
-            </tr>`;
+      <div class="section">
+        <h3>검사 결과</h3>
+        ${rows.length ? `
+        <div style="border:1px solid var(--line);border-radius:12px;overflow:hidden">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:28%">항목</th>
+                <th style="width:18%">결과</th>
+                <th style="width:22%">참고범위</th>
+                <th style="width:14%">판정</th>
+                <th>비고</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rows.map(r=>{
+            const ref = (r.lo!=null? r.lo.toLocaleString():'–') + ' ~ ' + (r.hi!=null? r.hi.toLocaleString():'–');
+            const val = (r.value!=null? r.value.toLocaleString() + (r.unit? ' '+txt(r.unit):'') : '-');
+            const badge = r.flag==='ok' ? '<span class="tag ok">정상</span>' : (r.flag==='high' ? '<span class="tag high">상승</span>' : '<span class="tag low">저하</span>');
+            return `
+                  <tr>
+                    <td>${txt(r.name)}</td>
+                    <td>${val}</td>
+                    <td>${ref}</td>
+                    <td>${badge}</td>
+                    <td class="muted"></td>
+                  </tr>`;
         }).join('')}
-        </tbody>
-      </table>` : `<div class="muted">표시할 처방 내역이 없습니다.</div>`}
-    </div>
+            </tbody>
+          </table>
+        </div>` : `<div class="muted">표시할 검사 결과가 없습니다.</div>`}
+      </div>
 
-    <div class="section">
-      <h3>AI 설명</h3>
-      ${mdHtml}
-    </div>
-    <div class="muted" style="margin-top:8px">※ 본 문서는 보호자 이해를 돕기 위한 설명 자료이며, 최종 의학적 판단은 담당 수의사의 소견을 따릅니다.</div>
-  `;
+      <div class="section">
+        <h3>투약/처방</h3>
+        ${meds.length ? `
+        <div style="border:1px solid var(--line);border-radius:12px;overflow:hidden">
+          <table>
+            <thead>
+              <tr><th style="width:32%">약품명</th><th style="width:18%">용량</th><th style="width:22%">용법</th><th style="width:12%">기간</th><th>비고</th></tr>
+            </thead>
+            <tbody>
+              ${meds.map(m=>{
+            const dose=(m.dose!=null? Number(m.dose).toLocaleString():'' )+(m.dose_unit? ' '+txt(m.dose_unit):'');
+            const freq=[m.freq,m.route].filter(Boolean).join(' / ');
+            const days=(m.days!=null? `${Number(m.days).toLocaleString()}일`:'-');
+            return `<tr>
+                  <td>${txt(m.drug||'-')}</td>
+                  <td>${dose||'-'}</td>
+                  <td>${freq||'-'}</td>
+                  <td>${days}</td>
+                  <td class="muted"></td>
+                </tr>`;
+        }).join('')}
+            </tbody>
+          </table>
+        </div>` : `<div class="muted">표시할 처방 내역이 없습니다.</div>`}
+      </div>
+
+      <div class="section">
+        <h3>AI 설명</h3>
+        <div class="md">${mdHtml}</div>
+        <div class="muted" style="margin-top:8px">※ 본 문서는 보호자 이해를 돕기 위한 설명 자료이며, 최종 의학적 판단은 담당 수의사의 소견을 따릅니다.</div>
+      </div>
+    `;
     }
 
     async function loadDoc(id){
@@ -265,8 +382,11 @@
     };
 
     $('#btnFormat').onclick = ()=>{
-        try{ const o=JSON.parse($('#jsonInput').value||'{}'); $('#jsonInput').value=JSON.stringify(o,null,2); toast('자동 정렬 완료'); }
-        catch{ toast('JSON 형식 오류', true); }
+        try{
+            const o=JSON.parse($('#jsonInput').value||'{}');
+            $('#jsonInput').value=JSON.stringify(o,null,2);
+            toast('자동 정렬 완료');
+        } catch { toast('JSON 형식 오류', true); }
     };
 
     btnPdf.onclick = async ()=>{
@@ -276,7 +396,16 @@
         const provider = (obj.document&&obj.document.provider)||'Report';
         const date = (obj.document&&obj.document.date)||new Date().toISOString().slice(0,10);
         const fileName = `${provider}_${date}_설명서.pdf`.replace(/[^\w가-힣_.-]+/g,'_');
-        const opt = { margin:[10,10,10,10], filename:fileName, image:{type:'jpeg',quality:0.98}, html2canvas:{scale:2,useCORS:true}, jsPDF:{unit:'mm',format:'a4',orientation:'portrait'} };
+
+        const opt = {
+            margin: [0,0,0,0],                 // ★ 마진 0 → 더 이상 잘리지 않음
+            filename: fileName,
+            image: { type:'jpeg', quality:0.98 },
+            html2canvas: { scale: 2.5, useCORS: true },
+            jsPDF: { unit:'mm', format:'a4', orientation:'portrait' },
+            pagebreak: { mode: ['css','legacy'] }  // 표 행 분리 최소화
+        };
+
         await html2pdf().from(reportRoot).set(opt).save();
     };
 
