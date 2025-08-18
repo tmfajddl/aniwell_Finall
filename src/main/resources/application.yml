@@ -85,11 +85,7 @@ naver:
 gcv:
   ocrMode: DOCUMENT_TEXT_DETECTION   # TEXT_DETECTION | DOCUMENT_TEXT_DETECTION
   credentials:
-    json: |-
-      { 
-        
-      }
-
+    json:
     path: ""
     base64: ""
 
