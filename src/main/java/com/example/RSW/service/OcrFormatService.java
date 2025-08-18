@@ -232,4 +232,16 @@ public class OcrFormatService {
 
 	private record Pair(String date, String body) {
 	}
+
+	public String suggestDocType(String text) {
+		DocType dt = detectDocType(text);
+		return (dt == null || dt == DocType.UNKNOWN) ? null : dt.name().toLowerCase();
+		// => "receipt" | "prescription" | "lab" | "diagnosis" | null
+	}
+
+	// [선택] 필요 시 enum으로 직접 받고 싶은 경우 쓸 수 있는 보조 메서드
+	public DocType suggestDocTypeEnum(String text) {
+		DocType dt = detectDocType(text);
+		return (dt == null) ? DocType.UNKNOWN : dt;
+	}
 }
