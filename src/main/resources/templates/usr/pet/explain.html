@@ -1,141 +1,290 @@
 <!doctype html>
 <html lang="ko">
 <head>
-    <meta charset="utf-8" />
-    <title>보호자 설명 생성 (JSON → Markdown)</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <!-- 선택: CDN으로 Markdown 렌더러 (없어도 실행됨; 없으면 그냥 프리텍스트로 표시) -->
+    <meta charset="utf-8"/>
+    <title>보호자 리포트</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
     <script defer src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js"></script>
     <style>
-        :root { --fg:#111; --muted:#666; --bg:#f6f7fb; --card:#fff; --accent:#4f46e5;}
-        *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.5 system-ui, -apple-system, Segoe UI, Roboto;}
-        header{padding:20px 16px}
-        .wrap{max-width:1100px;margin:0 auto;padding:0 16px 48px}
+        :root{--fg:#111;--mut:#667085;--bg:#f6f7fb;--card:#fff;--accent:#4f46e5}
+        *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.5 system-ui,-apple-system,Segoe UI,Roboto}
+        .wrap{max-width:1100px;margin:0 auto;padding:18px 16px 40px}
         .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
         .card{background:var(--card);border-radius:14px;box-shadow:0 2px 18px rgba(0,0,0,.06);padding:16px}
-        textarea{width:100%;min-height:340px;font:12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;resize:vertical;padding:12px;border:1px solid #ddd;border-radius:10px;background:#fafafa}
-        .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 0}
+        h1{margin:0 0 10px}
+        input,button,textarea{font:inherit}
+        input[type="number"],input[type="text"]{width:120px;padding:8px 10px;border:1px solid #e5e7eb;border-radius:10px;background:#fff}
         button{appearance:none;border:0;border-radius:10px;padding:10px 14px;background:var(--accent);color:#fff;font-weight:700;cursor:pointer}
-        button.secondary{background:#e5e7eb;color:#111;font-weight:600}
-        .status{margin-left:auto;color:var(--muted);display:flex;align-items:center;gap:8px}
+        button.secondary{background:#e5e7eb;color:#111}
+        .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+        .hint{color:var(--mut);font-size:12px}
+        textarea{width:100%;min-height:320px;background:#fafafa;border:1px solid #eee;border-radius:10px;padding:10px;font:12px ui-monospace,Menlo,Consolas,monospace}
+        .tabs{display:flex;gap:6px}
+        .tab{padding:8px 12px;border-radius:8px;border:1px solid #ddd;background:#f8fafc;cursor:pointer;font-weight:600}
+        .tab.active{background:#eef2ff;border-color:#c7d2fe;color:#1e1b4b}
+        .view{border:1px solid #eee;border-radius:10px;min-height:320px;background:#fff;overflow:auto;padding:16px}
+        .hidden{display:none}
+        .status{margin-left:auto;color:var(--mut);display:flex;align-items:center;gap:8px}
         .spinner{width:14px;height:14px;border:2px solid #ddd;border-top-color:var(--accent);border-radius:50%;display:inline-block;animation:spin 1s linear infinite}
         @keyframes spin{to{transform:rotate(360deg)}}
-        #out{min-height:340px;background:#fff;border:1px solid #eee;border-radius:10px;padding:16px;overflow:auto}
-        pre{white-space:pre-wrap;word-break:break-word}
-        .hint{color:var(--muted);font-size:12px;margin-top:8px}
+
+        /* Report(A4) */
+        .report-page{width:210mm;min-height:297mm;margin:0 auto;background:#fff;padding:18mm 16mm;border:1px solid #e5e7eb;border-radius:8px;box-shadow:0 1px 10px rgba(0,0,0,.05)}
+        .report-header{display:flex;justify-content:space-between;gap:16px;margin-bottom:14px}
+        .report-title{margin:0;font-size:20px}
+        .meta{font-size:12px;color:#555}
+        .kvs{display:grid;grid-template-columns:120px 1fr;gap:6px 10px;font-size:13px}
+        .section{margin:16px 0 0}
+        .section h3{margin:0 0 8px;font-size:16px}
+        table{width:100%;border-collapse:collapse;font-size:12px}
+        th,td{border:1px solid #e5e7eb;padding:8px 10px;text-align:left}
+        th{background:#f9fafb}
+        .tag{display:inline-block;padding:.1rem .5rem;border-radius:999px;font-size:11px;border:1px solid #e5e7eb;background:#f3f4f6}
+        .tag.ok{color:#064e3b;background:#ecfdf5;border-color:#d1fae5}
+        .tag.high{color:#7f1d1d;background:#fef2f2;border-color:#fee2e2}
+        .tag.low{color:#0c4a6e;background:#eff6ff;border-color:#dbeafe}
+        .muted{color:#6b7280}
+        @media print{body{background:#fff}.grid{display:block}.card{box-shadow:none}.tabs{display:none}.view{border:0;padding:0}.report-page{border:0;box-shadow:none;margin:0;width:auto;min-height:auto;padding:0}}
     </style>
 </head>
 <body>
-<header class="wrap">
-    <h1 style="margin:0 0 10px;">보호자 설명 생성</h1>
-    <div class="hint">좌측에 JSON을 붙여넣고 <b>설명 생성</b>을 누르면, 우측에 보호자 친화 설명(Markdown)이 표시됩니다.</div>
-</header>
+<div class="wrap">
+    <h1>보호자 리포트</h1>
+    <div class="row" style="margin-bottom:10px">
+        <label>문서 ID</label>
+        <input id="docIdInput" type="number" placeholder="예: 12"/>
+        <button class="secondary" id="btnLoad">불러오기</button>
+        <span class="hint">또는 URL에 <b>?docId=12</b>처럼 붙여 들어오면 자동 로드됩니다.</span>
+        <span class="status" id="status"></span>
+    </div>
 
-<div class="wrap grid">
-    <section class="card">
-        <h3 style="margin:0 0 8px;">입력 JSON</h3>
-        <textarea id="jsonInput" spellcheck="false" placeholder='{
-  "document": { "provider": "Aniwell Clinic", "date": "2025-08-10" },
-  "labs": [
-    { "code": "ALT", "value": 486.5, "unit": "U/L", "ref_low": 28, "ref_high": 106 },
-    { "code": "BUN", "value": 23,  "unit": "mg/dL", "ref_low": 16, "ref_high": 36 }
-  ],
-  "prescriptions": [
-    { "drug": "Amoxicillin", "dose": 50, "dose_unit": "mg", "freq": "BID", "route": "PO", "days": 7 }
-  ],
-  "meta": { "notes": "식욕 저하, 구토 없음" }
-}'></textarea>
+    <div class="grid">
+        <section class="card">
+            <h3 style="margin:0 0 8px;">합쳐진 JSON (문서+펫)</h3>
+            <textarea id="jsonInput" spellcheck="false" placeholder="문서 ID를 불러오면 여기에 표시됩니다."></textarea>
+            <div class="row" style="margin-top:8px">
+                <button id="btnExplain">설명 생성</button>
+                <button class="secondary" id="btnFormat">자동 정렬</button>
+            </div>
+        </section>
 
-        <div class="toolbar">
-            <button class="secondary" type="button" id="btnSample">샘플 넣기</button>
-            <button class="secondary" type="button" id="btnFormat">자동 정렬</button>
-            <button type="button" id="btnExplain">설명 생성</button>
-            <div class="status" id="status"></div>
-        </div>
-        <div class="hint">JSON 형식 오류가 있으면 먼저 <b>자동 정렬</b>로 확인하세요.</div>
-    </section>
+        <section class="card">
+            <div class="row" style="justify-content:space-between;margin-bottom:6px">
+                <div class="row" style="gap:10px">
+                    <h3 style="margin:0">출력</h3>
+                    <div class="tabs">
+                        <div class="tab active" data-tab="md">Markdown</div>
+                        <div class="tab" data-tab="report">Report</div>
+                    </div>
+                </div>
+                <div class="row" style="gap:8px">
+                    <button class="secondary" id="btnPdf" disabled>PDF로 저장</button>
+                </div>
+            </div>
 
-    <section class="card">
-        <h3 style="margin:0 0 8px;">출력 (Markdown)</h3>
-        <div id="out"><div class="hint">아직 결과가 없습니다.</div></div>
-    </section>
+            <div id="view-md" class="view"><div class="muted">아직 결과가 없습니다.</div></div>
+            <div id="view-report" class="view hidden"><div id="reportRoot" class="report-page"></div></div>
+        </section>
+    </div>
 </div>
 
-
 <script>
-    const $ = (sel)=>document.querySelector(sel);
-    const input = $('#jsonInput');
-    const out = $('#out');
+    const $ = s => document.querySelector(s);
     const statusEl = $('#status');
-    const sample = {
-        document: { provider: "Aniwell Clinic", date: "2025-08-10" },
-        labs: [
-            { code: "ALT", name: "ALT", value: 486.5, unit: "U/L", ref_low: 28, ref_high: 106 },
-            { code: "BUN", name: "BUN", value: 23, unit: "mg/dL", ref_low: 16, ref_high: 36 }
-        ],
-        prescriptions: [
-            { drug: "Amoxicillin", dose: 50, dose_unit: "mg", freq: "BID", route: "PO", days: 7 }
-        ],
-        meta: { notes: "식욕 저하, 구토 없음" }
-    };
+    const viewMd = $('#view-md');
+    const viewReport = $('#view-report');
+    const reportRoot = $('#reportRoot');
+    const btnPdf = $('#btnPdf');
 
-    $('#btnSample').onclick = ()=>{
-        input.value = JSON.stringify(sample, null, 2);
-        out.innerHTML = '<div class="hint">샘플을 입력했습니다. 설명 생성을 눌러보세요.</div>';
-    };
+    function toast(msg, err){ statusEl.innerHTML = (err?'⚠️ ':'✅ ') + msg; setTimeout(()=>statusEl.innerHTML='', 2200); }
+    function setBusy(b, t){ statusEl.innerHTML = b ? `<span class="spinner"></span> ${t||'로딩 중...'}` : ''; }
+    function escapeHtml(s){ return String(s??'').replace(/[&<>"']/g,m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m])); }
+    function num(n){ return (Number(n)).toLocaleString(undefined,{maximumFractionDigits:4}); }
+    function isNum(v){ return v!==null && v!=='' && !Number.isNaN(Number(v)); }
+    function pad2(n){ return String(n).padStart(2,'0'); }
+    function txt(s){ return escapeHtml(s==null? '' : String(s)); }
 
-    $('#btnFormat').onclick = ()=>{
-        try {
-            const obj = JSON.parse(input.value);
-            input.value = JSON.stringify(obj, null, 2);
-            toast('형식 정상 · 자동 정렬 완료');
-        } catch {
-            toast('JSON 형식 오류: 따옴표/쉼표/중괄호 확인', true);
+    function switchTab(which){
+        if (which==='md'){ $('#view-md').classList.remove('hidden'); $('#view-report').classList.add('hidden'); }
+        else { $('#view-report').classList.remove('hidden'); $('#view-md').classList.add('hidden'); }
+        document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===which));
+    }
+    document.querySelector('.tab[data-tab="md"]').onclick=()=>switchTab('md');
+    document.querySelector('.tab[data-tab="report"]').onclick=()=>switchTab('report');
+
+    function renderMarkdown(md){
+        if (window.marked && typeof marked.parse==='function') viewMd.innerHTML = marked.parse(md||'');
+        else viewMd.innerHTML = '<pre>'+escapeHtml(md||'')+'</pre>';
+    }
+    function renderReport(obj, md){
+        obj = obj||{};
+        const doc = obj.document||{};
+        const pet = obj.pet||{};
+        const labs = Array.isArray(obj.labs)? obj.labs : [];
+        const meds = Array.isArray(obj.prescriptions)? obj.prescriptions : [];
+        const notes = (obj.meta&&obj.meta.notes)||'';
+
+        const labRows = labs.map(l=>{
+            const lo=isNum(l.ref_low)?Number(l.ref_low):null, hi=isNum(l.ref_high)?Number(l.ref_high):null;
+            const val=isNum(l.value)?Number(l.value):null;
+            let flag='ok'; if(val!=null && (lo!=null||hi!=null)){ if(hi!=null&&val>hi)flag='high'; else if(lo!=null&&val<lo)flag='low'; }
+            return { code:l.code||l.name||'', value:val, unit:l.unit||'', lo, hi, flag };
+        });
+
+        const abn = labRows.filter(r=>r.flag!=='ok');
+        const abnSummary = abn.length ? abn.map(r=>`${r.code}${r.value!=null?' '+r.value:''}${r.unit?' '+r.unit:''} (${r.flag==='high'?'상승':'저하'})`).join(', ') : '특이 소견 없음';
+
+        const now = new Date();
+        const generatedAt = `${now.getFullYear()}-${pad2(now.getMonth()+1)}-${pad2(now.getDate())} ${pad2(now.getHours())}:${pad2(now.getMinutes())}`;
+        const mdHtml = (window.marked && typeof marked.parse==='function') ? marked.parse(md||'') : '<pre>'+escapeHtml(md||'')+'</pre>';
+
+        reportRoot.innerHTML = `
+    <div class="report-header">
+      <div>
+        <h2 class="report-title">보호자 설명서</h2>
+        <div class="meta">
+          의료기관: <b>${txt(doc.provider||'')}</b><br/>
+          문서일자: ${txt(doc.date||'')}<br/>
+          생성시각: ${txt(generatedAt)}
+        </div>
+      </div>
+      <div class="meta" style="text-align:right">
+        <div><b>반려동물 정보</b></div>
+        <div class="kvs" style="grid-template-columns:90px 1fr;margin-top:6px">
+          <div>이름</div><div>${txt(pet.name||'-')}</div>
+          <div>종</div><div>${txt(pet.species||'-')}</div>
+          <div>나이</div><div>${pet.age!=null? txt(pet.age)+'세':'-'}</div>
+          <div>성별</div><div>${txt(pet.sex||'-')}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>요약</h3>
+      <div class="kvs">
+        <b>이상 소견</b><div>${abn.length? `<span class="tag high">${abn.length}개</span>` : '<span class="tag ok">없음</span>'}</div>
+        <b>이상 항목</b><div>${txt(abnSummary)}</div>
+        <b>메모</b><div>${txt(notes||'-')}</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>검사 결과</h3>
+      ${labRows.length ? `
+      <table>
+        <thead><tr><th style="width:22%">항목</th><th style="width:18%">결과</th><th style="width:22%">참고범위</th><th style="width:15%">판정</th><th>비고</th></tr></thead>
+        <tbody>
+          ${labRows.map(r=>`
+            <tr>
+              <td>${txt(r.code)}</td>
+              <td>${r.value!=null? num(r.value)+(r.unit?' '+txt(r.unit):''):'-'}</td>
+              <td>${(r.lo!=null? num(r.lo):'–')} ~ ${(r.hi!=null? num(r.hi):'–')}</td>
+              <td>${r.flag==='ok' ? '<span class="tag ok">정상</span>' : (r.flag==='high' ? '<span class="tag high">상승</span>' : '<span class="tag low">저하</span>')}</td>
+              <td class="muted"></td>
+            </tr>`).join('')}
+        </tbody>
+      </table>` : `<div class="muted">표시할 검사 결과가 없습니다.</div>`}
+    </div>
+
+    <div class="section">
+      <h3>투약/처방</h3>
+      ${meds.length ? `
+      <table>
+        <thead><tr><th style="width:32%">약품명</th><th style="width:18%">용량</th><th style="width:18%">용법</th><th style="width:12%">기간</th><th>비고</th></tr></thead>
+        <tbody>
+          ${meds.map(m=>{
+            const dose=(m.dose!=null? num(m.dose):'')+(m.dose_unit? ' '+txt(m.dose_unit):'');
+            const freq=[m.freq,m.route].filter(Boolean).join(' / ');
+            const days=m.days!=null? `${num(m.days)}일`:'-';
+            return `<tr>
+              <td>${txt(m.drug||'-')}</td>
+              <td>${dose||'-'}</td>
+              <td>${freq||'-'}</td>
+              <td>${days}</td>
+              <td class="muted"></td>
+            </tr>`;
+        }).join('')}
+        </tbody>
+      </table>` : `<div class="muted">표시할 처방 내역이 없습니다.</div>`}
+    </div>
+
+    <div class="section">
+      <h3>AI 설명</h3>
+      ${mdHtml}
+    </div>
+    <div class="muted" style="margin-top:8px">※ 본 문서는 보호자 이해를 돕기 위한 설명 자료이며, 최종 의학적 판단은 담당 수의사의 소견을 따릅니다.</div>
+  `;
+    }
+
+    async function loadDoc(id){
+        setBusy(true,'불러오는 중…');
+        try{
+            const structured = await fetch(`/api/ai/doc/${id}/structured`).then(r=>r.json());
+            $('#jsonInput').value = JSON.stringify(structured,null,2);
+
+            const explained = await fetch(`/api/ai/doc/${id}/explain`).then(r=>r.json());
+            const md = explained.markdown || '';
+            renderMarkdown(md);
+            renderReport(structured, md);
+            btnPdf.disabled = false;
+            switchTab('report'); // 보고서 탭으로
+            toast('로드 완료');
+        }catch(e){
+            toast('로드 실패: '+e, true);
+        }finally{
+            setBusy(false);
         }
+    }
+
+    $('#btnLoad').onclick = ()=>{
+        const id = Number($('#docIdInput').value);
+        if(!id){ toast('문서 ID를 입력하세요', true); return; }
+        loadDoc(id);
     };
 
     $('#btnExplain').onclick = async ()=>{
-        let obj;
-        try {
-            obj = JSON.parse(input.value);
-        } catch {
-            toast('JSON 형식 오류: 먼저 자동 정렬을 눌러 확인하세요', true);
-            return;
-        }
-        setBusy(true);
-        try {
-            const res = await fetch('/api/ai/explain', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(obj)
+        try{
+            const obj = JSON.parse($('#jsonInput').value||'{}');
+            setBusy(true,'설명 생성 중…');
+            const res = await fetch('/api/ai/explain?detailed=true',{
+                method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(obj)
             });
-            const data = await res.json().catch(()=> ({}));
-            const md = data.markdown || '서버 응답이 비었습니다.';
+            const data = await res.json();
+            const md = data.markdown || '';
             renderMarkdown(md);
+            renderReport(obj, md);
+            btnPdf.disabled = false;
+            switchTab('report');
             toast('완료');
-        } catch (e) {
-            renderMarkdown(`설명 생성 실패: ${e}`);
-            toast('오류', true);
-        } finally {
+        }catch(e){
+            toast('오류: '+e, true);
+        }finally{
             setBusy(false);
         }
     };
 
-    function renderMarkdown(md){
-        if (window.marked && typeof marked.parse === 'function') {
-            out.innerHTML = marked.parse(md);
-        } else {
-            out.innerHTML = '<pre>'+escapeHtml(md)+'</pre>';
-        }
-    }
-    function escapeHtml(s){ return s.replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m])); }
-    function setBusy(b){
-        statusEl.innerHTML = b ? '<span class="spinner"></span> 생성 중...' : '';
-    }
-    function toast(msg, err){
-        statusEl.innerHTML = (err ? '⚠️ ' : '✅ ') + msg;
-        setTimeout(()=>{ statusEl.innerHTML=''; }, 2500);
-    }
+    $('#btnFormat').onclick = ()=>{
+        try{ const o=JSON.parse($('#jsonInput').value||'{}'); $('#jsonInput').value=JSON.stringify(o,null,2); toast('자동 정렬 완료'); }
+        catch{ toast('JSON 형식 오류', true); }
+    };
+
+    btnPdf.onclick = async ()=>{
+        if(!window.html2pdf){ toast('PDF 라이브러리 로드 중', true); return; }
+        switchTab('report');
+        const obj = JSON.parse($('#jsonInput').value||'{}');
+        const provider = (obj.document&&obj.document.provider)||'Report';
+        const date = (obj.document&&obj.document.date)||new Date().toISOString().slice(0,10);
+        const fileName = `${provider}_${date}_설명서.pdf`.replace(/[^\w가-힣_.-]+/g,'_');
+        const opt = { margin:[10,10,10,10], filename:fileName, image:{type:'jpeg',quality:0.98}, html2canvas:{scale:2,useCORS:true}, jsPDF:{unit:'mm',format:'a4',orientation:'portrait'} };
+        await html2pdf().from(reportRoot).set(opt).save();
+    };
+
+    (function initFromQuery(){
+        const p=new URLSearchParams(location.search);
+        const id=p.get('docId');
+        if(id){ $('#docIdInput').value=id; loadDoc(id).catch(()=>{}); }
+    })();
 </script>
 </body>
 </html>
