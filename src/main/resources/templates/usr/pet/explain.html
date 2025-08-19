@@ -4,6 +4,10 @@
     <meta charset="utf-8"/>
     <title>보호자 리포트</title>
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <!-- (선택) 스프링 CSRF 메타가 있으면 자동으로 읽어 사용합니다. -->
+    <!-- <meta name="_csrf" content="${_csrf.token}"/> -->
+    <!-- <meta name="_csrf_header" content="${_csrf.headerName}"/> -->
+
     <script defer src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js"></script>
     <style>
@@ -128,7 +132,15 @@
         list: (petId) => `/usr/pet/lab-docs?petId=${petId}&page=1&pageSize=100`,
         structured: (id) => `/api/ai/doc/${id}/structured`,
         explain: (id) => `/api/ai/doc/${id}/explain?detailed=true`,
+        updateHospital: (visitId) => `/usr/visit/${visitId}/hospital`
     };
+
+    function getCsrf(){
+        const token = document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
+        const header = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content') || 'X-CSRF-TOKEN';
+        return token ? { header, token } : null;
+    }
+    const CSRF = getCsrf();
 
     function toast(msg, err){ statusEl.innerHTML = (err?'⚠️ ':'✅ ') + msg; setTimeout(()=>statusEl.innerHTML='', 2200); }
     function setBusy(b, t){ statusEl.innerHTML = b ? `<span class="spinner"></span> ${t||'로딩 중...'}` : ''; }
@@ -152,10 +164,8 @@
         else viewMd.innerHTML = '<pre style="padding:14px">'+escapeHtml(md||'')+'</pre>';
     }
 
-    // 현재 문서 캐시
     const CURRENT = { id: null, structured: null, md: '' };
 
-    // 나이 표시
     function formatAge(pet, refDate){
         if (!pet) return '-';
         let y = toInt(pet.age);
@@ -277,7 +287,6 @@
     `;
     }
 
-    // 목록 메타(병원/날짜 보완)
     const DOC_META = new Map();
 
     async function loadDocsForPet(petId){
@@ -329,7 +338,7 @@
             const title = `[${dateText}] <span class="hospital" data-id="${it.documentId}">${txt(it.hospitalName || '병원 미상')}</span>`;
 
             return `
-        <div class="doc-item" data-id="${it.documentId}">
+        <div class="doc-item" data-id="${it.documentId}" data-visit="${it.visitId}">
           <div>
             <div class="doc-title">${title}
               <button class="secondary small edit-btn" data-id="${it.documentId}">수정</button>
@@ -347,44 +356,72 @@
         </div>`;
         }).join('');
 
-        // 이벤트 위임: 한 번 클릭으로 문서 열림, 수정 UI는 전파 막음
-        box.onclick = (e)=>{
+        // 이벤트 위임
+        box.onclick = async (e)=>{
             const t = e.target;
 
-            // 수정/저장/취소 버튼 처리 (문서 열기 전파 막기)
+            // 편집 관련: 전파 막기
             if (t.classList.contains('edit-btn')) {
                 e.stopPropagation();
                 const id = t.dataset.id;
                 const eb = box.querySelector(`.editbox[data-id="${id}"]`);
                 eb.style.display = 'flex';
-                const inp = eb.querySelector('.edit-input');
-                inp.focus();
+                eb.querySelector('.edit-input').focus();
                 return;
             }
             if (t.classList.contains('save-btn')) {
                 e.stopPropagation();
-                const id = t.dataset.id;
-                const eb = box.querySelector(`.editbox[data-id="${id}"]`);
+
+                const docId = (t.dataset.id || '').trim();
+                const itemEl = t.closest('.doc-item');
+                const eb = box.querySelector(`.editbox[data-id="${docId}"]`);
                 const inp = eb.querySelector('.edit-input');
-                const name = inp.value.trim();
-                // DOC_META 갱신
-                const meta = DOC_META.get(String(id)) || {};
+                const name = (inp.value || '').trim().replace(/\s+/g, ' ');
+
+                // visitId 확보: 우선 .doc-item의 data-visit, 없으면 메타 캐시, 그래도 없으면 버튼 data-visit
+                const meta = DOC_META.get(docId) || {};
+                const visitId = (itemEl && itemEl.dataset.visit) || meta.visitId || (t.dataset.visit || '').trim();
+
+                if (!name) { toast('병원명을 입력해 주세요.', true); inp.focus(); return; }
+                if (!visitId) { toast('visitId를 찾을 수 없습니다. 목록 템플릿에 data-visit을 추가했는지 확인하세요.', true); return; }
+
+                // 서버 반영 (POST)
+                t.disabled = true;
+                try {
+                    const res = await fetch(`/api/visit/${visitId}/hospital`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ hospital: name })
+                    });
+                    const data = await res.json().catch(() => ({}));
+                    if (!res.ok || data.ok === false) throw new Error(data.message || `HTTP ${res.status}`);
+                } catch (err) {
+                    t.disabled = false;
+                    toast('서버 저장 실패: ' + err.message, true);
+                    return;
+                }
+                t.disabled = false;
+
+                // 로컬 메타 & UI 갱신
                 meta.hospitalName = name;
-                DOC_META.set(String(id), meta);
-                // 리스트 텍스트 갱신
-                const label = box.querySelector(`.hospital[data-id="${id}"]`);
+                meta.visitId = visitId; // 캐시에 보강 저장
+                DOC_META.set(docId, meta);
+
+                const label = box.querySelector(`.hospital[data-id="${docId}"]`);
                 if (label) label.textContent = name || '병원 미상';
                 eb.style.display = 'none';
 
-                // 현재 열려 있는 리포트도 갱신
-                if (String(CURRENT.id) === String(id) && CURRENT.structured) {
+                if (String(CURRENT.id) === String(docId) && CURRENT.structured) {
                     CURRENT.structured.document = CURRENT.structured.document || {};
                     CURRENT.structured.document.provider = name || null;
                     renderReport(CURRENT.structured, CURRENT.md);
                 }
-                toast('병원명이 변경되었습니다.');
+                toast('병원명이 저장되었습니다.');
                 return;
             }
+
+
+
             if (t.classList.contains('cancel-btn')) {
                 e.stopPropagation();
                 const id = t.dataset.id;
@@ -392,28 +429,24 @@
                 eb.style.display = 'none';
                 return;
             }
-            if (t.closest('.editbox')) {
-                // 편집 영역 내부 클릭은 문서 열기 방지
-                e.stopPropagation();
-                return;
-            }
+            if (t.closest('.editbox')) { e.stopPropagation(); return; }
 
-            // 👉 일반 아이템 클릭: 즉시 문서 열기(한 번 클릭)
+            // 일반 아이템 클릭: 한 번에 문서 열기
             const item = t.closest('.doc-item');
             if(item){ loadDoc(item.dataset.id); }
         };
 
-        // 편집 인풋: Enter 저장, Esc 취소
+        // 엔터 저장 / ESC 취소
         box.addEventListener('keydown', (e)=>{
             const inp = e.target;
             if (!inp.classList || !inp.classList.contains('edit-input')) return;
             const id = inp.dataset.id;
             if (e.key === 'Enter') {
-                const saveBtn = box.querySelector(`.save-btn[data-id="${id}"]`);
-                saveBtn?.click();
+                e.preventDefault();
+                box.querySelector(`.save-btn[data-id="${id}"]`)?.click();
             } else if (e.key === 'Escape') {
-                const cancelBtn = box.querySelector(`.cancel-btn[data-id="${id}"]`);
-                cancelBtn?.click();
+                e.preventDefault();
+                box.querySelector(`.cancel-btn[data-id="${id}"]`)?.click();
             }
         });
     }
@@ -425,7 +458,7 @@
         setBusy(true,'문서 로딩 중…');
 
         try {
-            // 1) structured
+            // structured
             const r1 = await fetch(API.structured(id));
             if(!r1.ok) throw new Error(`structured HTTP ${r1.status}`);
             let structured = norm(await r1.json());
@@ -436,7 +469,7 @@
             if(!structured.document.provider && meta.hospitalName){ structured.document.provider = meta.hospitalName; }
             if(!structured.document.date && meta.visitDate){ structured.document.date = String(meta.visitDate).slice(0,10); }
 
-            // 2) explain(실패해도 렌더)
+            // explain(실패해도 렌더)
             let md = '';
             try{
                 const r2 = await fetch(API.explain(id));
@@ -452,14 +485,13 @@
                 toast('설명 로드 실패', true);
             }
 
-            // 캐시 및 렌더
             CURRENT.id = id;
             CURRENT.structured = structured;
             CURRENT.md = md;
 
             renderMarkdown(md);
             renderReport(structured, md);
-            btnPdf.disabled = !md || !md.trim().length ? true : false;
+            btnPdf.disabled = !(md && md.trim().length);
 
             switchTab('report');
             toast('문서 로드 완료');
