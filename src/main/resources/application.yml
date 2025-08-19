@@ -6,7 +6,7 @@ spring:
     host: smtp.sendgrid.net
     port: 587
     username: apikey
-    password:
+    password:  # 푸시할 떄마다 지우기
     properties:
       mail.smtp.auth: true
       mail.smtp.starttls.enable: true
@@ -18,7 +18,7 @@ spring:
       redirect-uri: "http://localhost:8080/usr/member/google"
 
   session:
-    store-type: none   # Redis 비활성화
+    store-type: redis   # Redis 비활성화
 #    store-type: redis # Redis 활성화
 
   autoconfigure:
@@ -53,12 +53,12 @@ custom:
 
   redis:
     enabled: true                # false면 Redis 완전 비활성화 / true - Redis 활성화
-    use-personal: true           # true: 개인 Redis / false: 팀 공유 Redis
+    use-personal: false           # true: 개인 Redis / false: 팀 공유 Redis
     personal-host: 100.114.185.63
     personal-port: 6379
     shared-host: 100.65.187.38
     shared-port: 6379
-    password: ${aniwell1234}
+    password: "aniwell1234"
 
 
 kakao:

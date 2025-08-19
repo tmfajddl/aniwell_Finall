@@ -1,6 +1,7 @@
 package com.example.RSW.config;
 
-import org.junit.jupiter.api.Order;
+//import org.junit.jupiter.api.Order;
+import org.springframework.core.annotation.Order;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -38,6 +39,7 @@ public class SecurityConfig {
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers("/api/sms/**").permitAll()
                         .requestMatchers("/api/member/**").authenticated()
                         .requestMatchers("/api/pet/**").authenticated()
                         // 공개 API가 필요하면 ↓ 경로로 붙이세요.
@@ -85,7 +87,7 @@ public class SecurityConfig {
                         /* ✅ 공개 API: S3가 호출하는 엔드포인트 */
                         .requestMatchers(HttpMethod.GET, "/api/**").permitAll()
                         // 필요하면 POST/DELETE도 공개
-                        //.requestMatchers(HttpMethod.POST, "/api/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/**").permitAll()
                         //.requestMatchers(HttpMethod.DELETE, "/api/**").permitAll()
 
                         /* (선택) 외부에서 직접 호출할 엔드포인트 있으면 유지 */
