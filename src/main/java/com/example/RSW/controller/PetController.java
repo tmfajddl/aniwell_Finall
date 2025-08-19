@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -53,16 +54,7 @@ public class PetController {
 	private Cloudinary cloudinary;
 
 	@Autowired
-	private VisitService visitService;
-
-	@Autowired
-	private PetHealthService petHealthService;
-
-	@Autowired
-	private LabResultDetailService labResultDetailService;
-
-	@Autowired
-	private PrescriptionDetailService prescriptionDetailService;
+	private DocComposeService composeService;
 
 	@Autowired
 	private MedicalDocumentService medicalDocumentService;
@@ -741,10 +733,39 @@ public class PetController {
 		return "usr/pet/qrTest"; // → templates/usr/pet/qr.html
 	}
 
-	@RequestMapping("/usr/pet/explain")
-	public String showPage() {
-		return "usr/pet/explain"; // → templates/usr/pet/qr.html
+	// 페이지 라우팅: petId만 받아 템플릿 오픈
+	@GetMapping("/usr/pet/explain")
+	public String showExplainPage(@RequestParam("petId") int petId,
+								  @RequestParam(value="docId", required=false) Integer docId,
+								  Model model){
+		model.addAttribute("petId", petId);
+		model.addAttribute("docId", docId);
+		return "usr/pet/explain"; // templates/usr/pet/explain.html
 	}
+
+	// 목록 API: lab 문서 + 병원/방문일 포함
+	@GetMapping("/usr/pet/lab-docs")
+	@ResponseBody
+	public Map<String,Object> listLabDocs(@RequestParam int petId,
+										  @RequestParam(defaultValue="1") int page,
+										  @RequestParam(defaultValue="100") int pageSize){
+		Map<String,Object> data = medicalDocumentService.getLabDocsByPetId(petId, page, pageSize);
+		return Map.of("rows", data.get("rows"), "total", data.get("total"),
+				"page", data.get("page"), "pageSize", data.get("pageSize"));
+	}
+
+	@GetMapping(value = "/usr/pet/doc/{docId}/structured", produces = MediaType.APPLICATION_JSON_VALUE)
+	@ResponseBody
+	public Map<String, Object> getStructured(@PathVariable int docId) {
+		return composeService.getStructuredByDocId(docId);
+	}
+
+	@GetMapping(value = "/usr/pet/doc/{docId}/explain", produces = MediaType.APPLICATION_JSON_VALUE)
+	@ResponseBody
+	public Map<String, Object> explainMarkdownByDocId(@PathVariable int docId) {
+		return composeService.explainMarkdownByDocId(docId);
+	}
+
 
 	@RequestMapping("/usr/pet/convert")
 	public String showPages() {

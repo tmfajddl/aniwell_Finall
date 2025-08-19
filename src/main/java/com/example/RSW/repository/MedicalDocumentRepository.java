@@ -1,10 +1,13 @@
 package com.example.RSW.repository;
 
+import com.example.RSW.dto.DocEnvelopeDto;
+import com.example.RSW.dto.LabDocumentDto;
 import com.example.RSW.vo.MedicalDocument;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
+import java.util.Map;
 
 @Mapper
 public interface MedicalDocumentRepository {
@@ -25,4 +28,15 @@ public interface MedicalDocumentRepository {
     MedicalDocument findById(int id);
 
     MedicalDocument findLatestByVisitId(int visitId);
+
+    List<LabDocumentDto> selectLabDocsByPetId(
+            @Param("petId") int petId,
+            @Param("offset") int offset,
+            @Param("limit") int limit
+    );
+
+    int countLabDocsByPetId(@Param("petId") int petId);
+
+    // ★ structured용
+    DocEnvelopeDto selectDocEnvelopeById(@Param("docId") int docId);
 }

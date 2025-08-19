@@ -24,4 +24,5 @@ public class Visit {
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss") // (선택)
     private LocalDateTime updatedAt;
+
 }
