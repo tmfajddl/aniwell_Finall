@@ -10,7 +10,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.util.StringUtils;
@@ -775,15 +777,45 @@ public class PetController {
 		return "usr/pet/convert"; // → templates/usr/pet/qr.html
 	}
 
-	@PatchMapping("/visit/{visitId}/hospital")
-	public Map<String,Object> updateVisitHospital(@PathVariable int visitId,
-												  @RequestBody Map<String, String> body) {
-		String hospital = body == null ? null : body.get("hospital");
-		if (!StringUtils.hasText(hospital)) {
-			return Map.of("ok", false, "message", "병원명은 비워둘 수 없습니다.");
+	@PostMapping(
+			value = "api/visit/{visitId}/hospital",
+			consumes = MediaType.APPLICATION_JSON_VALUE,
+			produces = MediaType.APPLICATION_JSON_VALUE
+	)
+	public ResponseEntity<Map<String, Object>> updateVisitHospital(
+			@PathVariable int visitId,
+			@RequestBody(required = false) Map<String, String> body
+	) {
+		String hospital = (body == null) ? null : body.get("hospital");
+		if (hospital != null) {
+			hospital = hospital.trim().replaceAll("\\s+", " ");
 		}
-		int n = visitService.updateHospital(visitId, hospital.trim());
-		return Map.of("ok", n == 1, "visitId", visitId, "hospital", hospital.trim());
-	}
+		if (!StringUtils.hasText(hospital)) {
+			return ResponseEntity.badRequest().body(
+					Map.of("ok", false, "message", "병원명은 비워둘 수 없습니다.")
+			);
+		}
+		if (hospital.length() > 100) {
+			return ResponseEntity.badRequest().body(
+					Map.of("ok", false, "message", "병원명은 100자 이내로 입력해주세요.")
+			);
+		}
 
+		try {
+			int updated = visitService.updateHospital(visitId, hospital);
+			if (updated == 0) {
+				return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+						Map.of("ok", false, "visitId", visitId, "message", "해당 방문(visit)을 찾을 수 없습니다.")
+				);
+			}
+			return ResponseEntity.ok(
+					Map.of("ok", true, "visitId", visitId, "hospital", hospital)
+			);
+		} catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+					Map.of("ok", false, "visitId", visitId, "message", "저장 중 오류가 발생했습니다.")
+			);
+		}
+	}
 }
+
