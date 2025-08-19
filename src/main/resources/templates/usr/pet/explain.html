@@ -1,449 +1,279 @@
 <!doctype html>
 <html lang="ko">
 <head>
-<meta charset="utf-8" />
-<title>보호자 리포트</title>
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<!-- (선택) 스프링 CSRF 메타가 있으면 자동으로 읽어 사용합니다. -->
-<!-- <meta name="_csrf" content="${_csrf.token}"/> -->
-<!-- <meta name="_csrf_header" content="${_csrf.headerName}"/> -->
+    <meta charset="utf-8"/>
+    <title>보호자 리포트</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
 
-<script defer src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-<script defer src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js"></script>
-<style>
-:root {
-	--ink: #0f172a;
-	--mut: #64748b;
-	--bg: #f6f7fb;
-	--card: #fff;
-	--primary: #4f46e5;
-	--ok: #16a34a;
-	--high: #ef4444;
-	--low: #0ea5e9;
-	--warn: #f59e0b;
-	--line: #e5e7eb;
-	--zebra: #fafafa;
-}
+    <!-- Tailwind: CDN 하나만 사용 -->
+    <script src="https://cdn.tailwindcss.com"></script>
 
-* {
-	box-sizing: border-box
-}
+    <script defer src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js"></script>
 
-body {
-	margin: 0;
-	background: var(--bg);
-	color: var(--ink);
-	font: 14px/1.55 'Pretendard', 'Noto Sans KR', system-ui, -apple-system,
-		Segoe UI, Roboto
-}
+    <link rel="stylesheet" th:href="@{/resource/css/common.css}">
+    <link rel="stylesheet" th:href="@{/resource/css/global.css}">
 
-.wrap {
-	max-width: 1100px;
-	margin: 0 auto;
-	padding: 18px 16px 40px
-}
+    <style>
+        :root{
+            --ink:#0f172a; --mut:#6b7280; --line:#e5e7eb; --zebra:#fafafa;
+            --primary:#15803d;          /* main green */
+            --primary-700:#166534;      /* darker green */
+            --primary-soft:#eaf6ef;     /* very light green */
+            --tone-50:#f6fbf7;          /* subtle green bg */
+            --tone-100:#edf6f0;
+            --tone-200:#dcebe1;
+            --card:#ffffff;
 
-.grid {
-	display: grid;
-	grid-template-columns: 360px 1fr;
-	gap: 16px
-}
+            /* 기존 코드 호환용 */
+            --accent:#15803d;
+            --accent-600:#166534;
+            --accent-soft:#eef7f2;
 
-.card {
-	background: var(--card);
-	border-radius: 16px;
-	box-shadow: 0 10px 30px rgba(2, 6, 23, .06);
-	padding: 16px
-}
+            /* 판정 색상(OK/High/Low) */
+            --ok-bg:#dcfce7;   --ok-border:#bbf7d0;   --ok-fg:#166534;   /* green  */
+            --high-bg:#fee2e2; --high-border:#fecaca; --high-fg:#991b1b; /* red    */
+            --low-bg:#fef9c3;  --low-border:#fde68a;  --low-fg:#854d0e;  /* yellow */
+        }
 
-h1 {
-	margin: 0 0 12px;
-	font-size: 22px;
-	letter-spacing: -.2px
-}
+        *{box-sizing:border-box}
+        html{ font-size:16px; } /* 전반적으로 작게 */
 
-button {
-	appearance: none;
-	border: 0;
-	border-radius: 12px;
-	padding: 10px 14px;
-	background: var(--primary);
-	color: #fff;
-	font-weight: 700;
-	cursor: pointer;
-	box-shadow: 0 6px 14px rgba(79, 70, 229, .18)
-}
+        /* 레이아웃 */
+        .wrap > .grid{display:grid;grid-template-columns:360px 1fr;gap:16px}
+        .card{
+            background:var(--card);
+            border-radius:16px;
+            box-shadow:0 10px 30px rgba(2,6,23,.06);
+            padding:16px;
+            max-height:100vh;
+            border:1px solid var(--tone-200);
+        }
 
-button.secondary {
-	background: #e5e7eb;
-	color: #111;
-	box-shadow: none
-}
+        /* 타이포 */
+        h1{margin:0 0 8px;font-size:18px;letter-spacing:-.2px}
+        .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+        .hint{color:var(--mut);font-size:10px}
+        .status{margin-left:auto;color:var(--mut);display:flex;align-items:center;gap:8px}
 
-button.small {
-	padding: 6px 10px;
-	font-size: 12px;
-	border-radius: 8px
-}
+        /* 버튼 */
+        button{
+            appearance:none;border:0;border-radius:12px;padding:8px 12px;
+            background:var(--primary); color:#fff;font-weight:700;cursor:pointer;
+            box-shadow:0 6px 14px rgba(22,163,74,.12);
+            transition:transform .05s ease, filter .15s ease;
+            font-size:12px;
+        }
+        button:hover{filter:brightness(1.03)}
+        button:active{transform:translateY(1px)}
+        button.secondary{
+            background:var(--tone-100);
+            color:#111827;
+            border:1px solid var(--tone-200);
+            box-shadow:none;
+        }
+        button.small{padding:5px 9px;font-size:11px;border-radius:8px}
 
-.row {
-	display: flex;
-	gap: 10px;
-	align-items: center;
-	flex-wrap: wrap
-}
+        /* 탭 */
+        .tabs{display:flex;gap:6px}
+        .tab{
+            padding:8px 12px;border-radius:10px;border:1px solid var(--tone-200);
+            background:var(--tone-100);cursor:pointer;font-weight:700;color:#334155;
+            font-size:12px;
+        }
+        .tab.active{
+            background:var(--primary-soft);border-color:var(--tone-200);color:var(--primary-700);
+        }
 
-.hint {
-	color: var(--mut);
-	font-size: 12px
-}
+        /* 컨텐츠 뷰 (높이/스크롤 유지) */
+        .view{border:1px solid var(--tone-200);border-radius:14px; max-height:80vh; background:#fff;overflow:auto;padding:0}
+        .view.hidden{display:none}
 
-.status {
-	margin-left: auto;
-	color: var(--mut);
-	display: flex;
-	align-items: center;
-	gap: 8px
-}
+        /* Report (A4) */
+        .report-page{
+            width:210mm;min-height:297mm;margin:0 auto;background:#fff;
+            padding:18mm 16mm;border-radius:12px;border:1px solid var(--tone-200);
+            /* 화면에서만 보이는 은은한 배경 */
+            background-image:
+                    radial-gradient(1200px 600px at -15% -20%, var(--accent-soft), transparent),
+                    radial-gradient(1200px 600px at 120% -10%, #e6ffe6, transparent);
+        }
+        .report-header{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin-bottom:14px}
+        .brand{font-weight:900;font-size:16px;letter-spacing:-.3px;color:var(--primary)}
+        .brand small{display:block;color:var(--mut);font-weight:600;font-size:11px;margin-top:2px}
+        .meta{font-size:11px;color:var(--mut)}
+        .section{margin:16px 0 0}
+        .section h3{
+            margin:0 0 8px;font-size:14px;letter-spacing:-.2px;
+            display:flex;align-items:center;gap:8px;
+        }
+        .section h3::after{
+            content:"";flex:1;height:1px;background:linear-gradient(90deg,var(--tone-200),transparent);
+            opacity:.7;
+        }
 
-.spinner {
-	width: 14px;
-	height: 14px;
-	border: 2px solid #e2e8f0;
-	border-top-color: var(--primary);
-	border-radius: 50%;
-	display: inline-block;
-	animation: spin 1s linear infinite
-}
+        /* 표 */
+        table{width:100%;border-collapse:separate;border-spacing:0;font-size:11px}
+        thead th{
+            position:sticky;top:0;background:#f7fbf8;border-bottom:1px solid var(--tone-200);
+            text-align:left;padding:8px 10px;font-weight:900;color:#14532d;
+        }
+        tbody td{border-bottom:1px solid var(--tone-200);padding:8px 10px}
+        tbody tr:nth-child(odd){background:var(--zebra)}
 
-@
-keyframes spin {
-	to {transform: rotate(360deg)
-}
+        /* 태그/뱃지 (R/G/Y) */
+        .muted{ color: var(--mut); }
+        .tag{
+            display:inline-flex;gap:6px;padding:2px 8px;border-radius:999px;
+            font-weight:800;font-size:10px;border:1px solid var(--tone-200);
+        }
+        .tag.ok  { background:var(--ok-bg);   border-color:var(--ok-border);   color:var(--ok-fg); }
+        .tag.high{ background:var(--high-bg); border-color:var(--high-border); color:var(--high-fg); }
+        .tag.low { background:var(--low-bg);  border-color:var(--low-border);  color:var(--low-fg); }
 
-}
-.tabs {
-	display: flex;
-	gap: 6px
-}
+        /* 펫 카드 */
+        .pet-card{
+            display:grid;grid-template-columns:92px 1fr;gap:8px 14px;
+            border:1px solid var(--tone-200);border-radius:12px;padding:10px 12px;
+            background:linear-gradient(180deg,#f8faf9,#fff);
+            box-shadow:inset 0 0 0 2px rgba(22,163,74,.12);
+        }
 
-.tab {
-	padding: 8px 12px;
-	border-radius: 10px;
-	border: 1px solid var(--line);
-	background: #f8fafc;
-	cursor: pointer;
-	font-weight: 600
-}
+        .card-soft{
+            border:1px solid var(--tone-200);border-radius:12px;padding:12px;
+            background:linear-gradient(180deg,#ffffff, #f7fbf8);
+            font-size:12px;
+        }
 
-.tab.active {
-	background: #eef2ff;
-	border-color: #c7d2fe;
-	color: #3730a3
-}
+        /* 문서 리스트 */
+        .doc-top{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;margin-bottom:6px}
+        .doc-list{border:1px solid var(--tone-200);border-radius:12px;overflow:hidden}
+        .doc-item{
+            display:grid;grid-template-columns:1fr auto;gap:8px;padding:10px 12px;
+            border-bottom:1px solid var(--tone-200);cursor:pointer;background:#fff;
+            transition:background .15s ease, box-shadow .15s ease;
+        }
+        .doc-item:nth-child(odd){background:var(--zebra)}
+        .doc-item:hover{background:var(--tone-50)}
+        .doc-item.active{outline:2px solid #bbf7d0;background:var(--primary-soft)}
+        .doc-title{font-weight:900;font-size:14px}
+        .doc-meta{font-size:11px;color:var(--mut)}
+        .empty{padding:12px;color:var(--mut)}
+        .editbox{display:none;gap:6px;margin-top:6px}
+        .editbox input{padding:6px 8px;border:1px solid var(--tone-200);border-radius:8px;font:inherit}
+        .actions{display:flex;gap:6px}
 
-.view {
-	border: 1px solid var(--line);
-	border-radius: 14px;
-	min-height: 320px;
-	background: #fff;
-	overflow: auto;
-	padding: 0
-}
+        /* 스피너 */
+        .spinner{width:14px;height:14px;border:2px solid #e2e8f0;border-top-color:var(--primary); border-radius:50%;display:inline-block;animation:spin 1s linear infinite}
+        @keyframes spin{to{transform:rotate(360deg)}}
 
-.view.hidden {
-	display: none
-}
+        /* 인쇄 */
+        @media print{
+            body{background:#fff}
+            .wrap > .grid{display:block}
+            .card{box-shadow:none}
+            .tabs{display:none}
+            .view{border:0}
+            .report-page{border-radius:0;padding:12mm 12mm;background:#fff}
+            thead th{position:static}
+        }
 
-/* Report (A4) */
-.report-page {
-	width: 210mm;
-	min-height: 297mm;
-	margin: 0 auto;
-	background: #fff;
-	padding: 18mm 16mm;
-	border-radius: 8px
-}
+        /* ===== Report: 세부 타이포 & 구분선 ===== */
+        .report-page .pet-card{ font-size:11px; line-height:1.55; }
+        .report-page .pet-card > div{ padding:2px 0; }
 
-.report-header {
-	display: flex;
-	justify-content: space-between;
-	gap: 16px;
-	align-items: flex-start;
-	margin-bottom: 14px
-}
+        .report-page .md{ font-size:12px; line-height:1.75; }
+        .report-page .md h1,
+        .report-page .md h2,
+        .report-page .md h3{
+            font-size:14px; line-height:1.4;
+            margin:16px 0 8px; padding-top:10px;
+            border-top:1px solid var(--tone-200);
+        }
+        .report-page .md h1:first-child,
+        .report-page .md h2:first-child,
+        .report-page .md h3:first-child{ border-top:none; padding-top:0; margin-top:0; }
+        .report-page .md p + p{ border-top:1px dashed var(--tone-200); padding-top:8px; }
+        .report-page .md ul,
+        .report-page .md ol{ margin:8px 0 8px 18px; }
+        .report-page .md ul + p,
+        .report-page .md ol + p{ border-top:1px dashed var(--tone-200); padding-top:8px; }
 
-.brand {
-	font-weight: 900;
-	font-size: 18px;
-	letter-spacing: -.3px;
-	color: var(--primary)
-}
+        /* ===== PDF 클린 모드: 그라데이션/그림자 제거(룩은 동일) ===== */
+        #reportRoot.pdf-clean{
+            background:#ffffff !important;
+            background-image:none !important;
+            box-shadow:none !important;
+        }
 
-.brand small {
-	display: block;
-	color: var(--mut);
-	font-weight: 600;
-	font-size: 12px;
-	margin-top: 2px
-}
+        #reportRoot.pdf-clean *,
+        #reportRoot.pdf-clean *::before,
+        #reportRoot.pdf-clean *::after{
+            background-image:none !important;
+            box-shadow:none !important;
+        }
+    </style>
 
-.meta {
-	font-size: 12px;
-	color: var(--mut)
-}
-
-.section {
-	margin: 18px 0 0
-}
-
-.section h3 {
-	margin: 0 0 10px;
-	font-size: 16px;
-	letter-spacing: -.2px
-}
-
-table {
-	width: 100%;
-	border-collapse: separate;
-	border-spacing: 0;
-	font-size: 12px
-}
-
-thead th {
-	position: sticky;
-	top: 0;
-	background: #f8fafc;
-	border-bottom: 1px solid var(--line);
-	text-align: left;
-	padding: 9px 10px;
-	font-weight: 800
-}
-
-tbody td {
-	border-bottom: 1px solid var(--line);
-	padding: 9px 10px
-}
-
-tbody tr:nth-child(odd) {
-	background: var(--zebra)
-}
-
-.muted {
-	color: var(--mut);
-}
-
-.tag {
-	display: inline-flex;
-	gap: 6px;
-	padding: 3px 10px;
-	border-radius: 999px;
-	font-weight: 800;
-	font-size: 11px;
-	border: 1px solid var(--line)
-}
-
-.tag.ok {
-	color: #065f46;
-	background: #ecfdf5;
-	border-color: #d1fae5;
-}
-
-.tag.high {
-	color: #991b1b;
-	background: #fef2f2;
-	border-color: #fee2e2;
-}
-
-.tag.low {
-	color: #0c4a6e;
-	background: #eff6ff;
-	border-color: #dbeafe;
-}
-
-.pet-card {
-	display: grid;
-	grid-template-columns: 92px 1fr;
-	gap: 8px 14px;
-	border: 1px solid var(--line);
-	border-radius: 12px;
-	padding: 10px 12px;
-	background: linear-gradient(180deg, #f8fafc, #fff)
-}
-
-.card-soft {
-	border: 1px solid var(--line);
-	border-radius: 12px;
-	padding: 12px;
-	background: #fcfcff
-}
-
-.md {
-	font-size: 13px;
-	color: #111
-}
-
-.md h1, .md h2, .md h3 {
-	margin: 14px 0 8px
-}
-
-.md p {
-	margin: 6px 0
-}
-
-.md ul {
-	margin: 6px 0 6px 18px
-}
-
-/* 문서 리스트 */
-.doc-top {
-	display: grid;
-	grid-template-columns: 1fr auto;
-	gap: 8px;
-	align-items: center;
-	margin-bottom: 6px
-}
-
-.doc-list {
-	border: 1px solid var(--line);
-	border-radius: 12px;
-	overflow: hidden
-}
-
-.doc-item {
-	display: grid;
-	grid-template-columns: 1fr auto;
-	gap: 8px;
-	padding: 10px 12px;
-	border-bottom: 1px solid var(--line);
-	cursor: pointer;
-	background: #fff
-}
-
-.doc-item:nth-child(odd) {
-	background: var(--zebra)
-}
-
-.doc-item:hover {
-	background: #eef2ff
-}
-
-.doc-item.active {
-	outline: 2px solid #c7d2fe;
-	background: #eef2ff
-}
-
-.doc-title {
-	font-weight: 800
-}
-
-.doc-meta {
-	font-size: 12px;
-	color: var(--mut)
-}
-
-.empty {
-	padding: 12px;
-	color: var(--mut)
-}
-
-.editbox {
-	display: none;
-	gap: 6px;
-	margin-top: 6px
-}
-
-.editbox input {
-	padding: 6px 8px;
-	border: 1px solid var(--line);
-	border-radius: 8px;
-	font: inherit
-}
-
-.actions {
-	display: flex;
-	gap: 6px
-}
-
-@media print {
-	body {
-		background: #fff
-	}
-	.grid {
-		display: block
-	}
-	.card {
-		box-shadow: none
-	}
-	.tabs {
-		display: none
-	}
-	.view {
-		border: 0
-	}
-	.report-page {
-		border-radius: 0;
-		padding: 12mm 12mm
-	}
-	thead th {
-		position: static
-	}
-}
-</style>
 </head>
-<body>
-	<div class="wrap">
-		<div class="row" style="margin-bottom: 8px">
-			<h1>보호자 리포트</h1>
-			<span class="status" id="status"></span>
-		</div>
 
-		<div class="grid">
-			<!-- 좌측: 문서 목록(병원명 인라인 수정) -->
-			<section class="card">
-				<div class="doc-top">
-					<h3 style="margin: 0">문서 목록</h3>
-					<span id="docCount" class="hint"></span>
-				</div>
-				<div id="docList" class="doc-list">
-					<div class="empty">
-						URL에
-						<b>?petId=1</b>
-						처럼 접속하면 목록이 자동으로 로드됩니다.
-					</div>
-				</div>
-			</section>
+<body class="bg-gradient-to-b from-[#e4f0b9] to-[#fcdca9] min-h-[770px]">
+<div class="flex h-screen">
+    <!-- Sidebar -->
+    <div th:replace="common :: siteHeader"></div>
 
-			<!-- 우측: 출력 -->
-			<section class="card">
-				<div class="row" style="justify-content: space-between; margin-bottom: 6px">
-					<div class="row" style="gap: 10px">
-						<h3 style="margin: 0">출력</h3>
-						<div class="tabs">
-							<div class="tab active" data-tab="report">Report</div>
-							<div class="tab" data-tab="md">Markdown</div>
-						</div>
-					</div>
-					<div class="row" style="gap: 8px">
-						<button class="secondary" id="btnPdf" disabled>PDF로 저장</button>
-					</div>
-				</div>
+    <!-- Main content -->
+    <main class="main_page min-h-[770px] flex-1 p-6 grid grid-cols-12 gap-4">
+        <div class="wrap col-span-12">
+            <div class="row mb-2">
+                <h1 class="flex items-center gap-2">상세 리포트</h1>
+                <span class="status" id="status"></span>
+            </div>
 
-				<div id="view-report" class="view">
-					<div id="reportRoot" class="report-page"></div>
-				</div>
-				<div id="view-md" class="view hidden">
-					<div class="muted" style="padding: 14px">아직 결과가 없습니다.</div>
-				</div>
-			</section>
-		</div>
-	</div>
+            <div class="grid">
+                <!-- 좌측: 문서 목록 -->
+                <section class="card">
+                    <div class="doc-top">
+                        <h3 class="m-0 flex items-center gap-2">
+                            문서 목록
+                            <span class="tag" title="도움말">i</span>
+                        </h3>
+                        <span id="docCount" class="hint"></span>
+                    </div>
+                    <div id="docList" class="doc-list">
+                        <div class="empty">URL에 <b>?petId=1</b>처럼 접속하면 목록이 자동으로 로드됩니다.</div>
+                    </div>
+                </section>
 
-	<script>
-    const $ = s => document.querySelector(s);
-    const statusEl = $('#status');
-    const reportRoot = $('#reportRoot');
-    const btnPdf = $('#btnPdf');
+                <!-- 우측: 출력 -->
+                <section class="card">
+                    <div class="row justify-between mb-1">
+                        <div class="row" style="gap:10px">
+                            <h3 class="m-0">출력</h3>
+                            <div class="tabs">
+                                <div class="tab active" data-tab="report">Report</div>
+                                <div class="tab" data-tab="md">Markdown</div>
+                            </div>
+                        </div>
+                        <div class="row" style="gap:8px">
+                            <button class="secondary" id="btnPdf" disabled>PDF로 저장</button>
+                        </div>
+                    </div>
+
+                    <div id="view-report" class="view"><div id="reportRoot" class="report-page"></div></div>
+                    <div id="view-md" class="view hidden"><div class="muted p-4">아직 결과가 없습니다.</div></div>
+                </section>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+    /* jQuery 충돌 방지: DOM 헬퍼는 qs로 */
+    const qs = s => document.querySelector(s);
+
+    const statusEl   = qs('#status');
+    const reportRoot = qs('#reportRoot');
+    const btnPdf     = qs('#btnPdf');
 
     const API = {
         list: (petId) => `/usr/pet/lab-docs?petId=${petId}&page=1&pageSize=100`,
@@ -464,10 +294,11 @@ tbody tr:nth-child(odd) {
     function escapeHtml(s){ return String(s??'').replace(/[&<>"']/g,m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m])); }
     function pad2(n){ return String(n).padStart(2,'0'); }
     function txt(s){ return escapeHtml(s==null? '' : String(s)); }
+
     function switchTab(which){
         const views = {report: '#view-report', md:'#view-md'};
         Object.entries(views).forEach(([k,sel])=>{
-            const el = $(sel);
+            const el = qs(sel);
             el.classList.toggle('hidden', k!==which);
         });
         document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===which));
@@ -476,9 +307,9 @@ tbody tr:nth-child(odd) {
     document.querySelector('.tab[data-tab="md"]').onclick=()=>switchTab('md');
 
     function renderMarkdown(md){
-        const viewMd = $('#view-md');
+        const viewMd = qs('#view-md');
         if (window.marked && typeof marked.parse==='function') viewMd.innerHTML = marked.parse(md||'');
-        else viewMd.innerHTML = '<pre style="padding:14px">'+escapeHtml(md||'')+'</pre>';
+        else viewMd.innerHTML = '<pre class="p-4">'+escapeHtml(md||'')+'</pre>';
     }
 
     const CURRENT = { id: null, structured: null, md: '' };
@@ -523,6 +354,7 @@ tbody tr:nth-child(odd) {
             }
             return { name:l.name||l.code||'', value:vN, unit:l.unit||'', lo:loN, hi:hiN, flag };
         });
+
         const abn = rows.filter(r=>r.flag!=='ok');
         const abnText = abn.length
             ? abn.map(r=>`${r.name}${r.value!=null?' '+r.value.toLocaleString():''}${r.unit?' '+r.unit:''} (${r.flag==='high'?'상승':'저하'})`).join(', ')
@@ -537,7 +369,7 @@ tbody tr:nth-child(odd) {
       <div class="report-header">
         <div>
           <div class="brand">Aniwell Report<small>반려동물 보호자 설명서</small></div>
-          <div class="meta" style="margin-top:6px">
+          <div class="meta mt-1">
             의료기관: <b id="providerName">${txt(doc.provider||'-')}</b><br/>
             문서일자: ${txt(doc.date||'-')} · 생성시각: ${txt(generatedAt)}
           </div>
@@ -599,7 +431,7 @@ tbody tr:nth-child(odd) {
       <div class="section">
         <h3>AI 설명(쉬운 안내서)</h3>
         <div class="md">${mdHtml || '<div class="muted">AI 설명을 불러오지 못했습니다.</div>'}</div>
-        <div class="muted" style="margin-top:8px">※ 본 문서는 보호자 이해를 돕기 위한 설명 자료이며, 최종 의학적 판단은 담당 수의사의 소견을 따릅니다.</div>
+        <div class="muted mt-2">※ 본 문서는 보호자 이해를 돕기 위한 설명 자료이며, 최종 의학적 판단은 담당 수의사의 소견을 따릅니다.</div>
       </div>
     `;
     }
@@ -613,10 +445,10 @@ tbody tr:nth-child(odd) {
             const payload = await fetch(API.list(petId)).then(r=>r.json());
             const rows = normalizeRows(payload);
             renderDocList(rows);
-            $('#docCount').textContent = rows.length ? `총 ${rows.length}건` : '';
+            qs('#docCount').textContent = rows.length ? `총 ${rows.length}건` : '';
             toast(`목록 로드 완료 (${rows.length}건)`);
         }catch(e){
-            $('#docList').innerHTML = `<div class="empty">목록 로드 실패: ${escapeHtml(e)}</div>`;
+            qs('#docList').innerHTML = `<div class="empty">목록 로드 실패: ${escapeHtml(e)}</div>`;
             toast('목록 로드 실패', true);
         }finally{
             setBusy(false);
@@ -633,7 +465,7 @@ tbody tr:nth-child(odd) {
     }
 
     function renderDocList(items){
-        const box = $('#docList');
+        const box = qs('#docList');
         if(!items || !items.length){
             box.innerHTML = `<div class="empty">해당 펫의 lab 문서가 없습니다.</div>`;
             return;
@@ -651,21 +483,21 @@ tbody tr:nth-child(odd) {
 
             DOC_META.set(String(it.documentId), { hospitalName: it.hospitalName, visitDate: it.visitDate });
 
-            const dateText = it.visitDate ? String(it.visitDate).slice(0,10) : '-'; // 날짜만
+            const dateText = it.visitDate ? String(it.visitDate).slice(0,10) : '-';
             const title = `[${dateText}] <span class="hospital" data-id="${it.documentId}">${txt(it.hospitalName || '병원 미상')}</span>`;
 
             return `
         <div class="doc-item" data-id="${it.documentId}" data-visit="${it.visitId}">
           <div>
             <div class="doc-title">${title}
-              <button class="secondary small edit-btn" data-id="${it.documentId}">수정</button>
+              <button class="small" style="background:var(--accent);color:#1f2937" data-role="edit" data-id="${it.documentId}">수정</button>
             </div>
             <div class="doc-meta">문서 #${it.documentId} · visitId: ${it.visitId}</div>
             <div class="editbox" data-id="${it.documentId}">
               <input class="edit-input" data-id="${it.documentId}" type="text" value="${txt(it.hospitalName || '')}" placeholder="병원명을 입력하세요"/>
               <div class="actions">
-                <button class="small save-btn" data-id="${it.documentId}">저장</button>
-                <button class="secondary small cancel-btn" data-id="${it.documentId}">취소</button>
+                <button class="small" data-role="save" data-id="${it.documentId}">저장</button>
+                <button class="small" style="background:#e5e7eb;color:#111" data-role="cancel" data-id="${it.documentId}">취소</button>
               </div>
             </div>
           </div>
@@ -677,8 +509,8 @@ tbody tr:nth-child(odd) {
         box.onclick = async (e)=>{
             const t = e.target;
 
-            // 편집 관련: 전파 막기
-            if (t.classList.contains('edit-btn')) {
+            // 편집 토글
+            if (t.dataset.role === 'edit') {
                 e.stopPropagation();
                 const id = t.dataset.id;
                 const eb = box.querySelector(`.editbox[data-id="${id}"]`);
@@ -686,7 +518,7 @@ tbody tr:nth-child(odd) {
                 eb.querySelector('.edit-input').focus();
                 return;
             }
-            if (t.classList.contains('save-btn')) {
+            if (t.dataset.role === 'save') {
                 e.stopPropagation();
 
                 const docId = (t.dataset.id || '').trim();
@@ -695,14 +527,12 @@ tbody tr:nth-child(odd) {
                 const inp = eb.querySelector('.edit-input');
                 const name = (inp.value || '').trim().replace(/\s+/g, ' ');
 
-                // visitId 확보: 우선 .doc-item의 data-visit, 없으면 메타 캐시, 그래도 없으면 버튼 data-visit
                 const meta = DOC_META.get(docId) || {};
                 const visitId = (itemEl && itemEl.dataset.visit) || meta.visitId || (t.dataset.visit || '').trim();
 
                 if (!name) { toast('병원명을 입력해 주세요.', true); inp.focus(); return; }
                 if (!visitId) { toast('visitId를 찾을 수 없습니다. 목록 템플릿에 data-visit을 추가했는지 확인하세요.', true); return; }
 
-                // 서버 반영 (POST)
                 t.disabled = true;
                 try {
                     const res = await fetch(`/api/visit/${visitId}/hospital`, {
@@ -719,9 +549,8 @@ tbody tr:nth-child(odd) {
                 }
                 t.disabled = false;
 
-                // 로컬 메타 & UI 갱신
                 meta.hospitalName = name;
-                meta.visitId = visitId; // 캐시에 보강 저장
+                meta.visitId = visitId;
                 DOC_META.set(docId, meta);
 
                 const label = box.querySelector(`.hospital[data-id="${docId}"]`);
@@ -736,10 +565,7 @@ tbody tr:nth-child(odd) {
                 toast('병원명이 저장되었습니다.');
                 return;
             }
-
-
-
-            if (t.classList.contains('cancel-btn')) {
+            if (t.dataset.role === 'cancel') {
                 e.stopPropagation();
                 const id = t.dataset.id;
                 const eb = box.querySelector(`.editbox[data-id="${id}"]`);
@@ -748,7 +574,7 @@ tbody tr:nth-child(odd) {
             }
             if (t.closest('.editbox')) { e.stopPropagation(); return; }
 
-            // 일반 아이템 클릭: 한 번에 문서 열기
+            // 문서 열기
             const item = t.closest('.doc-item');
             if(item){ loadDoc(item.dataset.id); }
         };
@@ -760,10 +586,10 @@ tbody tr:nth-child(odd) {
             const id = inp.dataset.id;
             if (e.key === 'Enter') {
                 e.preventDefault();
-                box.querySelector(`.save-btn[data-id="${id}"]`)?.click();
+                box.querySelector(`[data-role="save"][data-id="${id}"]`)?.click();
             } else if (e.key === 'Escape') {
                 e.preventDefault();
-                box.querySelector(`.cancel-btn[data-id="${id}"]`)?.click();
+                box.querySelector(`[data-role="cancel"][data-id="${id}"]`)?.click();
             }
         });
     }
@@ -775,18 +601,15 @@ tbody tr:nth-child(odd) {
         setBusy(true,'문서 로딩 중…');
 
         try {
-            // structured
             const r1 = await fetch(API.structured(id));
             if(!r1.ok) throw new Error(`structured HTTP ${r1.status}`);
             let structured = norm(await r1.json());
 
-            // 목록 메타 보완
             const meta = DOC_META.get(String(id)) || {};
             structured.document = structured.document || {};
             if(!structured.document.provider && meta.hospitalName){ structured.document.provider = meta.hospitalName; }
             if(!structured.document.date && meta.visitDate){ structured.document.date = String(meta.visitDate).slice(0,10); }
 
-            // explain(실패해도 렌더)
             let md = '';
             try{
                 const r2 = await fetch(API.explain(id));
@@ -823,6 +646,10 @@ tbody tr:nth-child(odd) {
     btnPdf.onclick = async ()=>{
         if(!window.html2pdf){ toast('PDF 라이브러리 로드 중', true); return; }
         switchTab('report');
+
+        // 1) PDF 클린 모드 ON
+        reportRoot.classList.add('pdf-clean');
+
         const obj = CURRENT.structured || {};
         const provider = (obj.document&&obj.document.provider)||'Report';
         const date = (obj.document&&obj.document.date)||new Date().toISOString().slice(0,10);
@@ -832,12 +659,26 @@ tbody tr:nth-child(odd) {
             margin: [0,0,0,0],
             filename: fileName,
             image: { type:'jpeg', quality:0.98 },
-            html2canvas: { scale: 2.5, useCORS: true },
+            // ✔ 배경 흰색 강제 + 스케일 적당히
+            html2canvas: {
+                scale: 2,          // 2.5가 밴딩/번짐 만들면 2가 안정적
+                useCORS: true,
+                backgroundColor: '#ffffff',
+                scrollX: 0,
+                scrollY: 0
+            },
             jsPDF: { unit:'mm', format:'a4', orientation:'portrait' },
             pagebreak: { mode: ['css','legacy'] }
         };
-        await html2pdf().from(reportRoot).set(opt).save();
+
+        try{
+            await html2pdf().from(reportRoot).set(opt).save();
+        } finally {
+            // 2) PDF 클린 모드 OFF
+            reportRoot.classList.remove('pdf-clean');
+        }
     };
+
 
     // 쿼리 파라미터 자동 로드
     (function initFromQuery(){
