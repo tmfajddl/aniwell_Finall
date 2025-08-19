@@ -88,4 +88,25 @@ public class PetService {
 	public Integer findNewestPetIdByMemberAndName(int memberId, String name) {
 		return petRepository.findNewestPetIdByMemberAndName(memberId, name);
 	}
+
+	// ✅ [추가] 사료량 변화 시에만 로그 적재 (임계값 없음: 값이 다르면 기록)
+	// - newAmountG : 이번에 입력된 급여량(g)
+	// - foodName : 제품명(없으면 null 허용)
+	// - feedType : 'dry' | 'wet' (없으면 null 허용)
+	// - brand : 브랜드(없으면 null 허용)
+	// - source/note: 기록 출처/메모
+	public void upsertFeedIfChanged(int petId, double newAmountG, String foodName, String feedType, String brand,
+			String source, String note) {
+		// 1) 최신 급여량 조회(없으면 null)
+		Double lastAmount = petRepository.findLastFeedAmountByPetId(petId);
+
+		// 2) 변화 판단(임계값 없음): 값이 다르면 기록
+		if (lastAmount == null || Double.compare(newAmountG, lastAmount) != 0) {
+			// 3) 로그 INSERT (pet_feed_log)
+			petRepository.insertFeedLog(petId, newAmountG, foodName, feedType, brand, source, note);
+			// (선택) 최근 급여량을 pet 테이블에 보관하려면 update 메서드 한 줄 추가
+			// petRepository.updatePetLastFeed(petId, newAmountG, foodName, feedType,
+			// brand);
+		}
+	}
 }

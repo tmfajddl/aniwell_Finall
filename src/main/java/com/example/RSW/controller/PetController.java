@@ -10,7 +10,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.util.StringUtils;
@@ -307,6 +309,21 @@ public class PetController {
 		} catch (Exception e) {
 			// ⚠ 체중 로그 실패가 전체 수정 실패로 이어지지 않도록 예외는 삼키고 서버 로그만 남김
 			e.printStackTrace();
+		}
+
+		// ✅ [추가] 사료 변화 후처리 (값이 다르면 INSERT)
+		// - feedAmountG 입력이 있고, 양수일 때만 시도
+		try {
+			if (feedAmountG != null && feedAmountG > 0) {
+				petService.upsertFeedIfChanged(petId, feedAmountG,
+						(foodName != null && !foodName.isBlank()) ? foodName.trim() : null,
+						(feedType != null && !feedType.isBlank()) ? feedType : null, // 'dry' | 'wet'
+						(brand != null && !brand.isBlank()) ? brand.trim() : null, "manual", // source
+						"수정화면 급여 기록" // note
+				);
+			}
+		} catch (Exception e) {
+			e.printStackTrace(); // 실패해도 수정 자체는 성공 처리
 		}
 
 		int id = rq.getLoginedMemberId();
@@ -773,14 +790,30 @@ public class PetController {
 		return "usr/pet/convert"; // → templates/usr/pet/qr.html
 	}
 
-	@PatchMapping("/visit/{visitId}/hospital")
-	public Map<String, Object> updateVisitHospital(@PathVariable int visitId, @RequestBody Map<String, String> body) {
-		String hospital = body == null ? null : body.get("hospital");
-		if (!StringUtils.hasText(hospital)) {
-			return Map.of("ok", false, "message", "병원명은 비워둘 수 없습니다.");
+	@PostMapping(value = "api/visit/{visitId}/hospital", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+	public ResponseEntity<Map<String, Object>> updateVisitHospital(@PathVariable int visitId,
+			@RequestBody(required = false) Map<String, String> body) {
+		String hospital = (body == null) ? null : body.get("hospital");
+		if (hospital != null) {
+			hospital = hospital.trim().replaceAll("\\s+", " ");
 		}
-		int n = visitService.updateHospital(visitId, hospital.trim());
-		return Map.of("ok", n == 1, "visitId", visitId, "hospital", hospital.trim());
-	}
+		if (!StringUtils.hasText(hospital)) {
+			return ResponseEntity.badRequest().body(Map.of("ok", false, "message", "병원명은 비워둘 수 없습니다."));
+		}
+		if (hospital.length() > 100) {
+			return ResponseEntity.badRequest().body(Map.of("ok", false, "message", "병원명은 100자 이내로 입력해주세요."));
+		}
 
+		try {
+			int updated = visitService.updateHospital(visitId, hospital);
+			if (updated == 0) {
+				return ResponseEntity.status(HttpStatus.NOT_FOUND)
+						.body(Map.of("ok", false, "visitId", visitId, "message", "해당 방문(visit)을 찾을 수 없습니다."));
+			}
+			return ResponseEntity.ok(Map.of("ok", true, "visitId", visitId, "hospital", hospital));
+		} catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body(Map.of("ok", false, "visitId", visitId, "message", "저장 중 오류가 발생했습니다."));
+		}
+	}
 }
