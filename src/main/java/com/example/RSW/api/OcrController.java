@@ -1025,10 +1025,4 @@ public class OcrController {
 		return "diagnosis";
 	}
 
-<<<<<<< HEAD
-
-
-
-=======
->>>>>>> upstream/Develop
 }
