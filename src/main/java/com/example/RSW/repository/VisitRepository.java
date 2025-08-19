@@ -2,6 +2,7 @@ package com.example.RSW.repository;
 
 import com.example.RSW.vo.Visit;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 import java.net.InterfaceAddress;
 import java.util.List;
@@ -18,4 +19,6 @@ public interface VisitRepository {
     List<Visit> selectVisitsByPetId(int petId);
 
     Visit selectVisitById(int id);
+
+    int updateHospital(@Param("visitId") int visitId, @Param("hospital") String hospital);
 }

@@ -7,6 +7,7 @@
 
 package com.example.RSW.api;
 
+import java.time.LocalDate;
 import java.util.*;
 
 import com.example.RSW.service.LabResultDetailService;
@@ -158,6 +159,15 @@ public class OcrController {
 			hydrateVisitFromDiagnosisGroups(vo);        // ⬅️ 헬퍼
 		}
 
+		if ("receipt".equalsIgnoreCase(vo.getDocType()) && hasGroups) {
+			hydrateVisitFromReceiptGroup(vo);   // ✅ 새로 추가
+		}
+
+		if ("lab".equalsIgnoreCase(vo.getDocType()) && hasGroups) {
+			hydrateVisitFromLabGroup(vo);
+		}
+
+
 		try {
 			String safeDocType = (vo.getDocType() == null) ? "diagnosis" : vo.getDocType().toLowerCase();
 			switch (safeDocType) {
@@ -170,6 +180,7 @@ public class OcrController {
 			Integer visitId = vo.getVisitId();
 			if (visitId == null) {
 				Visit visit = new Visit();
+				visit.setTotalCost(vo.getTotalCost());
 				visit.setPetId(vo.getPetId());
 				visit.setVisitDate(vo.getVisitDate() != null ? vo.getVisitDate() : LocalDateTime.now());
 				visit.setHospital(vo.getHospital());
@@ -220,6 +231,88 @@ public class OcrController {
 			return ResultData.from("F-OCR-SAVE", "OCR 저장 중 오류", "data", err);
 		}
 	}
+
+	@SuppressWarnings("unchecked")
+	private void hydrateVisitFromLabGroup(OcrSaveVo vo) {
+		if (vo.getGroups() == null || vo.getGroups().isEmpty()) return;
+
+		Map<String,Object> best = pickBestLabGroup(vo.getGroups());
+		if (best == null) return;
+
+		// date → Visit.visitDate (vo에 이미 값이 없을 때만)
+		if (vo.getVisitDate() == null) {
+			LocalDateTime dt = tryParseToLdt(String.valueOf(best.getOrDefault("date","")));
+			if (dt != null) vo.setVisitDate(dt);
+		}
+
+		// 병원명 보강 (hospital/store 키 우선)
+		if (vo.getHospital() == null || vo.getHospital().isBlank()) {
+			Map<String,Object> kv = findKv(best, "hospital","store","병원명","기관명");
+			if (kv != null) vo.setHospital(String.valueOf(kv.get("value")));
+		}
+	}
+
+	/** 최신 날짜 + 실제 검사값이 있는 그룹을 우선 선택 */
+	@SuppressWarnings("unchecked")
+	private Map<String,Object> pickBestLabGroup(List<?> groups) {
+		Map<String,Object> best = null;
+		long bestScore = Long.MIN_VALUE;
+		for (Object o : groups) {
+			if (!(o instanceof Map)) continue;
+			Map<String,Object> g = (Map<String,Object>) o;
+			String date = String.valueOf(g.getOrDefault("date",""));
+			long ts = toEpochSafe(date);
+
+			// name/value 형태의 검사값이 1개라도 있으면 가중치
+			boolean hasValues = false;
+			Object items = g.get("items");
+			if (items instanceof List) {
+				for (Object it : (List<?>) items) {
+					if (it instanceof Map) {
+						Map<String,Object> m = (Map<String,Object>) it;
+						if (m.containsKey("name") && m.get("value") != null) { hasValues = true; break; }
+					}
+				}
+			}
+			long score = ts + (hasValues ? 1_000_000_000_000L : 0L);
+			if (score > bestScore) { bestScore = score; best = g; }
+		}
+		return best;
+	}
+
+	@SuppressWarnings("unchecked")
+	private Map<String,Object> findKv(Map<String,Object> group, String... keys) {
+		Object items = group.get("items");
+		if (!(items instanceof List)) return null;
+		for (Object it : (List<?>) items) {
+			if (!(it instanceof Map)) continue;
+			Map<String,Object> m = (Map<String,Object>) it;
+			if (!m.containsKey("key")) continue;
+			String k = String.valueOf(m.get("key"));
+			for (String want : keys) {
+				if (want.equalsIgnoreCase(k)) return m;
+			}
+		}
+		return null;
+	}
+
+	private LocalDateTime tryParseToLdt(String s) {
+		if (s == null || s.isBlank() || "Unknown".equalsIgnoreCase(s)) return null;
+		try {
+			String t = s.trim();
+			if (t.length() > 10) return LocalDateTime.parse(t.replace(' ', 'T'));
+			return LocalDate.parse(t).atStartOfDay();
+		} catch (Exception e) { return null; }
+	}
+
+	private long toEpochSafe(String s) {
+		try {
+			LocalDateTime dt = tryParseToLdt(s);
+			return (dt == null) ? Long.MIN_VALUE / 2 :
+					dt.atZone(java.time.ZoneId.systemDefault()).toEpochSecond();
+		} catch (Exception e) { return Long.MIN_VALUE / 2; }
+	}
+
 
 	private void hydrateVisitFromDiagnosisGroups(OcrSaveVo vo){
 		if (vo.getGroups()==null || vo.getGroups().isEmpty()) return;
@@ -279,6 +372,139 @@ public class OcrController {
 			} catch (Exception ignore) { /* 파싱 실패 시 그냥 패스 */ }
 		}
 	}
+
+	@SuppressWarnings("unchecked")
+	private void hydrateVisitFromReceiptGroup(OcrSaveVo vo) {
+		if (vo.getGroups()==null || vo.getGroups().isEmpty()) return;
+
+		// 1) 가장 알찬 그룹 하나 고르기(라인아이템 많은 것 우선)
+		Map<String,Object> best = null;
+		int bestLines = -1;
+		for (var g : vo.getGroups()){
+			Object items = g.get("items");
+			if (!(items instanceof java.util.List<?> list)) continue;
+			int lineCnt = 0;
+			for (Object o : list){
+				if (o instanceof java.util.Map<?,?> mm) {
+					Object t = ((java.util.Map<?,?>)o).get("type");
+					if ("line".equals(t)) lineCnt++;
+				}
+			}
+			if (lineCnt > bestLines){ bestLines = lineCnt; best = g; }
+			if (best == null) best = g; // 폴백
+		}
+		if (best == null) return;
+
+		// 2) items -> key/value map 만들기 (소문자 키)
+		Map<String,String> kv = new java.util.LinkedHashMap<>();
+		java.util.List<?> items = (java.util.List<?>) best.get("items");
+		if (items != null){
+			for (Object o : items){
+				if (!(o instanceof java.util.Map<?,?> mm)) continue;
+				Object key = mm.get("key");
+				Object val = mm.get("value");
+				if (key != null && val != null){
+					String k = String.valueOf(key).trim().toLowerCase(java.util.Locale.ROOT);
+					String v = String.valueOf(val).trim();
+					if (!k.isEmpty() && !v.isEmpty()) kv.put(k, v);
+				}
+			}
+		}
+
+		// 3) 병원명(가게명) → Visit.hospital
+		// buildReceiptGroup는 store/hospital 중 하나를 넣도록 했음
+		String store = nz(kv.get("store"));
+		String hosp  = nz(kv.get("hospital"));
+		if (nz(vo.getHospital()) == null) {
+			if (store != null) vo.setHospital(store);
+			else if (hosp != null) vo.setHospital(hosp);
+		}
+
+		// 4) visitDate: 그룹의 date(yyyy-MM-dd 또는 yyyy-MM-dd HH:mm:ss) 우선
+		String ds = (best.get("date") instanceof String) ? (String)best.get("date") : null;
+		if (ds != null && !ds.isBlank()){
+			try {
+				java.time.LocalDateTime dt = (ds.length() > 10)
+						? java.time.LocalDateTime.parse(ds.replace(' ', 'T'))
+						: java.time.LocalDate.parse(ds).atStartOfDay();
+				vo.setVisitDate(dt);
+			} catch (Exception ignore) {}
+		}
+
+		// 5) notes 만들기 (주소/전화는 제외)
+		//   - 라인아이템 요약: "진료비 ×1 = 5,500", "대복약… ×3 = 9,900"
+		//   - 합계/과세/부가세/비과세/총액
+		java.text.DecimalFormat F = new java.text.DecimalFormat("#,###");
+		java.util.List<String> lineBits = new java.util.ArrayList<>();
+		if (items != null){
+			for (Object o : items){
+				if (!(o instanceof java.util.Map<?,?> mm)) continue;
+				Object type = mm.get("type");
+				if (!"line".equals(type)) continue;
+				String item = nz(mm.get("item"));
+				Long qty    = toLong(mm.get("qty"));
+				Long total  = toLong(mm.get("total"));
+				if (item != null && total != null){
+					String q = (qty != null && qty > 1) ? (" ×" + qty) : "";
+					lineBits.add(item + q + " = " + F.format(total));
+				}
+			}
+		}
+
+		// summary
+		java.util.LinkedHashMap<String, String> sums = new java.util.LinkedHashMap<>();
+		if (kv.get("subtotal") != null) sums.put("합계",    F.format(toLong(kv.get("subtotal"))));
+		if (kv.get("taxable")  != null) sums.put("과세",    F.format(toLong(kv.get("taxable"))));
+		if (kv.get("vat")      != null) sums.put("부가세",  F.format(toLong(kv.get("vat"))));
+		if (kv.get("taxfree")  != null) sums.put("비과세",  F.format(toLong(kv.get("taxfree"))));
+		if (kv.get("total")    != null) sums.put("총액",    F.format(toLong(kv.get("total"))));
+
+		java.util.List<String> sumBits = new java.util.ArrayList<>();
+		for (var e : sums.entrySet()) sumBits.add(e.getKey()+": "+e.getValue());
+
+		String notes = String.join(", ", lineBits);
+		if (!sumBits.isEmpty()){
+			if (!notes.isEmpty()) notes += " · ";
+			notes += String.join(" · ", sumBits);
+		}
+		if (!notes.isBlank()) vo.setNotes(notes);
+
+		// 6) diagnosis는 비워두거나 "영수증" 정도로 구분 표시만
+		if (nz(vo.getDiagnosis()) == null) vo.setDiagnosis("영수증");
+
+		Long totalVal = toLong(kv.get("total"));
+		if (totalVal == null) totalVal = toLong(kv.get("subtotal")); // 폴백
+
+// VO/Visit의 타입이 BigDecimal/Integer/Long 중 무엇이든 안전하게 시도
+		try { vo.getClass().getMethod("setTotalCost", java.math.BigDecimal.class)
+				.invoke(vo, new java.math.BigDecimal(totalVal)); }
+		catch (Throwable ___) {
+			try { vo.getClass().getMethod("setTotalCost", Integer.class)
+					.invoke(vo, totalVal.intValue()); }
+			catch (Throwable ____) {
+				try { vo.getClass().getMethod("setTotalCost", Long.class)
+						.invoke(vo, totalVal.longValue()); }
+				catch (Throwable _____) { /* 무시 */ }
+			}
+		}
+	}
+
+	// 작은 헬퍼
+	private static String nz(Object o){
+		if (o == null) return null;
+		String s = String.valueOf(o).trim();
+		return s.isEmpty() ? null : s;
+	}
+	private static Long toLong(Object o){
+		if (o == null) return null;
+		try {
+			String s = String.valueOf(o).replaceAll("[^\\d]", "");
+			return s.isEmpty()? null : Long.valueOf(s);
+		} catch(Exception e){ return null; }
+	}
+
+
+
 
 
 
@@ -785,9 +1011,14 @@ public class OcrController {
 		if (itemsObj instanceof java.util.List<?> list && !list.isEmpty()){
 			Object first = list.get(0);
 			if (first instanceof java.util.Map<?,?> m){
-				// lab 형태: {name, value, unit, ref_low, ref_high, ...}
+				// ✅ receipt 형태: type=line/summary 가 보이면 영수증
+				Object t = m.get("type");
+				if ("line".equals(t) || "summary".equals(t)) return "receipt";
+
+				// lab 형태: {name, value, ref_low...}
 				if (m.containsKey("name") && (m.containsKey("value") || m.containsKey("ref_low"))) return "lab";
-				// diagnosis 형태: {key:"doctor"/"hospital"/..., value:"..."}
+
+				// diagnosis 형태: {key:"doctor"/"hospital"...}
 				if (m.containsKey("key") && m.containsKey("value")) return "diagnosis";
 			}
 		}
