@@ -30,4 +30,7 @@ public class VisitService {
 		return visitRepository.selectVisitsByPetId(petId);
 	}
 
+	public int updateHospital(int visitId, String haspital) {
+		return visitRepository.updateHospital(visitId, haspital);
+	}
 }

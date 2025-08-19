@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -58,6 +59,8 @@ public class PetController {
 
 	@Autowired
 	private MedicalDocumentService medicalDocumentService;
+    @Autowired
+    private VisitService visitService;
 
 	//추천 장소 리스트 불러오기
 	@GetMapping("/usr/pet/recommend/list")
@@ -770,6 +773,17 @@ public class PetController {
 	@RequestMapping("/usr/pet/convert")
 	public String showPages() {
 		return "usr/pet/convert"; // → templates/usr/pet/qr.html
+	}
+
+	@PatchMapping("/visit/{visitId}/hospital")
+	public Map<String,Object> updateVisitHospital(@PathVariable int visitId,
+												  @RequestBody Map<String, String> body) {
+		String hospital = body == null ? null : body.get("hospital");
+		if (!StringUtils.hasText(hospital)) {
+			return Map.of("ok", false, "message", "병원명은 비워둘 수 없습니다.");
+		}
+		int n = visitService.updateHospital(visitId, hospital.trim());
+		return Map.of("ok", n == 1, "visitId", visitId, "hospital", hospital.trim());
 	}
 
 }
