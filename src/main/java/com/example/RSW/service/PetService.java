@@ -89,24 +89,37 @@ public class PetService {
 		return petRepository.findNewestPetIdByMemberAndName(memberId, name);
 	}
 
-	// ✅ [추가] 사료량 변화 시에만 로그 적재 (임계값 없음: 값이 다르면 기록)
-	// - newAmountG : 이번에 입력된 급여량(g)
+	// ✅ 값 동일 여부와 무관하게 '항상' 몸무게 로그를 남김
+	public void insertWeightAlways(int petId, double weightKg, String source, String note) {
+		// 1) 측정 히스토리 보존: 로그 테이블에 무조건 INSERT
+		petRepository.insertWeightLog(petId, weightKg, source, note); // <-- 기존 매퍼 재사용
+
+		// 2) 펫 현재 체중은 최신값으로 갱신(같은 값이어도 그대로 덮어쓰기)
+		petRepository.updatePetWeight(petId, weightKg); // <-- 기존 매퍼 재사용
+	}
+
+	// ✅ 사료량 변화 시에만 로그 적재 (임계값 없음: 값이 다르면 기록)
 	// - foodName : 제품명(없으면 null 허용)
 	// - feedType : 'dry' | 'wet' (없으면 null 허용)
 	// - brand : 브랜드(없으면 null 허용)
-	// - source/note: 기록 출처/메모
-	public void upsertFeedIfChanged(int petId, double newAmountG, String foodName, String feedType, String brand,
-			String source, String note) {
-		// 1) 최신 급여량 조회(없으면 null)
-		Double lastAmount = petRepository.findLastFeedAmountByPetId(petId);
+	// ✅ 진행중 기본사료와 다르면: 기존 endedAt=오늘, 새 레코드 startedAt=오늘 생성
+	public void upsertPrimaryFoodIfChanged(int petId, String brand, String feedType) {
+		var cur = petRepository.findActivePrimaryFood(petId); // {brand, foodType}
+		String curBrand = (cur == null) ? null : (String) cur.get("brand");
+		String curType = (cur == null) ? null : (String) cur.get("foodType");
 
-		// 2) 변화 판단(임계값 없음): 값이 다르면 기록
-		if (lastAmount == null || Double.compare(newAmountG, lastAmount) != 0) {
-			// 3) 로그 INSERT (pet_feed_log)
-			petRepository.insertFeedLog(petId, newAmountG, foodName, feedType, brand, source, note);
-			// (선택) 최근 급여량을 pet 테이블에 보관하려면 update 메서드 한 줄 추가
-			// petRepository.updatePetLastFeed(petId, newAmountG, foodName, feedType,
-			// brand);
+		if (cur != null && brand.equals(curBrand) && feedType.equals(curType))
+			return;
+
+		if (cur != null) {
+			petRepository.closeActivePrimaryFood(petId); // endedAt = CURRENT_DATE
 		}
+		petRepository.insertPrimaryFood(petId, brand, feedType); // startedAt = CURRENT_DATE
 	}
+
+	// ✅ 무게 없이 이벤트 1건 기록 → 일별 COUNT(*)로 "하루 몇 번" 계산
+	public void insertFeedEvent(int petId, String feedType, String brand) {
+		petRepository.insertFeedEvent(petId, feedType, brand);
+	}
+
 }

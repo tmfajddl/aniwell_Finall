@@ -77,6 +77,23 @@
 		)
 	</select>
 
+	<!-- [추가] 현재 저장된 펫의 weight 조회 -->
+	<select id="getPetWeightById" parameterType="int"
+		resultType="double">
+		SELECT weight
+		FROM pet
+		WHERE id = #{petId}
+		LIMIT 1
+	</select>
+
+	<!-- [추가] 해당 펫의 체중 로그 존재 여부(0이면 로그 없음) -->
+	<select id="countWeightLogsByPetId" parameterType="int"
+		resultType="int">
+		SELECT COUNT(*)
+		FROM pet_weight_log
+		WHERE petId = #{petId}
+	</select>
+
 	<!-- ✅ 가장 최근 체중 1건 조회 -->
 	<select id="findLastWeightByPetId" parameterType="int"
 		resultType="double">
@@ -116,35 +133,66 @@
 		LIMIT 1
 	</select>
 
-	<!-- ✅ 최신 급여량 조회 -->
-	<!-- - pet_feed_log 테이블에서 해당 펫(petId)의 최근 급여 기록을 가져옴 - amountG: 급여량(g) - 
-		fedAt 기준으로 내림차순 정렬 후 1건만 조회 (최신 데이터) -->
-	<select id="findLastFeedAmountByPetId" parameterType="int"
-		resultType="double">
-		SELECT amountG
-		FROM pet_feed_log
+	<!-- ✅ 진행중 기본 사료 1건 조회 -->
+	<select id="findActivePrimaryFood" parameterType="int"
+		resultType="map">
+		SELECT id, brand, foodType, startedAt, endedAt
+		FROM pet_food
 		WHERE petId = #{petId}
-		ORDER
-		BY fedAt DESC
+		AND isPrimary = 1
+		AND endedAt IS NULL
 		LIMIT 1
 	</select>
 
+	<!-- ✅ 진행중 기본 사료 종료 -->
+	<update id="closeActivePrimaryFood" parameterType="int">
+		UPDATE
+		pet_food
+		SET endedAt = CURRENT_DATE(),
+		updateDate = NOW()
+		WHERE petId =
+		#{petId}
+		AND isPrimary = 1
+		AND endedAt IS NULL
+	</update>
 
-	<!-- ✅ 급여 로그 INSERT -->
-	<!-- - 새로운 급여 기록을 적재 - fedAt: 자동으로 NOW() 입력 (급여 시각) - amountG: 급여량(g) - 
-		foodName: 제품명 - feedType: 건식/습식/간식 등 타입 - brand: 브랜드명 - source: 기록 출처(manual, 
-		device 등) - note: 메모 (예: 아프거나 먹은 양 변동 사유) -->
-	<insert id="insertFeedLog">
+	<!-- ✅ 새 기본 사료 시작 -->
+	<insert id="insertPrimaryFood">
+		INSERT INTO pet_food
+		SET petId = #{petId},
+		brand =
+		#{brand},
+		foodType = #{foodType},
+		isPrimary = 1,
+		startedAt =
+		CURRENT_DATE(),
+		endedAt = NULL,
+		regDate = NOW(),
+		updateDate= NOW()
+	</insert>
+
+	<!-- ✅ 급여 이벤트 기록 (브랜드/타입만 기록, 무게 없음) -->
+	<insert id="insertFeedEvent">
 		INSERT INTO pet_feed_log
 		SET petId = #{petId},
 		fedAt =
 		NOW(),
-		amountG = #{amountG},
-		foodName = #{foodName},
-		feedType =
-		#{feedType},
+		feedType= #{feedType},
 		brand = #{brand},
-		source = #{source},
-		note = #{note}
+		source = 'manual',
+		note =
+		'자동 급여 이벤트 기록'
 	</insert>
+
+	<!-- ✅ 특정 일자의 급여 횟수 조회 -->
+	<select id="countFeedsOnDate" resultType="int">
+		SELECT COUNT(*)
+		FROM
+		pet_feed_log
+		WHERE petId = #{petId}
+		AND DATE(fedAt) = #{ymd}
+	</select>
+
+
+
 </mapper>

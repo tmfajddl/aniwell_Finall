@@ -5,6 +5,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
+import java.util.Map;
 
 @Mapper
 public interface PetRepository {
@@ -27,6 +28,12 @@ public interface PetRepository {
 
 	List<Pet> findPetsWithBirthdayInDays(List<Integer> integers);
 
+	// [추가] 현재 저장된 펫의 weight 조회
+	Double getPetWeightById(@Param("petId") int petId);
+
+	// [추가] 해당 펫의 체중 로그 존재 여부(0이면 로그 없음)
+	int countWeightLogsByPetId(@Param("petId") int petId);
+
 	// ✅ [추가] 가장 최근 체중 1건(없으면 null)
 	Double findLastWeightByPetId(@Param("petId") int petId);
 
@@ -40,18 +47,19 @@ public interface PetRepository {
 	// ✅ [추가] 방금 등록한 펫(동명이인 대비: memberId+name) 중 가장 최근 PK
 	Integer findNewestPetIdByMemberAndName(@Param("memberId") int memberId, @Param("name") String name);
 
-	// ✅ [추가] 최신 사료 급여량 조회
-	// - pet_feed_log 테이블에서 petId 기준 최신 amount_g 값 조회
-	Double findLastFeedAmountByPetId(@Param("petId") int petId);
+	// 진행중 기본 사료 1건 조회 (isPrimary=1 AND endedAt IS NULL)
+	Map<String, Object> findActivePrimaryFood(@Param("petId") int petId);
 
-	// ✅ [추가] 사료 로그 적재
-	// - 급여량 변화가 있을 때만 INSERT
-	int insertFeedLog(@Param("petId") int petId, @Param("amountG") double amountG, @Param("foodName") String foodName,
-			@Param("feedType") String feedType, @Param("brand") String brand, @Param("source") String source,
-			@Param("note") String note);
+	// 진행중 기본 사료 종료 (endedAt = CURRENT_DATE())
+	int closeActivePrimaryFood(@Param("petId") int petId);
 
-	// ✅ [추가] 펫 테이블의 최신 사료 정보 업데이트 (선택적으로 사용)
-	int updatePetFeed(@Param("petId") int petId, @Param("amountG") double amountG, @Param("foodName") String foodName,
-			@Param("feedType") String feedType, @Param("brand") String brand);
+	// 새 기본 사료 시작 (startedAt = CURRENT_DATE(), endedAt = NULL)
+	int insertPrimaryFood(@Param("petId") int petId, @Param("brand") String brand, @Param("foodType") String foodType);
+
+	// 급여 이벤트 기록 (무게 없이 → 브랜드/타입만 기록)
+	int insertFeedEvent(@Param("petId") int petId, @Param("feedType") String feedType, @Param("brand") String brand);
+
+	// 특정 일자의 급여 횟수 (하루 몇 번 급여했는지)
+	int countFeedsOnDate(@Param("petId") int petId, @Param("ymd") String ymd);
 
 }

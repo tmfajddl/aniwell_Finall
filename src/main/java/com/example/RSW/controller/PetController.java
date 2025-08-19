@@ -261,7 +261,10 @@ public class PetController {
 	@RequestMapping("/usr/pet/doModify")
 	@ResponseBody
 	public String doModify(HttpServletRequest req, @RequestParam("petId") int petId, String name, String species,
-			String breed, String gender, String birthDate, double weight, MultipartFile photo) {
+			String breed, String gender, String birthDate, double weight, MultipartFile photo,
+			@RequestParam(value = "feedType", required = false) String feedType, // 'dry' | 'wet' (또는 한글)
+			@RequestParam(value = "brand", required = false) String brand // 브랜드명
+	) {
 
 		int memberId = rq.getLoginedMemberId();
 		Pet pet = petService.getPetsById(petId);
@@ -299,31 +302,44 @@ public class PetController {
 		} else {
 			modifyRd = petService.updatePet(petId, name, species, breed, gender, birthDate, weight, photoPath);
 		}
-		// ✅ [추가] 몸무게 변화 시 로그 적재 + 현재값 갱신 (서비스 트랜잭션 내부에서 처리)
-		// - 서비스에서 "이전 최신체중 vs 입력체중"을 비교하여 값이 다르면 INSERT (임계값 없음)
-		// - pet_weight_log INSERT 후, pet 테이블의 weightKg/weightUpdatedAt(존재 시) UPDATE
+		// ✅ 몸무게는 '항상 기록' + 현재값 갱신 (서비스 트랜잭션 내부에서 처리)
+		// - 이전 최신체중과 같아도 INSERT (임계값 없음)
+		// - pet_weight_log INSERT 후, pet 테이블의 weight(또는 weightKg) 갱신
 		try {
-			petService.upsertWeightIfChanged(petId, weight, "manual", // source: 수동 입력(수정 화면)
-					"수정화면 업데이트" // note: 추적용 메모
+			petService.insertWeightAlways(petId, weight, "manual", // source (수동 입력)
+					"수정화면 업데이트" // note (추적용 메모)
 			);
 		} catch (Exception e) {
 			// ⚠ 체중 로그 실패가 전체 수정 실패로 이어지지 않도록 예외는 삼키고 서버 로그만 남김
+			System.err.println("[ERROR] 몸무게 기록 저장 실패" + " | petId=" + petId + " | weightKg=" + weight
+					+ " | source=manual" + " | note=수정화면 업데이트");
 			e.printStackTrace();
 		}
 
-		// ✅ [추가] 사료 변화 후처리 (값이 다르면 INSERT)
-		// - feedAmountG 입력이 있고, 양수일 때만 시도
+		// - 적재되는 시점(fedAt)은 매 요청마다 달라 히스토리가 남음
+		// ✅ feedType 정규화 ('건식'→'dry', '습식'→'wet')
+		if (feedType != null) {
+			feedType = feedType.trim();
+			if ("건식".equals(feedType))
+				feedType = "dry";
+			else if ("습식".equals(feedType))
+				feedType = "wet";
+		}
+
+		// ✅ [추가] 사료 이벤트 기록 + 기본사료 자동 전환 (브랜드/타입 모두 있을 때만)
 		try {
-			if (feedAmountG != null && feedAmountG > 0) {
-				petService.upsertFeedIfChanged(petId, feedAmountG,
-						(foodName != null && !foodName.isBlank()) ? foodName.trim() : null,
-						(feedType != null && !feedType.isBlank()) ? feedType : null, // 'dry' | 'wet'
-						(brand != null && !brand.isBlank()) ? brand.trim() : null, "manual", // source
-						"수정화면 급여 기록" // note
-				);
+			if (brand != null && !brand.trim().isEmpty() && feedType != null && !feedType.trim().isEmpty()) {
+
+				// 1) 기본사료 자동 전환 (endedAt/startedAt 관리)
+				petService.upsertPrimaryFoodIfChanged(petId, brand.trim(), feedType);
+
+				// 2) 급여 이벤트 기록 (무게 없이 → 횟수는 COUNT로 계산)
+				petService.insertFeedEvent(petId, feedType, brand.trim());
 			}
 		} catch (Exception e) {
-			e.printStackTrace(); // 실패해도 수정 자체는 성공 처리
+			System.err.println("[ERROR] 사료 이벤트/기본사료 처리 실패" + " | petId=" + petId + " | brand=" + brand + " | feedType="
+					+ feedType);
+			e.printStackTrace();
 		}
 
 		int id = rq.getLoginedMemberId();
