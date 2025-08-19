@@ -964,6 +964,7 @@ public class OcrFormatService {
 		t = t.replaceAll("[\\s·•ㆍ:：\\-–—]*[\\(\\[\\{]?$", "").trim();
 		return t;
 	}
+<<<<<<< HEAD
 
 	// ====== RECEIPT 전용 ======
 
@@ -1304,5 +1305,7 @@ public class OcrFormatService {
 
 
 
+=======
+>>>>>>> upstream/Develop
 }
 
