@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="ko">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AI JSON 변환(보기만)</title>
+<style>
+    body{font-family:ui-sans-serif,system-ui,apple-system; background:#fafafa; color:#111; margin:0}
+    .wrap{max-width:880px; margin:32px auto; padding:0 16px}
+    .card{background:#fff; border:1px solid #e5e5e5; border-radius:12px; box-shadow:0 1px 2px rgba(0,0,0,.04); padding:16px; margin-bottom:16px}
+    .row{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
+    textarea{width:100%; min-height:280px; font:12px/1.5 ui-monospace,Menlo,Consolas,monospace; padding:12px; border:1px solid #ddd; border-radius:8px}
+    button{padding:8px 12px; border:1px solid #ddd; border-radius:8px; background:#111; color:#fff; cursor:pointer}
+    button.secondary{background:#f6f6f6; color:#111}
+    pre{background:#111; color:#f1f1f1; padding:12px; border-radius:8px; overflow:auto; font:12px/1.5 ui-monospace,Menlo,Consolas,monospace; max-height:420px}
+    .muted{color:#6b6b6b; font-size:12px}
+    input[type=number]{padding:8px 10px; border:1px solid #ddd; border-radius:8px; width:120px}
+    .spinner{display:inline-block; width:18px; height:18px; border:3px solid #ddd; border-top-color:#111; border-radius:50%; animation:spin 1s linear infinite; vertical-align:-4px}
+    @keyframes spin{to{transform:rotate(360deg)}}
+</style>
+<div class="wrap">
+    <h1 style="margin:0 0 6px;font-size:20px;font-weight:700">AI JSON 변환 (DB 저장 없음)</h1>
+    <p class="muted" style="margin:0 0 16px">원본 JSON을 넣고 <b>변환 실행</b>을 누르면,
+        <code>medical_document</code>, <code>lab_result_detail</code>, <code>prescription_detail</code>용
+        JSON만 받아와서 보여줍니다.</p>
+
+    <div class="card">
+        <div class="row" style="margin-bottom:8px">
+            <label>Pet ID</label>
+            <input id="petId" type="number" value="1">
+            <button class="secondary" id="btnSample">샘플 JSON</button>
+            <input type="file" id="file" accept=".json,application/json" style="display:none">
+            <button class="secondary" id="btnFile">파일 불러오기</button>
+            <div style="margin-left:auto">
+                <button class="secondary" id="btnPretty">포맷</button>
+                <button id="btnRun">변환 실행</button>
+            </div>
+        </div>
+        <textarea id="src" placeholder='여기에 원본 JSON 붙여넣기'></textarea>
+        <p class="muted">엔드포인트: <code>POST /api/ai/map?petId=...</code> (응답은 테이블별 JSON, 저장 없음)</p>
+    </div>
+
+    <div class="card">
+        <div class="row" style="justify-content:space-between;margin-bottom:8px">
+            <strong>결과</strong>
+            <div id="loading" style="display:none"><span class="spinner"></span> 변환 중…</div>
+        </div>
+        <pre id="out">아직 결과가 없습니다.</pre>
+    </div>
+</div>
+
+<script>
+    const $ = sel => document.querySelector(sel);
+    const petId = $('#petId'), src = $('#src'), out = $('#out'), loading = $('#loading');
+
+    const sample = {
+        "petId": 1,
+        "visitDate": "2025-08-10",
+        "documents": [
+            {"type":"lab","tests":[
+                    {"name":"ALT","value":"123 U/L","ref":"10-100","note":"mildly high"},
+                    {"name":"BUN","value":"18 mg/dL","ref":"7-27"}]},
+            {"type":"prescription","drugs":[
+                    {"name":"Amoxicillin","dose":"20 mg","freq":"BID","duration":7,"route":"PO"}],
+                "note":"give with food"}
+        ]
+    };
+
+    $('#btnSample').onclick = () => src.value = JSON.stringify(sample, null, 2);
+    $('#btnPretty').onclick = () => { try{ src.value = JSON.stringify(JSON.parse(src.value), null, 2); }catch(e){ alert('JSON 아님: '+e.message); } };
+    $('#btnFile').onclick = () => $('#file').click();
+    $('#file').onchange = async e => {
+        const f = e.target.files?.[0]; if(!f) return;
+        const t = await f.text(); src.value = t;
+        try{ src.value = JSON.stringify(JSON.parse(t), null, 2); }catch(_){}
+    };
+
+    $('#btnRun').onclick = async () => {
+        let body;
+        try{
+            body = JSON.parse(src.value || '{}');
+        }catch(e){ return alert('유효한 JSON이 아닙니다: '+e.message); }
+
+        if (petId.value && body.petId == null) body.petId = Number(petId.value);
+
+        loading.style.display = 'block'; out.textContent = '요청 중...';
+        try{
+            const resp = await fetch(`/api/ai/map?petId=${encodeURIComponent(petId.value||'')}`, {
+                method:'POST',
+                headers:{'Content-Type':'application/json'},
+                body: JSON.stringify(body)
+            });
+            const text = await resp.text();
+            if(!resp.ok) throw new Error(`HTTP ${resp.status}\n${text}`);
+            let data; try{ data = JSON.parse(text); }catch{ data = text; }
+            out.textContent = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
+        }catch(err){
+            out.textContent = String(err);
+        }finally{
+            loading.style.display = 'none';
+        }
+    };
+</script>
+</html>

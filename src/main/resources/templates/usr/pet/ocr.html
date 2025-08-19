@@ -1,246 +1,237 @@
 <!-- templates/usr/pet/ocr.html -->
-<!-- ✅ 테스트 업로드 페이지: 파일 선택 → /api/ocr/extract 로 POST 전송 -->
 <!doctype html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
-<meta charset="utf-8" />
-<title>OCR 테스트</title>
+	<meta charset="utf-8" />
+	<title>OCR 테스트</title>
 
-<!-- ✅ (권장) Spring Security CSRF 대응: POST 호출 시 토큰 헤더로 전송 -->
-<!-- 🔧 Security 6.x 환경에서 _csrf가 null일 수 있으므로, 안전 접근 + 조건부 렌더링 -->
-<th:block th:with="csrf=${#request.getAttribute('org.springframework.security.web.csrf.CsrfToken')}"
-	th:if="${csrf != null}">
-	<meta name="_csrf" th:content="${csrf.token}" />
-	<meta name="_csrf_header" th:content="${csrf.headerName}" />
-</th:block>
-<!-- 참고: 위 블록은 _csrf가 없을 땐 아무 것도 렌더하지 않습니다. -->
+	<!-- Spring Security CSRF (있을 때만 렌더) -->
+	<th:block th:with="csrf=${#request.getAttribute('org.springframework.security.web.csrf.CsrfToken')}" th:if="${csrf != null}">
+		<meta name="_csrf" th:content="${csrf.token}" />
+		<meta name="_csrf_header" th:content="${csrf.headerName}" />
+	</th:block>
 
-<style>
-body {
-	font-family: system-ui, Arial, sans-serif;
-	padding: 16px;
-}
-
-#out {
-	white-space: pre-wrap;
-	border: 1px solid #ddd;
-	padding: 12px;
-	margin-top: 12px;
-}
-
-.btn {
-	padding: 6px 10px;
-	border: 1px solid #aaa;
-	border-radius: 4px;
-	background: #fff;
-	cursor: pointer;
-}
-
-.btn:disabled {
-	opacity: .6;
-	cursor: not-allowed;
-}
-</style>
+	<style>
+		:root { color-scheme: light dark; }
+		body { font-family: system-ui, Arial, sans-serif; padding: 16px; }
+		#out { white-space: pre-wrap; border: 1px solid #ddd; padding: 12px; margin-top: 12px; border-radius: 8px; }
+		.btn { padding: 6px 10px; border: 1px solid #aaa; border-radius: 6px; background: #fff; cursor: pointer; }
+		.btn:disabled { opacity: .6; cursor: not-allowed; }
+		.toolbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 10px 0; }
+		.toolbar label { display: inline-flex; gap: 6px; align-items: center; }
+	</style>
 </head>
 <body>
-	<h2>영수증 OCR 테스트</h2>
+<h2>영수증 OCR 테스트</h2>
 
-	<!-- ✅ 파일 업로드 UI (필드명은 반드시 'file') -->
+<div class="toolbar">
 	<input id="file" type="file" accept="image/*" />
 	<button id="run" type="button" class="btn">OCR 실행</button>
 	<button id="btnSaveOcr" type="button" class="btn">OCR 저장</button>
 
-	<div id="out" aria-live="polite"></div>
+	<label for="docType">문서 유형</label>
+	<select id="docType">
+		<option value="auto" selected>자동 (추천 사용)</option>
+		<option value="prescription">처방전 (prescription)</option>
+		<option value="lab">검사결과 (lab)</option>
+		<option value="diagnosis">진단서 (diagnosis)</option>
+	</select>
+	<label><input type="checkbox" id="saveAllGroups"> 모든 그룹 저장</label>
+	<label><input type="checkbox" id="saveTextAlso" checked> 텍스트도 함께 저장(디버그)</label>
+</div>
 
-	<script>
-    // =========================
-    // ✅ 전역 상태: 마지막 OCR 텍스트/파일 URL
-    // =========================
-    let __lastOcrText = null;      // OCR 실행 성공 시 저장
-    let __uploadedFileUrl = null;  // 서버가 반환한 이미지 URL (없으면 null → 폴백 경로 사용)
+<div id="out" aria-live="polite"></div>
 
-    // =========================
-    // ✅ CSRF 메타에서 토큰 추출 (없으면 null 반환)
-    // =========================
-    function getCsrf() {
-      const tokenTag  = document.querySelector('meta[name="_csrf"]');
-      const headerTag = document.querySelector('meta[name="_csrf_header"]');
-      return (tokenTag && headerTag && tokenTag.content && headerTag.content)
-        ? { header: headerTag.content, token: tokenTag.content }
-        : null;
-    }
+<script>
+	// =========================
+	// 전역 상태
+	// =========================
+	let __lastOcrText = null;      // OCR 원문 텍스트(옵션)
+	let __uploadedFileUrl = null;  // 서버가 반환한 이미지 URL
+	let __lastParsedData = null;   // 파싱 결과(data: {docType, groups, ...})
 
-    // =========================
-    // ✅ URL 쿼리 파서 (예: /usr/pet/ocr?petId=1&visitId=10)
-    // =========================
-    function getQueryParam(name) {
-      const p = new URLSearchParams(location.search);
-      return p.get(name);
-    }
+	// 사용자가 문서유형 드롭다운을 직접 바꿨는지
+	let __userTouchedDocType = false;
 
-    // 숫자 변환(공백/빈문자 → null 처리) 유틸
-    function parseNumOrNull(v) {
-      if (v == null) return null;
-      const s = String(v).trim();
-      if (!s) return null;
-      const n = Number(s);
-      return Number.isFinite(n) ? n : null;
-    }
+	// =========================
+	// DOM 참조
+	// =========================
+	const $file = document.getElementById('file');
+	const $out  = document.getElementById('out');
+	const $run  = document.getElementById('run');
+	const $save = document.getElementById('btnSaveOcr');
+	const $docType = document.getElementById('docType');
+	$docType?.addEventListener('change', () => { __userTouchedDocType = true; });
 
-    // =========================
-    // ✅ DOM 참조
-    // =========================
-    const $file = document.getElementById('file');
-    const $out  = document.getElementById('out');
-    const $run  = document.getElementById('run');
-    const $save = document.getElementById('btnSaveOcr');
+	// =========================
+	// 유틸
+	// =========================
+	function getCsrf() {
+		const tokenTag  = document.querySelector('meta[name="_csrf"]');
+		const headerTag = document.querySelector('meta[name="_csrf_header"]');
+		return (tokenTag && headerTag && tokenTag.content && headerTag.content)
+				? { header: headerTag.content, token: tokenTag.content }
+				: null;
+	}
+	function getQueryParam(name) { return new URLSearchParams(location.search).get(name); }
+	function parseNumOrNull(v) {
+		if (v == null) return null; const s = String(v).trim(); if (!s) return null;
+		const n = Number(s); return Number.isFinite(n) ? n : null;
+	}
+	function toggleBusy(isBusy) { $run.disabled = isBusy; $save.disabled = isBusy; }
+	function pickData(json) { return json?.data ?? json?.data1 ?? json?.data2 ?? json?.data3 ?? null; }
+	function normalizeTs(ts) { return ts ? ts.replace(/(\.\d{3})\d+$/, '$1') : null; }
 
-    // 버튼 비활성/활성 토글 유틸
-    function toggleBusy(isBusy) {
-      $run.disabled = isBusy;
-      $save.disabled = isBusy;
-    }
+	// 문서유형 결정 (자동/수동)
+	function getDocTypeToSave(data) {
+		const sel = $docType?.value || 'auto';
+		if (sel !== 'auto') return sel;
+		return data?.docType || data?.suggestedDocType || 'lab';
+	}
+	// 최신 그룹 선택 규칙
+	function getBestGroup(groups = []) {
+		const safe = groups.filter(g => Array.isArray(g?.items));
+		if (!safe.length) return null;
+		const dated = safe.filter(g => g.date && g.items.length);
+		if (dated.length) return dated.sort((a,b) => String(b.date).localeCompare(String(a.date)))[0];
+		return [...safe].sort((a,b) => (b.items.length||0) - (a.items.length||0))[0];
+	}
+	function chooseGroups(data) {
+		const groups = Array.isArray(data?.groups) ? data.groups : [];
+		if (!groups.length) return [];
+		return (document.getElementById('saveAllGroups')?.checked) ? groups : [getBestGroup(groups)].filter(Boolean);
+	}
+	function buildStructuredPayload(base = {}) {
+		const groupsToSave = chooseGroups(__lastParsedData);
+		return {
+			...base,
+			docType: getDocTypeToSave(__lastParsedData),
+			groups: groupsToSave,            // 핵심: 그룹 기반 저장
+			parseVersion: 'lab-v3.2',        // 클라이언트 파서 버전
+			text: document.getElementById('saveTextAlso')?.checked ? (__lastOcrText || null) : null
+		};
+	}
 
-    // =========================
-    // ✅ OCR 실행: /api/ocr/extract 로 파일 업로드
-    // =========================
-    $run.onclick = async () => {
-      const f = $file.files?.[0];
-      if (!f) { alert('이미지를 선택하세요.'); return; }
+	// =========================
+	// OCR 실행
+	// =========================
+	$run.onclick = async () => {
+		const f = $file.files?.[0];
+		if (!f) { alert('이미지를 선택하세요.'); return; }
 
-      // 1) FormData 구성 (서버 @RequestParam("file")와 필드명 일치)
-      const form = new FormData();
-      form.append('file', f);
+		const form = new FormData();
+		form.append('file', f);
 
-      // 2) CSRF 헤더(있을 때만)
-      const headers = {};
-      const csrf = getCsrf();
-      if (csrf) headers[csrf.header] = csrf.token;
+		const headers = {}; const csrf = getCsrf();
+		if (csrf) headers[csrf.header] = csrf.token;
 
-      // 3) 요청
-      $out.textContent = '업로드 중...';
-      toggleBusy(true);
-      try {
-        const res = await fetch('/api/ocr/extract', { method: 'POST', body: form, headers });
-        if (!res.ok) {
-          const text = await res.text().catch(() => '');
-          throw new Error(`HTTP ${res.status} ${res.statusText}${text ? ' - ' + text : ''}`);
-        }
-        const json = await res.json(); // { resultCode, msg, data1?, data?, text? ... }
+		$out.textContent = '업로드 중...';
+		toggleBusy(true);
+		try {
+			const res = await fetch('/api/ocr/extract', { method: 'POST', body: form, headers });
+			if (!res.ok) { const text = await res.text().catch(() => ''); throw new Error(`HTTP ${res.status} ${res.statusText}${text ? ' - ' + text : ''}`); }
+			const json = await res.json();
+			const data = pickData(json) || {};
 
-        // 4) 화면 출력(디버그 보기 좋게)
-        $out.textContent = JSON.stringify(json, null, 2);
+			// 상태 저장
+			__lastParsedData = data;
+			__lastOcrText     = data?.text ?? json?.text ?? null;
+			__uploadedFileUrl = data?.fileUrl ?? __uploadedFileUrl ?? null;
 
-        // 5) 텍스트 + 파일URL 추출 보관(서버 응답 구조에 따라 안전 탐색)
-        //    - text: data1.text → data.text → text
-        //    - fileUrl: data1.fileUrl → data.fileUrl (없으면 그대로 null 유지 → 폴백)
-        __lastOcrText     = (json?.data1?.text)    || (json?.data?.text)    || (json?.text) || null;
-        __uploadedFileUrl = (json?.data1?.fileUrl) || (json?.data?.fileUrl) || __uploadedFileUrl || null;
+			// 자동 docType 셋업(사용자가 건드리지 않았을 때만)
+			if (!__userTouchedDocType) {
+				const suggested = data?.docType || data?.suggestedDocType;
+				if (suggested && $docType.querySelector(`option[value="${suggested}"]`)) {
+					$docType.value = suggested;
+				}
+			}
 
-        if (!__lastOcrText) {
-          console.warn('응답에서 OCR 텍스트를 찾지 못했습니다. 응답 구조를 확인하세요.');
-        }
-      } catch (e) {
-        console.error(e);
-        $out.textContent = '요청 실패: ' + (e?.message || e);
-      } finally {
-        toggleBusy(false);
-      }
-    };
+			// 출력
+			$out.textContent = JSON.stringify(json, null, 2);
+			renderParsed(data);
+		} catch (e) {
+			console.error(e); $out.textContent = '요청 실패: ' + (e?.message || e);
+		} finally { toggleBusy(false); }
+	};
 
-    // =========================
-    // ✅ OCR 저장: 이미지+텍스트 함께 저장
-    // - fileUrl이 있으면 JSON(/api/ocr/save)
-    // - fileUrl이 없으면 멀티파트(/api/ocr/save-with-file) 폴백
-    // =========================
-    async function saveOcr() {
-      if (!__lastOcrText || !__lastOcrText.trim()) {
-        alert('저장할 OCR 텍스트가 없습니다. 먼저 [OCR 실행]을 눌러주세요.');
-        return;
-      }
+	// =========================
+	// 저장
+	// =========================
+	async function saveOcr() {
+		const groups = Array.isArray(__lastParsedData?.groups) ? __lastParsedData.groups : [];
+		if (!groups.length) { alert('저장할 그룹이 없습니다. 먼저 [OCR 실행]을 눌러주세요.'); return; }
 
-      // visitId가 있으면 기존 방문에 문서 추가, 없으면 petId로 새 visit 생성
-      const petId   = parseNumOrNull(getQueryParam('petId'));
-      const visitId = parseNumOrNull(getQueryParam('visitId'));
+		const petId   = parseNumOrNull(getQueryParam('petId'));
+		const visitId = parseNumOrNull(getQueryParam('visitId'));
+		const csrf = getCsrf();
 
-      // 공통 메타 (필요 시 화면에서 입력받아 추가 가능)
-      const docType = 'receipt';
+		toggleBusy(true);
+		try {
+			let json;
+			if (__uploadedFileUrl) {
+				// 파일 URL 보유: JSON 저장
+				const payload = buildStructuredPayload({
+					visitId: visitId || null,
+					petId: visitId ? null : petId,
+					fileUrl: __uploadedFileUrl
+				});
+				const headers = { 'Content-Type': 'application/json' }; if (csrf) headers[csrf.header] = csrf.token;
+				const res = await fetch('/api/ocr/save', { method: 'POST', headers, body: JSON.stringify(payload) });
+				json = await res.json();
+			} else {
+				// 파일 URL 없음: 멀티파트 저장
+				const f = $file.files?.[0];
+				if (!f) { alert('파일이 없습니다. 먼저 이미지를 선택하고 OCR 실행을 해주세요.'); toggleBusy(false); return; }
+				const form = new FormData();
+				form.append('file', f);
+				form.append('docType', getDocTypeToSave(__lastParsedData));
+				form.append('groups', JSON.stringify(chooseGroups(__lastParsedData)));
+				form.append('parseVersion', 'lab-v3.2');
+				if (document.getElementById('saveTextAlso')?.checked && __lastOcrText) form.append('text', __lastOcrText);
+				if (visitId != null) form.append('visitId', String(visitId));
+				if (visitId == null && petId) form.append('petId', String(petId));
+				const headers = {}; if (csrf) headers[csrf.header] = csrf.token;
+				const res = await fetch('/api/ocr/save-with-file', { method: 'POST', headers, body: form });
+				json = await res.json();
+			}
 
-      const csrf = getCsrf();
-      toggleBusy(true);
-      try {
-        let json;
+			console.log('[OCR 저장 응답]', json);
+			if (json?.resultCode?.startsWith('S-')) {
+				const out = json.data ?? json.data1 ?? json.data2 ?? json.data3 ?? {};
+				if (out.fileUrl && !__uploadedFileUrl) __uploadedFileUrl = out.fileUrl;
+				alert(`저장 완료!\nvisitId=${out.visitId}, documentId=${out.documentId}`);
+			} else {
+				console.error('OCR 저장 실패:', json);
+				alert(`저장 실패: ${json?.msg || '서버 오류'}`);
+			}
+		} catch (e) {
+			console.error(e); alert('저장 중 오류가 발생했습니다.');
+		} finally { toggleBusy(false); }
+	}
 
-        if (__uploadedFileUrl) {
-          // ✅ 1) fileUrl 보유: JSON으로 저장 (/api/ocr/save)
-          const payload = {
-            text: __lastOcrText,
-            visitId: visitId || null,
-            petId: visitId ? null : petId,
-            docType,
-            fileUrl: __uploadedFileUrl // 서버가 바로 접근 가능한 URL
-            // visitDate/hospital/doctor/diagnosis/notes 필요 시 추가
-          };
-          const headers = { 'Content-Type': 'application/json' };
-          if (csrf) headers[csrf.header] = csrf.token;
+	document.getElementById('btnSaveOcr')?.addEventListener('click', saveOcr);
 
-          const res = await fetch('/api/ocr/save', {
-            method: 'POST',
-            headers,
-            body: JSON.stringify(payload)
-          });
-          json = await res.json();
-        } else {
-          // ✅ 2) fileUrl 미보유: 이미지 파일까지 함께 업로드 (/api/ocr/save-with-file)
-          const f = $file.files?.[0];
-          if (!f) { alert('파일이 없습니다. 먼저 이미지를 선택하고 OCR 실행을 해주세요.'); toggleBusy(false); return; }
-
-          const form = new FormData();
-          form.append('file', f);                 // 업로드 이미지 (원본 저장)
-          form.append('text', __lastOcrText);     // 분석 텍스트
-          if (visitId != null)          form.append('visitId', String(visitId));
-          if (visitId == null && petId) form.append('petId', String(petId));
-          form.append('docType', docType);
-          // 필요 시 visitDate/hospital/doctor/diagnosis/notes 추가 가능
-
-          const headers = {};
-          if (csrf) headers[csrf.header] = csrf.token; // 멀티파트는 Content-Type 자동 지정
-          const res = await fetch('/api/ocr/save-with-file', {
-            method: 'POST',
-            headers,
-            body: form
-          });
-          json = await res.json();
-        }
-
-        console.log('[OCR 저장 응답]', json); // 디버그
-
-        if (json?.resultCode?.startsWith('S-')) {
-          // ✅ 응답 슬롯(data/data1/data2/data3) 모두 지원
-          const out = json.data ?? json.data1 ?? json.data2 ?? json.data3 ?? {};
-          const { visitId: outVisitId, documentId, fileUrl } = out;
-          // 저장 직후 돌려준 fileUrl(있으면) 최신값 저장해 두면 이후 미리보기에 사용 가능
-          if (fileUrl && !__uploadedFileUrl) __uploadedFileUrl = fileUrl;
-
-          alert(`저장 완료!\nvisitId=${outVisitId}, documentId=${documentId}`);
-          // 필요 시 상세로 이동:
-          // location.href = `/usr/visit/detail?id=${outVisitId}`;
-        } else {
-          console.error('OCR 저장 실패:', json);
-          alert(`저장 실패: ${json?.msg || '서버 오류'}`);
-        }
-      } catch (e) {
-        console.error(e);
-        alert('저장 중 오류가 발생했습니다.');
-      } finally {
-        toggleBusy(false);
-      }
-    }
-
-    // =========================
-    // ✅ 버튼 바인딩
-    // =========================
-    document.getElementById('btnSaveOcr')?.addEventListener('click', saveOcr);
-  </script>
+	// =========================
+	// 프리뷰 렌더
+	// =========================
+	function renderParsed(data) {
+		if (!data) return;
+		const docType = data.docType ?? data.suggestedDocType;
+		const groups  = Array.isArray(data.groups) ? data.groups : [];
+		const lines = [];
+		if (docType) lines.push(`\n\n[docType] ${docType}`);
+		lines.push(`[groups.length] ${groups.length}`);
+		groups.slice(0,5).forEach((g,i) => {
+			const n = Array.isArray(g?.items) ? g.items.length : 0;
+			lines.push(`- group#${i+1} date=${g?.date || '(없음)'} items=${n}`);
+		});
+		if (data.createdAt)       lines.push(`[createdAt] ${data.createdAt}`);
+		if (data.ocrMeta?.engine) lines.push(`[engine] ${data.ocrMeta.engine}`);
+		if (data.ocrMeta?.ts)     lines.push(`[ts] ${normalizeTs(data.ocrMeta.ts)}`);
+		if (data.storage)         lines.push(`[storage] ${data.storage}`);
+		if (data.fileUrl)         lines.push(`[fileUrl] ${data.fileUrl}`);
+		if (lines.length) $out.textContent += '\n' + lines.join('\n');
+	}
+</script>
 </body>
 </html>

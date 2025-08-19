@@ -12,13 +12,13 @@
 <body class="bg-gradient-to-b from-[#e4f0b9] to-[#fcdca9] font-sans">
 	<div th:fragment="siteHeader" class="flex">
 		<!-- Sidebar -->
-		<aside class="w-20 flex flex-col items-center p-4 min-h-dvh">
+		<aside class="w-20 flex flex-col items-center p-4 min-h-dvh menu">   
 
 			<img src="https://i.imgur.com/rcOcaL6.png" alt="Logo" class="w-12 mb-6"
 				onclick="window.location.href = 'http://localhost:8080/'">
 
 			<!-- 프로필 원형 -->
-			<div onclick="openModal()" class="w-14 h-14 bg-white rounded-full shrink-0 overflow-hidden cursor-pointer"
+			<div onclick="memberOpenModal()" class="w-14 h-14 bg-white rounded-full shrink-0 overflow-hidden cursor-pointer"
 				id="memberPhoto">
 			</div>
 			<div id="myModal" class="fixed inset-0 z-50 bg-black bg-opacity-40 flex items-center justify-center hidden">
