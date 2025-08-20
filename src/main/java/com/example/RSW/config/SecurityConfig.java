@@ -34,17 +34,26 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/public/**").permitAll()
-                        // 여기는 인증 필요로 유지
-                        .requestMatchers("/api/member/**").authenticated()
+
+                        // ✅ 공개 API는 여기(1순위 체인)에서 먼저 허용
+                        .requestMatchers(HttpMethod.GET,
+                                "/api/pet/report",
+                                "/api/pet/weight-timeline"   // 필요 시 추가
+                        ).permitAll()
+
+                        // ✅ 그 외 /api/pet/** 는 인증 필요
                         .requestMatchers("/api/pet/**").authenticated()
-                        // 그 외 API는 공개
+
+                        // OCR 저장 등 민감 API는 계속 보호
+                        .requestMatchers("/api/member/**").authenticated()
                         .anyRequest().permitAll()
                 )
                 .exceptionHandling(e -> e
-                        .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)) // 401
+                        .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
                 );
         return http.build();
     }
+
 
     /* ========= 2) 앱 전체 체인 (그 외 전부) =========
        - CORS: /usr/** 까지 적용 (S3/CloudFront에서 호출 시 403 방지)
