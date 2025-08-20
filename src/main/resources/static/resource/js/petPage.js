@@ -91,6 +91,29 @@ function addPet() {
 		           <label class="block text-sm font-medium mb-1" for="weight">체중 (kg)</label>
 		           <input type="number" step="0.1" id="weight" name="weight" required class="w-full border rounded px-3 py-2" />
 		         </div>
+				 <div class="col-span-2 grid grid-cols-2 gap-4">
+				 			  <!-- 습식/건식 선택 -->
+				 			  <div>
+				 			    <label class="block text-sm font-medium mb-1" for="feedType">사료 종류</label>
+				 			    <select id="feedType" name="feedType" class="w-full border rounded px-3 py-2">
+				 			      <option value="">선택</option>
+				 			      <option value="습식">습식</option>
+				 			      <option value="건식">건식</option>
+				 			    </select>
+				 			  </div>
+
+				 			  <!-- 브랜드 입력 -->
+				 			  <div>
+				 			    <label class="block text-sm font-medium mb-1" for="brand">브랜드</label>
+				 			    <input 
+				 			      type="text" 
+				 			      id="brand" 
+				 			      name="brand" 
+				 			      placeholder="브랜드 입력" 
+				 			      class="w-full border rounded px-3 py-2" 
+				 			    />
+				 			  </div>
+				 			</div>
 		       </div>
 		     </div>
 
@@ -173,23 +196,24 @@ function modifyPet(pet) {
 			  <!-- 습식/건식 선택 -->
 			  <div>
 			    <label class="block text-sm font-medium mb-1" for="feedType">사료 종류</label>
-			    <select id="feedType" name="feeddType" class="w-full border rounded px-3 py-2">
-			      <option value="">선택</option>
-			      <option value="습식">습식</option>
-			      <option value="건식">건식</option>
+			    <select id="feedType" name="feedType" value="${pet.feedType}" class="w-full border rounded px-3 py-2">
+				<option value="">선택</option>
+				<option value="습식" ${(pet.feedType === '습식' || pet.feedType === 'wet') ? 'selected' : ''}>습식</option>
+				<option value="건식" ${(pet.feedType === '건식' || pet.feedType === 'dry') ? 'selected' : ''}>건식</option>
+				  </select>
 			    </select>
 			  </div>
 
 			  <!-- 브랜드 입력 -->
 			  <div>
-			    <label class="block text-sm font-medium mb-1" for="Brand">브랜드</label>
+			    <label class="block text-sm font-medium mb-1" for="brand">브랜드</label>
 			    <input 
 			      type="text" 
-			      id="foodBrand" 
-			      name="foodBrand" 
+			      id="brand" 
+			      name="brand" 
+				  value="${pet.brand}"
 			      placeholder="브랜드 입력" 
-			      class="w-full border rounded px-3 py-2" 
-			    />
+			      class="w-full border rounded px-3 py-2" />
 			  </div>
 			</div>
           </div>
@@ -266,6 +290,7 @@ function submitModifyForm(e) {
 
 	fetch('/usr/pet/doModify', {
 		method: 'POST',
+
 		body: formData
 	})
 		.then(res => res.text())  // 응답이 문자열 형태 "S-1,수정되었습니다!"
@@ -276,6 +301,7 @@ function submitModifyForm(e) {
 				// ✅ 성공 시 알림 메시지 요청
 				fetch('/toast/doModify', {
 					method: 'POST'
+
 				})
 					.then(res => res.json())  // 이미 JSON 파싱됨
 					.then(toastData => {
@@ -350,5 +376,4 @@ function petDelete() {
 			});
 		});
 }
-
 
