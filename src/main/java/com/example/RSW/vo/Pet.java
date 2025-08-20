@@ -13,17 +13,18 @@ import java.util.Date;
 @NoArgsConstructor
 @Builder
 public class Pet {
-    private int id;
-    private int memberId;
-    private String name;
-    private String species;
-    private String breed;
-    private String gender;
-    private Date birthDate;
-    private double weight;
-    private String photo;
-    private Timestamp createdAt;
-    private Timestamp updatedAt;
+	private int id;
+	private int memberId;
+	private String name;
+	private String species;
+	private String breed;
+	private String gender;
+	private Date birthDate;
+	private double weight;
+	private String photo;
+	private Timestamp createdAt;
+	private Timestamp updatedAt;
+	private String feedType;
+	private String brand;
 
 }
-

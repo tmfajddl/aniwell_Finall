@@ -172,8 +172,8 @@ function modifyPet(pet) {
 			<div class="col-span-2 grid grid-cols-2 gap-4">
 			  <!-- 습식/건식 선택 -->
 			  <div>
-			    <label class="block text-sm font-medium mb-1" for="foodType">사료 종류</label>
-			    <select id="foodType" name="foodType" class="w-full border rounded px-3 py-2">
+			    <label class="block text-sm font-medium mb-1" for="feedType">사료 종류</label>
+			    <select id="feedType" name="feeddType" class="w-full border rounded px-3 py-2">
 			      <option value="">선택</option>
 			      <option value="습식">습식</option>
 			      <option value="건식">건식</option>
@@ -182,7 +182,7 @@ function modifyPet(pet) {
 
 			  <!-- 브랜드 입력 -->
 			  <div>
-			    <label class="block text-sm font-medium mb-1" for="foodBrand">브랜드</label>
+			    <label class="block text-sm font-medium mb-1" for="Brand">브랜드</label>
 			    <input 
 			      type="text" 
 			      id="foodBrand" 
