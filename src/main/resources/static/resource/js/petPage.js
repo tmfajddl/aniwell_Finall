@@ -91,6 +91,29 @@ function addPet() {
 		           <label class="block text-sm font-medium mb-1" for="weight">체중 (kg)</label>
 		           <input type="number" step="0.1" id="weight" name="weight" required class="w-full border rounded px-3 py-2" />
 		         </div>
+				 <div class="col-span-2 grid grid-cols-2 gap-4">
+				 			  <!-- 습식/건식 선택 -->
+				 			  <div>
+				 			    <label class="block text-sm font-medium mb-1" for="foodType">사료 종류</label>
+				 			    <select id="foodType" name="foodType" class="w-full border rounded px-3 py-2">
+				 			      <option value="">선택</option>
+				 			      <option value="습식">습식</option>
+				 			      <option value="건식">건식</option>
+				 			    </select>
+				 			  </div>
+
+				 			  <!-- 브랜드 입력 -->
+				 			  <div>
+				 			    <label class="block text-sm font-medium mb-1" for="brand">브랜드</label>
+				 			    <input 
+				 			      type="text" 
+				 			      id="brand" 
+				 			      name="brand" 
+				 			      placeholder="브랜드 입력" 
+				 			      class="w-full border rounded px-3 py-2" 
+				 			    />
+				 			  </div>
+				 			</div>
 		       </div>
 		     </div>
 
@@ -173,7 +196,7 @@ function modifyPet(pet) {
 			  <!-- 습식/건식 선택 -->
 			  <div>
 			    <label class="block text-sm font-medium mb-1" for="foodType">사료 종류</label>
-			    <select id="foodType" name="foodType" class="w-full border rounded px-3 py-2">
+			    <select id="foodType" name="feedType" value="${pet.feedType} class="w-full border rounded px-3 py-2">
 			      <option value="">선택</option>
 			      <option value="습식">습식</option>
 			      <option value="건식">건식</option>
@@ -182,11 +205,12 @@ function modifyPet(pet) {
 
 			  <!-- 브랜드 입력 -->
 			  <div>
-			    <label class="block text-sm font-medium mb-1" for="foodBrand">브랜드</label>
+			    <label class="block text-sm font-medium mb-1" for="brand">브랜드</label>
 			    <input 
 			      type="text" 
-			      id="foodBrand" 
-			      name="foodBrand" 
+			      id="brand" 
+			      name="brand" 
+				  value="${pet.brand}
 			      placeholder="브랜드 입력" 
 			      class="w-full border rounded px-3 py-2" 
 			    />
