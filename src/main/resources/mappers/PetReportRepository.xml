@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.RSW.repository.PetReportRepository">
+
+    <select id="selectWeightTimeline" resultType="com.example.RSW.dto.WeightPoint">
+        SELECT
+            DATE_FORMAT(w.measuredAt, '%Y-%m-%d %H:%i:%s') AS measuredAt,
+            w.weightKg
+        FROM pet_weight_log w
+        WHERE w.petId = #{petId}
+        ORDER BY w.measuredAt ASC
+    </select>
+
+</mapper>
