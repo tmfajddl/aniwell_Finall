@@ -54,7 +54,7 @@ public interface PetRepository {
 	int closeActivePrimaryFood(@Param("petId") int petId);
 
 	// 새 기본 사료 시작 (startedAt = CURRENT_DATE(), endedAt = NULL)
-	int insertPrimaryFood(@Param("petId") int petId, @Param("brand") String brand, @Param("foodType") String foodType);
+	int insertPrimaryFood(@Param("petId") int petId, @Param("brand") String brand, @Param("foodType") String feedType);
 
 	// 급여 이벤트 기록 (무게 없이 → 브랜드/타입만 기록)
 	int insertFeedEvent(@Param("petId") int petId, @Param("feedType") String feedType, @Param("brand") String brand);
