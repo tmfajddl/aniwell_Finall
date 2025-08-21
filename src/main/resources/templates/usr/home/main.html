@@ -11,29 +11,45 @@
 	<script th:src="@{/resource/js/main.js}"></script>
 
 	<title>MAIN</title>
+
 </head>
 
 <body class="bg-gradient-to-b from-[#E4F0B9] to-[#FCDCA9] min-w-min w-screen">
-	<div class="section section-top mx-auto z-0 w-full h-[100dvh]">
-		<svg class="absolute inset-0 w-screen h-[100dvh] z-[-9]"
-		     viewBox="0 0 960 540"
-		     preserveAspectRatio="xMidYMid slice"
-		     xmlns="http://www.w3.org/2000/svg">
+	<div class="bg-gradient-to-b from-[#E4F0B9] to-[#FCDCA9] section section-top mx-auto z-0 w-full h-[100dvh]">
+		<!-- TOP -->
+		<svg class="absolute inset-0 w-full h-[100dvh] z-[-9]" viewBox="0 0 960 540"
+		     preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+		  <defs>
+		    <linearGradient id="gradTop" x1="40%" y1="1%" x2="60%" y2="99%">
+		      <stop offset="5%"  stop-color="#dbe09a"/>
+		      <stop offset="95%" stop-color="#2e576d"/>
+		    </linearGradient>
+		  </defs>
 		  <g transform="translate(960, 0) scale(1.1)">
-		    <path d="M0 297C-34.4 259.4 -68.9 221.8 -116.5 201.8C-164.1 181.7 -224.9 179.2 -257.2 148.5C-289.5 117.8 -293.2 58.9 -297 0L0 0Z" fill="#A8C7AF"/>
+		    <path
+		      d="M0 297C-34.4 259.4 -68.9 221.8 -116.5 201.8C-164.1 181.7 -224.9 179.2 -257.2 148.5C-289.5 117.8 -293.2 58.9 -297 0L0 0Z"
+		      fill="url(#gradTop)"/>
 		  </g>
 		</svg>
 
-		<svg class="absolute inset-0 w-screen h-[100dvh] z-[-9]"
-		     viewBox="0 0 960 540"
-		     preserveAspectRatio="xMidYMid slice"
-		     xmlns="http://www.w3.org/2000/svg">
+		<!-- BOTTOM -->
+		<svg class="absolute inset-0 w-screen h-[100dvh] z-[-9]" viewBox="0 0 960 540"
+		     preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+		  <defs>
+		    <linearGradient id="gradBottom" x1="40%" y1="1%" x2="60%" y2="99%">
+		      <stop offset="5%"  stop-color="#dbe09a"/>
+		      <stop offset="95%" stop-color="#2e576d"/>
+		    </linearGradient>
+		  </defs>
 		  <g transform="translate(0, 540) scale(1.1)">
-		    <path d="M0 -297C41.1 -271 82.2 -244.9 129 -223.4C175.8 -201.9 228.3 -185 257.2 -148.5C286.2 -112 291.6 -56 297 0L0 0Z" fill="#A8C7AF"/>
+		    <path
+		      d="M0 -297C41.1 -271 82.2 -244.9 129 -223.4C175.8 -201.9 228.3 -185 257.2 -148.5C286.2 -112 291.6 -56 297 0L0 0Z"
+		      fill="url(#gradBottom)"/>
 		  </g>
 		</svg>
-		<svg class="logo absolute left-1/2 top-0 -translate-x-1/2" id="eqx5j4MNSvi1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 150"
-			shape-rendering="geometricPrecision" text-rendering="geometricPrecision">
+
+		<svg class="logo absolute left-1/2 top-0 -translate-x-1/2" id="eqx5j4MNSvi1" xmlns="http://www.w3.org/2000/svg"
+			viewBox="0 0 300 150" shape-rendering="geometricPrecision" text-rendering="geometricPrecision">
 
 			<path transform="translate(.000001 0)" fill="#2e576d" stroke="#3f5787" stroke-width="0.6"
 				fill-rule="evenodd" d="
@@ -421,7 +437,7 @@
 				pinSpacing: true,               // ✅ pinSpacer 생성 안 함 (부모 레이아웃 안 흔들림)
 				anticipatePin: 1,
 				invalidateOnRefresh: true,
-				markers: true,
+				markers: false,
 				id: "sec3",
 			}
 		});
