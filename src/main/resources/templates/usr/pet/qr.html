@@ -78,6 +78,12 @@
 <div class="wrap">
   <div>
     <span class="pill">QR 리포트</span>
+	
+	<a th:href="@{/usr/pet/ocr(petId=${pet.id})}"
+							class="pill">
+						OCR</a>
+							
+							
     <h1 id="title">로딩 중...</h1>
     <div class="muted" id="subtitle"></div>
   </div>

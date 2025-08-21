@@ -147,7 +147,7 @@
 					<div id=""
 						class="relative bg-gradient-to-r from-[#DFF8E5] to-[#F4FBCC] rounded-xl p-4 text-center shadow hover:shadow-md transition-shadow duration-300 font-semibold cursor-pointer">
 						<a href="./detailPage.html">
-						  상세 기입란
+							상세 기입란
 						</a>
 					</div>
 
@@ -162,12 +162,12 @@
 					<a th:href="@{/usr/pet/qr(petId=${pet.id})}"
 						class="flex-1 hover:shadow-md transition-shadow duration-300 font-semibold cursor-pointer shadow block bg-gradient-to-r from-[#EEE8CD] to-[#F4FBCC] rounded-xl p-3 text-sm text-center font-semibold transition">
 						QR 레포트</a>
+					<a th:href="@{/usr/pet/ocr(petId=${pet.id})}"
+						class="flex-1 hover:shadow-md transition-shadow duration-300 font-semibold cursor-pointer shadow block bg-gradient-to-r from-[#EEE8CD] to-[#F4FBCC] rounded-xl p-3 text-sm text-center font-semibold transition">
+						OCR 읽기 </a>
 					<a th:href="@{/usr/pet/petPlace}"
 						class="flex-1 hover:shadow-md transition-shadow duration-300 font-semibold cursor-pointer shadow block bg-gradient-to-r from-[#EEE8CD] to-[#F4FBCC] rounded-xl p-3 text-sm text-center font-semibold transition">
 						주변 펫샵 알아보기 </a>
-					<a th:href="@{/usr/pet/gallery(petId=${pet.id})}"
-						class="flex-1 hover:shadow-md transition-shadow duration-300 font-semibold cursor-pointer shadow block bg-gradient-to-r from-[#EEE8CD] to-[#F4FBCC] rounded-xl p-3 text-sm text-center font-semibold transition">
-						감정 갤러리 </a>
 					<a th:href="@{/usr/pet/daily(petId=${pet.id})}"
 						class="flex-1 hover:shadow-md transition-shadow duration-300 font-semibold cursor-pointer shadow block bg-gradient-to-r from-[#EEE8CD] to-[#F4FBCC] rounded-xl p-3 text-sm text-center font-semibold transition">
 						감정 일기 </a>
