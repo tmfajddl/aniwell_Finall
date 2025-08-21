@@ -150,15 +150,15 @@
 		.calendar-event-icon {
 			position: absolute;
 			top: 4px;
-			left:30px;
+			left: 30px;
 			width: 20px;
 			height: 20px;
 		}
 
-		.calendar-birthday-icon{
+		.calendar-birthday-icon {
 			position: absolute;
 			top: -5px;
-			left:30px;
+			left: 30px;
 			width: 25px;
 			height: 25px;
 		}
@@ -367,6 +367,9 @@
 		<div class="content-area col-span-6">
 			<button class="btn-register" onclick="openModal()">+ 등록</button>
 			<div id="calendar"></div>
+			<a th:href="@{/usr/pet/gallery(petId=${pet.id})}"
+				class="flex-1 hover:shadow-md transition-shadow duration-300 font-semibold cursor-pointer shadow block bg-gradient-to-r from-[#EEE8CD] to-[#F4FBCC] rounded-xl p-3 text-sm text-center font-semibold transition">
+				갤러리 </a>
 		</div>
 		<div class="diary-panel col-span-6">
 			<h2>📓 감정일기</h2>
