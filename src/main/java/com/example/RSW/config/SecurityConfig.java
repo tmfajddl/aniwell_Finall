@@ -30,13 +30,17 @@ public class SecurityConfig {
 				.sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
 				.authorizeHttpRequests(auth -> auth.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 						.requestMatchers("/api/public/**").permitAll()
-						// 여기는 인증 필요로 유지
-						.requestMatchers("/api/member/**").authenticated().requestMatchers("/api/pet/**")
-						.authenticated()
-						// 그 외 API는 공개
-						.anyRequest().permitAll())
-				.exceptionHandling(e -> e.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)) // 401
-				);
+
+						// ✅ 공개 API는 여기(1순위 체인)에서 먼저 허용
+						.requestMatchers(HttpMethod.GET, "/api/pet/report", "/api/pet/weight-timeline" // 필요 시 추가
+						).permitAll()
+
+						// ✅ 그 외 /api/pet/** 는 인증 필요
+						.requestMatchers("/api/pet/**").authenticated()
+
+						// OCR 저장 등 민감 API는 계속 보호
+						.requestMatchers("/api/member/**").authenticated().anyRequest().permitAll())
+				.exceptionHandling(e -> e.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)));
 		return http.build();
 	}
 
@@ -55,6 +59,8 @@ public class SecurityConfig {
 						.sessionFixation(sessionFixation -> sessionFixation.none()))
 				.headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()))
 				.authorizeHttpRequests(auth -> auth.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+						.requestMatchers(HttpMethod.GET, "/api/pet/report").permitAll()
+
 						/* 정적/공개 리소스 */
 						.requestMatchers("/", "/usr/home/main", "/usr/member/login", "/usr/member/doLogin",
 								"/usr/member/join", "/usr/member/doJoin", "/usr/member/doFindLoginId",
@@ -65,15 +71,18 @@ public class SecurityConfig {
 								"/usr/member/getCellphoneDup", "/css/**", "/js/**", "/img/**", "/img.socialLogin/**",
 								"/resource/**", "/favicon.ico")
 						.permitAll()
+
 						/* 외부에서 직접 호출할 경로(요구사항 그대로 공개 유지) */
 						.requestMatchers(HttpMethod.GET, "/usr/pet/daily/**").permitAll()
 						.requestMatchers(HttpMethod.DELETE, "/usr/pet/daily/**").permitAll()
+
 						/* 나머지는 로그인 필요 */
 						.anyRequest().authenticated())
 				.formLogin(login -> login.loginPage("/usr/member/login").defaultSuccessUrl("/", false).permitAll())
 				.logout(logout -> logout.logoutUrl("/usr/member/doLogout").logoutSuccessUrl("/")
 						.invalidateHttpSession(true).deleteCookies("JSESSIONID").permitAll())
 				.rememberMe(rememberMe -> rememberMe.tokenValiditySeconds(7 * 24 * 60 * 60).alwaysRemember(true));
+
 		return http.build();
 	}
 
@@ -95,8 +104,9 @@ public class SecurityConfig {
 		cfg.setAllowedHeaders(List.of("*"));
 		cfg.setExposedHeaders(List.of("Location"));
 		cfg.setAllowCredentials(true);
+
 		UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-		// :흰색_확인_표시: 전역 적용: /api/** 뿐 아니라 /usr/** 까지
+		// ✅ 전역 적용: /api/** 뿐 아니라 /usr/** 까지
 		source.registerCorsConfiguration("/**", cfg);
 		return source;
 	}
