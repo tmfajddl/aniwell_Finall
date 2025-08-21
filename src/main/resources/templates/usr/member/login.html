@@ -507,88 +507,204 @@
         });
     });
 </script>
-<!-- ✅ Firebase 라이브러리 로드 -->
+
+<!-- ✅ Firebase SDK (한 번만) -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 
-<!-- ✅ reCAPTCHA를 위한 숨김 컨테이너 -->
-<div id="recaptcha-container" style="position: absolute; left: -9999px;"></div>
+<!-- ✅ reCAPTCHA 루트(고정) -->
+<div id="recaptcha-container" style="position:absolute; left:-9999px;"></div>
 
-<!-- ✅ Firebase 초기화 + reCAPTCHA 초기화 + 인증 함수 -->
 <script>
-    // ✅ Firebase 설정
+    // ===== Firebase 설정 =====
+    const firebaseConfig = {
+        apiKey: "AIzaSyCickEEoEGDTVyy-7defZSkOSSmWj2shkw",
+        authDomain: "aniwell-2a90b.firebaseapp.com",
+        projectId: "aniwell-2a90b",
+        storageBucket: "aniwell-2a90b.appspot.com",
+        messagingSenderId: "399675409170",
+        appId: "1:399675409170:web:2fb665a85291a8c9a6a9cb"
+    };
+    if (firebase.apps.length === 0) firebase.initializeApp(firebaseConfig);
+    firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL);
 
+    // ===== reCAPTCHA 관리 =====
+    let recaptchaVerifier = null;
+    let recaptchaWidgetId = null;
 
-    // ✅ Firebase 초기화
-    if (firebase.apps.length === 0) {
-        firebase.initializeApp(firebaseConfig);
-        console.log("🔥 Firebase 초기화 완료");
+    function makeInnerContainer() {
+        const root = document.getElementById('recaptcha-container');
+        root.innerHTML = '';
+        const inner = document.createElement('div');
+        inner.id = 'rc-' + Date.now();
+        root.appendChild(inner);
+        return inner;
     }
 
-    // ✅ Firebase 세션 지속성 설정
-    firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL)
-        .then(() => console.log("🟢 Firebase 세션 지속성 LOCAL 설정 완료"));
+    async function renderRecaptchaOnce() {
+        if (recaptchaVerifier) return;
+        const inner = makeInnerContainer();
+        recaptchaVerifier = new firebase.auth.RecaptchaVerifier(inner, {
+            size: 'invisible',
+            'expired-callback': () => {
+                try { if (recaptchaWidgetId != null) grecaptcha.reset(recaptchaWidgetId); } catch {}
+            }
+        });
+        recaptchaWidgetId = await recaptchaVerifier.render();
+        console.log('reCAPTCHA rendered:', recaptchaWidgetId);
+    }
 
-    // ✅ invisible reCAPTCHA 초기화 (한 번만)
-    document.addEventListener("DOMContentLoaded", function () {
-        if (!window.recaptchaVerifier) {
-            window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
-                size: 'invisible',
-                callback: (response) => {
-                    console.log("🟢 reCAPTCHA solved:", response);
-                }
-            });
+    async function renderFreshRecaptcha() {
+        try { recaptchaVerifier?.clear?.(); } catch {}
+        try { if (recaptchaWidgetId != null && typeof grecaptcha !== 'undefined') grecaptcha.reset(recaptchaWidgetId); } catch {}
+        recaptchaVerifier = null; recaptchaWidgetId = null;
+        await renderRecaptchaOnce();
+    }
 
-            window.recaptchaVerifier.render().then(function (widgetId) {
-                window.recaptchaWidgetId = widgetId;
-                console.log("🟢 reCAPTCHA widget rendered:", widgetId);
-            });
+    document.addEventListener('DOMContentLoaded', renderRecaptchaOnce);
+
+    // ===== 유틸 =====
+    const toE164KR = v => '+82' + v.replace(/-/g,'').replace(/^0/,'');
+    const isPhone  = v => /^\d{3}-\d{3,4}-\d{4}$/.test(v);
+    const sendBtn  = () => document.querySelector('.auth'); // 첫 번째(인증) 버튼
+
+    // ===== 점증 쿨다운 (남용 차단 회피; 로컬스토리지 저장) =====
+    const COOLDOWN_KEY = 'smsCooldownUntil';
+    const FAILCOUNT_KEY = 'smsFailCount';
+
+    const coolingLeftMs = () => Math.max(0, (Number(localStorage.getItem(COOLDOWN_KEY))||0) - Date.now());
+    function startCooldown(ms) {
+        localStorage.setItem(COOLDOWN_KEY, String(Date.now() + ms));
+        paintCooldown();
+    }
+    function incFailCount() {
+        const n = (Number(localStorage.getItem(FAILCOUNT_KEY))||0) + 1;
+        localStorage.setItem(FAILCOUNT_KEY, String(n));
+        return n;
+    }
+    function resetFailCount() { localStorage.removeItem(FAILCOUNT_KEY); }
+
+    function paintCooldown() {
+        const btn = sendBtn();
+        if (!btn) return;
+        const left = coolingLeftMs();
+        if (left > 0) {
+            btn.setAttribute('disabled','true');
+            btn.textContent = `인증 대기중… (${Math.ceil(left/1000)}s)`;
+        } else {
+            btn.removeAttribute('disabled');
+            btn.textContent = '인증';
         }
-    });
-
-    // ✅ 한국형 전화번호 포맷 → E.164로 변환
-    function toE164KR(phone) {
-        return "+82" + phone.replace(/-/g, '').replace(/^0/, '');
     }
+    setInterval(paintCooldown, 1000);
+    document.addEventListener('visibilitychange', paintCooldown);
+    document.addEventListener('DOMContentLoaded', paintCooldown);
 
-    // ✅ 인증번호 전송 함수
+    // ===== 인증번호 전송 =====
     async function sendVerificationCode() {
-        const phoneNumber = document.getElementById("cellphone").value.trim();
-        const warning = document.getElementById("cellphoneWarning");
-        const authBtn = document.querySelector('.auth');
+        // 쿨다운 중이면 막기
+        if (coolingLeftMs() > 0) { paintCooldown(); return; }
 
-        if (!/^\d{3}-\d{3,4}-\d{4}$/.test(phoneNumber)) {
-            warning.innerText = "전화번호 형식이 올바르지 않습니다.";
-            warning.classList.remove("hidden");
+        const phone = document.getElementById('cellphone').value.trim();
+        const warn  = document.getElementById('cellphoneWarning');
+        const btn   = sendBtn();
+
+        if (!isPhone(phone)) {
+            warn.innerText = '전화번호 형식이 올바르지 않습니다.';
+            warn.classList.remove('hidden');
             return;
         }
-        warning.classList.add("hidden");
+        warn.classList.add('hidden');
 
-        if (!window.recaptchaVerifier) {
-            alert("reCAPTCHA가 아직 준비되지 않았습니다. 잠시 후 다시 시도해주세요.");
-            return;
-        }
+        const e164 = toE164KR(phone);
 
-        const appVerifier = window.recaptchaVerifier;
-        const formattedPhone = toE164KR(phoneNumber);
+        const trySend = async () => {
+            await recaptchaVerifier.verify(); // 항상 새 토큰
+            const token = (typeof grecaptcha !== 'undefined' && recaptchaWidgetId != null)
+                ? grecaptcha.getResponse(recaptchaWidgetId) : '';
+            console.log('🔎 recaptcha token length:', token?.length || 0);
+            return firebase.auth().signInWithPhoneNumber(e164, recaptchaVerifier);
+        };
+
+        // 버튼 연타 방지(짧은 잠금)
+        btn?.setAttribute('disabled','true');
+        const unlock = (ms=60000)=>setTimeout(()=>paintCooldown(), ms); // paintCooldown이 버튼 상태 갱신
 
         try {
-            const confirmationResult = await firebase.auth().signInWithPhoneNumber(formattedPhone, appVerifier);
-            window.confirmationResult = confirmationResult;
-            document.getElementById("phone-verification-box").classList.remove("hidden");
-            alert("인증번호가 전송되었습니다.");
+            await renderRecaptchaOnce();
 
-            authBtn?.setAttribute("disabled", "true");
-            setTimeout(() => authBtn?.removeAttribute("disabled"), 60000);
-        } catch (error) {
-            console.error("❌ SMS 전송 실패", error);
-            if (window.recaptchaWidgetId) {
-                grecaptcha.reset(window.recaptchaWidgetId); // reCAPTCHA 리셋
+            // 1차 시도
+            const confirmationResult = await trySend();
+            window.confirmationResult = confirmationResult;
+
+            // 성공: 실패카운트 리셋 & UI
+            resetFailCount();
+            document.getElementById('phone-verification-box').classList.remove('hidden');
+            alert('인증번호를 전송했습니다.');
+            unlock();
+
+        } catch (err1) {
+            console.warn('⚠️ 1차 실패:', err1);
+            const msg = (err1 && (err1.code || err1.message || '')).toString();
+
+            // reCAPTCHA/토큰 문제로 보이면 새로 렌더해서 1회 재시도
+            const isCaptchaIssue =
+                msg.includes('invalid-app-credential') ||
+                msg.includes('captcha') ||
+                msg.includes('already been rendered');
+
+            if (isCaptchaIssue) {
+                try {
+                    await renderFreshRecaptcha();
+                    const confirmationResult = await trySend();
+                    window.confirmationResult = confirmationResult;
+
+                    resetFailCount();
+                    document.getElementById('phone-verification-box').classList.remove('hidden');
+                    alert('인증번호를 전송했습니다.');
+                    unlock();
+                    return;
+                } catch (err2) {
+                    console.error('❌ 재시도 실패:', err2);
+                    alert('SMS 전송에 실패했습니다. ' + (err2.message || ''));
+                    // 재시도 실패 후 짧은 쿨다운
+                    startCooldown(5 * 1000);
+                    return;
+                }
             }
-            alert("SMS 전송에 실패했습니다. " + (error.message || ""));
+
+            // 남용 차단 → 점증 쿨다운
+            if (msg.includes('too-many-requests')) {
+                const fails = incFailCount();
+                // 1분, 2분, 4분… 최대 15분
+                const backoffMs = Math.min(15 * 60 * 1000, Math.pow(2, fails - 1) * 60 * 1000);
+                startCooldown(backoffMs);
+                alert('요청이 너무 자주 발생했습니다. 잠시 후 다시 시도하거나 네트워크/브라우저를 변경해 주세요.');
+                return;
+            }
+
+            // 기타 오류
+            alert('SMS 전송에 실패했습니다. ' + (err1.message || ''));
+            startCooldown(5 * 1000);
+        }
+    }
+
+    // ===== 인증번호 확인 =====
+    async function verifyPhoneCode() {
+        const code = document.getElementById('verificationCode').value.trim();
+        if (!window.confirmationResult) { alert('먼저 인증번호를 요청하세요.'); return; }
+        if (!code) { alert('인증번호를 입력하세요.'); return; }
+
+        try {
+            const result = await window.confirmationResult.confirm(code);
+            alert('전화번호 인증이 완료되었습니다: ' + (result.user?.phoneNumber || ''));
+        } catch (err) {
+            console.error('❌ 인증 실패', err);
+            alert('인증에 실패했습니다. ' + (err.message || ''));
         }
     }
 </script>
+
 
 <script>
     function execDaumPostcode() {
@@ -729,7 +845,7 @@
                 await handleFirebaseAndSessionLogin(customToken);
             }
 
-			// 해당 위치에 로그인된 유저를 대상으로 api불러와서 memberid가지고 오기
+            // 해당 위치에 로그인된 유저를 대상으로 api불러와서 memberid가지고 오기
             // ✅ 로그인 성공 시 즉시 메인으로 이동
             window.location.replace("/");
         } catch {
