@@ -75,7 +75,6 @@
 			resultType="com.example.RSW.vo.Pet">
 		SELECT
 			p.*,
-
 			pf.brand       AS brand,
 			pf.productName AS productName,
 			pf.flavor      AS flavor,

@@ -50,21 +50,13 @@ body {
 
 .bg-logo {
 	position: relative;
-<<<<<<< HEAD
-	margin-top: 50px;
-=======
 	padding-top: 50px;
->>>>>>> 5805810befbc16956d55e43e2b8e61f7068b7d4b
 	min-width: 500px;
 }
 
 .b-logo {
-<<<<<<< HEAD
-	z-index: -100;
-=======
 	padding-top: 50px;
 	z-index: -10;
->>>>>>> 5805810befbc16956d55e43e2b8e61f7068b7d4b
 	position: relative;
 	width: 1300px;
 }
@@ -351,9 +343,6 @@ body {
 
 #waterWave {
 	animation: waveShift 3s linear infinite;
-<<<<<<< HEAD
-}
-=======
 }
 
 
@@ -390,4 +379,3 @@ body {
   mix-blend-mode: screen;
   opacity: 0; transition: opacity .2s ease;
 }
->>>>>>> 5805810befbc16956d55e43e2b8e61f7068b7d4b
