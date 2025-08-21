@@ -45,20 +45,17 @@ body {
    Logo / Character
 ========================= */
 .logo {
-	width: 90px;
+	width: 100px;
 }
 
 .bg-logo {
 	position: relative;
+	padding-top: 50px;
 	min-width: 500px;
 }
 
 .b-logo {
-	top: 50%;
-	left: 50%;
-	transform: translate(-50%, -50%);
-	min-width: 400px;
-	min-height: 400px;
+	padding-top: 50px;
 	z-index: -10;
 	position: relative;
 	width: 1300px;
@@ -106,9 +103,10 @@ body {
    Buttons / Icons
 ========================= */
 .icon {
-	
+	position: relative;
 	bottom: 100px;
 	display: flex;
+	gap: 50px;
 	padding-left: 70%;
 }
 
@@ -354,35 +352,30 @@ body {
 
 /* 3D 원근감 컨테이너 */
 .tilt-scene {
-	display: inline-block;
-	perspective: 900px;
-	/* 자식의 3D 깊이 보이게 */
+  display: inline-block;
+  perspective: 900px;          /* 자식의 3D 깊이 보이게 */
 }
 
 /* 기울어질 타겟 */
 #visual {
-	transform-style: preserve-3d;
-	/* 자식 Z 이동 유지 */
-	transform-origin: center center;
-	will-change: transform;
-	transition: transform .12s ease-out;
-	/* SVG일 때 CSS 트랜스폼 기준 박스 지정 */
-	transform-box: fill-box;
+  transform-style: preserve-3d; /* 자식 Z 이동 유지 */
+  transform-origin: center center;
+  will-change: transform;
+  transition: transform .12s ease-out;
+  /* SVG일 때 CSS 트랜스폼 기준 박스 지정 */
+  transform-box: fill-box;
 }
 
 /* 패럴랙스 레이어 기본값 */
 #visual [data-depth] {
-	transform-box: fill-box;
-	/* SVG shapes를 위한 설정 */
-	transform-origin: center;
+  transform-box: fill-box; /* SVG shapes를 위한 설정 */
+  transform-origin: center;
 }
 
 /* (HTML일 때만) 하이라이트/글레어 오버레이 */
 #visual .glare {
-	position: absolute;
-	inset: 0;
-	pointer-events: none;
-	mix-blend-mode: screen;
-	opacity: 0;
-	transition: opacity .2s ease;
+  position: absolute; inset: 0;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  opacity: 0; transition: opacity .2s ease;
 }

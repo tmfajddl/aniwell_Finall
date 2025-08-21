@@ -157,6 +157,34 @@
     transition: opacity 2s;
 }
 
+.auth {
+    margin: auto;
+    top: -40px;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    padding: 7px 0;
+    border: none;
+    border-radius: 10px;
+    width: 100px;
+    height: 30px;
+    display: block;
+    outline: none;
+    text-align: inherit;
+    text-transform: uppercase;
+    text-decoration: none;
+    letter-spacing: 0.1em;
+    font-size: 12px;
+    font-weight: 500;
+    color: #fff;
+    background: #FAD564;
+    box-shadow: 0 15px 30px rgb(250, 213, 100, .32);
+    -webkit-transition: bottom 2s;
+    -moz-transition: bottom 2s;
+    -o-transition: bottom 2s;
+    transition: bottom 2s;
+    cursor: pointer;
+}
 
 .ser {
     margin: auto;

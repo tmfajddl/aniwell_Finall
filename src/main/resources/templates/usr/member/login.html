@@ -15,14 +15,23 @@
         }
 
         /* 검증 실패/차단 복구 시 전환 잠시 끄기 */
-        .form-panel-slide.no-anim { transition: none !important; }
+        .form-panel-slide.no-anim {
+            transition: none !important;
+        }
 
         /* 가로 흔들림 방지(선택) */
-        html, body { overflow-x: hidden; }
-        html { scrollbar-gutter: stable; }
+        html, body {
+            overflow-x: hidden;
+        }
+
+        html {
+            scrollbar-gutter: stable;
+        }
 
         /* 세로 스크롤바 공간을 항상 확보 → 경고 문구 표시 시 좌우 '툭' 방지 */
-        body { overflow-y: scroll; }
+        body {
+            overflow-y: scroll;
+        }
 
         .form-step {
             width: 100%;
@@ -188,7 +197,7 @@
                                     <i class="fa-solid fa-eye hidden" id="iconOpenPwConfirm"></i>
                                 </button>
                             </div>
-                            <p id="pwMessage" class="block text-xs text-red-600 mt-1 mb-2 hidden">비밀번호가 일치하지 않습니다.</p>
+                            <p id="pwMessage" class="block text-xs text-red-600 mt-1 hidden">비밀번호가 일치하지 않습니다.</p>
                         </div>
 
                         <label class="form-wrapper__label" for="name">이름</label>
@@ -200,19 +209,27 @@
                                placeholder="NICKNAME" th:value="${param.nickname}"/>
                         <p id="nicknameWarning" class="block text-xs text-red-600 mt-1 hidden"></p>
 
-                        <button type="button" class="z-10 top-46 buttons__signup buttons__signup--sign-up-form "
+                        <button type="button" class="z-10 top-auto buttons__signup buttons__signup--sign-up-form "
                                 onclick="tryGoNextFromStep1()">다음
                         </button>
                     </div>
                     <!-- STEP 2 -->
-
                     <div class="relative py-12 overflow-hidden form-step w-1/2 flex flex-col self-start h-full"
                          id="step2">
 
                         <label class="form-wrapper__label" for="cellphone">전화번호</label>
-                        <input class="form-wrapper__input" id="cellphone" name="cellphone" type="text" required
-                               placeholder="PHONE NUMBER" th:value="${param.cellphone}"/>
+                        <div class="flex items-center gap-1">
+                            <input class="form-wrapper__input  w-[250px] h-[30px]" id="cellphone" name="cellphone"
+                                   type="text" required
+                                   placeholder="PHONE NUMBER" th:value="${param.cellphone}"/>
+                            <button type="button" onclick="sendVerificationCode()" class="auth">인증</button>
+                        </div>
                         <p id="cellphoneWarning" class="block text-xs text-red-600 mt-1 hidden"></p>
+                        <div id="phone-verification-box" class="mt-2 hidden">
+                            <input class="form-wrapper__input w-[250px] h-[30px] mt-1" id="verificationCode" type="text"
+                                   placeholder="인증번호 입력"/>
+                            <button type="button" class="auth mt-1" onclick="verifyPhoneCode()">확인</button>
+                        </div>
 
                         <label class="form-wrapper__label" for="email">이메일</label>
                         <input class="form-wrapper__input" id="email" name="email" type="email" required
@@ -234,12 +251,12 @@
                         <div class="py-4">
                             <input type="hidden" id="authLevel" name="authLevel"
                                    th:value="${param.authLevel ?: 1}"/>
-                            <button type="button" class=" buttons__signup buttons__signup--sign-up-form"
+                            <button type="button" class="top-auto buttons__signup buttons__signup--sign-up-form"
                                     onclick="goToStep(1)">뒤로가기
                             </button>
 
                             <button type="submit"
-                                    class="top-[260px] buttons__signup buttons__signup--sign-up-form">sign
+                                    class="top-[360px] buttons__signup buttons__signup--sign-up-form">sign
 
                                 up
                             </button>
@@ -258,12 +275,12 @@
 
 <script>
     // 보이는 경고문인지 판별
-    function isShown(el){
+    function isShown(el) {
         return !!el && !el.classList.contains('hidden');
     }
 
     // 슬라이드 애니메이션 1회 비활성화
-    function disableSlideOnce(){
+    function disableSlideOnce() {
         const slide = document.querySelector('.form-panel-slide');
         if (!slide) return;
 
@@ -288,38 +305,38 @@
     }
 
     // step1 전용 검증 (빈칸 + 빨간만 에러로 처리)
-    function validateStep1(){
+    function validateStep1() {
         const form = document.querySelector('.login-form--register form');
-        if (!form) return { ok:false };
+        if (!form) return {ok: false};
 
         // step1 필수만
-        const fields = ['loginId','loginPw','loginPwConfirm','name','nickname'];
+        const fields = ['loginId', 'loginPw', 'loginPwConfirm', 'name', 'nickname'];
         let firstError = null;
 
         // 1) 빈칸 체크
-        for (const id of fields){
+        for (const id of fields) {
             const el = form.querySelector('#' + id);
-            if (el && el.value.trim() === ''){
+            if (el && el.value.trim() === '') {
                 firstError = el;
                 break;
             }
         }
 
         // 2) 빨간 테두리 있으면 에러
-        if (!firstError){
+        if (!firstError) {
             const redInput = form.querySelector('#step1 input.border-red-500');
             if (redInput) firstError = redInput;
         }
 
         // 3) 경고 텍스트 중 '빨간'만 에러 처리 (성공=초록은 통과)
-        if (!firstError){
+        if (!firstError) {
             const warns = [
-                { id:'idWarning',       focus:'#loginId' },
-                { id:'nicknameWarning', focus:'#nickname' },
-                { id:'pwWarning',       focus:'#loginPw' },
-                { id:'pwMessage',       focus:'#loginPwConfirm' }, // 불일치
+                {id: 'idWarning', focus: '#loginId'},
+                {id: 'nicknameWarning', focus: '#nickname'},
+                {id: 'pwWarning', focus: '#loginPw'},
+                {id: 'pwMessage', focus: '#loginPwConfirm'}, // 불일치
             ];
-            for (const {id, focus} of warns){
+            for (const {id, focus} of warns) {
                 const w = form.querySelector('#' + id);
                 if (!w || w.classList.contains('hidden')) continue;
                 if (w.classList.contains('text-red-600')) {
@@ -329,13 +346,13 @@
             }
         }
 
-        return { ok: !firstError, firstError };
+        return {ok: !firstError, firstError};
     }
 
     // step1 빈칸들을 빨간 테두리로 표시, 첫 빈 칸을 리턴
     function highlightEmptyStep1() {
         const form = document.querySelector('.login-form--register form');
-        const ids = ['loginId','loginPw','loginPwConfirm','name','nickname'];
+        const ids = ['loginId', 'loginPw', 'loginPwConfirm', 'name', 'nickname'];
         let first = null;
 
         ids.forEach(id => {
@@ -358,9 +375,9 @@
 
 
     // 통합 진입점: 통과 시에만 다음 단계
-    function tryGoNextFromStep1(){
-        const { ok, firstError } = validateStep1();
-        if (!ok){
+    function tryGoNextFromStep1() {
+        const {ok, firstError} = validateStep1();
+        if (!ok) {
             const firstEmpty = highlightEmptyStep1();   // 빈 칸 빨간 줄 표시
             _blockSlideOnce = true; // ✅ 이 프레임에서 모든 goToStep 호출 차단
             disableSlideOnce();     // 애니메이션 끄기 + 위치 복구
@@ -368,10 +385,12 @@
             const slide = document.querySelector('.form-panel-slide');
             if (slide) slide.style.transform = 'translateX(0)';
 
-            if (firstError) firstError.focus({ preventScroll: true });
-            (firstEmpty || firstError)?.focus({ preventScroll: true });
+            if (firstError) firstError.focus({preventScroll: true});
+            (firstEmpty || firstError)?.focus({preventScroll: true});
             // 120ms 뒤 차단 해제
-            setTimeout(() => { _blockSlideOnce = false; }, 120);
+            setTimeout(() => {
+                _blockSlideOnce = false;
+            }, 120);
             return;
         }
         goToStep(2); // 통과 시 정상 이동
@@ -457,7 +476,7 @@
         // "다음" 버튼에서 시작되는 드래그/터치가 스와이프로 인식되지 않게 막기
         const nextBtn = document.querySelector('#step1 .buttons__signup--sign-up-form');
         if (nextBtn) {
-            ['mousedown','touchstart'].forEach(evt => {
+            ['mousedown', 'touchstart'].forEach(evt => {
                 nextBtn.addEventListener(evt, e => e.stopPropagation());
             });
         }
@@ -487,6 +506,88 @@
             e.target.value = result;
         });
     });
+</script>
+<!-- ✅ Firebase 라이브러리 로드 -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+
+<!-- ✅ reCAPTCHA를 위한 숨김 컨테이너 -->
+<div id="recaptcha-container" style="position: absolute; left: -9999px;"></div>
+
+<!-- ✅ Firebase 초기화 + reCAPTCHA 초기화 + 인증 함수 -->
+<script>
+    // ✅ Firebase 설정
+
+
+    // ✅ Firebase 초기화
+    if (firebase.apps.length === 0) {
+        firebase.initializeApp(firebaseConfig);
+        console.log("🔥 Firebase 초기화 완료");
+    }
+
+    // ✅ Firebase 세션 지속성 설정
+    firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+        .then(() => console.log("🟢 Firebase 세션 지속성 LOCAL 설정 완료"));
+
+    // ✅ invisible reCAPTCHA 초기화 (한 번만)
+    document.addEventListener("DOMContentLoaded", function () {
+        if (!window.recaptchaVerifier) {
+            window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
+                size: 'invisible',
+                callback: (response) => {
+                    console.log("🟢 reCAPTCHA solved:", response);
+                }
+            });
+
+            window.recaptchaVerifier.render().then(function (widgetId) {
+                window.recaptchaWidgetId = widgetId;
+                console.log("🟢 reCAPTCHA widget rendered:", widgetId);
+            });
+        }
+    });
+
+    // ✅ 한국형 전화번호 포맷 → E.164로 변환
+    function toE164KR(phone) {
+        return "+82" + phone.replace(/-/g, '').replace(/^0/, '');
+    }
+
+    // ✅ 인증번호 전송 함수
+    async function sendVerificationCode() {
+        const phoneNumber = document.getElementById("cellphone").value.trim();
+        const warning = document.getElementById("cellphoneWarning");
+        const authBtn = document.querySelector('.auth');
+
+        if (!/^\d{3}-\d{3,4}-\d{4}$/.test(phoneNumber)) {
+            warning.innerText = "전화번호 형식이 올바르지 않습니다.";
+            warning.classList.remove("hidden");
+            return;
+        }
+        warning.classList.add("hidden");
+
+        if (!window.recaptchaVerifier) {
+            alert("reCAPTCHA가 아직 준비되지 않았습니다. 잠시 후 다시 시도해주세요.");
+            return;
+        }
+
+        const appVerifier = window.recaptchaVerifier;
+        const formattedPhone = toE164KR(phoneNumber);
+
+        try {
+            const confirmationResult = await firebase.auth().signInWithPhoneNumber(formattedPhone, appVerifier);
+            window.confirmationResult = confirmationResult;
+            document.getElementById("phone-verification-box").classList.remove("hidden");
+            alert("인증번호가 전송되었습니다.");
+
+            authBtn?.setAttribute("disabled", "true");
+            setTimeout(() => authBtn?.removeAttribute("disabled"), 60000);
+        } catch (error) {
+            console.error("❌ SMS 전송 실패", error);
+            if (window.recaptchaWidgetId) {
+                grecaptcha.reset(window.recaptchaWidgetId); // reCAPTCHA 리셋
+            }
+            alert("SMS 전송에 실패했습니다. " + (error.message || ""));
+        }
+    }
 </script>
 
 <script>
@@ -591,24 +692,6 @@
         }
     }
 </script>
-
-<!-- ✅ Firebase 라이브러리 로드 -->
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-
-<!-- ✅ Firebase 초기화 -->
-<script>
-
-    if (firebase.apps.length === 0) {
-        firebase.initializeApp(firebaseConfig);
-        console.log("🔥 Firebase 초기화 완료");
-    }
-
-    // ✅ Firebase 세션 지속성 유지
-    firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL)
-        .then(() => console.log("🟢 Firebase 세션 지속성 LOCAL 설정 완료"));
-</script>
 <script>
     // ✅ Firebase 로그인 보장
     async function ensureFirebaseLogin(customToken) {
@@ -645,7 +728,7 @@
             if (customToken && (customToken.match(/\./g) || []).length === 2) {
                 await handleFirebaseAndSessionLogin(customToken);
             }
-			
+
 			// 해당 위치에 로그인된 유저를 대상으로 api불러와서 memberid가지고 오기
             // ✅ 로그인 성공 시 즉시 메인으로 이동
             window.location.replace("/");
@@ -719,6 +802,5 @@
     });
 </script>
 <script th:src="@{/resource/js/dup_check.js}"></script>
-
 </body>
 </html>

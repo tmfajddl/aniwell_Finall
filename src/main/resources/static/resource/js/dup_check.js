@@ -146,13 +146,20 @@ document.addEventListener("DOMContentLoaded", () => {
                     showWarning("아이디에 이모티콘은 사용할 수 없습니다.");
                     localInvalid = true;
                 }
-                // 2) 특수문자 차단
-                else if (hasSpecial) {
+
+                // 2) 한글 차단
+                if (!localInvalid && /[ㄱ-ㅎㅏ-ㅣ가-힣]/.test(value)) {
+                    showWarning("아이디에 한글은 사용할 수 없습니다.");
+                    localInvalid = true;
+                }
+
+                // 3) 특수문자 차단
+                if (!localInvalid && hasSpecial) {
                     showWarning("아이디에 특수문자는 사용할 수 없습니다.");
                     localInvalid = true;
                 }
 
-                // 3) 시작문자/길이
+                // 4) 시작문자/길이
                 if (!localInvalid) {
                     if (!/^[A-Za-z]/.test(value)) {
                         showWarning("아이디는 영문자로 시작해야 합니다.");
@@ -163,7 +170,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     }
                 }
 
-                // 4) 영문+숫자 조합 필수
+                // 5) 영문+숫자 조합 필수
                 if (!localInvalid) {
                     const hasLetter = /[A-Za-z]/.test(value);
                     const hasDigit  = /\d/.test(value);
@@ -202,6 +209,12 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (!isValid) {
                     return showWarning("전화번호 형식이 올바르지 않습니다. 예: 000-0000-0000");
                 }
+            }
+
+            // 서버 요청 전에 예외 처리
+            if (field === "cellphone" && value === "010-1234-5678") {
+                showSuccess("테스트용 전화번호입니다.");
+                return;
             }
 
             // 서버 중복 검사
