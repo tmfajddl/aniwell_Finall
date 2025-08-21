@@ -380,7 +380,7 @@ CREATE TABLE schedule_participant (
   FOREIGN KEY (memberId) REFERENCES member(id) ON DELETE CASCADE
 );
 
-## 처방전 / 진단서 / 검사결과지 DB
+## 진단서 / 검사결과지 DB
 
 -- 방문기록
 CREATE TABLE visit (
@@ -408,19 +408,6 @@ CREATE TABLE medical_document (
   INDEX idx_doc_visit (visit_id)
 );
 
--- 처방전 상세
-CREATE TABLE prescription_detail (
-  id BIGINT AUTO_INCREMENT PRIMARY KEY,
-  document_id BIGINT NOT NULL,                   -- medical_document.id (doc_type='prescription')
-  drug_name VARCHAR(150) NOT NULL,               -- 약품명
-  dose_value DECIMAL(10,3),                      -- 용량 수치
-  dose_unit ENUM('mg','g','mL','IU','tablet','drop'),
-  freq_per_day DECIMAL(5,2),                     -- 하루 복용 횟수
-  duration_days SMALLINT,                        -- 복용 기간(일)
-  notes VARCHAR(255),                            -- 비고
-  INDEX idx_prescription_doc (document_id)
-);
-
 -- 검사결과지 상세
 CREATE TABLE lab_result_detail (
   id BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -435,6 +422,114 @@ CREATE TABLE lab_result_detail (
   INDEX idx_lab_doc (document_id),
   INDEX idx_lab_test (test_name)
 );
+
+-- ✅ 체중 변화 이력 테이블 (기존 스키마 규칙 맞춤)
+CREATE TABLE pet_weight_log (
+  id           INT(10) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,  -- PK
+  petId        INT(10) UNSIGNED NOT NULL COMMENT 'FK → pet.id',       -- 부모와 동일 타입(UNSIGNED)
+  measuredAt   DATETIME NOT NULL COMMENT '측정 시각(로컬 기준)',
+  weightKg     DECIMAL(5,2) NOT NULL COMMENT '체중(kg), 최대 999.99',
+  source       VARCHAR(20) DEFAULT 'manual'
+               COMMENT '기록 출처: manual(수동), hospital(병원), scale(가정용 체중계), ble(스마트 저울/BLE)',
+  note         VARCHAR(255) NULL COMMENT '메모',
+
+  regDate      DATETIME NOT NULL DEFAULT NOW() COMMENT '등록 시각',
+  updateDate   DATETIME NOT NULL DEFAULT NOW() COMMENT '수정 시각',
+
+  -- 동일 시각 중복 기록 방지(펫+시각 조합 유니크)
+  UNIQUE KEY uk_pet_measured_time (petId, measuredAt),
+
+  -- 조회 최적화(타임라인/최근값)
+  INDEX idx_pet_time (petId, measuredAt),
+
+  -- FK: 타입/UNSIGNED 일치 필수
+  CONSTRAINT fk_pet_weight_log__pet
+    FOREIGN KEY (petId) REFERENCES pet(id)
+    ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='반려동물 체중 변화 이력(타임라인)';
+
+
+-- ✅ 펫별 사료/간식 메타 및 섭취 기간 관리
+CREATE TABLE pet_food (
+  id            INT(10) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, -- PK
+  petId         INT(10) UNSIGNED NOT NULL COMMENT 'FK → pet.id',
+
+  brand         VARCHAR(120) NULL COMMENT '브랜드(예: Royal Canin)',
+  productName   VARCHAR(200) NOT NULL COMMENT '제품명',
+  flavor        VARCHAR(120) NULL COMMENT '주요 단백질/맛(예: chicken, salmon)',
+  foodType      VARCHAR(20)  NOT NULL DEFAULT 'dry'
+                COMMENT '사료 형태: dry, wet, raw, freeze_dried, treat 등',
+  lifeStage     VARCHAR(20)  NOT NULL DEFAULT 'all'
+                COMMENT '급여 대상 단계: all, kitten, puppy, adult, senior',
+   notes         VARCHAR(255) NULL COMMENT '특이사항(알레르기/반응 등)',
+
+  isPrimary     TINYINT(1) UNSIGNED NOT NULL DEFAULT 0 COMMENT '기본 사료 여부(1=기본)',
+  startedAt     DATE NULL COMMENT '급여 시작일',
+  endedAt       DATE NULL COMMENT '중단일(NULL=진행중)',
+
+  regDate       DATETIME NOT NULL DEFAULT NOW(),
+  updateDate    DATETIME NOT NULL DEFAULT NOW(),
+
+  -- 진행중 기본 사료 1개 제약(endedAt IS NULL 상태에서만 유니크 보장)
+  UNIQUE KEY uk_primary_active (petId, isPrimary, endedAt),
+
+  -- 조회 최적화
+  INDEX idx_pet (petId),
+  INDEX idx_product (productName),
+
+  -- FK: 타입/UNSIGNED 일치 필수
+  CONSTRAINT fk_pet_food__pet
+    FOREIGN KEY (petId) REFERENCES pet(id)
+    ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='펫별 사료/간식 정보 + 섭취 기간/기본사료 관리';
+
+
+############# 💣 트리거 ###################
+-- :흰색_확인_표시: INSERT 트리거: 백신 접종 등록 시 자동으로 예정일 계산
+DELIMITER $$
+CREATE TRIGGER `auto_set_next_due_date`
+BEFORE INSERT ON `pet_vaccination`
+FOR EACH ROW
+BEGIN
+  DECLARE v_interval INT;
+  -- 백엔드에서 NULL로 명시하지 않은 경우에만 계산
+  IF NEW.nextDueDate IS NOT NULL THEN
+    SELECT intervalMonths INTO v_interval
+    FROM vaccine_schedule
+    WHERE vaccineName = NEW.vaccineName
+    LIMIT 1;
+    IF v_interval IS NOT NULL THEN
+      SET NEW.nextDueDate = DATE_ADD(NEW.injectionDate, INTERVAL v_interval MONTH);
+    ELSE
+      SET NEW.nextDueDate = NULL;
+    END IF;
+  END IF;
+END$$
+DELIMITER ;
+-- :흰색_확인_표시: UPDATE 트리거: 백신 접종 정보 수정 시 자동으로 예정일 재계산
+DELIMITER $$
+CREATE TRIGGER `auto_set_next_due_date_before_update`
+BEFORE UPDATE ON `pet_vaccination`
+FOR EACH ROW
+BEGIN
+  DECLARE v_interval INT;
+  -- 백엔드에서 NULL로 명시하지 않은 경우에만 계산
+  IF NEW.nextDueDate IS NOT NULL THEN
+    SELECT intervalMonths INTO v_interval
+    FROM vaccine_schedule
+    WHERE vaccineName = NEW.vaccineName
+    LIMIT 1;
+    IF v_interval IS NOT NULL THEN
+      SET NEW.nextDueDate = DATE_ADD(NEW.injectionDate, INTERVAL v_interval MONTH);
+    ELSE
+      SET NEW.nextDueDate = NULL;
+    END IF;
+  END IF;
+END$$
+DELIMITER ;
+
+############# 💣 트리거 ###################
+
 
 ############# 📜 테스트용 코드 ###################
 
@@ -512,63 +607,3 @@ INSERT INTO `vaccine_schedule` (`vaccineName`, `intervalMonths`, `type`, `descri
 ('Leptospirosis', 12, 'Annual', '물과 흙을 통해 퍼지는 세균 감염 예방');
 
 ############# 📜 테스트용 코드 ###################
-
-
-############# 💣 트리거 ###################
--- :흰색_확인_표시: INSERT 트리거: 백신 접종 등록 시 자동으로 예정일 계산
-DELIMITER $$
-CREATE TRIGGER `auto_set_next_due_date`
-BEFORE INSERT ON `pet_vaccination`
-FOR EACH ROW
-BEGIN
-  DECLARE v_interval INT;
-  -- 백엔드에서 NULL로 명시하지 않은 경우에만 계산
-  IF NEW.nextDueDate IS NOT NULL THEN
-    SELECT intervalMonths INTO v_interval
-    FROM vaccine_schedule
-    WHERE vaccineName = NEW.vaccineName
-    LIMIT 1;
-    IF v_interval IS NOT NULL THEN
-      SET NEW.nextDueDate = DATE_ADD(NEW.injectionDate, INTERVAL v_interval MONTH);
-    ELSE
-      SET NEW.nextDueDate = NULL;
-    END IF;
-  END IF;
-END$$
-DELIMITER ;
--- :흰색_확인_표시: UPDATE 트리거: 백신 접종 정보 수정 시 자동으로 예정일 재계산
-DELIMITER $$
-CREATE TRIGGER `auto_set_next_due_date_before_update`
-BEFORE UPDATE ON `pet_vaccination`
-FOR EACH ROW
-BEGIN
-  DECLARE v_interval INT;
-  -- 백엔드에서 NULL로 명시하지 않은 경우에만 계산
-  IF NEW.nextDueDate IS NOT NULL THEN
-    SELECT intervalMonths INTO v_interval
-    FROM vaccine_schedule
-    WHERE vaccineName = NEW.vaccineName
-    LIMIT 1;
-    IF v_interval IS NOT NULL THEN
-      SET NEW.nextDueDate = DATE_ADD(NEW.injectionDate, INTERVAL v_interval MONTH);
-    ELSE
-      SET NEW.nextDueDate = NULL;
-    END IF;
-  END IF;
-END$$
-DELIMITER ;
-
-############# 💣 트리거 ###################
-
-
-
-
-
-
-
-
-
-
-
-
-
