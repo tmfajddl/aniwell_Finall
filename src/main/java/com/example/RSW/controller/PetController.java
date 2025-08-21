@@ -61,7 +61,6 @@ public class PetController {
 
 	@Autowired
 	private MedicalDocumentService medicalDocumentService;
-
 	@Autowired
 	private VisitService visitService;
 
