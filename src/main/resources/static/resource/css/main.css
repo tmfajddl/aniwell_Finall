@@ -2,20 +2,20 @@
    Reset & Base
 ========================= */
 * {
-  box-sizing: border-box;
+	box-sizing: border-box;
 }
 
 html,
 body {
-  margin: 0;
-  overflow-x: hidden;
-  /* 가로 흔들림 방지 */
-  /* scroll-behavior: smooth;  // pin 구간에서 튐이 있으면 주석 유지 권장 */
+	margin: 0;
+	overflow-x: hidden;
+	/* 가로 흔들림 방지 */
+	/* scroll-behavior: smooth;  // pin 구간에서 튐이 있으면 주석 유지 권장 */
 }
 
 body {
-  text-align: center;
-  /* 배경/폰트는 Tailwind로 제어: body 클래스 그라디언트/인라인 폰트 유지 */
+	text-align: center;
+	/* 배경/폰트는 Tailwind로 제어: body 클래스 그라디언트/인라인 폰트 유지 */
 }
 
 /* =========================
@@ -23,142 +23,144 @@ body {
 ========================= */
 /* 100vh 대신 100dvh만 사용 (중복/충돌 제거) */
 .section {
-  min-height: 100dvh;
+	min-height: 100dvh;
 }
 
 /* 상단 섹션 */
 .section-top {
-  position: relative;
-  width: 100%;
-  padding: 10px 0;
-  z-index: 5;
+	position: relative;
+	width: 100%;
+	z-index: 5;
 }
 
 /* 중간 섹션 컨테이너: 부모는 고정(애니메이션 금지) */
 .section-middle {
-  position: relative;
-  z-index: 10;
-  background: transparent;
-  /* 개별 섹션이 각자 배경 가짐 */
+	position: relative;
+	z-index: 10;
+	background: transparent;
+	/* 개별 섹션이 각자 배경 가짐 */
 }
 
 /* =========================
    Logo / Character
 ========================= */
 .logo {
-  width: 130px;
+	width: 100px;
 }
 
 .bg-logo {
-  position: relative;
-  margin-top: 50px;
-  min-width: 500px;
+	position: relative;
+	padding-top: 50px;
+	min-width: 500px;
 }
 
 .b-logo {
-  position: relative;
-  width: 1300px;
+	padding-top: 50px;
+	z-index: -10;
+	position: relative;
+	width: 1300px;
 }
 
 .char {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  max-width: 500px;
-  min-width: 400px;
-  min-height: 400px;
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	max-width: 500px;
+	min-width: 400px;
+	min-height: 400px;
 }
 
 .img_head {
-  position: absolute;
-  top: -90px;
-  left: 10px;
-  z-index: 99;
+	position: absolute;
+	top: -90px;
+	left: 10px;
+	z-index: 99;
 }
 
 /* 세션3 스크롤 길이: 타임라인 길이에 맞게 조절(2~4 추천) */
-.sec3-scroller { height: calc(100dvh * 3); }
-
-/* wave는 레이아웃 차지하지 않도록 absolute (이미 적용했다면 생략) */
-.wave { position:absolute; left:0; right:0; bottom:0; height:100px; pointer-events:none; }
-.wave::before {
-  content:""; position:absolute; left:0; bottom:100%; width:100%; height:100px;
-  background: radial-gradient(circle at 50% 100%, #fff7e6 50%, transparent 51%);
-  background-size:100px 100px; background-repeat:repeat-x;
+.sec3-scroller {
+	height: calc(100dvh * 3);
 }
 
+
 /* 성능 힌트 */
-.right-anim, .sec3-layer, .sec3-dog, .sec3-heart, .sec3-sparkle { will-change: transform, opacity; }
+.right-anim,
+.sec3-layer,
+.sec3-dog,
+.sec3-heart,
+.sec3-sparkle {
+	will-change: transform, opacity;
+}
 
 
 /* .img_body는 HTML에서 Tailwind 'absolute' 사용중 — 여기선 사이즈만 */
 .img_body {
-  max-width: 600px;
+	max-width: 600px;
 }
 
 /* =========================
    Buttons / Icons
 ========================= */
 .icon {
-  position: relative;
-  bottom: 100px;
-  display: flex;
-  gap: 50px;
-  padding-left: 70%;
+	position: relative;
+	bottom: 100px;
+	display: flex;
+	gap: 50px;
+	padding-left: 70%;
 }
 
 .up-icon,
 .in-icon {
-  position: relative;
-  z-index: 2;
-  background-color: #2e576d;
-  border-radius: 50%;
-  width: 8vw;
-  height: 8vw;
-  max-width: 100px;
-  max-height: 100px;
-  min-width: 30px;
-  min-height: 30px;
+	position: relative;
+	z-index: 2;
+	background-color: #2e576d;
+	border-radius: 50%;
+	width: 8vw;
+	height: 8vw;
+	max-width: 100px;
+	max-height: 100px;
+	min-width: 30px;
+	min-height: 30px;
 }
 
 .in-icon>img,
 .up-icon>img {
-  position: absolute;
-  width: 30px;
-  height: 30px;
-  top: 25%;
-  left: 30%;
+	position: absolute;
+	width: 30px;
+	height: 30px;
+	top: 25%;
+	left: 30%;
 }
 
 /* =========================
    Wave (반원 파도) — 절대배치로 레이아웃 영향 제거
 ========================= */
 .wave {
-  position: absolute;
-  top:0;
-  left: 0;
-  right: 0;
-  height: 100px;
-  pointer-events: none;
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	height: 100px;
+	pointer-events: none;
 }
 
 .wave::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  bottom: 100%;
-  width: 100%;
-  height: 100px;
-  background: radial-gradient(circle at 50% 100%, #fff7e6 50%, transparent 51%);
-  background-size: 100px 100px;
-  background-repeat: repeat-x;
+	content: "";
+	position: absolute;
+	left: 0;
+	bottom: 100%;
+	width: 100%;
+	height: 100px;
+	background: radial-gradient(circle at 50% 100%, #fff7e6 50%, transparent 51%);
+	background-size: 100px 100px;
+	background-repeat: repeat-x;
 }
 
 /* wave가 붙어있는 부모들이 영역을 가질 수 있도록 */
 .section-top,
 #sectionMiddle {
-  position: relative;
+	position: relative;
 }
 
 /* =========================
@@ -169,7 +171,7 @@ body {
 .sec3-dog,
 .sec3-heart,
 .sec3-sparkle {
-  will-change: transform, opacity;
+	will-change: transform, opacity;
 }
 
 /* =========================
@@ -177,63 +179,203 @@ body {
 ========================= */
 @keyframes sway-head {
 
-  0%,
-  100% {
-    transform: rotate(-1deg);
-  }
+	0%,
+	100% {
+		transform: rotate(-1deg);
+	}
 
-  25% {
-    transform: rotate(0.5deg);
-  }
+	25% {
+		transform: rotate(0.5deg);
+	}
 
-  50% {
-    transform: rotate(-0.5deg);
-  }
+	50% {
+		transform: rotate(-0.5deg);
+	}
 
-  75% {
-    transform: rotate(1deg);
-  }
+	75% {
+		transform: rotate(1deg);
+	}
 }
 
 @keyframes swingX {
 
-  0%,
-  100% {
-    transform: translateX(0);
-  }
+	0%,
+	100% {
+		transform: translateX(0);
+	}
 
-  25% {
-    transform: translateX(-4px);
-  }
+	25% {
+		transform: translateX(-4px);
+	}
 
-  75% {
-    transform: translateX(4px);
-  }
+	75% {
+		transform: translateX(4px);
+	}
 }
 
 @keyframes bounce-down {
 
-  0%,
-  100% {
-    transform: translateY(0);
-  }
+	0%,
+	100% {
+		transform: translateY(0);
+	}
 
-  50% {
-    transform: translateY(8px);
-  }
+	50% {
+		transform: translateY(8px);
+	}
 }
 
 .sway-top {
-  animation: sway-head 5s ease-in-out infinite;
-  transform-origin: bottom center;
-  z-index: 10;
+	animation: sway-head 5s ease-in-out infinite;
+	transform-origin: bottom center;
+	z-index: 10;
 }
 
 .swing-left-right {
-  animation: swingX 2.5s ease-in-out infinite;
-  transform-origin: bottom center;
+	animation: swingX 2.5s ease-in-out infinite;
+	transform-origin: bottom center;
 }
 
 .animate-bounce-down {
-  animation: bounce-down 1.2s ease-in-out infinite;
+	animation: bounce-down 1.2s ease-in-out infinite;
+}
+
+
+
+
+
+/* =========================
+  로고 애니메이션 / logo / animation
+========================= */
+
+
+
+#e2OkVSxci3g1 {
+	--drawDur: 2.6s;
+	--riseDur: 6s;
+	/* 물이 차오르는 시간 */
+}
+
+/* 선 그리는 총 시간 */
+#e2OkVSxci3g1 path.draw {
+	stroke-linecap: round;
+	stroke-dasharray: 1;
+	/* pathLength=1 기준 정규화 */
+	stroke-dashoffset: 1;
+	/* 완전 숨김에서 시작 */
+	animation: draw var(--drawDur) ease forwards var(--d, 0s);
+}
+
+#p1.draw {
+	--d: 0s;
+}
+
+#p2.draw {
+	--d: .15s;
+}
+
+#p3.draw {
+	--d: .30s;
+}
+
+#p4.draw {
+	--d: .45s;
+}
+
+#p5.draw {
+	--d: .60s;
+}
+
+#p6.draw {
+	--d: .75s;
+}
+
+#p6.draw {
+	--d: .90s;
+}
+
+@keyframes draw {
+	to {
+		stroke-dashoffset: 0;
+	}
+}
+
+/* ▼ 물결 채움 애니메이션(클리핑 내부) */
+/* SVG transform이 경계 박스를 기준으로 동작하도록 */
+#waterRise,
+#waterWave {
+	transform-box: fill-box;
+	transform-origin: center;
+}
+
+/* 물결 X방향 이동(무한 반복) */
+@keyframes waveShift {
+	from {
+		transform: translateX(0%);
+		/* 시작 위치: 오른쪽으로 절반 이동 */
+	}
+
+	to {
+		transform: translateX(-50%);
+	}
+
+	/* 2장 타일 중 절반만큼 이동해서 루프 */
+}
+
+/* 물 Y방향 상승(선 그리기 끝난 후 시작) */
+@keyframes riseUp {
+	from {
+		transform: translateY(100%);
+	}
+
+	/* 아래에서 시작 */
+	to {
+		transform: translateY(-10%);
+	}
+}
+
+/* 물결 타일이 올라오는 애니메이션 */
+#waterRise {
+	transform: translateY(100%);
+	animation: riseUp var(--riseDur) cubic-bezier(.25, .7, .2, 1) forwards;
+	/* 지연 없음 */
+}
+
+#waterWave {
+	animation: waveShift 3s linear infinite;
+}
+
+
+
+/* ---- */
+
+
+/* 3D 원근감 컨테이너 */
+.tilt-scene {
+  display: inline-block;
+  perspective: 900px;          /* 자식의 3D 깊이 보이게 */
+}
+
+/* 기울어질 타겟 */
+#visual {
+  transform-style: preserve-3d; /* 자식 Z 이동 유지 */
+  transform-origin: center center;
+  will-change: transform;
+  transition: transform .12s ease-out;
+  /* SVG일 때 CSS 트랜스폼 기준 박스 지정 */
+  transform-box: fill-box;
+}
+
+/* 패럴랙스 레이어 기본값 */
+#visual [data-depth] {
+  transform-box: fill-box; /* SVG shapes를 위한 설정 */
+  transform-origin: center;
+}
+
+/* (HTML일 때만) 하이라이트/글레어 오버레이 */
+#visual .glare {
+  position: absolute; inset: 0;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  opacity: 0; transition: opacity .2s ease;
 }
