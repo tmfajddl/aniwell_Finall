@@ -61,6 +61,7 @@ public class PetController {
 
 	@Autowired
 	private MedicalDocumentService medicalDocumentService;
+
 	@Autowired
 	private VisitService visitService;
 
@@ -206,7 +207,11 @@ public class PetController {
 	@ResponseBody
 	public String doJoin(HttpServletRequest req, @RequestParam("photo") MultipartFile photo, @RequestParam String name,
 			@RequestParam String species, @RequestParam String breed, @RequestParam String gender,
-			@RequestParam String birthDate, @RequestParam double weight) {
+			@RequestParam String birthDate, @RequestParam double weight,
+			@RequestParam(value = "feedType", required = false) String feedType,
+			@RequestParam(value = "brand", required = false) String brand,
+			@RequestParam(value = "productName", required = false) String productName,
+			@RequestParam(value = "flavor", required = false) String flavor) {
 
 		if (Ut.isEmptyOrNull(name))
 			return Ut.jsHistoryBack("F-1", "이름을 입력하세요");
@@ -235,7 +240,30 @@ public class PetController {
 		ResultData joinRd = petService.insertPet(rq.getLoginedMemberId(), name, species, breed, gender, birthDate,
 				weight, imagePath);
 
-		int id = rq.getLoginedMemberId();
+		// ✅ [추가] 방금 만든 펫 PK 확보 (이미 Mapper에 준비된 메서드 활용)
+		Integer petId = petService.findNewestPetIdByMemberAndName(rq.getLoginedMemberId(), name);
+		if (petId != null && brand != null && !brand.isBlank() && feedType != null && !feedType.isBlank()) {
+			try {
+				// 화면 입력 한글 → 서버 표준코드로 정규화
+				String normalized = feedType.trim();
+				if ("건식".equals(normalized))
+					normalized = "dry";
+				else if ("습식".equals(normalized))
+					normalized = "wet";
+
+				// 1) 기본사료 자동 전환(진행중 종료 → 신규 시작)
+				petService.upsertPrimaryFoodIfChanged(petId, brand.trim(), normalized);
+				// 2) 급여 이벤트 1건 기록(무게 없이 횟수만)
+				petService.feedPet(petId, brand.trim(), (productName != null ? productName.trim() : null),
+						(flavor != null ? flavor.trim() : null), normalized);
+			} catch (Exception e) {
+				// 🚧 등록 자체는 성공시켰으므로, 사료 관련 오류는 로그만 남김
+				System.err.println(
+						"[WARN] doJoin 사료 처리 실패 | petId=" + petId + " | brand=" + brand + " | feedType=" + feedType);
+				e.printStackTrace();
+			}
+		}
+
 		return Ut.rd("S-1", "등록되었습니다!");
 	}
 
@@ -831,5 +859,16 @@ public class PetController {
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
 					.body(Map.of("ok", false, "visitId", visitId, "message", "저장 중 오류가 발생했습니다."));
 		}
+	}
+
+	@GetMapping("/usr/pet/listWithFood")
+	@ResponseBody
+	public Map<String, Object> listWithFood(@RequestParam int memberId) {
+		int loginId = rq.getLoginedMemberId();
+		if (loginId != memberId) {
+			return Map.of("msg", "권한이 없습니다.", "pets", List.of());
+		}
+		var pets = petService.getPetsWithFood(memberId);
+		return Map.of("msg", "펫 및 급여 정보 목록 조회 성공", "pets", pets);
 	}
 }

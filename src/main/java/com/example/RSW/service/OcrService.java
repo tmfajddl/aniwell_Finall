@@ -10,6 +10,8 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.ResourceLoader;
 
 // ⬇️ Google Cloud Vision SDK
 import com.google.cloud.vision.v1.AnnotateImageRequest;
@@ -20,6 +22,9 @@ import com.google.cloud.vision.v1.Feature.Type;
 import com.google.cloud.vision.v1.Image;
 import com.google.cloud.vision.v1.ImageAnnotatorClient;
 import com.google.protobuf.ByteString;
+import com.google.auth.oauth2.GoogleCredentials; // ★ 새로 필요
+import com.google.auth.oauth2.ServiceAccountCredentials; // ★ 새로 필요
+import com.google.api.gax.core.FixedCredentialsProvider; // ★ setCredentialsProvider에 필요
 
 //✅ [추가] 언어 힌트용
 import com.google.cloud.vision.v1.ImageContext;
@@ -28,9 +33,24 @@ import com.google.cloud.vision.v1.ImageContext;
 import com.google.api.gax.retrying.RetrySettings;
 import com.google.cloud.vision.v1.ImageAnnotatorSettings;
 import java.time.Duration; // (컴파일 오류 시 org.threeten.bp.Duration 으로 교체)
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.util.Base64;
 
 @Service
 public class OcrService {
+
+	private final ResourceLoader resourceLoader;
+
+	public OcrService(ResourceLoader resourceLoader) {
+		this.resourceLoader = resourceLoader;
+	}
+
+	@Value("${gcv.credentials.path:}")
+	private String gcvPath;
+
+	@Value("${gcv.credentials.base64:}")
+	private String gcvBase64;
 
 	// ✅ OCR 모드 설정 (기본: 문서/영수증에 적합한 DOCUMENT_TEXT_DETECTION)
 	@Value("${gcv.ocrMode:DOCUMENT_TEXT_DETECTION}")
@@ -72,7 +92,7 @@ public class OcrService {
 		String text;
 
 		// 4) GCV 클라이언트로 배치 요청(여기서는 단일 이미지만 전송)
-		try (ImageAnnotatorClient client = ImageAnnotatorClient.create()) {
+		try (ImageAnnotatorClient client = createVisionClient(gcvPath, gcvBase64)) {
 			BatchAnnotateImagesResponse resp = client.batchAnnotateImages(java.util.List.of(req));
 			AnnotateImageResponse r = resp.getResponses(0);
 
@@ -96,5 +116,37 @@ public class OcrService {
 		payload.put("text", text != null ? text.trim() : "");
 		payload.put("confidence", null); // 평균 신뢰도는 기본 응답에 별도 제공되지 않음(필요시 확장)
 		return payload;
+	}
+
+	// ✅ GCV Credentials 로딩 메서드 추가
+	private GoogleCredentials loadGcvCredentials(String path, String base64) throws IOException {
+		// base64 → 우선 사용
+		if (base64 != null && !base64.isBlank()) {
+			byte[] jsonBytes = Base64.getDecoder().decode(base64);
+			try (var in = new ByteArrayInputStream(jsonBytes)) {
+				return ServiceAccountCredentials.fromStream(in);
+			}
+		}
+		// path → file:/ or classpath:/ 지원
+		if (path != null && !path.isBlank()) {
+			Resource r = resourceLoader.getResource(path);
+			try (var in = r.getInputStream()) {
+				return ServiceAccountCredentials.fromStream(in);
+			}
+		}
+		// 둘 다 없으면 ADC
+		return GoogleCredentials.getApplicationDefault();
+	}
+
+	// ✅ ImageAnnotatorClient 생성 메서드 (Credentials 적용)
+	private ImageAnnotatorClient createVisionClient(String path, String base64) throws IOException {
+		GoogleCredentials credentials = loadGcvCredentials(path, base64);
+
+		// ✅ 명시적으로 고정 Provider 사용 (버전 차이에 안전)
+		ImageAnnotatorSettings settings = ImageAnnotatorSettings.newBuilder()
+				.setCredentialsProvider(com.google.api.gax.core.FixedCredentialsProvider.create(credentials)) // ← 변경
+				.build();
+
+		return ImageAnnotatorClient.create(settings);
 	}
 }
