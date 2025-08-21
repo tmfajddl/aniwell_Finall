@@ -50,12 +50,21 @@ body {
 
 .bg-logo {
 	position: relative;
+<<<<<<< HEAD
 	margin-top: 50px;
+=======
+	padding-top: 50px;
+>>>>>>> 5805810befbc16956d55e43e2b8e61f7068b7d4b
 	min-width: 500px;
 }
 
 .b-logo {
+<<<<<<< HEAD
 	z-index: -100;
+=======
+	padding-top: 50px;
+	z-index: -10;
+>>>>>>> 5805810befbc16956d55e43e2b8e61f7068b7d4b
 	position: relative;
 	width: 1300px;
 }
@@ -342,4 +351,43 @@ body {
 
 #waterWave {
 	animation: waveShift 3s linear infinite;
+<<<<<<< HEAD
 }
+=======
+}
+
+
+
+/* ---- */
+
+
+/* 3D 원근감 컨테이너 */
+.tilt-scene {
+  display: inline-block;
+  perspective: 900px;          /* 자식의 3D 깊이 보이게 */
+}
+
+/* 기울어질 타겟 */
+#visual {
+  transform-style: preserve-3d; /* 자식 Z 이동 유지 */
+  transform-origin: center center;
+  will-change: transform;
+  transition: transform .12s ease-out;
+  /* SVG일 때 CSS 트랜스폼 기준 박스 지정 */
+  transform-box: fill-box;
+}
+
+/* 패럴랙스 레이어 기본값 */
+#visual [data-depth] {
+  transform-box: fill-box; /* SVG shapes를 위한 설정 */
+  transform-origin: center;
+}
+
+/* (HTML일 때만) 하이라이트/글레어 오버레이 */
+#visual .glare {
+  position: absolute; inset: 0;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  opacity: 0; transition: opacity .2s ease;
+}
+>>>>>>> 5805810befbc16956d55e43e2b8e61f7068b7d4b

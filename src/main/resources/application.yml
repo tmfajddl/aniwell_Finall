@@ -2,8 +2,6 @@ server:
   port: 8080
 
 spring:
-  main:
-   web-application-type: servlet
   mail:
     host: smtp.sendgrid.net
     port: 587
@@ -99,4 +97,17 @@ app:
 aniwell:
   qr:
     base: https://aniwell.s3.ap-northeast-2.amazonaws.com/qr.html
+
+
     # CloudFront 쓰면 여기를 CloudFront 도메인으로 교체
+
+  api:
+    default: https://seed-wesley-worried-highs.trycloudflare.com
+    # CloudFront 쓰면 여기를 CloudFront 도메인으로 교체
+
+openai:
+  api-base: https://api.openai.com/v1
+  api-key:
+
+
+
