@@ -728,7 +728,7 @@
             if (customToken && (customToken.match(/\./g) || []).length === 2) {
                 await handleFirebaseAndSessionLogin(customToken);
             }
-			
+
 			// 해당 위치에 로그인된 유저를 대상으로 api불러와서 memberid가지고 오기
             // ✅ 로그인 성공 시 즉시 메인으로 이동
             window.location.replace("/");

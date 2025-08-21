@@ -156,9 +156,9 @@
 
 				<!-- 주변 펫살 보기 -->
 				<div class="flex gap-2 w-full grid-cols-2 ">
-					<a th:href="@{/usr/pet/qr(petId=${pet.id})}"
+					<a th:href="@{/usr/pet/explain(petId=${pet.id})}"
 						class="flex-1 hover:shadow-md transition-shadow duration-300 font-semibold cursor-pointer shadow block bg-gradient-to-r from-[#EEE8CD] to-[#F4FBCC] rounded-xl p-3 text-sm text-center font-semibold transition">
-						진단서 다운받기</a>
+						검사 결과 분석</a>
 					<a th:href="@{/usr/pet/qr(petId=${pet.id})}"
 						class="flex-1 hover:shadow-md transition-shadow duration-300 font-semibold cursor-pointer shadow block bg-gradient-to-r from-[#EEE8CD] to-[#F4FBCC] rounded-xl p-3 text-sm text-center font-semibold transition">
 						QR 레포트</a>
@@ -441,6 +441,7 @@
 		<script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
 		<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 
+
 		<script th:inline="javascript">
 			const todayStr = new Date().toISOString().split("T")[0];
 			const dateInput = document.getElementById("datePicker");
@@ -460,8 +461,8 @@
 				rawData.length = 0;
 
 				if (!Array.isArray(data)) {
-					console.error("❌ 서버 응답이 배열이 아닙니다:", data);
-					alert("데이터 형식이 잘못되었습니다.");
+					console.error("❌ 배열 아님:", data);
+					alert("데이터 형식 오류");
 					return;
 				}
 
@@ -472,16 +473,13 @@
 					const curr = data[i];
 					const label = new Date(curr.logDate).toTimeString().slice(0, 5);
 
-					// 사료
 					if (curr.foodWeight !== null) {
 						const foodValue = parseFloat(curr.foodWeight).toFixed(2);
 						labels.push(label);
 						deltas.push(foodValue);
-						bgColors.push('rgba(255, 193, 7, 0.4)'); // 노란색 계열
+						bgColors.push('rgba(255, 193, 7, 0.4)');
 						tooltipLabels.push(`사료 섭취량: ${foodValue}g`);
 					}
-
-					// 물
 					if (curr.waterWeight !== null) {
 						const waterValue = parseFloat(curr.waterWeight).toFixed(2);
 						waterLabels.push(label);
@@ -494,8 +492,12 @@
 				const showFoodXAxis = labels.length > 0;
 				const showWaterXAxis = waterLabels.length > 0;
 
+				// ✅ 캔버스 크기 강제 세팅 후 컨텍스트 얻기
+				const foodCtx  = sizeCanvasAndGetCtx('weightChart');
+				const waterCtx = sizeCanvasAndGetCtx('waterChart');
+
+
 				// 사료 차트
-				const foodCtx = document.getElementById('weightChart').getContext('2d');
 				if (!weightChart) {
 					weightChart = new Chart(foodCtx, {
 						type: 'bar',
@@ -513,18 +515,11 @@
 							responsive: true,
 							maintainAspectRatio: false,
 							scales: {
-								y: {title: {display: true, text: 'g'}},
-								x: {
-									title: {display: true, text: '시간 (HH:MM)'},
-									display: showFoodXAxis
-								}
+								y: { title: { display: true, text: 'g' } },
+								x: { title: { display: true, text: '시간 (HH:MM)' }, display: showFoodXAxis }
 							},
 							plugins: {
-								tooltip: {
-									callbacks: {
-										label: ctx => tooltipLabels[ctx.dataIndex]
-									}
-								}
+								tooltip: { callbacks: { label: ctx => tooltipLabels[ctx.dataIndex] } }
 							}
 						}
 					});
@@ -535,10 +530,10 @@
 					weightChart.data.datasets[0].borderColor = bgColors.map(c => c.replace('0.4', '1'));
 					weightChart.options.scales.x.display = showFoodXAxis;
 					weightChart.update();
+					setTimeout(() => { try { weightChart.resize(); } catch {} }, 0);
 				}
 
 				// 물 차트
-				const waterCtx = document.getElementById('waterChart').getContext('2d');
 				if (!waterChart) {
 					waterChart = new Chart(waterCtx, {
 						type: 'bar',
@@ -556,18 +551,11 @@
 							responsive: true,
 							maintainAspectRatio: false,
 							scales: {
-								y: {title: {display: true, text: 'g'}},
-								x: {
-									title: {display: true, text: '시간 (HH:MM)'},
-									display: showWaterXAxis
-								}
+								y: { title: { display: true, text: 'g' } },
+								x: { title: { display: true, text: '시간 (HH:MM)' }, display: showWaterXAxis }
 							},
 							plugins: {
-								tooltip: {
-									callbacks: {
-										label: ctx => waterTooltipLabels[ctx.dataIndex]
-									}
-								}
+								tooltip: { callbacks: { label: ctx => waterTooltipLabels[ctx.dataIndex] } }
 							}
 						}
 					});
@@ -578,8 +566,15 @@
 					waterChart.data.datasets[0].borderColor = waterBgColors.map(c => c.replace('0.4', '1'));
 					waterChart.options.scales.x.display = showWaterXAxis;
 					waterChart.update();
+					setTimeout(() => { try { waterChart.resize(); } catch {} }, 0);
 				}
 			}
+
+			// 창 크기 바뀌면 다시 맞추기
+			window.addEventListener('resize', () => {
+				try { weightChart && weightChart.resize(); } catch {}
+				try { waterChart && waterChart.resize(); } catch {}
+			});
 
 			function connectWebSocket() {
 				const socket = new SockJS('/ws');
@@ -626,35 +621,169 @@
 			function loadDataAndDraw(dateStr) {
 				if (!dateStr) dateStr = todayStr;
 
-				fetch(`/usr/pet/health/logs?petId=${petId}&date=${dateStr}`)
-					.then(res => {
-						if (!res.ok) throw new Error(`서버 응답 오류: ${res.status}`);
-						return res.json();
-					})
-					.then(data => {
-						renderChart(data);
-						if (dateStr === todayStr) connectWebSocket();
-						else disconnectWebSocket();
-					})
-					.catch(err => {
-						console.error("🚨 데이터 로딩 실패:", err);
-						if (!rawData || rawData.length === 0) {
-							alert("데이터를 불러올 수 없습니다.");
-						}
-					});
+				// 캐시 방지 쿼리(_=timestamp) + no-store
+				const url = `/usr/pet/health/logs?petId=${petId}&date=${dateStr}&_=${Date.now()}`;
+				console.log('[LOAD]', dateStr, url);
+
+				fetch(url, { cache: 'no-store', headers: { 'Accept': 'application/json' } })
+						.then(res => {
+							if (!res.ok) throw new Error(`서버 응답 오류: ${res.status}`);
+							return res.json();
+						})
+						.then(data => {
+							// 날짜가 오늘이면 실시간, 아니면 끊기
+							if (dateStr === todayStr) connectWebSocket();
+							else disconnectWebSocket();
+
+							// 항상 “파괴 후 재생성” 전략을 쓰도록 renderChart가 destroy → create 하게 구현되어 있음
+							renderChart(data);
+						})
+						.catch(err => {
+							console.error("🚨 데이터 로딩 실패:", err);
+							renderChart([]); // 비어도 축/프레임은 보이게
+						});
 			}
 
-			function openFeedingPanel(e) {
-				if (e) e.stopPropagation();               // 카드 전체 클릭과 충돌 방지
-				const panel = document.getElementById('feedingPanel');
-				panel.classList.remove('translate-x-full', 'invisible', 'pointer-events-none');
+			// 부모 박스 크기로 캔버스의 '속성' width/height를 강제 세팅
+			function sizeCanvasAndGetCtx(id) {
+				const c = document.getElementById(id);
+				if (!c) throw new Error(`#${id} 캔버스 없음`);
+				const parent = c.parentElement; // p-4 박스가 부모
+				const box = parent.getBoundingClientRect();
 
-				// 기존 로직 유지
-				setTimeout(() => {
+				// 속성으로 꼭 넣어야 Chart.js가 정확히 그림
+				c.width  = Math.max(100, Math.floor(box.width));
+				c.height = Math.max(160, Math.floor(box.height));
+
+				return c.getContext('2d');
+			}
+		</script>
+
+		<script>
+			async function debugFeedingPanel() {
+				const foodC  = document.getElementById('weightChart');
+				const waterC = document.getElementById('waterChart');
+
+				// 1) DOM/사이즈 확인
+				const info = {
+					foodCanvasExists: !!foodC,
+					waterCanvasExists: !!waterC,
+					foodParentRect: foodC?.parentElement?.getBoundingClientRect(),
+					waterParentRect: waterC?.parentElement?.getBoundingClientRect(),
+					foodCanvasStyleWH: {w: foodC?.style?.width, h: foodC?.style?.height},
+					waterCanvasStyleWH:{w: waterC?.style?.width, h: waterC?.style?.height},
+					petId, todayStr
+				};
+				console.log('[DEBUG] feeding panel info:', info);
+
+				// 2) 사이즈가 0이면 강제 세팅
+				function forceSize(c) {
+					if (!c) return;
+					const box = c.parentElement.getBoundingClientRect();
+					c.width  = Math.max(120, Math.floor(box.width  || 0));
+					c.height = Math.max(160, Math.floor(box.height || 0));
+				}
+				forceSize(foodC);
+				forceSize(waterC);
+
+				console.log('[DEBUG] after force size:', { foodW: foodC?.width, foodH: foodC?.height, waterW: waterC?.width, waterH: waterC?.height });
+
+				// 3) API 실제 응답 확인 (에러면 메시지 보여줌)
+				try {
+					const r = await fetch(`/usr/pet/health/logs?petId=${petId}&date=${dateInput?.value || todayStr}`);
+					console.log('[DEBUG] fetch status:', r.status);
+					const js = await r.json();
+					console.log('[DEBUG] api json:', js);
+
+					// 4) 차트 자체가 그려지는지 “샘플 데이터”로 먼저 확인
+					const sampleFood  = [{t:'08:10', v:5.2}, {t:'12:30', v:3.1}, {t:'18:05', v:4.0}];
+					const sampleWater = [{t:'09:00', v:120}, {t:'14:20', v:80}, {t:'21:10', v:150}];
+
+					// 캔버스 컨텍스트
+					const foodCtx  = foodC.getContext('2d');
+					const waterCtx = waterC.getContext('2d');
+
+					// 기존 인스턴스 있으면 파괴
+					try { weightChart && weightChart.destroy(); } catch {}
+					try { waterChart  && waterChart.destroy(); } catch {}
+
+					// 샘플로 먼저 그려본다 (차트/사이즈 문제가 있으면 여기서도 안 보임)
+					weightChart = new Chart(foodCtx, {
+						type: 'bar',
+						data: {
+							labels: sampleFood.map(x=>x.t),
+							datasets: [{label:'사료(샘플)', data: sampleFood.map(x=>x.v)}]
+						},
+						options:{responsive:false, maintainAspectRatio:false}
+					});
+					waterChart = new Chart(waterCtx, {
+						type: 'bar',
+						data: {
+							labels: sampleWater.map(x=>x.t),
+							datasets: [{label:'물(샘플)', data: sampleWater.map(x=>x.v)}]
+						},
+						options:{responsive:false, maintainAspectRatio:false}
+					});
+
+					console.log('[DEBUG] charts drawn with sample');
+
+					// 5) 샘플이 보이면, 실제 데이터로 교체 시도
+					if (Array.isArray(js) && js.length) {
+						const food = js.filter(x => x.foodWeight != null)
+								.map(x => ({t: new Date(x.logDate).toTimeString().slice(0,5), v: +(+x.foodWeight).toFixed(2)}));
+						const water = js.filter(x => x.waterWeight != null)
+								.map(x => ({t: new Date(x.logDate).toTimeString().slice(0,5), v: +(+x.waterWeight).toFixed(2)}));
+
+						if (food.length || water.length) {
+							if (food.length) {
+								weightChart.data.labels = food.map(x=>x.t);
+								weightChart.data.datasets[0].label = '사료 섭취량';
+								weightChart.data.datasets[0].data  = food.map(x=>x.v);
+								weightChart.update();
+							}
+							if (water.length) {
+								waterChart.data.labels = water.map(x=>x.t);
+								waterChart.data.datasets[0].label = '물 섭취량';
+								waterChart.data.datasets[0].data  = water.map(x=>x.v);
+								waterChart.update();
+							}
+							console.log('[DEBUG] replaced sample with real data');
+						} else {
+							console.warn('[DEBUG] API에 데이터가 없음(오늘 또는 선택일 비어있음). 샘플만 보임이 정상.');
+						}
+					} else {
+						console.warn('[DEBUG] API 배열 아님 or empty. 샘플만 보임이 정상.', js);
+					}
+
+				} catch (e) {
+					console.error('[DEBUG] fetch/json error:', e);
+					alert('데이터 응답에 문제가 있습니다. 콘솔 로그를 확인해 주세요.');
+				}
+			}
+		</script>
+
+
+		<script>
+			// 패널 열기: 완전히 열린 뒤 load + 렌더
+			function openFeedingPanel(e) {
+
+				setTimeout(debugFeedingPanel, 0);
+				if (e) e.stopPropagation();
+				const panel = document.getElementById('feedingPanel');
+
+				// 처음엔 클릭 막고 숨김 상태 해제
+				panel.classList.remove('invisible', 'pointer-events-none');
+				panel.getBoundingClientRect();                 // reflow
+				panel.classList.remove('translate-x-full');    // 슬라이드 시작
+
+				let fired = false;
+				const afterOpen = () => {
+					if (fired) return; fired = true;
+
+					// 날짜 기본값 + 데이터 로드
 					if (dateInput) {
 						dateInput.value = todayStr;
 						loadDataAndDraw(todayStr);
-						// 리스너 중복 방지: 한 번만 등록
 						if (!dateInput.__bound) {
 							dateInput.addEventListener('change', () => {
 								disconnectWebSocket();
@@ -663,16 +792,29 @@
 							dateInput.__bound = true;
 						}
 					}
-				}, 50);
+
+					// 혹시 이미 만들어진 차트가 있으면 사이즈 재계산
+					setTimeout(() => {
+						try { weightChart && weightChart.resize(); } catch {}
+						try { waterChart && waterChart.resize(); } catch {}
+					}, 0);
+				};
+
+				panel.addEventListener('transitionend', afterOpen, { once: true });
+				setTimeout(afterOpen, 400); // transition 이벤트 누락 대비 폴백
 			}
 
+			// 패널 닫기 그대로 사용해도 OK (원하면 invisible/pointer-events-none 추가)
 			function closeFeedingPanel() {
 				const panel = document.getElementById('feedingPanel');
-				panel.classList.add('translate-x-full', 'invisible', 'pointer-events-none');
-				disconnectWebSocket();
-
-				// 혹시 렌더가 꼬였으면 안전하게 다시 그리기
-				if (window.__reloadActivityTimeline) window.__reloadActivityTimeline();
+				panel.classList.add('translate-x-full');
+				const onEnd = () => {
+					panel.removeEventListener('transitionend', onEnd);
+					panel.classList.add('invisible', 'pointer-events-none');
+					disconnectWebSocket();
+					if (window.__reloadActivityTimeline) window.__reloadActivityTimeline();
+				};
+				panel.addEventListener('transitionend', onEnd, { once: true });
 			}
 
 		</script>

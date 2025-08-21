@@ -82,5 +82,11 @@
 		ORDER BY visit_date DESC, id DESC
 	</select>
 
+	<update id="updateHospital">
+		UPDATE visit
+		SET hospital = #{hospital}
+		WHERE id = #{visitId}
+	</update>
+
 </mapper>
 

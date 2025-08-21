@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -33,6 +34,7 @@ public class OcrSaveVo {
 	private String doctor;
 	private String diagnosis;
 	private String notes;
+	private BigDecimal totalCost;
 
 	private String docType; // receipt | prescription | lab | diagnosis | other
 	private String fileUrl; // 원본 파일 URL

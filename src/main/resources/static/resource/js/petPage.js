@@ -36,73 +36,127 @@ function closeCommentModal() {
 function addPet() {
 
 	const html = `
-		<div>
-		<!-- 제목 -->
-		   <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
-		     🐾 <span>반려동물 등록</span>
-		   </h2>
+	<div>
+	  <!-- 제목 -->
+	  <h2 class="text-2xl font-bold mb-4 flex items-center gap-2">
+	    🐾 <span>반려동물 등록</span>
+	  </h2>
 
-		   <!-- 등록 폼 -->
-		   <form id="addPetForm" enctype="multipart/form-data" class="space-y-6">
-		     <div class="flex gap-6">
-		       <!-- 🐶 사진 업로드 -->
-		       <div class="flex flex-col items-center space-y-3">
-		         <img id="photo-preview" src="/img/default-pet.png" alt="사진" class="w-40 h-40 rounded-full object-cover border border-gray-300" />
-		         <label for="photo" class="cursor-pointer text-sm text-gray-600 hover:underline">📷 파일 선택</label>
-		         <input type="file" id="photo" name="photo" accept="image/*" onchange="previewPhoto(this)" class="hidden" />
-		       </div>
+	  <!-- 등록 폼 -->
+	  <form id="addPetForm" enctype="multipart/form-data" class="space-y-4">
+	    <div class="flex gap-4">
+	      <!-- 🐶 사진 업로드 -->
+	      <div class="flex flex-col items-center space-y-2">
+	        <img 
+	          id="photo-preview" 
+	          src="/img/default-pet.png" 
+	          alt="사진" 
+	          class="w-36 h-36 rounded-full object-cover border border-gray-300" 
+	        />
+	        <label 
+	          for="photo" 
+	          class="cursor-pointer text-sm text-gray-600 hover:underline"
+	        >
+	          📷 파일 선택
+	        </label>
+	        <input 
+	          type="file" 
+	          id="photo" 
+	          name="photo" 
+	          accept="image/*" 
+	          onchange="previewPhoto(this)" 
+	          class="hidden" 
+	        />
+	      </div>
 
-		       <!-- 📋 정보 입력 -->
-		       <div class="flex-1 grid grid-cols-2 gap-4">
-		         <div class="col-span-2">
-		           <label class="block text-sm font-medium mb-1" for="name">이름</label>
-		           <input type="text" id="name" name="name" required class="w-full border rounded px-3 py-2" />
-		         </div>
+	      <!-- 📋 정보 입력 -->
+	      <div class="flex-1 grid grid-cols-2 gap-4">
+	        <!-- 이름 -->
+	        <div class="col-span-2">
+	          <label for="name" class="block text-sm font-medium mb-1">이름</label>
+	          <input type="text" id="name" name="name" required class="w-full border rounded px-3 py-1.5" />
+	        </div>
 
-		         <div>
-		           <label class="block text-sm font-medium mb-1" for="species">종</label>
-		           <select id="species" name="species" required class="w-full border rounded px-3 py-2">
-		             <option value="">선택</option>
-		             <option value="강아지">강아지</option>
-		             <option value="고양이">고양이</option>
-		           </select>
-		         </div>
+	        <!-- 종 -->
+	        <div>
+	          <label for="species" class="block text-sm font-medium mb-1">종</label>
+	          <select id="species" name="species" required class="w-full border rounded px-3 py-1.5">
+	            <option value="">선택</option>
+	            <option value="강아지">강아지</option>
+	            <option value="고양이">고양이</option>
+	          </select>
+	        </div>
 
-		         <div>
-		           <label class="block text-sm font-medium mb-1" for="breed">품종</label>
-		           <input type="text" id="breed" name="breed" required class="w-full border rounded px-3 py-2" />
-		         </div>
+	        <!-- 품종 -->
+	        <div>
+	          <label for="breed" class="block text-sm font-medium mb-1">품종</label>
+	          <input type="text" id="breed" name="breed" required class="w-full border rounded px-3 py-1.5" />
+	        </div>
 
-		         <div>
-		           <label class="block text-sm font-medium mb-1" for="gender">성별</label>
-		           <select id="gender" name="gender" required class="w-full border rounded px-3 py-2">
-		             <option value="">선택</option>
-		             <option value="수컷">수컷</option>
-		             <option value="암컷">암컷</option>
-		           </select>
-		         </div>
+	        <!-- 성별 -->
+	        <div>
+	          <label for="gender" class="block text-sm font-medium mb-1">성별</label>
+	          <select id="gender" name="gender" required class="w-full border rounded px-3 py-1.5">
+	            <option value="">선택</option>
+	            <option value="수컷">수컷</option>
+	            <option value="암컷">암컷</option>
+	          </select>
+	        </div>
 
-		         <div>
-		           <label class="block text-sm font-medium mb-1" for="birthDate">생일</label>
-		           <input type="date" id="birthDate" name="birthDate" required class="w-full border rounded px-3 py-2" />
-		         </div>
+	        <!-- 생일 -->
+	        <div>
+	          <label for="birthDate" class="block text-sm font-medium mb-1">생일</label>
+	          <input type="date" id="birthDate" name="birthDate" required class="w-full border rounded px-3 py-1.5" />
+	        </div>
 
-		         <div class="col-span-2">
-		           <label class="block text-sm font-medium mb-1" for="weight">체중 (kg)</label>
-		           <input type="number" step="0.1" id="weight" name="weight" required class="w-full border rounded px-3 py-2" />
-		         </div>
-		       </div>
-		     </div>
+	        <!-- 체중 -->
+	        <div class="col-span-2">
+	          <label for="weight" class="block text-sm font-medium mb-1">체중 (kg)</label>
+	          <input type="number" step="0.1" id="weight" name="weight" required class="w-full border rounded px-3 py-1.5" />
+	        </div>
 
-		     <!-- 등록 버튼 -->
-		     <div class="text-center">
-		       <button type="submit" class="bg-yellow-400 hover:bg-yellow-500 text-white font-semibold px-6 py-2 rounded shadow">
-		         등록 완료
-		       </button>
-		     </div>
-		   </form>
-		</div>
-		`;
+	        <!-- 사료 종류 + 브랜드 -->
+	        <div>
+	          <label for="foodType" class="block text-sm font-medium mb-1">사료 종류</label>
+	          <select id="feedType" name="feedType" class="w-full border rounded px-3 py-1.5">
+	            <option value="">선택</option>
+	            <option value="습식">습식</option>
+	            <option value="건식">건식</option>
+	          </select>
+	        </div>
+
+	        <div>
+	          <label for="brand" class="block text-sm font-medium mb-1">브랜드</label>
+	          <input type="text" id="brand" name="brand" placeholder="브랜드 입력" class="w-full border rounded px-3 py-1.5" />
+	        </div>
+
+	        <!-- 제품명 -->
+	        <div class="col-span-2">
+	          <label for="productName" class="block text-sm font-medium mb-1">제품명</label>
+	          <input type="text" id="productName" name="productName" class="w-full border rounded px-3 py-1.5" />
+	        </div>
+
+	        <!-- 맛 -->
+	        <div class="col-span-2">
+	          <label for="flavor" class="block text-sm font-medium mb-1">맛</label>
+	          <input type="text" id="flavor" name="flavor" class="w-full border rounded px-3 py-1.5" />
+	        </div>
+	      </div>
+	    </div>
+
+	    <!-- 등록 버튼 -->
+	    <div class="text-center">
+	      <button 
+	        type="submit" 
+	        class="bg-yellow-400 hover:bg-yellow-500 text-white font-semibold px-6 py-2 rounded shadow"
+	      >
+	        등록 완료
+	      </button>
+	    </div>
+	  </form>
+	</div>
+	`;
+
 	openComModal(html);
 
 	setTimeout(() => {
@@ -117,71 +171,177 @@ function addPet() {
 function modifyPet(pet) {
 
 	const html = `
-    <div>
-      <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
-        🐾 <span>반려동물 정보 수정</span>
-      </h2>
+	<div>
+	  <h2 class="text-2xl font-bold mb-4 flex items-center gap-2">
+	    🐾 <span>반려동물 정보 수정</span>
+	  </h2>
 
-      <form id="modifyPetForm" enctype="multipart/form-data" class="space-y-6">
-        <input type="hidden" name="petId" value="${pet.id}" />
+	  <form id="modifyPetForm" enctype="multipart/form-data" class="space-y-4">
+	    <input type="hidden" name="petId" value="${pet.id}" />
 
-        <div class="flex gap-6">
-          <div class="flex flex-col items-center space-y-3">
-            <img id="photo-preview" src="${pet.photo || '/img/default-pet.png'}" alt="사진" class="w-40 h-40 rounded-full object-cover border border-gray-300" />
-            <label for="photo" class="cursor-pointer text-sm text-gray-600 hover:underline">📷 파일 선택</label>
-            <input type="file" id="photo" name="photo" accept="image/*" onchange="previewPhoto(this)" class="hidden" />
-          </div>
+	    <div class="flex gap-4">
+	      <!-- 사진 업로드 -->
+	      <div class="flex flex-col items-center space-y-2">
+	        <img 
+	          id="photo-preview" 
+	          src="${pet.photo || '/img/default-pet.png'}" 
+	          alt="사진" 
+	          class="w-36 h-36 rounded-full object-cover border border-gray-300" 
+	        />
+	        <label for="photo" class="cursor-pointer text-sm text-gray-600 hover:underline">📷 파일 선택</label>
+	        <input 
+	          type="file" 
+	          id="photo" 
+	          name="photo" 
+	          accept="image/*" 
+	          onchange="previewPhoto(this)" 
+	          class="hidden" 
+	        />
+	      </div>
 
-          <div class="flex-1 grid grid-cols-2 gap-4">
-            <div class="col-span-2">
-              <label class="block text-sm font-medium mb-1" for="name">이름</label>
-              <input type="text" id="name" name="name" value="${pet.name}" required class="w-full border rounded px-3 py-2" />
-            </div>
+	      <!-- 정보 입력 -->
+	      <div class="flex-1 grid grid-cols-2 gap-4">
+	        <!-- 이름 -->
+	        <div class="col-span-2">
+	          <label for="name" class="block text-sm font-medium mb-1">이름</label>
+	          <input 
+	            type="text" 
+	            id="name" 
+	            name="name" 
+	            value="${pet.name}" 
+	            required 
+	            class="w-full border rounded px-3 py-1.5" 
+	          />
+	        </div>
 
-            <div>
-              <label class="block text-sm font-medium mb-1" for="species">종</label>
-              <select id="species" name="species" required class="w-full border rounded px-3 py-2">
-                <option value="강아지" ${pet.species === '강아지' ? 'selected' : ''}>강아지</option>
-                <option value="고양이" ${pet.species === '고양이' ? 'selected' : ''}>고양이</option>
-              </select>
-            </div>
+	        <!-- 종 -->
+	        <div>
+	          <label for="species" class="block text-sm font-medium mb-1">종</label>
+	          <select id="species" name="species" required class="w-full border rounded px-3 py-1.5">
+	            <option value="강아지" ${pet.species === '강아지' ? 'selected' : ''}>강아지</option>
+	            <option value="고양이" ${pet.species === '고양이' ? 'selected' : ''}>고양이</option>
+	          </select>
+	        </div>
 
-            <div>
-              <label class="block text-sm font-medium mb-1" for="breed">품종</label>
-              <input type="text" id="breed" name="breed" value="${pet.breed}" required class="w-full border rounded px-3 py-2" />
-            </div>
+	        <!-- 품종 -->
+	        <div>
+	          <label for="breed" class="block text-sm font-medium mb-1">품종</label>
+	          <input 
+	            type="text" 
+	            id="breed" 
+	            name="breed" 
+	            value="${pet.breed}" 
+	            required 
+	            class="w-full border rounded px-3 py-1.5" 
+	          />
+	        </div>
 
-            <div>
-              <label class="block text-sm font-medium mb-1" for="gender">성별</label>
-              <select id="gender" name="gender" required class="w-full border rounded px-3 py-2">
-                <option value="수컷" ${pet.gender === '수컷' ? 'selected' : ''}>수컷</option>
-                <option value="암컷" ${pet.gender === '암컷' ? 'selected' : ''}>암컷</option>
-              </select>
-            </div>
+	        <!-- 성별 -->
+	        <div>
+	          <label for="gender" class="block text-sm font-medium mb-1">성별</label>
+	          <select id="gender" name="gender" required class="w-full border rounded px-3 py-1.5">
+	            <option value="수컷" ${pet.gender === '수컷' ? 'selected' : ''}>수컷</option>
+	            <option value="암컷" ${pet.gender === '암컷' ? 'selected' : ''}>암컷</option>
+	          </select>
+	        </div>
 
-            <div>
-              <label class="block text-sm font-medium mb-1" for="birthDate">생일</label>
-              <input type="date" id="birthDate" name="birthDate" value="${pet.birthDate}" required class="w-full border rounded px-3 py-2" />
-            </div>
+	        <!-- 생일 -->
+	        <div>
+	          <label for="birthDate" class="block text-sm font-medium mb-1">생일</label>
+	          <input 
+	            type="date" 
+	            id="birthDate" 
+	            name="birthDate" 
+	            value="${pet.birthDate}" 
+	            required 
+	            class="w-full border rounded px-3 py-1.5" 
+	          />
+	        </div>
 
-            <div class="col-span-2">
-              <label class="block text-sm font-medium mb-1" for="weight">체중 (kg)</label>
-              <input type="number" step="0.1" id="weight" name="weight" value="${pet.weight}" required class="w-full border rounded px-3 py-2" />
-            </div>
-          </div>
-        </div>
+	        <!-- 체중 -->
+	        <div class="col-span-2">
+	          <label for="weight" class="block text-sm font-medium mb-1">체중 (kg)</label>
+	          <input 
+	            type="number" 
+	            step="0.1" 
+	            id="weight" 
+	            name="weight" 
+	            value="${pet.weight}" 
+	            required 
+	            class="w-full border rounded px-3 py-1.5" 
+	          />
+	        </div>
 
-        <div class="text-center">
-		<button type="button" onclick="petDelete()" class="bg-yellow-400 hover:bg-yellow-500 text-white font-semibold px-6 py-2 rounded shadow">
-		          삭제
-		         </button>
-          <button type="submit" class="bg-yellow-400 hover:bg-yellow-500 text-white font-semibold px-6 py-2 rounded shadow">
-            수정 완료
-          </button>
-        </div>
-      </form>
-    </div>
-  `;
+	        <!-- 사료 종류 + 브랜드 -->
+	        <div class="col-span-2 grid grid-cols-2 gap-4">
+	          <div>
+	            <label for="foodType" class="block text-sm font-medium mb-1">사료 종류</label>
+	            <select id="foodType" name="feedType" class="w-full border rounded px-3 py-1.5">
+	              <option value="">선택</option>
+	              <option value="습식" ${pet.feedType === '습식' ? 'selected' : ''}>습식</option>
+	              <option value="건식" ${pet.feedType === '건식' ? 'selected' : ''}>건식</option>
+	            </select>
+	          </div>
+
+	          <div>
+	            <label for="brand" class="block text-sm font-medium mb-1">브랜드</label>
+	            <input 
+	              type="text" 
+	              id="brand" 
+	              name="brand" 
+	              value="${pet.brand}" 
+	              placeholder="브랜드 입력" 
+	              class="w-full border rounded px-3 py-1.5" 
+	            />
+	          </div>
+	        </div>
+
+	        <!-- 제품명 -->
+	        <div class="col-span-2">
+	          <label for="productName" class="block text-sm font-medium mb-1">제품명</label>
+	          <input 
+	            type="text" 
+	            id="productName" 
+	            name="productName" 
+	            value="${pet.productName}" 
+	            class="w-full border rounded px-3 py-1.5" 
+	          />
+	        </div>
+
+	        <!-- 맛 -->
+	        <div class="col-span-2">
+	          <label for="flavor" class="block text-sm font-medium mb-1">맛</label>
+	          <input 
+	            type="text" 
+	            id="flavor" 
+	            name="flavor" 
+	            value="${pet.flavor}" 
+	            class="w-full border rounded px-3 py-1.5" 
+	          />
+	        </div>
+	      </div>
+	    </div>
+
+	    <!-- 버튼 영역 -->
+	    <div class="text-center space-x-2">
+	      <button 
+	        type="button" 
+	        onclick="petDelete()" 
+	        class="bg-yellow-400 hover:bg-yellow-500 text-white font-semibold px-6 py-2 rounded shadow"
+	      >
+	        삭제
+	      </button>
+	      <button 
+	        type="submit" 
+	        class="bg-yellow-400 hover:bg-yellow-500 text-white font-semibold px-6 py-2 rounded shadow"
+	      >
+	        수정 완료
+	      </button>
+	    </div>
+	  </form>
+	</div>
+	`;
+
 	openComModal(html);
 
 	setTimeout(() => {
@@ -234,97 +394,97 @@ function submitPetForm(e) {
 
 
 function submitModifyForm(e) {
-  e.preventDefault();
-  console.log("Toast 상태:", typeof Toast);
+	e.preventDefault();
+	console.log("Toast 상태:", typeof Toast);
 
-  const form = document.getElementById('modifyPetForm');
-  const formData = new FormData(form);
+	const form = document.getElementById('modifyPetForm');
+	const formData = new FormData(form);
 
-  fetch('/usr/pet/doModify', {
-    method: 'POST',
-    body: formData
-  })
-    .then(res => res.text())  // 응답이 문자열 형태 "S-1,수정되었습니다!"
-    .then(data => {
-      const [resultCode, msg] = data.split(",");
+	fetch('/usr/pet/doModify', {
+		method: 'POST',
+		body: formData
+	})
+		.then(res => res.text())  // 응답이 문자열 형태 "S-1,수정되었습니다!"
+		.then(data => {
+			const [resultCode, msg] = data.split(",");
 
-      if (resultCode === "S-1") {
-        // ✅ 성공 시 알림 메시지 요청
-        fetch('/toast/doModify', {
-          method: 'POST'
-        })
-          .then(res => res.json())  // 이미 JSON 파싱됨
-          .then(toastData => {
-            Toast.fire({
-              icon: 'success',
-              title: toastData.msg || '수정 성공!'
-            });
+			if (resultCode === "S-1") {
+				// ✅ 성공 시 알림 메시지 요청
+				fetch('/toast/doModify', {
+					method: 'POST'
+				})
+					.then(res => res.json())  // 이미 JSON 파싱됨
+					.then(toastData => {
+						Toast.fire({
+							icon: 'success',
+							title: toastData.msg || '수정 성공!'
+						});
 
-            closeCommentModal?.();
-            setTimeout(() => location.reload(), 1000);
-          })
-          .catch(err => {
-            console.warn('⚠️ 응답 JSON 파싱 실패:', err);
-            Toast.fire({
-              icon: 'success',
-              title: '수정되었습니다!'
-            });
-            setTimeout(() => location.reload(), 1000);
-          });
-      } else {
-        Toast.fire({
-          icon: 'error',
-          title: msg || '수정 실패!'
-        });
-      }
-    })
-    .catch(err => {
-      console.error("❌ 수정 중 오류:", err);
-      Toast.fire({
-        icon: 'error',
-        title: '에러 발생',
-        text: '서버 오류가 발생했습니다.'
-      });
-    });
+						closeCommentModal?.();
+						setTimeout(() => location.reload(), 1000);
+					})
+					.catch(err => {
+						console.warn('⚠️ 응답 JSON 파싱 실패:', err);
+						Toast.fire({
+							icon: 'success',
+							title: '수정되었습니다!'
+						});
+						setTimeout(() => location.reload(), 1000);
+					});
+			} else {
+				Toast.fire({
+					icon: 'error',
+					title: msg || '수정 실패!'
+				});
+			}
+		})
+		.catch(err => {
+			console.error("❌ 수정 중 오류:", err);
+			Toast.fire({
+				icon: 'error',
+				title: '에러 발생',
+				text: '서버 오류가 발생했습니다.'
+			});
+		});
 }
 
 
 function petDelete() {
-  const petId = document.querySelector('input[name="petId"]')?.value;
+	const petId = document.querySelector('input[name="petId"]')?.value;
 
-  if (!petId) {
-    Toast.fire({
-      icon: 'error',
-      title: '펫 ID를 찾을 수 없습니다.'
-    });
-    return;
-  }
+	if (!petId) {
+		Toast.fire({
+			icon: 'error',
+			title: '펫 ID를 찾을 수 없습니다.'
+		});
+		return;
+	}
 
-  if (!confirm("정말 삭제하시겠습니까?")) return;
+	if (!confirm("정말 삭제하시겠습니까?")) return;
 
-  fetch('/usr/pet/delete?petId=' + encodeURIComponent(petId), {
-    method: 'POST'
-  })
-    .then(res => res.json())
-    .then(data => {
-      const { resultCode, msg } = data;
+	fetch('/usr/pet/delete?petId=' + encodeURIComponent(petId), {
+		method: 'POST'
+	})
+		.then(res => res.json())
+		.then(data => {
+			const { resultCode, msg } = data;
 
-      Toast.fire({
-        icon: resultCode === 'S-1' ? 'success' : 'error',
-        title: msg || (resultCode === 'S-1' ? '삭제 성공!' : '삭제 실패!')
-      });
+			Toast.fire({
+				icon: resultCode === 'S-1' ? 'success' : 'error',
+				title: msg || (resultCode === 'S-1' ? '삭제 성공!' : '삭제 실패!')
+			});
 
-      if (resultCode === "S-1") {
-        setTimeout(() => location.reload(), 1000);
-      }
-    })
-    .catch(err => {
-      console.error("❌ 삭제 중 오류:", err);
-      Toast.fire({
-        icon: 'error',
-        title: '서버 오류 발생'
-      });
-    });
+			if (resultCode === "S-1") {
+				setTimeout(() => location.reload(), 1000);
+			}
+		})
+		.catch(err => {
+			console.error("❌ 삭제 중 오류:", err);
+			Toast.fire({
+				icon: 'error',
+				title: '서버 오류 발생'
+			});
+		});
 }
 
 

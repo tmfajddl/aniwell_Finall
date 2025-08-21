@@ -24,11 +24,22 @@ public class OcrFormatService {
 		DocType docType = (hint != null && hint != DocType.UNKNOWN) ? hint : detectDocType(text);
 
 		// ✅ 진단서: 전용 파서로 한 번에 그룹 구성
+		// ✅ 진단서: 전용 파서
 		if (docType == DocType.DIAGNOSIS) {
 			Group g = buildDiagnosisGroup(text);
 			List<Group> groups = Collections.singletonList(g);
 			return new OcrParseResponse(docType, groups, buildAscii(groups, docType));
 		}
+
+/* ✅ 영수증: 전용 파서
+   - date, store(병원명), line 아이템들, summary(subtotal/taxable/vat/taxfree/total)를
+     모두 items 리스트에 넣어주고, summary는 key/value 형태도 같이 실어줌 */
+		if (docType == DocType.RECEIPT) {
+			Group g = buildReceiptGroup(text);
+			List<Group> groups = Collections.singletonList(g);
+			return new OcrParseResponse(docType, groups, buildAscii(groups, docType));
+		}
+
 
 		// LAB: 멀티-날짜 헤더 라인 감지(한 줄에 날짜 ≥2개면 열 순서로 분배)
 		List<String> headerDates = detectHeaderDates(text);
@@ -491,30 +502,101 @@ public class OcrFormatService {
 	// ====== 기타 문서 타입 ======
 	private List<Map<String, Object>> parseReceiptItems(String body) {
 		List<Map<String, Object>> list = new ArrayList<>();
-		for (String ln : body.split("\n")) {
-			String line = ln.trim();
+		if (body == null || body.isBlank()) return list;
+
+		for (String raw : body.split("\\r?\\n")) {
+			String line = raw.trim();
 			if (line.isEmpty()) continue;
 
-			Matcher m = Pattern.compile("^(.+?)\\s+(\\d+)\\s*[xX*]\\s*(\\d[\\d,]*)\\s*=\\s*(\\d[\\d,]*)").matcher(line);
-			Map<String, Object> row = new LinkedHashMap<>();
-			if (m.find()) {
-				row.put("item", m.group(1).trim());
-				row.put("qty", m.group(2));
-				row.put("unitPrice", m.group(3).replace(",", ""));
-				row.put("total", m.group(4).replace(",", ""));
-			} else {
-				m = Pattern.compile("^(.+?)\\s+(\\d[\\d,]*)$").matcher(line);
-				if (m.find()) {
-					row.put("item", m.group(1).trim());
-					row.put("qty", "1");
-					row.put("unitPrice", m.group(2).replace(",", ""));
-					row.put("total", m.group(2).replace(",", ""));
-				} else {
+			// 1) 결제예정일(날짜)
+			Matcher mdue = P_DUE_DATE.matcher(line);
+			if (mdue.find()) {
+				String iso = String.format("%s-%02d-%02d",
+						mdue.group(1), Integer.parseInt(mdue.group(2)), Integer.parseInt(mdue.group(3)));
+				list.add(Map.of("type", "meta", "key", "dueDate", "value", iso));
+				continue;
+			}
+
+			// 2) 요약 금액(소계/합계/청구금액/결제요청/결제예정)
+			Matcher msum = P_SUMMARY_KV.matcher(line);
+			if (msum.find()) {
+				Integer money = parseMoneySafe(msum.group(2));
+				if (money != null) {
+					String key = switch (msum.group(1)) {
+						case "소계" -> "subtotal";
+						case "합계" -> "sum";
+						case "청구금액" -> "amount_charged";
+						case "결제요청" -> "amount_request";
+						case "결제예정" -> "amount_due";
+						default -> "summary";
+					};
+					list.add(Map.of("type","summary","key", key, "value", money));
 					continue;
 				}
 			}
-			list.add(row);
+
+			// 3) 품목 라인
+			Matcher m3 = P_ITEM_3NUM.matcher(line);
+			Matcher mx = P_ITEM_XEQ.matcher(line);
+			Matcher mp = P_ITEM_ONLY_PRICE.matcher(line);
+
+			if (m3.find()) {
+				list.add(Map.of(
+						"type","line",
+						"item", m3.group(1).trim(),
+						"unitPrice", parseMoneySafe(m3.group(2)),
+						"qty", Integer.parseInt(m3.group(3)),
+						"total", parseMoneySafe(m3.group(4))
+				));
+				continue;
+			}
+			if (mx.find()) {
+				list.add(Map.of(
+						"type","line",
+						"item", mx.group(1).trim(),
+						"unitPrice", parseMoneySafe(mx.group(2)),
+						"qty", Integer.parseInt(mx.group(3)),
+						"total", parseMoneySafe(mx.group(4))
+				));
+				continue;
+			}
+			if (mp.find()) {
+				// 단가만 있는 형태 → qty=1, total=단가
+				Integer price = parseMoneySafe(mp.group(2));
+				if (price != null) {
+					list.add(Map.of(
+							"type","line",
+							"item", mp.group(1).trim(),
+							"unitPrice", price,
+							"qty", 1,
+							"total", price
+					));
+				}
+			}
 		}
+
+		// 4) total 계산이 없으면 요약을 보고 채우기
+		int calcTotal = list.stream()
+				.filter(m -> "line".equals(m.get("type")))
+				.mapToInt(m -> ((Integer)m.get("total") == null ? 0 : (Integer)m.get("total")))
+				.sum();
+
+		boolean hasTotal = list.stream().anyMatch(m ->
+				"summary".equals(m.get("type")) && "total".equals(m.getOrDefault("key","")));
+		if (!hasTotal) {
+			// 요약 중 가장 그럴듯한 금액을 total로 승격 (없으면 라인합)
+			Integer best = null;
+			for (Map<String,Object> m : list) {
+				if (!"summary".equals(m.get("type"))) continue;
+				String k = String.valueOf(m.get("key"));
+				if (Set.of("amount_due","amount_request","amount_charged","sum","subtotal").contains(k)) {
+					best = (Integer) m.get("value");
+					if (Set.of("amount_due","amount_request","amount_charged").contains(k)) break;
+				}
+			}
+			list.add(Map.of("type","summary","key","total","value", best != null ? best : calcTotal));
+		}
+
 		return list;
 	}
 
@@ -882,4 +964,345 @@ public class OcrFormatService {
 		t = t.replaceAll("[\\s·•ㆍ:：\\-–—]*[\\(\\[\\{]?$", "").trim();
 		return t;
 	}
+
+	// ====== RECEIPT 전용 ======
+
+	private static final Pattern MONEY = Pattern.compile("([\\d,]+)(?:\\s*원)?");
+
+	/** 영수증 1장을 Group(date, items[])으로 만든다. */
+	private Group buildReceiptGroup(String full) {
+		String date = firstDate(full, "날짜", "거래일자", "발행일", "결제일", "작성일");
+		if (date == null) date = firstDate(full); // 어디서든 첫 날짜
+
+		String store = coalesce(
+				findAfter(full, "병원명", "상호", "상호명", "사업장명", "업체명"),
+				findFirstLineContaining(full, "(동물)?병원")
+		);
+
+		List<Map<String,Object>> items = new ArrayList<>();
+
+		// 병원/가맹점명은 key/value로 추가(컨트롤러 하이드레이션에서 사용)
+		addKV(items, "store", store);
+		// 병원이라는 의미가 명확하도록 hospital도 함께 실어두면 더 안전
+		if (store != null) addKV(items, "hospital", store);
+
+		// 1) 라인 아이템(항목/단가/수량/금액)
+		items.addAll(parseReceiptLines(full));
+
+		// 2) 합계/과세/부가세/비과세/총액 요약
+		Long subtotal = firstAmountAfter(full, "소계|합계");
+		Long taxable  = firstAmountAfter(full, "과세\\s*공급가액|과세\\s*금액|공급가액");
+		Long vat      = firstAmountAfter(full, "부가세|VAT");
+		Long taxfree  = firstAmountAfter(full, "비과세|면세");
+		Long total    = firstAmountAfter(full, "총액|청구금액|결제요청|결제금액|결제예정|받을금액|수금액");
+
+		if (total == null && subtotal != null && vat != null) total = subtotal + vat;
+
+		// summary도 key/value 형태로 넣어주면 컨트롤러가 그대로 kv에서 꺼낼 수 있음
+		putSummary(items, "subtotal", subtotal);
+		putSummary(items, "taxable",  taxable);
+		putSummary(items, "vat",      vat);
+		putSummary(items, "taxfree",  taxfree);
+		putSummary(items, "total",    total);
+
+		return new Group(date != null ? date : "Unknown", items);
+	}
+
+	private static final Pattern P_ITEM_3NUM =
+			Pattern.compile("^(.+?)\\s+([\\d,]+)\\s+(\\d+)\\s+([\\d,]+)\\s*$");            // 항목 단가 수량 금액
+	private static final Pattern P_ITEM_XEQ =
+			Pattern.compile("^(.+?)\\s+([\\d,]+)\\s*[xX*]\\s*(\\d+)\\s*=\\s*([\\d,]+)\\s*$"); // 항목 3,300 x 3 = 9,900
+
+	private static final Pattern P_ITEM_ONLY_PRICE =
+			Pattern.compile("^(.+?)\\s+([\\d,]+)(?:\\s*원)?\\s*$");                 // 항목 5,500
+
+	private static final Pattern P_SUMMARY_KV =
+			Pattern.compile("^(소계|합계|청구금액|결제요청|결제예정)\\s*[:：]?\\s*([\\d,]+)(?:\\s*원)?\\s*$");
+
+	private static final Pattern P_DUE_DATE =
+			Pattern.compile("^결제\\s*예정(?:일|일자)?\\s*[:：]?\\s*(20\\d{2})[.\\-/년]\\s*(\\d{1,2})[.\\-/월]\\s*(\\d{1,2})\\s*$");
+
+	// 표 헤더 한 줄에 다 있는 경우
+	private static final Pattern P_HEADER =
+			Pattern.compile("(?i)^(항목|품목)\\s+(단가|금액)\\s+(수량)\\s+(금액).*$");
+
+	// ✅ 헤더/요약이 '한 단어'로만 떨어진 줄 (OCR가 세로로 쪼갠 케이스)
+	private static final Pattern P_HEADER_SINGLE =
+			Pattern.compile("^(항목|품목|단가|수량|금액)\\s*[:：]?$");
+
+	private static final Pattern P_SUMMARY_LABEL =
+			Pattern.compile("^(소\\s*계|합계|청구금액|결제요청|결제금액|결제예정|총액)\\b.*");
+
+	private static final Pattern P_SUMMARY_SINGLE =
+			Pattern.compile("^(소\\s*계|합계|청구금액|결제요청|결제금액|결제예정|총액)\\s*[:：]?$");
+
+	// 구분선 같은 줄
+	private static final Pattern P_DIV = Pattern.compile("^[\\-─━_·•\\.=]+$");
+
+	// 날짜가 섞인 문자열을 금액으로 잘못 해석하지 않도록 가드
+	private static Integer parseMoneySafe(String s){
+		if (s == null) return null;
+		// 날짜 토큰이 보이면 금액으로 보지 않음
+		if (s.contains("년") || s.contains("월") || s.contains("일")) return null;
+		String digits = s.replaceAll("[^\\d]", "");
+		if (digits.isEmpty()) return null;
+		try {
+			long v = Long.parseLong(digits);
+			if (v > Integer.MAX_VALUE) return null; // 비정상 큰 값 방지
+			return (int)v;
+		} catch (Exception e) { return null; }
+	}
+
+	/** 표(항목/단가/수량/금액) 같은 라인들을 쭉 긁어온다. */
+	// 맨 위에 패턴들 추가/정리
+	// 상단 패턴들 근처에 추가
+// 표 헤더/요약 라벨
+	// 표 헤더/요약 라벨 (강화)
+	private static final Pattern P_HEADER_PART = Pattern.compile(
+			"^(?:항목|품목|단가|수량|금액)(?:\\s+(?:항목|품목|단가|수량|금액))*$"
+	);
+
+	// 이름으로 쓰면 안 되는 단어(공백 제거 후 비교)
+	private static final java.util.Set<String> RECEIPT_STOP_WORDS =
+			new java.util.HashSet<>(java.util.Arrays.asList(
+					"항목","품목","단가","수량","금액","소계","합계","청구금액","결제요청","결제예정","총액"
+			));
+	// “이 줄이 항목명처럼 보이는가?”
+	private boolean looksLikeNameLine(String s){
+		if (s == null) return false;
+		String t = s.trim();
+		if (t.isEmpty()) return false;
+		if (isHeaderish(t)) return false;
+		if (P_SUMMARY_LABEL.matcher(t).matches()) return false;
+		// 숫자/기호 위주면 제외
+		if (t.matches("^[\\d, .xX*=()\\-~]+$")) return false;
+		return true; // 한글/영문이 섞여 있으면 이름 가능
+	}
+
+	// 현재 i에서 뒤쪽 숫자 3개를 모았을 때 붙일 ‘이름’ 고르기 (직전 1~2줄 우선)
+	private String pickNameFromWindow(String[] lines, int i){
+		for (int k = 1; k <= 3; k++){
+			int idx = i - k;
+			if (idx < 0) break;
+			String cand = lines[idx].trim();
+			if (looksLikeNameLine(cand)) return cand;
+			// 섹션/요약 경계 만나면 더 위로는 탐색 중단
+			if (cand.matches("[-=]{3,}.*") || isHeaderish(cand) || P_SUMMARY_LABEL.matcher(cand).matches()) break;
+		}
+		return null;
+	}
+
+	// 숫자 패턴들
+	private static final Pattern P_NUM_TRIPLE = Pattern.compile("^([\\d,]+)\\s+(\\d+)\\s+([\\d,]+)\\s*$"); // 단가 수량 금액
+	private static final Pattern P_NUM_XEQ    = Pattern.compile("^([\\d,]+)\\s*[xX*]\\s*(\\d+)\\s*=\\s*([\\d,]+)\\s*$"); // 3,300 x 3 = 9,900
+	private static final Pattern P_C          = Pattern.compile("^(.+?)\\s+([\\d,]+)(?:\\s*원)?\\s*$");               // 항목 5,500
+
+	// 금액 토큰 판별
+	private boolean isMoneyToken(String s) {
+		if (s == null) return false;
+		// 천단위 콤마가 있거나, 숫자부가 1000 이상이면 금액으로 간주
+		String digits = s.replaceAll("[^0-9]", "");
+		if (s.contains(",")) return true;
+		if (digits.isEmpty()) return false;
+		try { return Long.parseLong(digits) >= 1000; } catch (Exception e) { return false; }
+	}
+
+
+	// ✅ 여기 추가: 숫자 3개를 현재/다음 줄들에서 모아오는 수집기
+	private static class NumTriple {
+		Long unit; Long qty; Long total; int consumed;
+		NumTriple(Long u, Long q, Long t, int c){ this.unit=u; this.qty=q; this.total=t; this.consumed=c; }
+	}
+
+	private NumTriple tryCollectTriple(String[] lines, int startIdx){
+		// startIdx "다음 줄"부터 본격 수집 (현재 줄은 품목명 라인일 가능성 높음)
+		int i = Math.max(0, startIdx);
+
+		// 한 줄에 "금액 수량 금액" 또는 "금액 x 수량 = 금액"이 딱 있으면 즉시 반환
+		String cur = lines[i].trim();
+		java.util.regex.Matcher mt = P_NUM_TRIPLE.matcher(cur);
+		if (mt.matches())
+			return new NumTriple(money(mt.group(1)), longOf(mt.group(2)), money(mt.group(3)), 1);
+		java.util.regex.Matcher mx = P_NUM_XEQ.matcher(cur);
+		if (mx.matches())
+			return new NumTriple(money(mx.group(1)), longOf(mx.group(2)), money(mx.group(3)), 1);
+
+		// 여러 줄로 쪼개진 경우: 다음 최대 2줄까지 합쳐서 숫자 3개를 모은다
+		java.util.List<String> tokens = new java.util.ArrayList<>();
+		int consumed = 0;
+		for (int j = i; j < lines.length && consumed < 3 && (j - i) < 3; j++){
+			String s = lines[j].trim();
+			if (s.isEmpty()) break;
+			if (P_HEADER.matcher(s).matches() || P_SUMMARY_LABEL.matcher(s).matches()) break;
+
+			// 한 줄에 3개가 모두 있으면 그걸로
+			mt = P_NUM_TRIPLE.matcher(s);
+			if (mt.matches())
+				return new NumTriple(money(mt.group(1)), longOf(mt.group(2)), money(mt.group(3)), j - i + 1);
+			mx = P_NUM_XEQ.matcher(s);
+			if (mx.matches())
+				return new NumTriple(money(mx.group(1)), longOf(mx.group(2)), money(mx.group(3)), j - i + 1);
+
+			// ‘대복약-1일 2회(~10kg)’ 같은 품목명 라인은 건너뜀(문자 포함 & 금액형 토큰 거의 없음)
+			if (s.matches(".*[가-힣A-Za-z]{2,}.*") && !s.matches(".*[\\d,]{4,}.*")) continue;
+
+			// 낱개 숫자 토큰 누적
+			for (String p : s.split("\\s+")){
+				if (p.matches("[\\d,]+(?:원)?")) { tokens.add(p); consumed++; }
+			}
+		}
+
+		// 첫/셋째 토큰이 ‘금액’처럼 보일 때만 유효
+		if (tokens.size() >= 3 && isMoneyToken(tokens.get(0)) && isMoneyToken(tokens.get(2))){
+			return new NumTriple(
+					money(tokens.get(0)),
+					longOf(tokens.get(1)),
+					money(tokens.get(2)),
+					Math.max(1, consumed)
+			);
+		}
+		return null;
+	}
+
+	private static final Pattern P_A = Pattern.compile("^(.+?)\\s+([\\d,]+)\\s+(\\d+)\\s+([\\d,]+)\\s*$");     // 항목 단가 수량 금액
+	private static final Pattern P_B = Pattern.compile("^(.+?)\\s+(\\d+)\\s+([\\d,]+)\\s+([\\d,]+)\\s*$");     // 항목 수량 단가 금액
+
+
+	private List<Map<String,Object>> parseReceiptLines(String full){
+		List<Map<String,Object>> out = new ArrayList<>();
+		if (full == null || full.isBlank()) return out;
+
+
+
+		String[] lines = normalize(full).split("\\r?\\n");
+		for (int i=0; i<lines.length; i++){
+			String line = lines[i].trim();
+			if (line.isEmpty()) continue;
+			if (P_HEADER.matcher(line).matches()) continue;           // 표 헤더 스킵
+			if (P_SUMMARY_LABEL.matcher(line).matches()) continue;    // 요약 라벨 스킵(요약은 buildReceiptGroup에서 따로 처리)
+
+			// 1) 같은 줄에 "항목 + 숫자3개"가 모두 있는 경우
+			java.util.regex.Matcher m = P_ITEM_3NUM.matcher(line);
+			if (m.matches()){
+				addLine(out, m.group(1), money(m.group(2)), longOf(m.group(3)), money(m.group(4)));
+				continue;
+			}
+			m = P_ITEM_XEQ.matcher(line);
+			if (m.matches()){
+				addLine(out, m.group(1), money(m.group(2)), longOf(m.group(3)), money(m.group(4)));
+				continue;
+			}
+
+			// 2) 숫자 3개(단가/수량/금액)가 줄 나뉘어 있는 경우 → 다음 1~2줄까지 모아본다
+			NumTriple tri = tryCollectTriple(lines, i);
+			if (tri != null){
+				String name = pickNameFromWindow(lines, i);
+				if (name != null){ // ← 이름이 진짜일 때만 기록
+					addLine(out, name, tri.unit, tri.qty, tri.total);
+				}
+				i += (tri.consumed - 1);
+				continue;
+			}
+
+			// 3) 그 외: “항목 5,500” 같은 단품 라인을 다루고 싶다면,
+			//    이름 라인이 먼저 나오고 바로 다음 줄이 금액인 패턴만 허용 (금지어는 제외)
+			if (looksLikeNameLine(line) && (i+1) < lines.length){
+				String next = lines[i+1].trim();
+				if (next.matches("^[\\d,]+(?:\\s*원)?$")){
+					Long p = money(next);
+					if (p != null){
+						addLine(out, line, p, 1L, p);
+						i += 1;
+					}
+				}
+			}
+
+			if (/* 품목명 추정 라인 */ line.matches(".*[가-힣A-Za-z].*") && !line.matches(".*[\\d,]{2,}.*")) {
+				NumTriple t = tryCollectTriple(lines, i + 1); // ✅ i가 아니라 i+1
+				if (t != null) {
+					addLine(out, line, t.unit, t.qty, t.total);
+					i += t.consumed; // 소비한 줄만큼 스킵
+					continue;
+				}
+			}
+
+
+		}
+		return out;
+	}
+
+
+	// 이름 라인 휴리스틱(숫자는 거의 없고 한글/영문 포함)
+	private boolean looksLikeName(String s){
+		if (s == null) return false;
+		int digits  = s.replaceAll("\\D", "").length();
+		int letters = s.replaceAll("[^A-Za-z가-힣]", "").length();
+		return letters >= 1 && digits <= 2;
+	}
+
+
+	private void addLine(List<Map<String,Object>> out, String item, Long unitPrice, Long qty, Long total){
+		if (item == null || item.trim().isEmpty()) return;
+		Map<String,Object> row = new LinkedHashMap<>();
+		row.put("type", "line");
+		row.put("item", item.trim());
+		if (unitPrice != null) row.put("unitPrice", unitPrice);
+		if (qty != null)       row.put("qty", qty);
+		if (total != null)     row.put("total", total);
+		out.add(row);
+	}
+
+	private void putSummary(List<Map<String,Object>> out, String key, Long value){
+		if (value == null) return;
+		Map<String,Object> row = new LinkedHashMap<>();
+		row.put("type",  "summary");
+		row.put("key",   key);
+		row.put("value", value);              // ← 숫자(Long)로 저장
+		out.add(row);
+	}
+
+	private Long firstAmountAfter(String text, String labelRegex){
+		if (text == null) return null;
+		String[] lines = text.split("\\r?\\n");
+		Pattern head = Pattern.compile("(?i).*?(?:" + labelRegex + ").*");
+		for (String ln : lines){
+			String s = ln.trim();
+			if (!head.matcher(s).matches()) continue;
+			Matcher m = MONEY.matcher(s);
+			Long last = null;
+			while (m.find()) last = money(m.group(1));  // 한 줄에 여러 숫자면 마지막을 취함
+			if (last != null) return last;
+		}
+		return null;
+	}
+
+	private Long money(String s){ try { return (s==null)? null : Long.valueOf(s.replaceAll(",", "")); } catch(Exception e){ return null; } }
+	private Long longOf(String s){ try { return (s==null)? null : Long.valueOf(s.replaceAll(",", "")); } catch(Exception e){ return null; } }
+
+	// "동물병원/병원" 키워드를 포함하는 첫 라인 리턴(없으면 null)
+	private String findFirstLineContaining(String text, String regex){
+		if (text == null) return null;
+		for (String ln : text.split("\\r?\\n")){
+			if (ln.matches("(?i).*" + regex + ".*")) return ln.trim();
+		}
+		return null;
+	}
+
+	private boolean isHeaderish(String s){
+		if (s == null) return false;
+		String t = s.trim();
+		if (t.isEmpty()) return false;
+		if (P_HEADER.matcher(t).matches()) return true;
+		if (P_HEADER_PART.matcher(t).matches()) return true;
+		String compact = t.replaceAll("\\s", "");
+		// 부분 헤더(예: "단가수량" / "금액")도 컷
+		return compact.equals("단가수량") || compact.equals("항목") || compact.equals("품목")
+				|| compact.equals("단가") || compact.equals("수량") || compact.equals("금액");
+	}
+
+
+
+
+
 }
+
