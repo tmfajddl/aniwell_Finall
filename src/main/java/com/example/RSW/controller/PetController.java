@@ -204,27 +204,26 @@ public class PetController {
 
 	@RequestMapping("/usr/pet/doJoin")
 	@ResponseBody
-	public String doJoin(HttpServletRequest req, @RequestParam("photo") MultipartFile photo, @RequestParam String name,
-			@RequestParam String species, @RequestParam String breed, @RequestParam String gender,
-			@RequestParam String birthDate, @RequestParam double weight,
+	public String doJoin(
+			HttpServletRequest req,
+			@RequestParam("photo") MultipartFile photo,
+			@RequestParam String name,
+			@RequestParam String species,
+			@RequestParam String breed,
+			@RequestParam String gender,
+			@RequestParam String birthDate,
+			@RequestParam double weight,
 			@RequestParam(value = "feedType", required = false) String feedType,
 			@RequestParam(value = "brand", required = false) String brand,
 			@RequestParam(value = "productName", required = false) String productName,
-			@RequestParam(value = "flavor", required = false) String flavor) {
-
-
-		if (Ut.isEmptyOrNull(name))
-			return Ut.jsHistoryBack("F-1", "이름을 입력하세요");
-		if (Ut.isEmptyOrNull(species))
-			return Ut.jsHistoryBack("F-2", "종을 입력하세요");
-		if (Ut.isEmptyOrNull(breed))
-			return Ut.jsHistoryBack("F-3", "품종을 입력하세요");
-		if (Ut.isEmptyOrNull(gender))
-			return Ut.jsHistoryBack("F-4", "성별을 입력하세요");
-		if (Ut.isEmptyOrNull(birthDate))
-			return Ut.jsHistoryBack("F-5", "생일을 입력하세요");
-		if (Ut.isEmptyOrNull(String.valueOf(weight)))
-			return Ut.jsHistoryBack("F-6", "몸무게를 입력하세요");
+			@RequestParam(value = "flavor", required = false) String flavor
+	) {
+		if (Ut.isEmptyOrNull(name)) return Ut.jsHistoryBack("F-1", "이름을 입력하세요");
+		if (Ut.isEmptyOrNull(species)) return Ut.jsHistoryBack("F-2", "종을 입력하세요");
+		if (Ut.isEmptyOrNull(breed)) return Ut.jsHistoryBack("F-3", "품종을 입력하세요");
+		if (Ut.isEmptyOrNull(gender)) return Ut.jsHistoryBack("F-4", "성별을 입력하세요");
+		if (Ut.isEmptyOrNull(birthDate)) return Ut.jsHistoryBack("F-5", "생일을 입력하세요");
+		if (Ut.isEmptyOrNull(String.valueOf(weight))) return Ut.jsHistoryBack("F-6", "몸무게를 입력하세요");
 
 		String imagePath = null;
 		if (!photo.isEmpty()) {
@@ -237,35 +236,49 @@ public class PetController {
 			}
 		}
 
-		ResultData joinRd = petService.insertPet(rq.getLoginedMemberId(), name, species, breed, gender, birthDate,
-				weight, imagePath);
+		ResultData joinRd = petService.insertPet(
+				rq.getLoginedMemberId(), name, species, breed, gender, birthDate, weight, imagePath
+		);
 
-		// ✅ [추가] 방금 만든 펫 PK 확보 (이미 Mapper에 준비된 메서드 활용)
+		// 방금 만든 펫 PK
 		Integer petId = petService.findNewestPetIdByMemberAndName(rq.getLoginedMemberId(), name);
+
+		// 기본사료 자동 전환 (brand & feedType 둘 다 있을 때만)
 		if (petId != null && brand != null && !brand.isBlank() && feedType != null && !feedType.isBlank()) {
 			try {
-				// 화면 입력 한글 → 서버 표준코드로 정규화
+				// feedType 정규화
 				String normalized = feedType.trim();
-				if ("건식".equals(normalized))
-					normalized = "dry";
-				else if ("습식".equals(normalized))
-					normalized = "wet";
+				if ("건식".equals(normalized)) normalized = "dry";
+				else if ("습식".equals(normalized)) normalized = "wet";
 
-				// 1) 기본사료 자동 전환(진행중 종료 → 신규 시작)
-				petService.upsertPrimaryFoodIfChanged(petId, brand.trim(), normalized);
-				// 2) 급여 이벤트 1건 기록(무게 없이 횟수만)
-				petService.feedPet(petId, brand.trim(), (productName != null ? productName.trim() : null),
-						(flavor != null ? flavor.trim() : null), normalized);
+				// DB 제약 대응용 안전값
+				String safeBrand = brand.trim();
+				String safeProductName = (productName != null && !productName.isBlank())
+						? productName.trim()
+						: safeBrand;  // productName NOT NULL이면 브랜드로 대체
+				String safeFlavor = (flavor != null) ? flavor.trim() : ""; // NOT NULL이면 "" 권장
+
+				// 기본사료 종료/시작 (트랜잭션 내부)
+				petService.upsertPrimaryFoodIfChanged(petId, safeBrand, normalized, safeProductName, safeFlavor);
+
+				// (옵션) 급여 이벤트도 기록하고 싶으면 사용
+				// petService.insertFeedEvent(petId, normalized, safeBrand);
+
 			} catch (Exception e) {
-				// 🚧 등록 자체는 성공시켰으므로, 사료 관련 오류는 로그만 남김
-				System.err.println(
-						"[WARN] doJoin 사료 처리 실패 | petId=" + petId + " | brand=" + brand + " | feedType=" + feedType);
+				System.err.println("[WARN] doJoin 사료 처리 실패"
+						+ " | petId=" + petId
+						+ " | brand=" + brand
+						+ " | feedType=" + feedType
+						+ " | productName=" + productName
+						+ " | flavor=" + flavor);
 				e.printStackTrace();
+				// 등록 자체는 성공이므로 사료 오류는 로그만
 			}
 		}
 
 		return Ut.rd("S-1", "등록되었습니다!");
 	}
+
 
 	// 펫 정보 수정 페이지로 이동
 
@@ -288,11 +301,22 @@ public class PetController {
 	// 펫 정보 수정 로직
 	@RequestMapping("/usr/pet/doModify")
 	@ResponseBody
-	public String doModify(HttpServletRequest req, @RequestParam("petId") int petId, String name, String species,
-			String breed, String gender, String birthDate, double weight, MultipartFile photo,
+	public String doModify(
+			HttpServletRequest req,
+			@RequestParam("petId") int petId,
+			String name, String species, String breed, String gender, String birthDate,
+			double weight,
+			MultipartFile photo,
 			@RequestParam(value = "feedType", required = false) String feedType, // 'dry' | 'wet' (또는 한글)
-			@RequestParam(value = "brand", required = false) String brand // 브랜드명
+			@RequestParam(value = "brand", required = false) String brand,       // 브랜드명
+			@RequestParam(value = "productName", required = false) String productName, // ★ 추가
+			@RequestParam(value = "flavor", required = false) String flavor             // ★ 추가
 	) {
+
+		System.out.println(feedType);
+		System.out.println(brand);
+		System.out.println(productName);
+		System.out.println(flavor);
 
 		int memberId = rq.getLoginedMemberId();
 		Pet pet = petService.getPetsById(petId);
@@ -300,18 +324,12 @@ public class PetController {
 			return Ut.jsHistoryBack("F-0", "권한이 없습니다.");
 		}
 
-		if (Ut.isEmptyOrNull(name))
-			return Ut.jsHistoryBack("F-1", "이름을 입력하세요");
-		if (Ut.isEmptyOrNull(species))
-			return Ut.jsHistoryBack("F-2", "종을 입력하세요");
-		if (Ut.isEmptyOrNull(breed))
-			return Ut.jsHistoryBack("F-3", "품종을 입력하세요");
-		if (Ut.isEmptyOrNull(gender))
-			return Ut.jsHistoryBack("F-4", "성별을 입력하세요");
-		if (Ut.isEmptyOrNull(birthDate))
-			return Ut.jsHistoryBack("F-5", "생일을 입력하세요");
-		if (Ut.isEmptyOrNull(String.valueOf(weight)))
-			return Ut.jsHistoryBack("F-6", "몸무게를 입력하세요");
+		if (Ut.isEmptyOrNull(name)) return Ut.jsHistoryBack("F-1", "이름을 입력하세요");
+		if (Ut.isEmptyOrNull(species)) return Ut.jsHistoryBack("F-2", "종을 입력하세요");
+		if (Ut.isEmptyOrNull(breed)) return Ut.jsHistoryBack("F-3", "품종을 입력하세요");
+		if (Ut.isEmptyOrNull(gender)) return Ut.jsHistoryBack("F-4", "성별을 입력하세요");
+		if (Ut.isEmptyOrNull(birthDate)) return Ut.jsHistoryBack("F-5", "생일을 입력하세요");
+		if (Ut.isEmptyOrNull(String.valueOf(weight))) return Ut.jsHistoryBack("F-6", "몸무게를 입력하세요");
 
 		String photoPath = null;
 		if (photo != null && !photo.isEmpty()) {
@@ -330,49 +348,54 @@ public class PetController {
 		} else {
 			modifyRd = petService.updatePet(petId, name, species, breed, gender, birthDate, weight, photoPath);
 		}
-		// ✅ 몸무게는 '항상 기록' + 현재값 갱신 (서비스 트랜잭션 내부에서 처리)
-		// - 이전 최신체중과 같아도 INSERT (임계값 없음)
-		// - pet_weight_log INSERT 후, pet 테이블의 weight(또는 weightKg) 갱신
+
+		// 체중 로그 (실패해도 메인흐름 유지)
 		try {
-			petService.insertWeightAlways(petId, weight, "manual", // source (수동 입력)
-					"수정화면 업데이트" // note (추적용 메모)
-			);
+			petService.insertWeightAlways(petId, weight, "manual", "수정화면 업데이트");
 		} catch (Exception e) {
-			// ⚠ 체중 로그 실패가 전체 수정 실패로 이어지지 않도록 예외는 삼키고 서버 로그만 남김
-			System.err.println("[ERROR] 몸무게 기록 저장 실패" + " | petId=" + petId + " | weightKg=" + weight
-					+ " | source=manual" + " | note=수정화면 업데이트");
+			System.err.println("[ERROR] 몸무게 기록 저장 실패 | petId=" + petId);
 			e.printStackTrace();
 		}
 
-		// - 적재되는 시점(fedAt)은 매 요청마다 달라 히스토리가 남음
-		// ✅ feedType 정규화 ('건식'→'dry', '습식'→'wet')
+		// feedType 정규화
 		if (feedType != null) {
 			feedType = feedType.trim();
-			if ("건식".equals(feedType))
-				feedType = "dry";
-			else if ("습식".equals(feedType))
-				feedType = "wet";
+			if ("건식".equals(feedType)) feedType = "dry";
+			else if ("습식".equals(feedType)) feedType = "wet";
 		}
 
-		// ✅ [추가] 사료 이벤트 기록 + 기본사료 자동 전환 (브랜드/타입 모두 있을 때만)
+		// ★ productName/flavor 안전 기본값 (DB가 NOT NULL이면 최소 빈문자라도)
+		String safeBrand = (brand != null) ? brand.trim() : null;
+		String safeProductName =
+				(productName != null && !productName.isBlank())
+						? productName.trim()
+						: (safeBrand != null ? safeBrand : ""); // 브랜드로 대체 또는 ""
+		String safeFlavor = (flavor != null) ? flavor.trim() : ""; // NOT NULL이면 "" 권장
+
+		// 기본사료 전환 (브랜드/타입 둘 다 있을 때만)
 		try {
-			if (brand != null && !brand.trim().isEmpty() && feedType != null && !feedType.trim().isEmpty()) {
+			if (safeBrand != null && !safeBrand.isEmpty()
+					&& feedType != null && !feedType.isEmpty()) {
 
-				// 1) 기본사료 자동 전환 (endedAt/startedAt 관리)
-				petService.upsertPrimaryFoodIfChanged(petId, brand.trim(), feedType);
+				// ★ productName, flavor까지 서비스로 전달
+				petService.upsertPrimaryFoodIfChanged(petId, safeBrand, feedType, safeProductName, safeFlavor);
 
-				// 2) 급여 이벤트 기록 (무게 없이 → 횟수는 COUNT로 계산)
-				petService.insertFeedEvent(petId, feedType, brand.trim());
+				// 급여 이벤트를 남기고 싶으면 주석 해제
+				// petService.insertFeedEvent(petId, feedType, safeBrand);
 			}
 		} catch (Exception e) {
-			System.err.println("[ERROR] 사료 이벤트/기본사료 처리 실패" + " | petId=" + petId + " | brand=" + brand + " | feedType="
-					+ feedType);
+			System.err.println("[ERROR] 사료 이벤트/기본사료 처리 실패"
+					+ " | petId=" + petId
+					+ " | brand=" + safeBrand
+					+ " | feedType=" + feedType
+					+ " | productName=" + safeProductName
+					+ " | flavor=" + safeFlavor);
 			e.printStackTrace();
 		}
 
-		int id = rq.getLoginedMemberId();
 		return Ut.rd("S-1", "수정되었습니다!");
 	}
+
 
 	// 감정 갤러리 이동
 	@RequestMapping("/usr/pet/gallery")
@@ -861,14 +884,4 @@ public class PetController {
 		}
 	}
 
-	@GetMapping("/usr/pet/listWithFood")
-	@ResponseBody
-	public Map<String, Object> listWithFood(@RequestParam int memberId) {
-		int loginId = rq.getLoginedMemberId();
-		if (loginId != memberId) {
-			return Map.of("msg", "권한이 없습니다.", "pets", List.of());
-		}
-		var pets = petService.getPetsWithFood(memberId);
-		return Map.of("msg", "펫 및 급여 정보 목록 조회 성공", "pets", pets);
-	}
 }

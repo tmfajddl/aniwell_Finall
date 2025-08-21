@@ -7,7 +7,8 @@
 
 	<!-- 펫 목록 조회 -->
 	<select id="getPetsByMemberId" parameterType="int"
-			resultType="com.example.RSW.vo.Pet">
+
+		resultType="com.example.RSW.vo.Pet">
 		SELECT
 			p.*,
 			pf.brand       AS brand,
@@ -74,6 +75,7 @@
 			resultType="com.example.RSW.vo.Pet">
 		SELECT
 			p.*,
+
 			pf.brand       AS brand,
 			pf.productName AS productName,
 			pf.flavor      AS flavor,

@@ -19,10 +19,6 @@ public class PetService {
 	@Autowired
 	private PetRepository petRepository;
 
-	// 주석: PetService의 필드 주입 추가
-	@Autowired
-	private PetFoodService petFoodService;
-
 	// 멤버 ID로 펫 목록 호출
 	public List<Pet> getPetsByMemberId(int memberId) {
 		return petRepository.getPetsByMemberId(memberId);
@@ -137,107 +133,38 @@ public class PetService {
 		petRepository.updatePetWeight(petId, weightKg); // <-- 기존 매퍼 재사용
 	}
 
-	// ✅ 사료량 변화 시에만 로그 적재 (임계값 없음: 값이 다르면 기록)
-	// - foodName : 제품명(없으면 null 허용)
-	// - feedType : 'dry' | 'wet' (없으면 null 허용)
-	// - brand : 브랜드(없으면 null 허용)
 	// ✅ 진행중 기본사료와 다르면: 기존 endedAt=오늘, 새 레코드 startedAt=오늘 생성
-	@Transactional // ★ 추가: 기본사료 종료/시작이 하나의 트랜잭션으로 커밋되도록
-	public void upsertPrimaryFoodIfChanged(int petId, String brand, String feedType) {
-		// ★ 방어코드: null/공백은 DB 제약/비교에서 문제를 일으킴
-		if (brand == null || brand.isBlank() || feedType == null || feedType.isBlank())
+	@Transactional // 기본사료 종료/시작을 한 트랜잭션으로
+	public void upsertPrimaryFoodIfChanged(int petId,
+										   String brand,
+										   String feedType,
+										   String productName,   // ★ 추가
+										   String flavor) {      // ★ 추가
+		// 방어코드
+		if (brand == null || brand.isBlank() || feedType == null || feedType.isBlank()) return;
+
+		brand = brand.trim();
+		feedType = feedType.trim();
+
+		// DB가 NOT NULL이면 최소한 빈 문자열이라도 보장
+		String safeProductName = (productName != null && !productName.isBlank()) ? productName.trim() : brand; // 브랜드로 대체
+		String safeFlavor      = (flavor != null) ? flavor.trim() : "";
+
+		var cur = petRepository.findActivePrimaryFood(petId); // {brand, feedType, ...}
+		String curBrand = (cur == null) ? null : String.valueOf(cur.get("brand"));
+		String curType  = (cur == null) ? null : String.valueOf(cur.get("feedType"));
+
+		// brand/type 동일하면 종료/신규 생성 없이 메타만 갱신(선택)
+		if (cur != null && brand.equalsIgnoreCase(curBrand) && feedType.equalsIgnoreCase(curType)) {
+			// 메타(제품명/맛)만 바뀐 경우를 위해 주석 해제해서 사용 가능
+			// petRepository.updateActivePrimaryFoodMeta(petId, safeProductName, safeFlavor);
 			return;
+		}
 
-		var cur = petRepository.findActivePrimaryFood(petId); // {brand, feedType}를 반환하도록 매퍼 정합
-		String curBrand = (cur == null) ? null : (String) cur.get("brand");
-		String curType = (cur == null) ? null : (String) cur.get("feedType"); // ★ 키명 'feedType'로 통일
-
-		// 동일하면 아무 것도 안 함
-		if (cur != null && brand.equalsIgnoreCase(curBrand) && feedType.equalsIgnoreCase(curType))
-			return;
-
-		// 기존 활성 종료 후 새 기본사료 시작
 		if (cur != null) {
 			petRepository.closeActivePrimaryFood(petId); // endedAt = NOW()
 		}
-		petRepository.insertPrimaryFood(petId, brand, feedType); // startedAt = NOW(), endedAt = NULL
+		petRepository.insertPrimaryFood(petId, brand, feedType, safeProductName, safeFlavor); // startedAt = 오늘
 	}
 
-	// ✅ 무게 없이 이벤트 1건 기록 → 일별 COUNT(*)로 "하루 몇 번" 계산
-	// ✅ (변경) 급여 이벤트 기록: amountG(0.00) + fedAt=NOW 강제 세팅
-	@Transactional // ★ 추가: 이벤트 기록이 롤백되지 않도록
-	public void insertFeedEvent(int petId, String feedType, String brand) {
-		if (brand == null || brand.isBlank() || feedType == null || feedType.isBlank())
-			return;
-
-		// ★ amountG는 NOT NULL 스키마 대비 안전 기본값 사용
-		double amountG = 0.00;
-		String source = "manual";
-		String note = "수정화면 자동기록";
-
-		// ★ fedAt=NOW()는 SQL에서 넣도록 하고, 여기서는 파라미터 최소화
-		petRepository.insertFeedEvent(petId, amountG, null, feedType, brand, source, note);
-	}
-
-	@Transactional
-	public void insertPet(Pet pet, String brand, String feedType) {
-		petRepository.insertPet(pet);
-		int petId = petRepository.getLastInsertId();
-
-		// ★ feed log 자동 기록도 amountG 기본값으로 안전 삽입
-		PetFeedLog log = new PetFeedLog();
-		log.setPetId(petId);
-		log.setBrand(brand);
-		log.setFeedType(feedType);
-		log.setSource("manual");
-		log.setAmountG(0.00); // ★ 추가: NOT NULL 대비
-		log.setFoodName(null); // 선택
-		petRepository.insertFeedLog(log); // 매퍼에서 fedAt=NOW(), reg/updateDate=NOW()
-	}
-
-	@Transactional
-	public void updatePet(Pet pet, String brand, String feedType) {
-		petRepository.updatePet(pet);
-
-		PetFeedLog log = new PetFeedLog();
-		log.setPetId(pet.getId());
-		log.setBrand(brand);
-		log.setFeedType(feedType);
-		log.setSource("manual");
-		log.setAmountG(0.00); // ★ 추가
-		log.setFoodName(null);
-		petRepository.insertFeedLog(log); // 매퍼에서 시간을 NOW()로 채움
-	}
-
-	/**
-	 * ✅ 펫에게 급여 기록을 남기는 메서드 - brand/productName이 존재하면 pet_food 테이블에 upsert 후 foodId
-	 * 획득 - 이후 pet_feed_log 테이블에 feed 이벤트 기록
-	 */
-	public void feedPet(int petId, String brand, String productName, String flavor, String feedType) {
-		Integer foodId = null;
-
-		// 🔸 브랜드와 제품명이 비어있지 않을 경우 → pet_food 테이블에 upsert & foodId 반환
-		if (!Ut.isEmptyOrNull(brand) && !Ut.isEmptyOrNull(productName)) {
-			foodId = petFoodService.upsertAndGetId(petId, brand.trim(), productName.trim(), flavor, feedType);
-		}
-
-		// 🔸 최종 단계: pet_feed_log 테이블에 급여 이벤트 기록
-		insertFeedEvent(petId, foodId, feedType, brand);
-	}
-
-	/**
-	 * ✅ 실제 DB에 급여 이벤트 기록 (pet_feed_log INSERT)
-	 *
-	 * @param petId    펫 ID
-	 * @param foodId   pet_food 테이블의 ID (없으면 NULL)
-	 * @param feedType 급여 형태(dry/wet/treat)
-	 * @param brand    브랜드명
-	 */
-	public void insertFeedEvent(int petId, Integer foodId, String feedType, String brand) {
-		petRepository.insertFeedEventSimple(petId, foodId, feedType, brand);
-	}
-
-	public List<Map<String, Object>> getPetsWithFood(int memberId) {
-		return petRepository.getPetsByMemberIdWithLatestFood(memberId);
-	}
 }

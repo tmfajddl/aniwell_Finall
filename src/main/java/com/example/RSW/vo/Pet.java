@@ -25,7 +25,6 @@ public class Pet {
 	private Timestamp createdAt;
 	private Timestamp updatedAt;
 
-	// 🔹 JOIN으로 가져온 사료 정보
 	private String brand; // 사료 브랜드
 	private String productName; // 사료 제품명
 	private String flavor; // 사료 맛/주요 성분
