@@ -133,9 +133,10 @@ public class OcrController {
 	// ✅ [추가] VO 기반 OCR 텍스트 저장
 	// - 요청: OcrSaveVo(JSON)
 	// - 응답: { resultCode, msg, data: { visitId, documentId } }
+	// ✅ LAB 디테일 저장 되도록 camelCase → snake_case 변환 적용 버전
 	@PostMapping("/save")
 	public ResultData<Map<String, Object>> saveOcrText(@RequestBody OcrSaveVo vo) {
-		// 1) what we actually have
+		// 1) 입력 유효성
 		boolean hasText   = vo.getText() != null && !vo.getText().isBlank();
 		boolean hasGroups = vo.getGroups() != null && !vo.getGroups().isEmpty();
 
@@ -146,37 +147,36 @@ public class OcrController {
 			return ResultData.from("F-NO-TARGET", "visitId 또는 petId가 필요합니다.", "data", null);
 		}
 
-		// 2) docType 결정: groups가 있으면 그걸로 우선 추정 → 그다음 normalize
+		// 2) 문서유형 결정
 		String dt = vo.getDocType();
 		if ((dt == null || "auto".equalsIgnoreCase(dt)) && hasGroups) {
-			dt = guessDocTypeFromGroups(vo.getGroups()); // ⬅️ 헬퍼
+			dt = guessDocTypeFromGroups(vo.getGroups()); // groups 기반 1차 추정
 		}
-		dt = normalizeDocType(dt, hasText ? vo.getText() : null);
+		dt = normalizeDocType(dt, hasText ? vo.getText() : null); // 텍스트 기반 정교화
 		vo.setDocType(dt);
 
-		// 2.5) diagnosis 그룹이면 Visit 칸 자동 채우기(병원/의사/진단/비고/날짜)
+		// 3) 유형별로 Visit 필드 보강
 		if ("diagnosis".equalsIgnoreCase(vo.getDocType()) && hasGroups) {
-			hydrateVisitFromDiagnosisGroups(vo);        // ⬅️ 헬퍼
+			hydrateVisitFromDiagnosisGroups(vo);
 		}
-
 		if ("receipt".equalsIgnoreCase(vo.getDocType()) && hasGroups) {
-			hydrateVisitFromReceiptGroup(vo);   // ✅ 새로 추가
+			hydrateVisitFromReceiptGroup(vo);  // ⚠️ 사용자가 원하는 Notes 포맷 포함(방문이유/진료내역/금액 등)
 		}
-
 		if ("lab".equalsIgnoreCase(vo.getDocType()) && hasGroups) {
 			hydrateVisitFromLabGroup(vo);
 		}
 
-
 		try {
+			// 4) 안전한 docType 보정
 			String safeDocType = (vo.getDocType() == null) ? "diagnosis" : vo.getDocType().toLowerCase();
 			switch (safeDocType) {
-				case "receipt","prescription","lab","diagnosis","other" -> {}
+				case "receipt", "prescription", "lab", "diagnosis", "other" -> {}
 				default -> safeDocType = "diagnosis";
 			}
 
 			String safeFileUrl = (vo.getFileUrl() == null || vo.getFileUrl().isBlank()) ? "" : vo.getFileUrl();
 
+			// 5) Visit 생성(없는 경우)
 			Integer visitId = vo.getVisitId();
 			if (visitId == null) {
 				Visit visit = new Visit();
@@ -188,36 +188,49 @@ public class OcrController {
 				visit.setDiagnosis(vo.getDiagnosis());
 				visit.setNotes(vo.getNotes());
 				visitId = visitService.insertVisit(visit);
-				if (visitId == null || visitId <= 0) throw new IllegalStateException("Visit PK 생성 실패");
+				if (visitId == null || visitId <= 0) {
+					throw new IllegalStateException("Visit PK 생성 실패");
+				}
 			}
 
-			// 3) 저장 payload(text 또는 groups)
-			Map<String,Object> payload = new java.util.LinkedHashMap<>();
-			Map<String,Object> meta = new java.util.LinkedHashMap<>();
+			// 6) 저장 payload 구성
+			Map<String,Object> payload = new LinkedHashMap<>();
+			Map<String,Object> meta = new LinkedHashMap<>();
 			meta.put("engine", "gcv");
 			meta.put("ts", LocalDateTime.now().toString());
 			payload.put("meta", meta);
-			if (hasGroups) payload.put("groups", vo.getGroups());
-			else          payload.put("text", vo.getText().trim());
+
+			// ✅ LAB 의 경우 groups를 snake_case로 변환하여 저장 (lab_result_detail 파서 호환)
+			List<Map<String,Object>> groupsToPersist = vo.getGroups();
+			if (hasGroups && "lab".equalsIgnoreCase(safeDocType)) {
+				groupsToPersist = normalizeLabGroupsForPersistence(groupsToPersist); // ← 헬퍼 메서드 필요
+			}
+
+			if (hasGroups) payload.put("groups", groupsToPersist);
+			else           payload.put("text", vo.getText().trim());
 
 			String ocrJson = objectMapper.writeValueAsString(payload);
 
+			// 7) MedicalDocument 저장
 			MedicalDocument doc = new MedicalDocument();
 			doc.setVisitId(visitId);
 			doc.setDocType(safeDocType);
 			doc.setFileUrl(safeFileUrl);
 			doc.setOcrJson(ocrJson);
-
 			int documentId = medicalDocumentService.insertDocument(doc);
 
-			// 4) lab이면 최신 그룹을 lab_result_detail로 펼쳐 저장
+			// 8) LAB이면 디테일 테이블에 펼쳐 저장
 			int labRows = 0;
 			if ("lab".equalsIgnoreCase(safeDocType)) {
-				try { labRows = labResultDetailService.upsertLatestGroup(documentId, ocrJson); }
-				catch (Exception ignore) { ignore.printStackTrace(); }
+				try {
+					labRows = labResultDetailService.upsertLatestGroup(documentId, ocrJson);
+				} catch (Exception ignore) {
+					ignore.printStackTrace();
+				}
 			}
 
-			Map<String, Object> data = new java.util.HashMap<>();
+			// 9) 응답
+			Map<String, Object> data = new HashMap<>();
 			data.put("visitId", visitId);
 			data.put("documentId", documentId);
 			data.put("fileUrl", vo.getFileUrl());
@@ -225,12 +238,13 @@ public class OcrController {
 			return ResultData.from("S-OCR-SAVE", "OCR 데이터가 저장되었습니다.", "data", data);
 
 		} catch (Exception e) {
-			Map<String, Object> err = new java.util.HashMap<>();
+			Map<String, Object> err = new HashMap<>();
 			err.put("errorType", e.getClass().getSimpleName());
 			err.put("error", e.getMessage());
 			return ResultData.from("F-OCR-SAVE", "OCR 저장 중 오류", "data", err);
 		}
 	}
+
 
 	@SuppressWarnings("unchecked")
 	private void hydrateVisitFromLabGroup(OcrSaveVo vo) {
@@ -377,7 +391,7 @@ public class OcrController {
 	private void hydrateVisitFromReceiptGroup(OcrSaveVo vo) {
 		if (vo.getGroups()==null || vo.getGroups().isEmpty()) return;
 
-		// 1) 가장 알찬 그룹 하나 고르기(라인아이템 많은 것 우선)
+		// 1) 가장 알찬 그룹(라인아이템 많은 것) 고르기
 		Map<String,Object> best = null;
 		int bestLines = -1;
 		for (var g : vo.getGroups()){
@@ -395,8 +409,8 @@ public class OcrController {
 		}
 		if (best == null) return;
 
-		// 2) items -> key/value map 만들기 (소문자 키)
-		Map<String,String> kv = new java.util.LinkedHashMap<>();
+		// 2) items → key/value 맵(소문자 키)
+		java.util.Map<String,String> kv = new java.util.LinkedHashMap<>();
 		java.util.List<?> items = (java.util.List<?>) best.get("items");
 		if (items != null){
 			for (Object o : items){
@@ -411,16 +425,15 @@ public class OcrController {
 			}
 		}
 
-		// 3) 병원명(가게명) → Visit.hospital
-		// buildReceiptGroup는 store/hospital 중 하나를 넣도록 했음
-		String store = nz(kv.get("store"));
-		String hosp  = nz(kv.get("hospital"));
+		// 3) 병원명 보강 (store/hospital)
 		if (nz(vo.getHospital()) == null) {
-			if (store != null) vo.setHospital(store);
-			else if (hosp != null) vo.setHospital(hosp);
+			String store = kv.get("store");
+			String hosp  = kv.get("hospital");
+			if (nz(store) != null) vo.setHospital(store);
+			else if (nz(hosp) != null) vo.setHospital(hosp);
 		}
 
-		// 4) visitDate: 그룹의 date(yyyy-MM-dd 또는 yyyy-MM-dd HH:mm:ss) 우선
+		// 4) visitDate: 그룹의 date 우선(yyyy-MM-dd 또는 yyyy-MM-dd HH:mm:ss)
 		String ds = (best.get("date") instanceof String) ? (String)best.get("date") : null;
 		if (ds != null && !ds.isBlank()){
 			try {
@@ -431,63 +444,66 @@ public class OcrController {
 			} catch (Exception ignore) {}
 		}
 
-		// 5) notes 만들기 (주소/전화는 제외)
-		//   - 라인아이템 요약: "진료비 ×1 = 5,500", "대복약… ×3 = 9,900"
-		//   - 합계/과세/부가세/비과세/총액
-		java.text.DecimalFormat F = new java.text.DecimalFormat("#,###");
-		java.util.List<String> lineBits = new java.util.ArrayList<>();
+		// 5) 노트 구성 요구사항:
+		//    "방문이유: {reason}, 진료 내역: {item1, item2}, 금액: {total}원"
+		//    - reason: 그룹의 reason 필드 > kv.reason/symptom/증상 등
+		String reason = null;
+		Object reasonObj = best.get("reason");
+		if (reasonObj != null) {
+			String r = String.valueOf(reasonObj).trim();
+			if (!r.isEmpty()) reason = r;
+		}
+		if (reason == null) {
+			if (kv.get("reason") != null)                 reason = kv.get("reason");
+			else if (kv.get("symptom") != null)           reason = kv.get("symptom");
+			else if (kv.get("chief complaint") != null)   reason = kv.get("chief complaint");
+			else if (kv.get("증상") != null)              reason = kv.get("증상");
+		}
+
+		//    - 진료 내역: line 항목들의 item 이름만 추림
+		java.util.List<String> names = new java.util.ArrayList<>();
 		if (items != null){
 			for (Object o : items){
 				if (!(o instanceof java.util.Map<?,?> mm)) continue;
-				Object type = mm.get("type");
-				if (!"line".equals(type)) continue;
+				if (!"line".equals(String.valueOf(mm.get("type")))) continue;
 				String item = nz(mm.get("item"));
-				Long qty    = toLong(mm.get("qty"));
-				Long total  = toLong(mm.get("total"));
-				if (item != null && total != null){
-					String q = (qty != null && qty > 1) ? (" ×" + qty) : "";
-					lineBits.add(item + q + " = " + F.format(total));
+				if (item != null) names.add(item);
+			}
+		}
+
+		//    - 금액: summary.total(> subtotal 폴백)
+		Long total = null;
+		if (kv.get("total") != null) total = toLong(kv.get("total"));
+		if (total == null)           total = toLong(kv.get("subtotal"));
+
+		//    - VO의 totalCost 세팅(타입이 무엇이든 반영)
+		if (total != null){
+			try { vo.getClass().getMethod("setTotalCost", java.math.BigDecimal.class)
+					.invoke(vo, new java.math.BigDecimal(total)); }
+			catch (Throwable ___) {
+				try { vo.getClass().getMethod("setTotalCost", Integer.class)
+						.invoke(vo, total.intValue()); }
+				catch (Throwable ____) {
+					try { vo.getClass().getMethod("setTotalCost", Long.class)
+							.invoke(vo, total.longValue()); }
+					catch (Throwable _____) { /* ignore */ }
 				}
 			}
 		}
 
-		// summary
-		java.util.LinkedHashMap<String, String> sums = new java.util.LinkedHashMap<>();
-		if (kv.get("subtotal") != null) sums.put("합계",    F.format(toLong(kv.get("subtotal"))));
-		if (kv.get("taxable")  != null) sums.put("과세",    F.format(toLong(kv.get("taxable"))));
-		if (kv.get("vat")      != null) sums.put("부가세",  F.format(toLong(kv.get("vat"))));
-		if (kv.get("taxfree")  != null) sums.put("비과세",  F.format(toLong(kv.get("taxfree"))));
-		if (kv.get("total")    != null) sums.put("총액",    F.format(toLong(kv.get("total"))));
+		//    - 문자열 조합
+		java.util.List<String> bits = new java.util.ArrayList<>();
+		if (reason != null)               bits.add("방문이유: " + reason);
+		if (!names.isEmpty())             bits.add("진료 내역: " + String.join(", ", names));
+		if (total != null)                bits.add("금액: " + total + "원"); // 천단위 구분 없이 원문대로
 
-		java.util.List<String> sumBits = new java.util.ArrayList<>();
-		for (var e : sums.entrySet()) sumBits.add(e.getKey()+": "+e.getValue());
-
-		String notes = String.join(", ", lineBits);
-		if (!sumBits.isEmpty()){
-			if (!notes.isEmpty()) notes += " · ";
-			notes += String.join(" · ", sumBits);
-		}
+		String notes = String.join(", ", bits);
 		if (!notes.isBlank()) vo.setNotes(notes);
 
-		// 6) diagnosis는 비워두거나 "영수증" 정도로 구분 표시만
+		// 6) 구분용 진단 텍스트(없으면 "영수증")
 		if (nz(vo.getDiagnosis()) == null) vo.setDiagnosis("영수증");
-
-		Long totalVal = toLong(kv.get("total"));
-		if (totalVal == null) totalVal = toLong(kv.get("subtotal")); // 폴백
-
-// VO/Visit의 타입이 BigDecimal/Integer/Long 중 무엇이든 안전하게 시도
-		try { vo.getClass().getMethod("setTotalCost", java.math.BigDecimal.class)
-				.invoke(vo, new java.math.BigDecimal(totalVal)); }
-		catch (Throwable ___) {
-			try { vo.getClass().getMethod("setTotalCost", Integer.class)
-					.invoke(vo, totalVal.intValue()); }
-			catch (Throwable ____) {
-				try { vo.getClass().getMethod("setTotalCost", Long.class)
-						.invoke(vo, totalVal.longValue()); }
-				catch (Throwable _____) { /* 무시 */ }
-			}
-		}
 	}
+
 
 	// 작은 헬퍼
 	private static String nz(Object o){
@@ -805,6 +821,45 @@ public class OcrController {
 			return ResultData.from("F-ERROR", "문서 조회 중 오류가 발생했습니다.", "data", err);
 		}
 	}
+	@SuppressWarnings("unchecked")
+	private List<Map<String,Object>> normalizeLabGroupsForPersistence(List<Map<String,Object>> groups){
+		if (groups == null) return java.util.Collections.emptyList();
+		List<Map<String,Object>> outGroups = new ArrayList<>();
+		for (Object gObj : groups){
+			if (!(gObj instanceof Map)) continue;
+			Map<String,Object> g = (Map<String,Object>) gObj;
+			Map<String,Object> newGroup = new LinkedHashMap<>();
+			newGroup.put("date", g.get("date"));
+
+			List<Map<String,Object>> newItems = new ArrayList<>();
+			Object itemsObj = g.get("items");
+			if (itemsObj instanceof List<?> list){
+				for (Object itObj : list){
+					if (!(itObj instanceof Map)) continue;
+					Map<String,Object> it = (Map<String,Object>) itObj;
+
+					Map<String,Object> row = new LinkedHashMap<>();
+					Object name = it.get("name");        if (name == null) name = it.get("testName");
+					Object val  = it.get("value");       if (val  == null) val  = it.get("resultValue");
+					Object rlo  = it.get("ref_low");     if (rlo  == null) rlo  = it.get("refLow");
+					Object rhi  = it.get("ref_high");    if (rhi  == null) rhi  = it.get("refHigh");
+
+					row.put("name",      name);
+					row.put("value",     val);
+					row.put("unit",      it.get("unit"));
+					row.put("ref_low",   rlo);
+					row.put("ref_high",  rhi);
+					row.put("flag",      it.get("flag"));
+					row.put("notes",     it.get("notes"));
+					newItems.add(row);
+				}
+			}
+			newGroup.put("items", newItems);
+			outGroups.add(newGroup);
+		}
+		return outGroups;
+	}
+
 
 
 	// ✅ [추가] suggestedDocType(문자열) → OcrParseResponse.DocType(enum) 변환

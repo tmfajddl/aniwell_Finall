@@ -1,12 +1,17 @@
 package com.example.RSW.service;
 
 import com.example.RSW.repository.PetRepository;
+import com.example.RSW.util.Ut;
 import com.example.RSW.vo.Pet;
+import com.example.RSW.vo.PetFeedLog;
 import com.example.RSW.vo.ResultData;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.sql.Date;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class PetService {
@@ -22,7 +27,21 @@ public class PetService {
 	// 펫 수정(사진 있음)
 	public ResultData updatePet(int petId, String name, String species, String breed, String gender, String birthDate,
 			double weight, String photo) {
-		petRepository.updatePet(petId, name, species, breed, gender, birthDate, weight, photo);
+
+		// VO 생성 → VO 기반 update 사용
+		Pet p = new Pet();
+		p.setId(petId);
+		p.setName(name);
+		p.setSpecies(species);
+		p.setBreed(breed);
+		p.setGender(gender);
+		p.setBirthDate(Date.valueOf(birthDate));
+		p.setWeight(weight);
+		p.setPhoto(photo);
+
+		// XML의 <update id="updatePet" parameterType="com.example.RSW.vo.Pet">와 매칭
+		petRepository.updatePet(p);
+
 		return ResultData.from("S-1", "애완동물 정보 수정 완료");
 	}
 
@@ -36,12 +55,28 @@ public class PetService {
 	public ResultData insertPet(int memberId, String name, String species, String breed, String gender,
 			String birthDate, double weight, String photo) {
 
-		petRepository.insertPet(memberId, name, species, breed, gender, birthDate, weight, photo);
+		// VO를 만들어 VO 기반 mapper로 호출
+		Pet pet = new Pet();
+		pet.setMemberId(memberId);
+		pet.setName(name);
+		pet.setSpecies(species);
+		pet.setBreed(breed);
+		pet.setGender(gender);
+		pet.setBirthDate(Date.valueOf(birthDate));
+		pet.setWeight(weight);
+		pet.setPhoto(photo);
+
+		petRepository.insertPet(pet);
 
 		// 방금 등록된 pet의 id 가져오기
 		int id = petRepository.getLastInsertId();
 
 		return ResultData.from("S-1", "반려동물 등록 성공", "등록 성공 id", id);
+	}
+
+	// ✅ [추가] 가장 마지막으로 INSERT 된 PK 조회
+	public Integer getLastInsertId() {
+		return petRepository.getLastInsertId();
 	}
 
 	// 펫 사진 없이 수정
@@ -98,28 +133,39 @@ public class PetService {
 		petRepository.updatePetWeight(petId, weightKg); // <-- 기존 매퍼 재사용
 	}
 
-	// ✅ 사료량 변화 시에만 로그 적재 (임계값 없음: 값이 다르면 기록)
-	// - foodName : 제품명(없으면 null 허용)
-	// - feedType : 'dry' | 'wet' (없으면 null 허용)
-	// - brand : 브랜드(없으면 null 허용)
 	// ✅ 진행중 기본사료와 다르면: 기존 endedAt=오늘, 새 레코드 startedAt=오늘 생성
-	public void upsertPrimaryFoodIfChanged(int petId, String brand, String feedType) {
-		var cur = petRepository.findActivePrimaryFood(petId); // {brand, foodType}
-		String curBrand = (cur == null) ? null : (String) cur.get("brand");
-		String curType = (cur == null) ? null : (String) cur.get("foodType");
+	@Transactional // 기본사료 종료/시작을 한 트랜잭션으로
+	public void upsertPrimaryFoodIfChanged(int petId,
+										   String brand,
+										   String feedType,
+										   String productName,   // ★ 추가
+										   String flavor) {      // ★ 추가
+		// 방어코드
+		if (brand == null || brand.isBlank() || feedType == null || feedType.isBlank()) return;
 
-		if (cur != null && brand.equals(curBrand) && feedType.equals(curType))
+		brand = brand.trim();
+		feedType = feedType.trim();
+
+		// DB가 NOT NULL이면 최소한 빈 문자열이라도 보장
+		String safeProductName = (productName != null && !productName.isBlank()) ? productName.trim() : brand; // 브랜드로 대체
+		String safeFlavor      = (flavor != null) ? flavor.trim() : "";
+
+		var cur = petRepository.findActivePrimaryFood(petId); // {brand, feedType, ...}
+		String curBrand = (cur == null) ? null : String.valueOf(cur.get("brand"));
+		String curType  = (cur == null) ? null : String.valueOf(cur.get("feedType"));
+
+		// brand/type 동일하면 종료/신규 생성 없이 메타만 갱신(선택)
+		if (cur != null && brand.equalsIgnoreCase(curBrand) && feedType.equalsIgnoreCase(curType)) {
+			// 메타(제품명/맛)만 바뀐 경우를 위해 주석 해제해서 사용 가능
+			// petRepository.updateActivePrimaryFoodMeta(petId, safeProductName, safeFlavor);
 			return;
+		}
 
 		if (cur != null) {
-			petRepository.closeActivePrimaryFood(petId); // endedAt = CURRENT_DATE
+			petRepository.closeActivePrimaryFood(petId); // endedAt = NOW()
 		}
-		petRepository.insertPrimaryFood(petId, brand, feedType); // startedAt = CURRENT_DATE
+		petRepository.insertPrimaryFood(petId, brand, feedType, safeProductName, safeFlavor); // startedAt = 오늘
 	}
 
-	// ✅ 무게 없이 이벤트 1건 기록 → 일별 COUNT(*)로 "하루 몇 번" 계산
-	public void insertFeedEvent(int petId, String feedType, String brand) {
-		petRepository.insertFeedEvent(petId, feedType, brand);
-	}
 
 }

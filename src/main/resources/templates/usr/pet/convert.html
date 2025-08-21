@@ -1,103 +1,690 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ko">
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>AI JSON 변환(보기만)</title>
-<style>
-    body{font-family:ui-sans-serif,system-ui,apple-system; background:#fafafa; color:#111; margin:0}
-    .wrap{max-width:880px; margin:32px auto; padding:0 16px}
-    .card{background:#fff; border:1px solid #e5e5e5; border-radius:12px; box-shadow:0 1px 2px rgba(0,0,0,.04); padding:16px; margin-bottom:16px}
-    .row{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
-    textarea{width:100%; min-height:280px; font:12px/1.5 ui-monospace,Menlo,Consolas,monospace; padding:12px; border:1px solid #ddd; border-radius:8px}
-    button{padding:8px 12px; border:1px solid #ddd; border-radius:8px; background:#111; color:#fff; cursor:pointer}
-    button.secondary{background:#f6f6f6; color:#111}
-    pre{background:#111; color:#f1f1f1; padding:12px; border-radius:8px; overflow:auto; font:12px/1.5 ui-monospace,Menlo,Consolas,monospace; max-height:420px}
-    .muted{color:#6b6b6b; font-size:12px}
-    input[type=number]{padding:8px 10px; border:1px solid #ddd; border-radius:8px; width:120px}
-    .spinner{display:inline-block; width:18px; height:18px; border:3px solid #ddd; border-top-color:#111; border-radius:50%; animation:spin 1s linear infinite; vertical-align:-4px}
-    @keyframes spin{to{transform:rotate(360deg)}}
-</style>
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Aniwell QR Report</title>
+    <style>
+        :root{ --bg:#FFF8F3; --card:#fff; --accent:#FFC4C4; --chip:#f6f6f6; --ok:#16a34a; --down:#ef4444; --muted:#6b7280; --border:#ececec;}
+        html[data-theme="male"]{ --bg:#F3F8FF; --accent:#BFD9FF; --chip:#EEF4FF; }
+        html[data-theme="female"]{ --bg:#FFF3F7; --accent:#FFC4DF; --chip:#FFF0F6; }
+        *{box-sizing:border-box}
+        body{margin:0;background:var(--bg);font-family:system-ui,apple sd gothic neo,Segoe UI,sans-serif;display:flex;justify-content:center}
+        .wrap{max-width:980px;width:100%;padding:24px 16px;display:grid;gap:16px}
+        .pill{display:inline-block;background:var(--accent);padding:6px 12px;border-radius:999px;font-size:12px}
+        h1{margin:10px 0 0}
+        .card{background:var(--card);border-radius:18px;box-shadow:0 10px 24px rgba(0,0,0,.06);padding:20px}
+        .hero{display:flex;gap:18px;align-items:center}
+        .hero img{width:110px;height:110px;border-radius:16px;object-fit:cover;border:6px solid #fff;box-shadow:0 6px 18px rgba(0,0,0,.08)}
+        .kv{display:grid;grid-template-columns:110px 1fr;gap:6px 12px;font-size:14px}
+        .muted{color:var(--muted)}
+        .stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+        .stat{border:1px solid var(--border);border-radius:14px;padding:14px}
+        .row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+        .delta.up{color:var(--ok)} .delta.down{color:var(--down)} .delta.same{color:var(--muted)}
+        .delta b{font-weight:700}
+        .cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+        .visit{border:1px solid var(--border);border-radius:14px;padding:14px;display:grid;gap:8px}
+        .btn{appearance:none;border:1px solid var(--border);background:#fff;border-radius:10px;padding:8px 12px;cursor:pointer}
+        .btn:hover{box-shadow:0 6px 16px rgba(0,0,0,.06)}
+        .chips{display:flex;gap:6px;flex-wrap:wrap}
+        .chip{background:var(--chip);border-radius:999px;padding:4px 10px;font-size:12px}
+        .chip.muted{opacity:.6}
+        .tag{background:var(--chip);border-radius:999px;padding:4px 10px;font-size:12px;display:inline-block;margin-right:6px}
+        table{width:100%;border-collapse:collapse} th,td{padding:8px 10px;border-bottom:1px solid var(--border);text-align:left;font-size:13px}
+        .flag-H{color:#b91c1c;font-weight:700}
+        .flag-L{color:#1d4ed8;font-weight:700}
+        .flag-N{color:#16a34a;font-weight:700}
+        .modal{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:center;justify-content:center;padding:16px;z-index:999}
+        .dialog{background:#fff;border-radius:16px;box-shadow:0 20px 40px rgba(0,0,0,.25);width:min(840px,94vw);max-height:86vh;display:flex;flex-direction:column;overflow:hidden}
+        .dialog .hd{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;gap:10px;align-items:center;justify-content:space-between}
+        .dialog .hd .title{font-weight:700}
+        .dialog .bd{padding:14px 16px;overflow:auto}
+        .dialog .ft{padding:12px 16px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px}
+        .close-x{border:none;background:transparent;font-size:20px;cursor:pointer}
+        .btn.primary{background:#111;color:#fff;border-color:#111}
+        .thumbs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+        .thumb{border:1px solid var(--border);border-radius:10px;overflow:hidden;background:#fafafa}
+        .thumb img{width:100%;height:160px;object-fit:cover;display:block}
+        .thumb .meta{padding:8px;font-size:12px;color:#555;display:flex;justify-content:space-between;gap:8px;align-items:center}
+        .thumb a{font-size:12px}
+        .empty{color:var(--muted);padding:8px}
+        .legend{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+        .legend .item{display:flex;align-items:center;gap:6px;font-size:12px;color:#444;background:var(--chip);padding:4px 8px;border-radius:999px}
+        .point-swatch{width:10px;height:10px;border:1px solid #bbb;border-radius:2px}
+        .swatch-dry{border-radius:50%}
+        .swatch-wet{border-radius:2px}
+        .swatch-mix{clip-path:polygon(50% 0,0 100%,100% 100%)}
+        @media (max-width:760px){ .cards{grid-template-columns:1fr} .hero{flex-direction:column;align-items:flex-start} .dialog{width:96vw} .thumbs{grid-template-columns:repeat(2,1fr)} }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3"></script>
+</head>
+<body>
 <div class="wrap">
-    <h1 style="margin:0 0 6px;font-size:20px;font-weight:700">AI JSON 변환 (DB 저장 없음)</h1>
-    <p class="muted" style="margin:0 0 16px">원본 JSON을 넣고 <b>변환 실행</b>을 누르면,
-        <code>medical_document</code>, <code>lab_result_detail</code>, <code>prescription_detail</code>용
-        JSON만 받아와서 보여줍니다.</p>
-
-    <div class="card">
-        <div class="row" style="margin-bottom:8px">
-            <label>Pet ID</label>
-            <input id="petId" type="number" value="1">
-            <button class="secondary" id="btnSample">샘플 JSON</button>
-            <input type="file" id="file" accept=".json,application/json" style="display:none">
-            <button class="secondary" id="btnFile">파일 불러오기</button>
-            <div style="margin-left:auto">
-                <button class="secondary" id="btnPretty">포맷</button>
-                <button id="btnRun">변환 실행</button>
-            </div>
-        </div>
-        <textarea id="src" placeholder='여기에 원본 JSON 붙여넣기'></textarea>
-        <p class="muted">엔드포인트: <code>POST /api/ai/map?petId=...</code> (응답은 테이블별 JSON, 저장 없음)</p>
+    <div>
+        <span class="pill">QR 리포트</span>
+        <h1 id="title">로딩 중...</h1>
+        <div class="muted" id="subtitle"></div>
     </div>
 
-    <div class="card">
-        <div class="row" style="justify-content:space-between;margin-bottom:8px">
-            <strong>결과</strong>
-            <div id="loading" style="display:none"><span class="spinner"></span> 변환 중…</div>
+    <!-- 상단 펫 정보 -->
+    <section class="card" id="petCard" hidden>
+        <div class="hero">
+            <img id="petPhoto" src="" alt="pet photo">
+            <div>
+                <h2 id="petName" style="margin:0 0 6px"></h2>
+                <div class="kv">
+                    <div class="muted">품종</div><div id="petBreed">-</div>
+                    <div class="muted">성별</div><div id="petGender">-</div>
+                    <div class="muted">생일</div><div id="petBirth">-</div>
+                    <div class="muted">몸무게</div><div id="petWeight">-</div>
+                    <div class="muted">사료</div><div id="petFeed">-</div>
+                </div>
+            </div>
         </div>
-        <pre id="out">아직 결과가 없습니다.</pre>
+    </section>
+
+    <!-- 급식/급수 -->
+    <section class="card">
+        <h3 style="margin:0 0 12px">이번 주 변화</h3>
+        <div class="stats">
+            <div class="stat">
+                <div class="row"><b>급식량</b><div id="foodDelta" class="delta">-</div></div>
+                <table style="margin-top:8px"><tbody>
+                <tr><th>전주 평균</th><td id="foodPrev">-</td></tr>
+                <tr><th>이번주 평균</th><td id="foodThis">-</td></tr>
+                </tbody></table>
+            </div>
+            <div class="stat">
+                <div class="row"><b>급수량</b><div id="waterDelta" class="delta">-</div></div>
+                <table style="margin-top:8px"><tbody>
+                <tr><th>전주 평균</th><td id="waterPrev">-</td></tr>
+                <tr><th>이번주 평균</th><td id="waterThis">-</td></tr>
+                </tbody></table>
+            </div>
+        </div>
+    </section>
+
+    <!-- 몸무게 변화 -->
+    <section class="card" id="weightCard" hidden>
+        <h3 style="margin:0 0 6px">몸무게 변화</h3>
+        <div class="muted" style="font-size:12px">포인트 모양으로 사료를 구분합니다 (건식 ● / 습식 ■ / 혼합 ▲)</div>
+        <div style="height:280px;margin-top:10px"><canvas id="weightChart"></canvas></div>
+        <div class="legend" id="feedLegend"></div>
+        <div id="weightEmpty" class="muted" style="padding-top:6px" hidden>몸무게 기록이 없습니다</div>
+    </section>
+
+    <!-- 방문 기록 -->
+    <section class="card">
+        <h3 style="margin:0 0 12px">방문 기록</h3>
+        <div class="cards" id="visitCards"></div>
+        <div id="visitEmpty" class="muted" style="padding:6px 2px" hidden>방문 기록이 없습니다</div>
+    </section>
+</div>
+
+<!-- Visit Modal -->
+<div class="modal" id="visitModal" aria-hidden="true">
+    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="visitTitle">
+        <div class="hd">
+            <div class="title" id="visitTitle">방문 상세</div>
+            <div style="display:flex;gap:8px;align-items:center">
+                <button class="btn" id="btnOpenDocs">원본 보기</button>
+                <button class="close-x" id="closeVisitModal" aria-label="닫기">✕</button>
+            </div>
+        </div>
+        <div class="bd" id="visitBody"></div>
+        <div class="ft"><button class="btn primary" id="closeVisitModal2">닫기</button></div>
+    </div>
+</div>
+
+<!-- Docs Modal -->
+<div class="modal" id="docsModal" aria-hidden="true">
+    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="docsTitle">
+        <div class="hd">
+            <div class="title" id="docsTitle">원본 문서</div>
+            <button class="close-x" id="closeDocsModal" aria-label="닫기">✕</button>
+        </div>
+        <div class="bd" id="docsBody"></div>
+        <div class="ft"><button class="btn primary" id="closeDocsModal2">닫기</button></div>
     </div>
 </div>
 
 <script>
-    const $ = sel => document.querySelector(sel);
-    const petId = $('#petId'), src = $('#src'), out = $('#out'), loading = $('#loading');
+    /* ==== API ==== */
+    const API_BASE = 'http://localhost:8080';
+    const FOOD_UNIT = 'g';
+    const WATER_UNIT = 'mL';
 
-    const sample = {
-        "petId": 1,
-        "visitDate": "2025-08-10",
-        "documents": [
-            {"type":"lab","tests":[
-                    {"name":"ALT","value":"123 U/L","ref":"10-100","note":"mildly high"},
-                    {"name":"BUN","value":"18 mg/dL","ref":"7-27"}]},
-            {"type":"prescription","drugs":[
-                    {"name":"Amoxicillin","dose":"20 mg","freq":"BID","duration":7,"route":"PO"}],
-                "note":"give with food"}
-        ]
+    const qs = new URLSearchParams(location.search);
+    const petId = qs.get('petId');
+    const selectedVisitId = qs.get('visitId');
+
+    /* ==== utils ==== */
+    const $ = (id) => document.getElementById(id);
+    const safe = (v, d='-') => (v===null || v===undefined || v==='') ? d : v;
+    const num = (v) => (v===null || v===undefined || v==='') ? null : Number(v);
+    const pad = (n)=> String(n).padStart(2,'0');
+    const fmtDateTime = (s)=>{
+        if (!s) return '-';
+        const d = new Date(String(s).replace(' ','T'));
+        if (isNaN(d)) return s;
+        return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
     };
-
-    $('#btnSample').onclick = () => src.value = JSON.stringify(sample, null, 2);
-    $('#btnPretty').onclick = () => { try{ src.value = JSON.stringify(JSON.parse(src.value), null, 2); }catch(e){ alert('JSON 아님: '+e.message); } };
-    $('#btnFile').onclick = () => $('#file').click();
-    $('#file').onchange = async e => {
-        const f = e.target.files?.[0]; if(!f) return;
-        const t = await f.text(); src.value = t;
-        try{ src.value = JSON.stringify(JSON.parse(t), null, 2); }catch(_){}
+    const ageFromBirth = (birth)=>{
+        if (!birth) return '-';
+        const b = new Date(birth); if (isNaN(b)) return birth;
+        const now = new Date();
+        let y = now.getFullYear() - b.getFullYear();
+        let m = now.getMonth() - b.getMonth();
+        if (m < 0){ y--; m += 12; }
+        return y>0 ? `${y}세 ${m}개월` : `${m}개월`;
     };
+    const startOfWeekMon = (d0=new Date())=>{
+        const d = new Date(d0); d.setHours(0,0,0,0);
+        const day = d.getDay(); const diff = (day===0 ? -6 : 1 - day);
+        d.setDate(d.getDate() + diff); return d;
+    };
+    const inRange = (t, from, to) => t>=from.getTime() && t<to.getTime();
 
-    $('#btnRun').onclick = async () => {
-        let body;
-        try{
-            body = JSON.parse(src.value || '{}');
-        }catch(e){ return alert('유효한 JSON이 아닙니다: '+e.message); }
 
-        if (petId.value && body.petId == null) body.petId = Number(petId.value);
-
-        loading.style.display = 'block'; out.textContent = '요청 중...';
-        try{
-            const resp = await fetch(`/api/ai/map?petId=${encodeURIComponent(petId.value||'')}`, {
-                method:'POST',
-                headers:{'Content-Type':'application/json'},
-                body: JSON.stringify(body)
-            });
-            const text = await resp.text();
-            if(!resp.ok) throw new Error(`HTTP ${resp.status}\n${text}`);
-            let data; try{ data = JSON.parse(text); }catch{ data = text; }
-            out.textContent = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
-        }catch(err){
-            out.textContent = String(err);
-        }finally{
-            loading.style.display = 'none';
+    function toDateOnly(d){
+        const x = new Date(d);
+        x.setHours(0,0,0,0);
+        return x;
+    }
+    function dateKey(d){
+        return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+    }
+    /* 같은 날 여러 기록이 있으면 '가장 늦은 시간' 기록을 채택 */
+    function toDaySeries(points){
+        const byDay = new Map(); // key: yyyy-mm-dd -> point
+        for (const p of (points||[])){
+            const k = dateKey(p.x);
+            if (!byDay.has(k) || p.x > byDay.get(k)._orig){
+                byDay.set(k, { ...p, x: toDateOnly(p.x), _orig: p.x });
+            }
         }
-    };
+        return Array.from(byDay.values())
+            .map(({_orig, ...rest}) => rest)
+            .sort((a,b)=> a.x - b.x);
+    }
+
+
+    /* averages */
+    function weeklyAverages(logs, key){
+        const now = new Date();
+        const thisStart = startOfWeekMon(now);
+        const nextStart = new Date(thisStart); nextStart.setDate(thisStart.getDate()+7);
+        const prevStart = new Date(thisStart); prevStart.setDate(thisStart.getDate()-7);
+        const pick = (from, to)=>{
+            let sum=0, cnt=0;
+            for(const l of (logs||[])){
+                const v = num(l[key]); if (v===null || isNaN(v)) continue;
+                const when = l.logDate || l.date || l.createdAt;
+                const t = new Date(String(when).replace(' ','T')).getTime(); if (isNaN(t)) continue;
+                if (inRange(t, from, to)){ sum += v; cnt++; }
+            }
+            return cnt ? (sum/cnt) : null;
+        };
+        return { prev: pick(prevStart, thisStart), curr: pick(thisStart, nextStart) };
+    }
+
+    function renderDelta(el, prev, curr, unit){
+        let cls = 'same', txt = '변화 없음';
+        if (prev===null && curr===null){ el.className='delta same'; el.textContent='데이터 없음'; return; }
+        if (prev===null){ el.className='delta up'; el.textContent=`이번주 ${curr.toFixed(2)}${unit}`; return; }
+        if (curr===null){ el.className='delta same'; el.textContent=`이번주 데이터 없음`; return; }
+        const diff = curr - prev;
+        if (Math.abs(diff) < 1e-9){ cls='same'; txt='변화 없음'; }
+        else if (diff > 0){ cls='up';  txt = `▲ ${diff.toFixed(2)}${unit} (+${((diff/prev)*100).toFixed(1)}%)`; }
+        else { cls='down'; txt = `▼ ${Math.abs(diff).toFixed(2)}${unit} (${((diff/prev)*100).toFixed(1)}%)`; }
+        el.className = 'delta ' + cls; el.innerHTML = `<b>${txt}</b>`;
+    }
+
+    /* tables */
+    function doseStr(p){
+        const v = (p.doseValue!=null ? p.doseValue : null);
+        const unit = p.doseUnit ? p.doseUnit : '';
+        const theFreq = (p.freqPerDay!=null ? `${p.freqPerDay}회/일` : null);
+        const days = (p.durationDays!=null ? `${p.durationDays}일` : null);
+        const parts = [];
+        if (v!=null) parts.push(`${v}${unit? ' '+unit : ''}`);
+        if (theFreq) parts.push(theFreq);
+        if (days) parts.push(days);
+        return parts.length ? parts.join(' · ') : '-';
+    }
+
+    function prescriptionsTableHTML(list){
+        if (!Array.isArray(list) || list.length===0) return `<div class="empty">처방전 없음</div>`;
+        const rows = list.map(p => `
+      <tr><td>${safe(p.drugName)}</td><td>${doseStr(p)}</td><td>${safe(p.notes)}</td></tr>
+    `).join('');
+        return `<table>
+      <thead><tr><th style="width:40%">약품명</th><th style="width:40%">용법/용량</th><th>비고</th></tr></thead>
+      <tbody>${rows}</tbody></table>`;
+    }
+
+    function labsTableHTML(list){
+        if (!Array.isArray(list) || list.length===0) return `<div class="empty">검사 결과 없음</div>`;
+        const rows = list.map(l => {
+            const flag = (l.flag || 'N').toUpperCase(); const cls = `flag-${flag}`;
+            const ref = (l.refLow!=null || l.refHigh!=null) ? `${l.refLow??''} ~ ${l.refHigh??''}` : '-';
+            return `<tr>
+        <td>${safe(l.testName)}</td>
+        <td>${l.resultValue!=null? l.resultValue : '-' } ${safe(l.unit,'')}</td>
+        <td>${ref}</td>
+        <td class="${cls}">${flag}</td>
+        <td>${safe(l.notes)}</td>
+      </tr>`;
+        }).join('');
+        return `<table>
+      <thead><tr><th style="width:28%">검사 항목</th><th style="width:22%">결과</th><th style="width:22%">참고범위</th><th style="width:8%">Flag</th><th>비고</th></tr></thead>
+      <tbody>${rows}</tbody></table>`;
+    }
+
+    /* docs */
+    function isImage(url){ return /\.(png|jpe?g|webp|gif)$/i.test(url||''); }
+    function isPdf(url){ return /\.pdf$/i.test(url||''); }
+    function labelDoc(t){
+        const m = String(t||'').toLowerCase();
+        if (m==='prescription') return '처방전';
+        if (m==='lab') return '검사';
+        if (m==='receipt') return '영수증';
+        if (m==='diagnosis') return '진단서';
+        return '문서';
+    }
+    function docsGridHTML(docs){
+        if (!Array.isArray(docs) || docs.length===0) return `<div class="empty">원본 문서가 없습니다</div>`;
+        const items = docs.map(d=>{
+            const u = d.fileUrl || d.file_url || d.url || '';
+            const t = labelDoc(d.docType || d.doc_type);
+            if (isImage(u)) {
+                return `<div class="thumb"><img src="${u}" alt="${t}">
+          <div class="meta"><span>${t}</span><a href="${u}" target="_blank" rel="noopener">새 창</a></div></div>`;
+            } else if (isPdf(u)) {
+                return `<div class="thumb"><div style="height:160px;display:grid;place-items:center;color:#666">PDF</div>
+          <div class="meta"><span>${t}</span><a href="${u}" target="_blank" rel="noopener">열기</a></div></div>`;
+            } else {
+                return `<div class="thumb"><div style="height:160px;display:grid;place-items:center;color:#666">파일</div>
+          <div class="meta"><span>${t}</span><a href="${u}" target="_blank" rel="noopener">다운로드</a></div></div>`;
+            }
+        }).join('');
+        return `<div class="thumbs">${items}</div>`;
+    }
+
+    function applyThemeByGender(gender){
+        const g = String(gender||'').toLowerCase();
+        const isMale   = ['수컷','남','남아','m','male'].some(k => g.includes(k));
+        const isFemale = ['암컷','여','여아','f','female'].some(k => g.includes(k));
+        const root = document.documentElement;
+        if (isMale) root.setAttribute('data-theme','male');
+        else if (isFemale) root.setAttribute('data-theme','female');
+        else root.removeAttribute('data-theme');
+    }
+
+    /* ==== weight & feed helpers ==== */
+    const DATE_KEYS = ['measuredAt','logDate','visitDate','date','createdAt','updatedAt'];
+    const WEIGHT_KEYS = ['weight','bodyWeight','weightKg','weight_kg','petWeight','kg'];
+    const FEED_KEYS = ['feedType','foodType','사료','feed_type'];
+    const BRAND_KEYS = ['brand','feedBrand','브랜드'];
+
+    function findFirst(obj, keys){
+        for (const k of keys){ if (obj && obj[k] != null && obj[k] !== '') return obj[k]; }
+        return null;
+    }
+    function parseWeightValue(vRaw){
+        if (vRaw == null || vRaw === '') return null;
+        if (typeof vRaw === 'number'){ return vRaw > 50 ? (vRaw/1000) : vRaw; }
+        const s = String(vRaw).trim().toLowerCase();
+        const m = s.match(/([\d.]+)/); if (!m) return null;
+        const val = parseFloat(m[1]);
+        if (s.includes('kg')) return val;
+        if (s.includes('g')) return val/1000;
+        return val;
+    }
+    function normalizeTime(tRaw){
+        if (!tRaw) return null;
+        const t = new Date(String(tRaw).replace(' ','T'));
+        return isNaN(t) ? null : t;
+    }
+    function pickFeedMeta(obj){
+        const ft = findFirst(obj, FEED_KEYS);
+        const br = findFirst(obj, BRAND_KEYS);
+        return { feedType: ft || null, brand: br || null };
+    }
+    function feedPointStyle(ft){
+        const s = String(ft||'').toLowerCase();
+        if (s.includes('dry') || s.includes('건')) return 'circle';
+        if (s.includes('wet') || s.includes('습') || s.includes('캔')) return 'rect';
+        if (s.includes('mix') || s.includes('혼') || s.includes('blend')) return 'triangle';
+        return 'triangle';
+    }
+    function extractWeightSeries(pet, visits, logs){
+        const items = [];
+        const pushIfValid = (obj)=>{
+            const w = parseWeightValue(findFirst(obj, WEIGHT_KEYS));
+            const t = normalizeTime(findFirst(obj, DATE_KEYS));
+            if (w != null && isFinite(w) && t != null){
+                const {feedType, brand} = pickFeedMeta(obj);
+                items.push({ x: t, y: w, feedType, brand });
+            }
+        };
+        (Array.isArray(visits) ? visits : []).forEach(v=> pushIfValid(v));
+        (Array.isArray(logs) ? logs : []).forEach(l=> pushIfValid(l));
+        items.sort((a,b)=> a.x - b.x);
+        const uniq = []; const seen = new Set();
+        for (const it of items){
+            const key = it.x.toISOString() + '|' + it.y.toFixed(3);
+            if (!seen.has(key)){ seen.add(key); uniq.push(it); }
+        }
+        return uniq;
+    }
+    function renderFeedLegend(points){
+        const legend = $('feedLegend'); legend.innerHTML = '';
+        if (!points.length) return;
+        const buckets = new Map();
+        for (const p of points){
+            const style = feedPointStyle(p.feedType);
+            const label = p.feedType ? (p.brand ? `${p.feedType} (${p.brand})` : p.feedType)
+                : (p.brand ? `브랜드: ${p.brand}` : '사료 정보 없음');
+            if (!buckets.has(style)) buckets.set(style, new Set());
+            buckets.get(style).add(label);
+        }
+        for (const [style, set] of buckets.entries()){
+            const swatchClass = style === 'circle' ? 'swatch-dry' : style === 'rect' ? 'swatch-wet' : 'swatch-mix';
+            const labels = Array.from(set).slice(0,5);
+            const el = document.createElement('div');
+            el.className = 'item';
+            el.innerHTML = `<span class="point-swatch ${swatchClass}"></span><span>${labels.join(' · ')}</span>`;
+            legend.appendChild(el);
+        }
+    }
+
+    /* ==== visit cards ==== */
+    let _visits = [];
+    function visitCardHTML(v){
+        const date = fmtDateTime(v.visitDate);
+        const pres = Array.isArray(v.prescriptions) ? v.prescriptions : [];
+        const labs = Array.isArray(v.labResults) ? v.labResults : [];
+        const pCount = pres.length, lCount = labs.length;
+        return `
+      <div class="row" style="justify-content:space-between">
+        <div><b>${safe(v.hospital,'(병원 미입력)')}</b></div>
+        <div class="muted">방문일 · ${date}</div>
+      </div>
+      <div class="chips">
+        <span class="chip">의사: ${safe(v.doctor)}</span>
+        <span class="chip">진단: ${safe(v.diagnosis)}</span>
+        <span class="chip ${pCount?'':'muted'}">처방 ${pCount}건</span>
+        <span class="chip ${lCount?'':'muted'}">검사 ${lCount}건</span>
+      </div>
+      ${v.notes ? `<div class="muted" style="margin-top:6px">${v.notes}</div>` : ''}
+      <div class="row" style="margin-top:8px">
+        <button class="btn btn-detail" data-id="${v.id}">상세보기</button>
+      </div>
+    `;
+    }
+    function renderVisits(visits){
+        const box = $('visitCards'); box.innerHTML = '';
+        if (!Array.isArray(visits) || !visits.length){ $('visitEmpty').hidden = false; return; }
+        $('visitEmpty').hidden = true;
+        visits.sort((a,b)=>{
+            const da = a.visitDate ? new Date(String(a.visitDate).replace(' ','T')).getTime() : 0;
+            const db = b.visitDate ? new Date(String(b.visitDate).replace(' ','T')).getTime() : 0;
+            return db - da;
+        });
+        _visits = visits;
+        visits.forEach(v=>{
+            const card = document.createElement('div');
+            card.className = 'visit';
+            card.innerHTML = visitCardHTML(v);
+            box.appendChild(card);
+        });
+        box.addEventListener('click', (e)=>{
+            const btn = e.target.closest('.btn-detail'); if (!btn) return;
+            const id = Number(btn.getAttribute('data-id'));
+            const v = _visits.find(x=>String(x.id)===String(id));
+            if (v) openVisitModal(v);
+        });
+        if (selectedVisitId){
+            const v = _visits.find(x=>String(x.id)===String(selectedVisitId));
+            if (v) openVisitModal(v);
+        }
+    }
+
+    /* ==== modals ==== */
+    function openModal(el){ el.style.display='flex'; document.body.style.overflow='hidden'; }
+    function closeModal(el){ el.style.display='none'; document.body.style.overflow=''; }
+
+    function openVisitModal(v){
+        const when = fmtDateTime(v.visitDate);
+        $('visitTitle').textContent = `${safe(v.hospital)} · 방문일 ${when}`;
+        $('visitBody').innerHTML = `
+      <div class="chips" style="margin-bottom:10px">
+        <span class="chip">방문일: ${when}</span>
+        <span class="chip">의사: ${safe(v.doctor)}</span>
+        <span class="chip">진단: ${safe(v.diagnosis)}</span>
+        <span class="chip ${Array.isArray(v.prescriptions)&&v.prescriptions.length?'':'muted'}">처방 ${(v.prescriptions||[]).length}건</span>
+        <span class="chip ${Array.isArray(v.labResults)&&v.labResults.length?'':'muted'}">검사 ${(v.labResults||[]).length}건</span>
+      </div>
+      <h4 style="margin:8px 0 6px">처방전</h4>
+      ${prescriptionsTableHTML(v.prescriptions||[])}
+      <h4 style="margin:14px 0 6px">검사 결과</h4>
+      ${labsTableHTML(v.labResults||[])}
+    `;
+        $('btnOpenDocs').onclick = ()=> openDocsModal(v);
+        $('closeVisitModal').onclick = ()=> closeModal($('visitModal'));
+        $('closeVisitModal2').onclick = ()=> closeModal($('visitModal'));
+        $('visitModal').onclick = (e)=>{ if(e.target === $('visitModal')) closeModal($('visitModal')); };
+        openModal($('visitModal'));
+    }
+
+    function openDocsModal(v){
+        $('docsTitle').textContent = `원본 문서 · 방문 #${safe(v.id)}`;
+        $('docsBody').innerHTML = docsGridHTML(v.documents || []);
+        $('closeDocsModal').onclick = ()=> closeModal($('docsModal'));
+        $('closeDocsModal2').onclick = ()=> closeModal($('docsModal'));
+        $('docsModal').onclick = (e)=>{ if(e.target === $('docsModal')) closeModal($('docsModal')); };
+        openModal($('docsModal'));
+    }
+
+    /* ==== weight chart ==== */
+    let weightChart;
+    function renderWeightChart(points){
+        const card = $('weightCard');
+        const empty = $('weightEmpty');
+
+        // === 1) 날짜(자정) 기준으로 하루 1건만 남기기 ===
+        const byDay = new Map(); // 'YYYY-MM-DD' -> {label, date, y, feedType, brand, _orig}
+        for (const p of (points || [])){
+            if (!p || p.y == null || p.x == null) continue;
+            const x = (p.x instanceof Date) ? new Date(p.x) : new Date(String(p.x).replace(' ','T'));
+            if (isNaN(x)) continue;
+
+            const d0  = new Date(x.getFullYear(), x.getMonth(), x.getDate(), 0, 0, 0, 0); // 자정 고정
+            const lab = `${d0.getFullYear()}-${pad(d0.getMonth()+1)}-${pad(d0.getDate())}`;
+
+            const prev = byDay.get(lab);
+            if (!prev || x > prev._orig){
+                byDay.set(lab, {
+                    label: lab,
+                    date: d0,
+                    y: Number(p.y),
+                    feedType: p.feedType ?? p.ft ?? null,
+                    brand:    p.brand    ?? p.br ?? null,
+                    _orig: x
+                });
+            }
+        }
+        const dayPoints = Array.from(byDay.values()).sort((a,b)=> a.date - b.date);
+
+        if (!dayPoints.length){
+            card.hidden = false;
+            empty.hidden = false;
+            if (weightChart){ weightChart.destroy(); weightChart = null; }
+            return;
+        }
+        card.hidden = false;
+        empty.hidden = true;
+
+        // === 2) 카테고리 축 데이터 구성 ===
+        const labels = dayPoints.map(d => d.label);
+        const ydata  = dayPoints.map(d => d.y);
+
+        const ctx = $('weightChart').getContext('2d');
+        if (weightChart) weightChart.destroy();
+
+        weightChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels,
+                datasets: [{
+                    label: '몸무게(kg)',
+                    data: ydata,                // 숫자 배열
+                    borderWidth: 2,
+                    tension: 0.25,
+                    fill: false,
+                    pointRadius: 5,
+                    pointHoverRadius: 6,
+                    // ✅ 보기 확실하게 — 색을 명시(테마에 안 묻히게)
+                    borderColor: '#111',
+                    backgroundColor: '#111',
+                    pointBackgroundColor: '#111',
+                    pointBorderColor: '#111',
+                    // ✅ 포인트 모양: 데이터 인덱스별로 스크립터블
+                    pointStyle: (ctx) => {
+                        const i = ctx.dataIndex;
+                        return feedPointStyle(dayPoints[i]?.feedType);
+                    },
+                }]
+            },
+            options: {
+                // parsing 옵션은 생략(기본값 true) — 숫자 배열을 안전하게 처리
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        type: 'category',
+                        ticks: { autoSkip: false, maxRotation: 0 },
+                        grid: { color: '#f0f0f0' }
+                    },
+                    y: {
+                        title: { display: true, text: 'kg' },
+                        suggestedMin: Math.max(0, Math.min(...ydata) - 1),
+                        suggestedMax: Math.max(...ydata) + 1,
+                        grid: { color: '#f0f0f0' }
+                    }
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            // title은 labels 그대로(날짜)
+                            label: (ctx)=>{
+                                const i = ctx.dataIndex;
+                                const dp = dayPoints[i];
+                                const parts = [`${Number(ctx.parsed.y).toFixed(2)} kg`];
+                                if (dp?.feedType) parts.push(`사료: ${dp.feedType}`);
+                                if (dp?.brand)    parts.push(`브랜드: ${dp.brand}`);
+                                return parts.join(' · ');
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // === 3) 범례 업데이트 ===
+        renderFeedLegend(dayPoints.map(d => ({ x: d.date, y: d.y, feedType: d.feedType, brand: d.brand })));
+    }
+
+
+
+
+
+    /* ==== fetch weight timeline (백엔드 전용 API) ==== */
+    async function loadWeightTimeline(petId){
+        try{
+            const r = await fetch(`${API_BASE}/api/pet/weight-timeline?petId=${petId}`, {
+                mode:'cors',
+                credentials:'include',           // 세션 사용 시
+                headers:{ 'Accept':'application/json' }
+            });
+            if(!r.ok) throw new Error(`HTTP ${r.status}`);
+            const d = await r.json();
+            const list = Array.isArray(d.points) ? d.points : (Array.isArray(d) ? d : []);
+            return list.map(p=>({
+                x: new Date(String(p.measuredAt).replace(' ','T')),
+                y: Number(p.weightKg),
+                feedType: p.foodType || p.feedType || null,
+                brand: p.brand || null
+            })).sort((a,b)=> a.x - b.x);
+        }catch(e){
+            console.warn('weight-timeline fetch failed:', e);
+            return [];
+        }
+    }
+
+    /* ==== top/stats ==== */
+    function renderPet(pet){
+        $('petCard').hidden = false;
+        $('petName').textContent = `${safe(pet.name)} (${safe(pet.species)})`;
+        $('petBreed').textContent = safe(pet.breed);
+        $('petGender').textContent = safe(pet.gender);
+        $('petBirth').textContent = `${safe(pet.birthDate)} (${ageFromBirth(pet.birthDate)})`;
+        $('petWeight').textContent = pet.weight!=null ? `${pet.weight}` : '-';
+        let feedType = pet.feedType || pet.foodType;
+        let brand = pet.brand || pet.feedBrand;
+        $('petFeed').textContent = (feedType || brand) ? `${feedType || ''}${brand ? (feedType? ' / ' : '') + brand : ''}` : '-';
+        $('petPhoto').src = pet.photo || 'https://placehold.co/160x160?text=No+Photo';
+        $('subtitle').textContent = `ID #${pet.id}`;
+        applyThemeByGender(pet.gender);
+    }
+
+    function renderStats(logs){
+        const food = weeklyAverages(logs,'foodWeight');
+        const water = weeklyAverages(logs,'waterWeight');
+        $('foodPrev').textContent  = (food.prev==null ? '-' : `${food.prev.toFixed(2)} ${FOOD_UNIT}`);
+        $('foodThis').textContent  = (food.curr==null ? '-' : `${food.curr.toFixed(2)} ${FOOD_UNIT}`);
+        $('waterPrev').textContent = (water.prev==null ? '-' : `${water.prev.toFixed(2)} ${WATER_UNIT}`);
+        $('waterThis').textContent = (water.curr==null ? '-' : `${water.curr.toFixed(2)} ${WATER_UNIT}`);
+        renderDelta($('foodDelta'),  food.prev,  food.curr,  ` ${FOOD_UNIT}`);
+        renderDelta($('waterDelta'), water.prev, water.curr, ` ${WATER_UNIT}`);
+    }
+
+    /* ==== init ==== */
+    (function init(){
+        if (!petId){ $('title').textContent = 'petId가 필요합니다'; return; }
+        $('title').textContent = '로딩 중...';
+
+        const url = `${API_BASE}/api/pet/report?petId=${petId}${selectedVisitId ? `&visitId=${selectedVisitId}` : ''}`;
+
+        fetch(url,{ headers:{'Accept':'application/json'}, mode:'cors', credentials:'include' })
+            .then(r=>{ if(!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+            .then(async (data)=>{
+                const pet = data.pet || {};
+                const visits = data.visits || [];
+                const logs = data.logs || [];
+
+                const displayName = (pet.name && pet.name.trim()) ? pet.name : `펫 #${petId}`;
+                $('title').textContent = `${displayName} 리포트`;
+                document.title = `${displayName} 리포트`;
+
+                renderPet(pet);
+                renderStats(logs);
+                renderVisits(visits);
+
+                // 1순위: weight-timeline API, 2순위: 기존 추출
+                const apiPoints = await loadWeightTimeline(petId);
+                const points = apiPoints.length ? apiPoints : extractWeightSeries(pet, visits, logs);
+                renderWeightChart(points);
+            })
+            .catch(e=>{
+                $('title').textContent = '불러오기 실패';
+                alert(`불러오기 실패: ${e.message}\n요청: ${url}`);
+            });
+    })();
 </script>
+</body>
 </html>

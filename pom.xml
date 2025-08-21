@@ -208,6 +208,12 @@
 			<version>2.10.1</version>
 		</dependency>
 
+        <!-- Google Auth Library (GoogleCredentials 제공) -->
+        <dependency>
+            <groupId>com.google.auth</groupId>
+			<artifactId>google-auth-library-oauth2-http</artifactId>
+        </dependency>
+
 		<!-- 네이버 소셜 연동 -->
 		<!-- RestTemplate 사용 -->
 		<dependency>

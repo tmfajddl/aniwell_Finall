@@ -39,4 +39,5 @@ public interface MedicalDocumentRepository {
 
     // ★ structured용
     DocEnvelopeDto selectDocEnvelopeById(@Param("docId") int docId);
+
 }
