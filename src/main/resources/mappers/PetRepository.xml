@@ -74,8 +74,6 @@
 		resultType="com.example.RSW.vo.Pet">
 		SELECT
 			p.*,
-			p.regDate   AS createdAt,
-			p.updateDate AS updatedAt,
 			pf.brand       AS brand,
 			pf.productName AS productName,
 			pf.flavor      AS flavor,
