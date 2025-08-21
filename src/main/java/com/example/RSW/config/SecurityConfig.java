@@ -1,7 +1,9 @@
 package com.example.RSW.config;
+
 import org.junit.jupiter.api.Order;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.config.Customizer;
@@ -14,9 +16,12 @@ import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
 import java.util.List;
+
 @Configuration
 public class SecurityConfig {
+
     /* ========= 1) API 전용 체인 (/api/**) =========
        - CORS 활성화
        - CSRF 완전 비활성화(프론트 호출 편의)
@@ -125,7 +130,6 @@ public class SecurityConfig {
         return http.build();
     }
 
-
     /* ========= 공통 CORS =========
        - 실제 호출 오리진을 정확히 허용
        - /api/** 뿐 아니라 /usr/** 등 모든 엔드포인트에 적용해 403(CORS) 방지
@@ -142,19 +146,25 @@ public class SecurityConfig {
         ));
         // 필요 시 CloudFront/운영 도메인 추가
         // cfg.setAllowedOriginPatterns(List.of("https://*.cloudfront.net", "https://www.aniwell.kr"));
+
         cfg.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         cfg.setAllowedHeaders(List.of("*"));
         cfg.setExposedHeaders(List.of("Location"));
         cfg.setAllowCredentials(true);
-
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         // ✅ 전역 적용: /api/** 뿐 아니라 /usr/** 까지
         source.registerCorsConfiguration("/**", cfg);
         return source;
     }
+
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder(8);
     }
 }
+
+
+
+
+
