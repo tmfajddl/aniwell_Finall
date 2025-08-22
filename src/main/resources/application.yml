@@ -9,7 +9,7 @@ spring:
     host: smtp.sendgrid.net
     port: 587
     username: apikey
-    password:  # 푸시할 떄마다 지우기
+    password:   # 푸시할 떄마다 지우기
     properties:
       mail.smtp.auth: true
       mail.smtp.starttls.enable: true
@@ -63,7 +63,7 @@ custom:
 
   redis:
     enabled: true                # false면 Redis 완전 비활성화 / true - Redis 활성화
-    use-personal: true           # true: 개인 Redis / false: 팀 공유 Redis
+    use-personal: false           # true: 개인 Redis / false: 팀 공유 Redis
     personal-host: 100.114.185.63
     personal-port: 6379
     shared-host: 100.65.187.38
