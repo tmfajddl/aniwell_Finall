@@ -2,7 +2,7 @@ package com.example.RSW.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.annotation.Order;
+import org.springframework.core.annotation.Order; // ✅ JUnit 말고 이거!
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.config.Customizer;
@@ -12,6 +12,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.security.web.util.matcher.OrRequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -20,9 +22,26 @@ import java.util.List;
 
 @Configuration
 public class SecurityConfig {
-
     @Bean
-    @Order(1)
+    @Order(-10) // ✅ 모든 체인보다 앞
+    public SecurityFilterChain litterOnlyChain(HttpSecurity http) throws Exception {
+        return http
+                .securityMatcher(new OrRequestMatcher(
+                        new AntPathRequestMatcher("/api/litter/**")
+                        // 프록시 프리픽스까지 잡고 싶으면 ↓ 한 줄 추가해도 됨(문제 없음, AntPath 사용)
+                        // , new AntPathRequestMatcher("/**/api/litter/**")
+                ))
+                .cors(Customizer.withDefaults())
+                .csrf(csrf -> csrf.disable()) // 디바이스/멀티파트 업로드 편의
+                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+                .authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
+                .exceptionHandling(e -> e.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
+                .build();
+    }
+
+    /** ===== B) API 체인: /api/** ===== */
+    @Bean
+    @Order(0)
     public SecurityFilterChain apiChain(HttpSecurity http) throws Exception {
         http
                 .securityMatcher("/api/**")
@@ -40,14 +59,11 @@ public class SecurityConfig {
                         .requestMatchers("/api/member/**").authenticated()
                         .anyRequest().permitAll()
                 )
-                .exceptionHandling(e -> e
-                        .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
-                );
+                .exceptionHandling(e -> e.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)));
         return http.build();
     }
-
     @Bean
-    @Order(2)
+    @Order(1)
     public SecurityFilterChain appChain(HttpSecurity http) throws Exception {
         http
                 .cors(Customizer.withDefaults())
@@ -59,7 +75,9 @@ public class SecurityConfig {
                 .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/pet/report").permitAll()
+                        // ✅ 세이프가드: 혹시 앱 체인으로 흘러와도 /api/** 통과
+                        .requestMatchers("/api/**").permitAll()
+                        /* 정적/공개 리소스 */
                         .requestMatchers(
                                 "/", "/usr/home/main",
                                 "/usr/member/login", "/usr/member/doLogin",
@@ -74,8 +92,7 @@ public class SecurityConfig {
                                 "/usr/member/getNicknameDup",
                                 "/usr/member/getCellphoneDup",
                                 "/css/**", "/js/**", "/img/**", "/img.socialLogin/**",
-                                "/resource/**",
-                                "/favicon.ico"
+                                "/resource/**", "/favicon.ico"
                         ).permitAll()
                         .requestMatchers(HttpMethod.GET, "/usr/pet/daily/**").permitAll()
                         .requestMatchers(HttpMethod.DELETE, "/usr/pet/daily/**").permitAll()
@@ -100,7 +117,6 @@ public class SecurityConfig {
                         .alwaysRemember(true)                         // 체크박스 없어도 자동 발급
                         .useSecureCookie(true)                        // HTTPS 환경에서만 전송
                 );
-
         return http.build();
     }
 
@@ -113,7 +129,7 @@ public class SecurityConfig {
                 "http://localhost:3001",
                 "http://localhost:8080"
         ));
-        cfg.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+        cfg.setAllowedMethods(List.of("GET","POST","PUT","PATCH","DELETE","OPTIONS"));
         cfg.setAllowedHeaders(List.of("*"));
         cfg.setExposedHeaders(List.of("Location"));
         cfg.setAllowCredentials(true);
