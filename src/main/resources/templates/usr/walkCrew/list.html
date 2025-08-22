@@ -10,13 +10,13 @@
 <title>크루 모집 목록</title>
 </head>
 
-<body class="bg-gradient-to-b from-[#e4f0b9] to-[#fcdca9] min-h-[770px]">
-	<div class="flex h-screen">
+<body class="bg-gradient-to-b from-[#e4f0b9] to-[#fcdca9] h-screen min-h-dvh min-w-[1400px]">
+	<div class="flex h-screen w-full">
 		<!-- Sidebar -->
 		<div th:replace="~{common :: siteHeader}"></div>
 
 		<!-- Main content -->
-		<main class="main_page min-h-[770px] flex-1 p-3">
+		<main class="main_page h-full overflow-y-auto min-h-dvh box-border flex-1 p-3">
 			<div class="h-full w-full overflow-hidden">
 				<div class="p-3 flex justify-around text-gray-800 grid grid-cols-12">
 					<div class="col-span-3 p-3">
