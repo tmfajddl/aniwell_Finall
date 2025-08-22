@@ -117,7 +117,11 @@ function addPet() {
 
 	        <!-- 사료 종류 + 브랜드 -->
 	        <div>
+<<<<<<< HEAD
+	          <label for="foodType" class="block text-sm font-medium mb-1">사료 종류</label>
+=======
 	          <label for="feedType" class="block text-sm font-medium mb-1">사료 종류</label>
+>>>>>>> 5805810befbc16956d55e43e2b8e61f7068b7d4b
 	          <select id="feedType" name="feedType" class="w-full border rounded px-3 py-1.5">
 	            <option value="">선택</option>
 	            <option value="습식">습식</option>
@@ -275,11 +279,13 @@ function modifyPet(pet) {
 	        <!-- 사료 종류 + 브랜드 -->
 	        <div class="col-span-2 grid grid-cols-2 gap-4">
 	          <div>
+
 	            <label for="feedType" class="block text-sm font-medium mb-1">사료 종류</label>
 	            <select id="feedType" name="feedType" class="w-full border rounded px-3 py-1.5">
 	              <option value="">선택</option>
 	              <option value="wet" ${pet.foodType === 'wet' ? 'selected' : ''}>습식</option>
 	              <option value="dry" ${pet.foodType === 'dry' ? 'selected' : ''}>건식</option>
+
 	            </select>
 	          </div>
 
@@ -289,7 +295,9 @@ function modifyPet(pet) {
 	              type="text" 
 	              id="brand" 
 	              name="brand" 
+
 	              value="${pet.brand ?? ''}"
+
 	              placeholder="브랜드 입력" 
 	              class="w-full border rounded px-3 py-1.5" 
 	            />
@@ -303,7 +311,9 @@ function modifyPet(pet) {
 	            type="text" 
 	            id="productName" 
 	            name="productName" 
+
 	            value="${pet.productName ?? ''}"
+
 	            class="w-full border rounded px-3 py-1.5" 
 	          />
 	        </div>
@@ -315,7 +325,9 @@ function modifyPet(pet) {
 	            type="text" 
 	            id="flavor" 
 	            name="flavor" 
+
 	            value="${pet.flavor ?? ''}"
+
 	            class="w-full border rounded px-3 py-1.5" 
 	          />
 	        </div>
@@ -486,4 +498,3 @@ function petDelete() {
 			});
 		});
 }
-

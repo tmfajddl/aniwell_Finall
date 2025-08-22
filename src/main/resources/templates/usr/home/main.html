@@ -11,38 +11,45 @@
 	<script th:src="@{/resource/js/main.js}"></script>
 
 	<title>MAIN</title>
+
 </head>
 
-<body class="bg-gradient-to-b from-[#E4F0B9] to-[#FCDCA9] min-w-min">
-	<div class="section section-top mx-auto z-0">
-		<svg class="z-[-9] absolute top-0" viewBox="0 0 960 540" xmlns="http://www.w3.org/2000/svg"
-			xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1">
-			<rect x="0" y="0" width="960" height="540" fill="none"></rect>
-			<defs>
-				<linearGradient id="grad1_0" x1="43.8%" y1="0%" x2="100%" y2="100%">
-					<stop offset="14.444444444444446%" stop-color="#001220" stop-opacity="1"></stop>
-					<stop offset="85.55555555555554%" stop-color="#001220" stop-opacity="1"></stop>
-				</linearGradient>
-			</defs>
-			<defs>
-				<linearGradient id="grad2_0" x1="0%" y1="0%" x2="56.3%" y2="100%">
-					<stop offset="14.444444444444446%" stop-color="#001220" stop-opacity="1"></stop>
-					<stop offset="85.55555555555554%" stop-color="#001220" stop-opacity="1"></stop>
-				</linearGradient>
-			</defs>
-			<g transform="translate(960, 0)">
-				<path
-					d="M0 297C-34.4 259.4 -68.9 221.8 -116.5 201.8C-164.1 181.7 -224.9 179.2 -257.2 148.5C-289.5 117.8 -293.2 58.9 -297 0L0 0Z"
-					fill="#A8C7AF"></path>
-			</g>
-			<g transform="translate(0, 540)">
-				<path
-					d="M0 -297C41.1 -271 82.2 -244.9 129 -223.4C175.8 -201.9 228.3 -185 257.2 -148.5C286.2 -112 291.6 -56 297 0L0 0Z"
-					fill="#A8C7AF"></path>
-			</g>
+<body class="bg-gradient-to-b from-[#E4F0B9] to-[#FCDCA9] min-w-min w-screen">
+	<div class="bg-gradient-to-b from-[#E4F0B9] to-[#FCDCA9] section section-top mx-auto z-0 w-full h-[100dvh]">
+		<!-- TOP -->
+		<svg class="absolute inset-0 w-full h-[100dvh] z-[-9]" viewBox="0 0 960 540"
+		     preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+		  <defs>
+		    <linearGradient id="gradTop" x1="40%" y1="1%" x2="60%" y2="99%">
+		      <stop offset="5%"  stop-color="#dbe09a"/>
+		      <stop offset="95%" stop-color="#2e576d"/>
+		    </linearGradient>
+		  </defs>
+		  <g transform="translate(960, 0) scale(1.1)">
+		    <path
+		      d="M0 297C-34.4 259.4 -68.9 221.8 -116.5 201.8C-164.1 181.7 -224.9 179.2 -257.2 148.5C-289.5 117.8 -293.2 58.9 -297 0L0 0Z"
+		      fill="url(#gradTop)"/>
+		  </g>
 		</svg>
-		<svg class="logo mx-auto" id="eqx5j4MNSvi1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 150"
-			shape-rendering="geometricPrecision" text-rendering="geometricPrecision">
+
+		<!-- BOTTOM -->
+		<svg class="absolute inset-0 w-screen h-[100dvh] z-[-11]" viewBox="0 0 960 540"
+		     preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+		  <defs>
+		    <linearGradient id="gradBottom" x1="40%" y1="1%" x2="60%" y2="99%">
+		      <stop offset="5%"  stop-color="#dbe09a"/>
+		      <stop offset="95%" stop-color="#2e576d"/>
+		    </linearGradient>
+		  </defs>
+		  <g transform="translate(0, 540) scale(1.1)">
+		    <path
+		      d="M0 -297C41.1 -271 82.2 -244.9 129 -223.4C175.8 -201.9 228.3 -185 257.2 -148.5C286.2 -112 291.6 -56 297 0L0 0Z"
+		      fill="url(#gradBottom)"/>
+		  </g>
+		</svg>
+
+		<svg class="logo absolute left-1/2 top-0 -translate-x-1/2" id="eqx5j4MNSvi1" xmlns="http://www.w3.org/2000/svg"
+			viewBox="0 0 300 150" shape-rendering="geometricPrecision" text-rendering="geometricPrecision">
 
 			<path transform="translate(.000001 0)" fill="#2e576d" stroke="#3f5787" stroke-width="0.6"
 				fill-rule="evenodd" d="
@@ -69,8 +76,6 @@
 				d="M63.214745,126.954377l.14.88c.141548,1.324839.650134,1.668043,1.24,2.02s12.558677,1.971847,12.699274-1.274421c.293596-6.778887-1.639391-42.249691-1.495462-42.438699c1.47363-.551499,12.616103,39.052957,17.220823,42.782027s11.197113.419441,10.809387-.535041s1.712053-72.252353-.844097-75.156314-9.912622-1.251346-11.573314-.771013.331815,37.133314-.683765,37.742663C89.305778,90.000462,77.632787,53.0714,77.294019,51.121835s2.750228-24.653858-2.213363-31.615404c-2.211848-3.102165-7.205193,2.302131-18.688003,15.889492"
 				transform="translate(.000001 0)" stroke="#3f5787" stroke-width="0.6" fill="#2e576d" />
 
-
-
 			<path
 				d="M116.7271,52.265466c-1.668794,2.799646-2.189984,27.502403-1.482166,74.10827.0578,3.645216,1.603064,4.173925,3.184405,4.340017c4.053007-.1158,6.948011-.1158,8.337613-1.158002s.642433-22.189973.795281-65.052603c0,0-.215939-7.637389-.647421-11.049317s-8.93714-3.209461-10.187712-1.188365Z"
 				transform="translate(.000002 0.000002)" stroke="#3f5787" stroke-width="0.6" fill="#2e576d" />
@@ -91,13 +96,12 @@
 				d="M287.30322,15.36108c-.4225,2.535-1.76507,2.73809-4.47828,7.29023-9.29286,15.59127-.63329,16.15283,1.69641,29.4346s1.69,9.71748,1.69,17.95622-4.99011,35.8485-1.57493,43.46698c1.6498,3.68032,6.47229.76145,10.0257,3.17269s4.90446,4.87058,2.79197,9.51807-4.07209,4.23052-12.94458,4.44177-13.08564-1.4496-16.25439-10.11083-1.05624-30.2087-.42249-36.75744s2.74625-17.74497,2.1125-22.39247-2.1125-7.39374-4.6475-12.25248-3.80249-10.13998-4.01374-15.63247s1.43983-9.43049,4.25278-13.34414s5.63663-6.59657,11.87266-9.16486c4.15735-1.71219,7.05149-1.71431,8.68243-.00634c1.0893,1.23032,1.49312,2.69048,1.21145,4.38048l.00001-.00001Z"
 				transform="translate(.000001 0.000001)" stroke="#3f5787" stroke-width="0.6" fill="#2e576d" />
 		</svg>
-		<div class="bg-logo">
+		<div class="bg-logo h-full">
 
 			<div class="char">
-				<img class="img_head sway-top" src="/img/logo_head.PNG" alt="dog_cat">
-				<img class="img_body w-full mx-auto absolute" src="/img/logo-body.png" alt="dog_cat">
+				<img class="w-full mx-auto absolute" src="/img/default-pet.png" alt="dog_cat">
 			</div>
-			<svg class="b-logo mx-auto" id="e2OkVSxci3g1" xmlns="http://www.w3.org/2000/svg"
+			<svg class="b-logo" id="e2OkVSxci3g1" xmlns="http://www.w3.org/2000/svg"
 				xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1337 502" shape-rendering="geometricPrecision"
 				text-rendering="geometricPrecision" project-id="31d6e7ba95dd486ba30209ab768a484d"
 				export-id="bc73799278e5498dbb3ddc517e5f81cf" cached="false">
@@ -210,7 +214,7 @@
 					d="M1244.425888,66.051567c-22.123831,18.584019-46.212375,166.916756-58.406914,243.362149-12.140396,76.105981-15.037121,128.136731-9.763577,142.107384c8.198444,21.719288,53.899344,34.153166,83.723488,29.752549c10.876046-1.604784,42.311811-3.491611,49.106627-34.135094s-28.44101-42.33372-30.841357-42.818584c-1.85393-.634683-20.033002-6.290988-26.73864-23.225041s35.280263-209.301111,38.937943-225.663083s11.10573-63.05509,8.849533-74.336075c-3.539813-17.699065-32.743273-33.628224-54.867103-15.044205Z"
 					transform="translate(.000001 0)" fill="none" stroke="#2e576d" stroke-width="2.674" />
 			</svg>
-			<div class="scroll-indicator absolute w-full mx-auto z-10 mt-12">
+			<div class="scroll-indicator absolute w-full bottom-0 mx-auto z-10 pb-6">
 				<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64"
 					class="mx-auto animate-bounce-down">
 					<circle cx="32" cy="32" r="30" stroke="#ffffffaa" stroke-width="2" fill="none" />
@@ -220,7 +224,7 @@
 				</svg>
 			</div>
 
-			<div class="icon z-10">
+			<div class="icon absolute w-full bottom-0 mx-auto z-10 pb-6 ">
 				<!-- 로그인 버튼 -->
 				<button type="button" class="" th:if="${!rq.isLogined}"
 					onclick="setTimeout(() => { location.href='/usr/member/login'; }, 1000)">
@@ -433,7 +437,7 @@
 				pinSpacing: true,               // ✅ pinSpacer 생성 안 함 (부모 레이아웃 안 흔들림)
 				anticipatePin: 1,
 				invalidateOnRefresh: true,
-				markers: true,
+				markers: false,
 				id: "sec3",
 			}
 		});

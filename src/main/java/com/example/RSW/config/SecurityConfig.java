@@ -22,8 +22,6 @@ import java.util.List;
 
 @Configuration
 public class SecurityConfig {
-
-    /** ===== A) 리터 전용 체인: /api/litter/** 최우선 허용 ===== */
     @Bean
     @Order(-10) // ✅ 모든 체인보다 앞
     public SecurityFilterChain litterOnlyChain(HttpSecurity http) throws Exception {
@@ -53,12 +51,10 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/public/**").permitAll()
-                        // 공개 GET
                         .requestMatchers(HttpMethod.GET,
                                 "/api/pet/report",
                                 "/api/pet/weight-timeline"
                         ).permitAll()
-                        // 보호 API
                         .requestMatchers("/api/pet/**").authenticated()
                         .requestMatchers("/api/member/**").authenticated()
                         .anyRequest().permitAll()
@@ -66,8 +62,6 @@ public class SecurityConfig {
                 .exceptionHandling(e -> e.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)));
         return http.build();
     }
-
-    /** ===== C) 앱 체인: 그 외 전부 ===== */
     @Bean
     @Order(1)
     public SecurityFilterChain appChain(HttpSecurity http) throws Exception {
@@ -100,7 +94,6 @@ public class SecurityConfig {
                                 "/css/**", "/js/**", "/img/**", "/img.socialLogin/**",
                                 "/resource/**", "/favicon.ico"
                         ).permitAll()
-                        /* 외부 직접 호출 경로 */
                         .requestMatchers(HttpMethod.GET, "/usr/pet/daily/**").permitAll()
                         .requestMatchers(HttpMethod.DELETE, "/usr/pet/daily/**").permitAll()
                         .anyRequest().authenticated()
@@ -114,13 +107,19 @@ public class SecurityConfig {
                         .logoutUrl("/usr/member/doLogout")
                         .logoutSuccessUrl("/")
                         .invalidateHttpSession(true)
-                        .deleteCookies("JSESSIONID")
+                        // ✅ remember-me 쿠키도 함께 제거
+                        .deleteCookies("JSESSIONID", "REMEMBER_ME")
                         .permitAll()
+                )
+                .rememberMe(rememberMe -> rememberMe
+                        .rememberMeCookieName("REMEMBER_ME")          // 쿠키 이름 명시
+                        .tokenValiditySeconds(14 * 24 * 60 * 60)      // 14일 유지
+                        .alwaysRemember(true)                         // 체크박스 없어도 자동 발급
+                        .useSecureCookie(true)                        // HTTPS 환경에서만 전송
                 );
         return http.build();
     }
 
-    /** ===== 공통 CORS ===== */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration cfg = new CorsConfiguration();

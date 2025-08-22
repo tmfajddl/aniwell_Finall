@@ -167,5 +167,4 @@ public class PetService {
 		petRepository.insertPrimaryFood(petId, brand, feedType, safeProductName, safeFlavor); // startedAt = 오늘
 	}
 
-
 }
