@@ -198,9 +198,9 @@
     let query = ($('#searchInput').val() || '').trim(); // ← [수정] 기존: const query = $('#searchInput').val();
 
     /* ✅ [추가] 검색어가 공백이면 첫 로드(전체 리스트)와 동일하게 동 필터 제거 */
-    if (query === '') {
+   /*  if (query === '') {
       skipDongFilter = true;
-    }
+    } */
 
     const dong = skipDongFilter ? '' :
       (localStorage.getItem("selectedDong") || localStorage.getItem("userDong")); // 🔸 선택된 동 가져오기

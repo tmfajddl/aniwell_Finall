@@ -3,9 +3,15 @@
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.example.RSW.repository.PetReportRepository">
+<mapper
+	namespace="com.example.RSW.repository.PetReportRepository">
 
+<<<<<<< HEAD
+	<select id="selectWeightTimeline"
+		resultType="com.example.RSW.dto.WeightPoint">
+=======
     <select id="selectWeightTimeline" resultType="com.example.RSW.dto.WeightPoint">
+>>>>>>> e218dd1c7b5c33b66bdc90ec6a1aa4f8feb119b2
         <![CDATA[
         SELECT
             DATE_FORMAT(w.measuredAt, '%Y-%m-%d %H:%i:%s') AS measuredAt,
@@ -24,6 +30,10 @@
         WHERE w.petId = #{petId}
         ORDER BY w.measuredAt ASC
         ]]>
+<<<<<<< HEAD
+	</select>
+=======
     </select>
+>>>>>>> e218dd1c7b5c33b66bdc90ec6a1aa4f8feb119b2
 
 </mapper>
