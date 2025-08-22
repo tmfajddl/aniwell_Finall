@@ -3,9 +3,11 @@
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.example.RSW.repository.PetReportRepository">
+<mapper
+	namespace="com.example.RSW.repository.PetReportRepository">
 
-    <select id="selectWeightTimeline" resultType="com.example.RSW.dto.WeightPoint">
+	<select id="selectWeightTimeline"
+		resultType="com.example.RSW.dto.WeightPoint">
         <![CDATA[
         SELECT
             DATE_FORMAT(w.measuredAt, '%Y-%m-%d %H:%i:%s') AS measuredAt,
@@ -24,6 +26,8 @@
         WHERE w.petId = #{petId}
         ORDER BY w.measuredAt ASC
         ]]>
-    </select>
+
+	</select>
+
 
 </mapper>

@@ -55,7 +55,7 @@ public class WebMvcConfigurer implements org.springframework.web.servlet.config.
         ir = registry.addInterceptor(beforeActionInterceptor);
         ir.addPathPatterns("/**");
         ir.addPathPatterns("/favicon.ico");
-        ir.excludePathPatterns("/resource/**", "/css/**", "/js/**", "/img/**", "/uploads/**", "/error", "/favicon.ico");
+        ir.excludePathPatterns( "/api/**", "/resource/**", "/css/**", "/js/**", "/img/**", "/uploads/**", "/error", "/favicon.ico");
 
         // 펫 관련
         ir.addPathPatterns("/usr/pet/petPage");
@@ -106,7 +106,7 @@ public class WebMvcConfigurer implements org.springframework.web.servlet.config.
         ir.addPathPatterns("/usr/member/doFindLoginPw");
         // ✅ 정적 리소스 예외 강화
         ir.excludePathPatterns(
-                "/usr/member/logout",
+                "/usr/member/logout", "/api/**",
                 "/resource/**", "/css/**", "/js/**", "/img/**", "/uploads/**", "/error", "/favicon.ico"
         );
     }
