@@ -24,6 +24,13 @@ spring:
       max-request-size: 300MB     # 요청 전체 최대 용량
 
 
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 300MB        # 업로드 파일 최대 용량
+      max-request-size: 300MB     # 요청 전체 최대 용량
+
+
   oauth2:
     google:
       client-id: ""
@@ -141,4 +148,12 @@ aniwell:
 
 openai:
   api-base: https://api.openai.com/v1
+<<<<<<< HEAD
   api-key: 
+=======
+  api-key:
+
+
+
+
+>>>>>>> 554054ff38cbd1a5cd5fa6df3d0dffeca3396b8d

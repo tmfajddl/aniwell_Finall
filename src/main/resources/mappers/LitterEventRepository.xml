@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.RSW.repository.LitterEventRepository">
+    <insert id="insert" parameterType="com.example.RSW.vo.LitterEvent"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO litter_event
+        (petId, detectedAt, type, confidence,
+         visualSignals, anomalies, notes, sourceVideo, logId)
+        VALUES
+            (#{petId},
+             #{detectedAt},
+             #{type},
+             #{confidence},
+             CAST(#{visualSignalsJson} AS JSON),
+             CAST(#{anomaliesJson} AS JSON),
+             #{notes},
+             #{sourceVideo},
+             #{logId})
+    </insert>
+
+    <select id="findRecentByPet"
+            parameterType="map"
+            resultType="com.example.RSW.vo.LitterEvent">
+        SELECT
+            id, petId, detectedAt, type, confidence,
+            CAST(visualSignals AS CHAR) AS visualSignalsJson,
+            CAST(anomalies AS CHAR)     AS anomaliesJson,
+            notes, sourceVideo, logId
+        FROM litter_event
+        WHERE petId = #{petId}
+        ORDER BY detectedAt DESC, id DESC
+            LIMIT #{limit}
+    </select>
+
+</mapper>
