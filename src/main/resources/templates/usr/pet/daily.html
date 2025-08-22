@@ -356,89 +356,98 @@
 		.modal-footer button:hover {
 			opacity: 0.9;
 		}
+
+		.top_btn {
+			display: flex;
+			justify-content: space-evenly;
+		}
 	</style>
 </head>
 
-<body class="bg-gradient-to-b from-[#e4f0b9] to-[#fcdca9] min-h-[770px]">
-	<div th:replace="common :: siteHeader"></div>
+<body class="bg-gradient-to-b from-[#e4f0b9] to-[#fcdca9] h-screen min-h-dvh min-w-[1400px]">
+	<div class="flex h-screen w-full">
 
-	<!-- Main content -->
-	<main class="main_page min-h-[100%] flex-1 p-6 grid grid-cols-12 gap-4">
-		<div class="content-area col-span-6">
-			<button class="btn-register" onclick="openModal()">+ 등록</button>
-			<div id="calendar"></div>
-			<a th:href="@{/usr/pet/gallery(petId=${pet.id})}"
-				class="flex-1 hover:shadow-md transition-shadow duration-300 font-semibold cursor-pointer shadow block bg-gradient-to-r from-[#EEE8CD] to-[#F4FBCC] rounded-xl p-3 text-sm text-center font-semibold transition">
-				갤러리 </a>
-		</div>
-		<div class="diary-panel col-span-6">
-			<h2>📓 감정일기</h2>
-			<div class="diary-container">
-				<div th:each="e : ${events}" class="entry" th:attr="data-id=${e.id}"
-					th:onclick="'openViewModal(' + ${e.id} + ')'">
-					<div class="entry-header">
-						<span class="entry-title">
-							<span th:text="${e.title}"></span>
-							<span>🐱</span>
-						</span>
-						<span class="entry-date" th:text="${e.eventDate}"></span>
+		<div th:replace="common :: siteHeader"></div>
+
+		<!-- Main content -->
+		<main class="main_page h-full overflow-y-auto min-h-dvh box-border flex-1 p-6 grid grid-cols-12 gap-4">
+			<div class="content-area col-span-6">
+				<div class="top_btn">
+					<button class="btn-register" id="btnGallery">갤러리</button>
+					<button class="btn-register" onclick="openModal()">+ 등록</button>
+				</div>
+				<div id="calendar"></div>
+			</div>
+
+			<div class="diary-panel col-span-6">
+				<h2>📓 감정일기</h2>
+				<div class="diary-container">
+					<div th:each="e : ${events}" class="entry" th:attr="data-id=${e.id}"
+						th:onclick="'openViewModal(' + ${e.id} + ')'">
+						<div class="entry-header">
+							<span class="entry-title">
+								<span th:text="${e.title}"></span>
+								<span>🐱</span>
+							</span>
+							<span class="entry-date" th:text="${e.eventDate}"></span>
+						</div>
+						<div class="entry-content" th:text="${e.content}"></div>
 					</div>
-					<div class="entry-content" th:text="${e.content}"></div>
+				</div>
+			</div>
+		</main>
+
+		<!-- 등록 모달 -->
+		<div id="diaryModal" class="modal">
+			<div class="modal-content">
+				<h3>오늘의 감정 일기</h3>
+				<label>날짜: <input type="date" id="diaryDate"></label>
+				<div>
+					<p>감정:</p>
+					<button class="emotion-btn" data-emotion="happy">😊 행복</button>
+					<button class="emotion-btn" data-emotion="surprised">😮 놀람</button>
+					<button class="emotion-btn" data-emotion="sad">🥲 슬픔</button>
+					<button class="emotion-btn" data-emotion="relaxed">😌 평온</button>
+				</div>
+				<textarea id="diaryContent" placeholder="일기 내용을 입력해주세요..."></textarea>
+				<div class="modal-footer">
+					<button onclick="saveDiary()">등록</button>
+					<button onclick="closeModal()">닫기</button>
 				</div>
 			</div>
 		</div>
-	</main>
 
-	<!-- 등록 모달 -->
-	<div id="diaryModal" class="modal">
-		<div class="modal-content">
-			<h3>오늘의 감정 일기</h3>
-			<label>날짜: <input type="date" id="diaryDate"></label>
-			<div>
-				<p>감정:</p>
-				<button class="emotion-btn" data-emotion="happy">😊 행복</button>
-				<button class="emotion-btn" data-emotion="surprised">😮 놀람</button>
-				<button class="emotion-btn" data-emotion="sad">🥲 슬픔</button>
-				<button class="emotion-btn" data-emotion="relaxed">😌 평온</button>
-			</div>
-			<textarea id="diaryContent" placeholder="일기 내용을 입력해주세요..."></textarea>
-			<div class="modal-footer">
-				<button onclick="saveDiary()">등록</button>
-				<button onclick="closeModal()">닫기</button>
+		<!-- 상세 보기 모달 -->
+		<div id="viewModal" class="modal">
+			<div class="modal-content">
+				<h3>📘 상세보기</h3>
+				<div class="modal-body" id="diaryDetail"></div>
+				<div class="modal-footer">
+					<button onclick="startEditFromView()">✏️ 수정</button>
+					<button onclick="deleteDiaryFromView()">🗑 삭제</button>
+					<button onclick="$('#viewModal').hide();">닫기</button>
+				</div>
 			</div>
 		</div>
-	</div>
 
-	<!-- 상세 보기 모달 -->
-	<div id="viewModal" class="modal">
-		<div class="modal-content">
-			<h3>📘 상세보기</h3>
-			<div class="modal-body" id="diaryDetail"></div>
-			<div class="modal-footer">
-				<button onclick="startEditFromView()">✏️ 수정</button>
-				<button onclick="deleteDiaryFromView()">🗑 삭제</button>
-				<button onclick="$('#viewModal').hide();">닫기</button>
-			</div>
-		</div>
-	</div>
-
-	<!-- 수정 모달 -->
-	<div id="editModal" class="modal">
-		<div class="modal-content">
-			<h3>✏️ 감정일기 수정</h3>
-			<input type="hidden" id="editEventId">
-			<label>날짜: <input type="date" id="editDiaryDate"></label>
-			<div>
-				<p>감정:</p>
-				<button class="emotion-btn" data-emotion="happy">😊 행복</button>
-				<button class="emotion-btn" data-emotion="surprised">😮 놀람</button>
-				<button class="emotion-btn" data-emotion="sad">😿 슬픔</button>
-				<button class="emotion-btn" data-emotion="relaxed">😌 평온</button>
-			</div>
-			<textarea id="editDiaryContent"></textarea>
-			<div class="modal-footer">
-				<button onclick="updateDiary()">수정 완료</button>
-				<button onclick="$('#editModal').hide();">닫기</button>
+		<!-- 수정 모달 -->
+		<div id="editModal" class="modal">
+			<div class="modal-content">
+				<h3>✏️ 감정일기 수정</h3>
+				<input type="hidden" id="editEventId">
+				<label>날짜: <input type="date" id="editDiaryDate"></label>
+				<div>
+					<p>감정:</p>
+					<button class="emotion-btn" data-emotion="happy">😊 행복</button>
+					<button class="emotion-btn" data-emotion="surprised">😮 놀람</button>
+					<button class="emotion-btn" data-emotion="sad">😿 슬픔</button>
+					<button class="emotion-btn" data-emotion="relaxed">😌 평온</button>
+				</div>
+				<textarea id="editDiaryContent"></textarea>
+				<div class="modal-footer">
+					<button onclick="updateDiary()">수정 완료</button>
+					<button onclick="$('#editModal').hide();">닫기</button>
+				</div>
 			</div>
 		</div>
 	</div>
@@ -740,6 +749,15 @@
 
 
 
+	</script>
+	
+	<script>
+	  document.getElementById('btnGallery').addEventListener('click', () => {
+	    const params = new URLSearchParams(location.search);
+	    const pramPetId = params.get('petId');
+	    if (!petId) return alert('petId가 없습니다.');
+	    location.href = `/usr/pet/gallery?petId=${encodeURIComponent(pramPetId)}`;
+	  });
 	</script>
 
 </body>
