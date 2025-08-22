@@ -26,8 +26,12 @@
         WHERE w.petId = #{petId}
         ORDER BY w.measuredAt ASC
         ]]>
+<<<<<<< HEAD
+	</select>
+=======
 
 	</select>
 
+>>>>>>> 554054ff38cbd1a5cd5fa6df3d0dffeca3396b8d
 
 </mapper>
