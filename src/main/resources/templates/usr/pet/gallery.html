@@ -1,174 +1,337 @@
 <!DOCTYPE html>
 <html lang="ko">
+
 <head>
-  <link rel="stylesheet" th:href="@{/resource/css/common.css}">
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" th:href="@{/resource/css/global.css}">
-  <title>감정 결과 갤러리</title>
-  <style>
-    body {
-      margin: 0;
-      background: #b7b7b7;
-      display: flex;
-      justify-content: end;
-      align-items: center;
-      height: 100vh;
-    }
+	<link rel="stylesheet" th:href="@{/resource/css/common.css}">
+	<script src="https://cdn.tailwindcss.com"></script>
+	<link rel="stylesheet" th:href="@{/resource/css/global.css}">
+	<title>감정 결과 갤러리</title>
+	<style>
+		h2 {
+			text-align: center;
+			color: #444;
+			padding: 30px;
+		}
 
-    .main-container {
-      display: flex;
-      flex-direction: column;
-      background: white;
-      width: 100%;
-      height: 95%;
-      overflow: hidden;
-      padding: 30px;
-    }
+		.tabs {
+			text-align: center;
+			margin-bottom: 20px;
+		}
 
-    h2 {
-      text-align: center;
-      color: #444;
-      margin-bottom: 20px;
-    }
+		.tabs button {
+			padding: 10px 20px;
+			margin: 6px;
+			border: none;
+			background-color: #ffe28a;
+			border-radius: 30px;
+			font-size: 14px;
+			font-weight: bold;
+			cursor: pointer;
+			transition: background-color 0.3s;
+			box-shadow: 1px 1px 4px rgba(0, 0, 0, 0.1);
+		}
 
-    .tabs {
-      text-align: center;
-      margin-bottom: 20px;
-    }
+		.tabs button.active {
+			background-color: #ffcd29;
+			color: white;
+		}
 
-    .tabs button {
-      padding: 10px 20px;
-      margin: 6px;
-      border: none;
-      background-color: #ffe28a;
-      border-radius: 30px;
-      font-size: 14px;
-      font-weight: bold;
-      cursor: pointer;
-      transition: background-color 0.3s;
-      box-shadow: 1px 1px 4px rgba(0,0,0,0.1);
-    }
+		.gallery-section {
+			display: none;
+			overflow: hidden;
+			position: relative;
+			flex-grow: 1;
+		}
 
-    .tabs button.active {
-      background-color: #ffcd29;
-      color: white;
-    }
+		.gallery-section.active {
+			display: block;
+		}
 
-    .gallery-section {
-      display: none;
-      overflow: hidden;
-      position: relative;
-      flex-grow: 1;
-    }
+		.gallery-track {
+			display: flex;
+			gap: 20px;
+			transition: transform 0.2s linear;
+			will-change: transform;
+		}
 
-    .gallery-section.active {
-      display: block;
-    }
+		.label {
+			display: block;
+			font-size: 14px;
+			color: #777;
+		}
 
-    .gallery-track {
-      display: flex;
-      gap: 20px;
-      transition: transform 0.2s linear;
-      will-change: transform;
-    }
+		/* ====== 대자보 레이아웃 공통 변수 ====== */
+		:root {
+			--row-gap: 28px;
+			/* 행 간격 */
+			--overlap-x: -22px;
+			/* 카드 가로 겹침(음수=더 겹침) */
+			--lift: -6px;
+			/* 일부 카드 살짝 들림 */
+			--radius: 18px;
+			/* ← 원하는 픽셀 증가량 */
+			--grow-px: 10px;
+		}
 
-    .gallery-item {
-      width: 220px;
-      background-color: #fff;
-      border-radius: 16px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-      padding: 12px;
-      text-align: center;
-      flex-shrink: 0;
-    }
+		/* 섹션 안쪽 보드(세로 스크롤) */
+		.gallery-board {
+			display: flex;
+			flex-direction: column;
+			gap: var(--row-gap);
+			padding: 35px 8px;
+		}
 
-    .gallery-item img {
-      width: 100%;
-      height: 160px;
-      object-fit: cover;
-      border-radius: 12px;
-      margin-bottom: 10px;
-    }
+		/* 한 행 */
+		.row {
+			display: flex;
+			align-items: flex-end;
+			gap: 18px;
+			justify-content: center;
+			position: relative;
+		}
 
-    .label {
-      display: block;
-      font-size: 14px;
-      color: #777;
-    }
-  </style>
+		/* 2번째 이후 카드들은 살짝 겹치기 */
+		.row .card+.card {
+			margin-left: var(--overlap-x);
+		}
+
+		.card {
+			margin: 0 8px;
+			position: relative;
+			width: clamp(180px, 23vw, 240px);
+			aspect-ratio: 4/5;
+			--radius: 18px;
+			/* 혹시 없으면 기본 반경 정의 */
+			border-radius: var(--radius);
+			background: #fff;
+			box-shadow: 0 8px 24px rgba(0, 0, 0, .10);
+			overflow: hidden;
+
+			transform-origin: 50% 85%;
+			transform: translateZ(0) scale(1);
+			/* 기본 크기 */
+			transition: transform .18s ease, box-shadow .18s ease, z-index .18s ease;
+		}
+
+		.card:hover {
+			/* JS가 --hover-scale을 계산해줌 */
+			transform: translateZ(0) scale(var(--hover-scale, 1));
+			box-shadow: 0 12px 32px rgba(0, 0, 0, .16);
+			z-index: 2;
+		}
+
+		.card img {
+			width: 100%;
+			height: 75%;
+			object-fit: cover;
+			display: block;
+			border-radius: 12px;
+			margin-bottom: 0;
+			/* 기존 스타일 무력화 */
+		}
+
+		.card strong {
+			display: block;
+			text-align: center;
+			margin-top: 8px;
+		}
+
+		.card .label {
+			display: block;
+			font-size: 14px;
+			color: #777;
+			text-align: center;
+		}
+
+		.card::before {
+			content: "";
+			position: absolute;
+			inset: 0;
+			border-radius: inherit;
+			background: radial-gradient(transparent 60%, rgba(0, 0, 0, .04));
+			pointer-events: none;
+		}
+
+		/* Row A 패턴: [-4, 1, -2, 3] */
+		.row-a .card:nth-child(1) {
+			--rot: -4deg;
+			transform: rotate(var(--rot));
+			z-index: 4;
+		}
+
+		.row-a .card:nth-child(2) {
+			--rot: 1deg;
+			transform: translateY(var(--lift)) rotate(var(--rot));
+			z-index: 3;
+		}
+
+		.row-a .card:nth-child(3) {
+			--rot: -2deg;
+			transform: rotate(var(--rot));
+			z-index: 2;
+		}
+
+		.row-a .card:nth-child(4) {
+			--rot: 3deg;
+			transform: translateY(var(--lift)) rotate(var(--rot));
+			z-index: 1;
+		}
+
+		/* Row B 패턴: [2, -3, 1, -1] */
+		.row-b .card:nth-child(1) {
+			--rot: 2deg;
+			transform: translateY(var(--lift)) rotate(var(--rot));
+			z-index: 1;
+		}
+
+		.row-b .card:nth-child(2) {
+			--rot: -3deg;
+			transform: rotate(var(--rot));
+			z-index: 2;
+		}
+
+		.row-b .card:nth-child(3) {
+			--rot: 1deg;
+			transform: translateY(var(--lift)) rotate(var(--rot));
+			z-index: 3;
+		}
+
+		.row-b .card:nth-child(4) {
+			--rot: -1deg;
+			transform: rotate(var(--rot));
+			z-index: 4;
+		}
+
+		/* 반응형(선택) */
+		@media (max-width:1024px) {
+			.card {
+				width: clamp(160px, 30vw, 220px);
+			}
+
+			:root {
+				--overlap-x: -16px;
+			}
+		}
+
+		@media (max-width:640px) {
+			.card {
+				width: clamp(150px, 44vw, 200px);
+			}
+
+			:root {
+				--overlap-x: -12px;
+			}
+		}
+	</style>
 </head>
-<body class="bg-gradient-to-b from-[#e4f0b9] to-[#fcdca9] font-[Ownglyph_ParkDaHyun] min-h-[770px]">
-<div th:replace="common :: siteHeader"></div>
 
-<!-- Main content -->
-<main class="main_page min-h-[100%] flex-1 p-6 grid grid-cols-12 gap-4">
-<div class="main-container col-span-12">
-  <h2>🐾 감정 결과 갤러리</h2>
+<body class="bg-gradient-to-b from-[#e4f0b9] to-[#fcdca9] h-screen min-h-dvh min-w-[1400px]">
 
-  <div class="tabs">
-    <button class="emotion-btn active" onclick="showGallery('happy')">😊 Happy</button>
-    <button class="emotion-btn" onclick="showGallery('relaxed')">😌 Relaxed</button>
-    <button class="emotion-btn" onclick="showGallery('sad')">🥲 Sad</button>
-    <button class="emotion-btn" onclick="showGallery('scared')">😨 Scared</button>
-  </div>
+	<div class="flex h-screen w-full">
 
-  <div th:each="emotion : ${emotionList}"
-       th:class="'gallery-section ' + (emotion == 'happy' ? 'active' : '')"
-       th:id="'section-' + ${emotion}">
-    <div th:id="'track-' + ${emotion}" class="gallery-track">
-      <div th:each="item : ${analysisList}"
-           th:if="${item.emotionResult == emotion}"
-           class="gallery-item">
-        <img th:src="${item.imagePath}" alt="Pet Image">
-        <strong th:text="${item.emotionResult}"></strong>
-        <span class="label" th:text="'신뢰도: ' + ${item.confidence} + '%'"></span>
-        <span class="label" th:text="'날짜: ' + ${item.analyzedAt}"></span>
-      </div>
-    </div>
-  </div>
+		<div th:replace="common :: siteHeader"></div>
+
+		<!-- Main content -->
+		<main class="main_page h-full overflow-y-auto min-h-dvh flex-1">
+
+			<div class="sticky top-0 z-20 bg-white/80 backdrop-blur-sm pb-3">
+				<div class="h-4"></div>
+				<h2>🐾 감정 결과 갤러리</h2>
+
+				<div class="tabs sticy">
+					<button class="emotion-btn active" onclick="showGallery('happy')">😊 Happy</button>
+					<button class="emotion-btn" onclick="showGallery('relaxed')">😌 Relaxed</button>
+					<button class="emotion-btn" onclick="showGallery('sad')">🥲 Sad</button>
+					<button class="emotion-btn" onclick="showGallery('scared')">😨 Scared</button>
+				</div>
+			</div>
 
 
-  <script>
 
-    document.addEventListener('DOMContentLoaded', () => {
-      showGallery('happy');
-    });
+			<div th:each="emotion : ${emotionList}" th:class="'gallery-section ' + (emotion == 'happy' ? 'active' : '')"
+				th:id="'section-' + ${emotion}">
+				<div th:id="'track-' + ${emotion}" class="gallery-track">
+					<div th:each="item : ${analysisList}" th:if="${item.emotionResult == emotion}" class="relative gallery-item group bg-white rounded-[22px] p-2 shadow-[0_12px_30px_rgba(0,0,0,0.12)]
+							ring-1 ring-black/5 transition-transform hover:-translate-y-0.5">
+						<img th:src="${item.imagePath}" alt="Pet Image" loading="lazy"
+							class="w-full h-full object-cover">
+						<div class="px-3 pb-3 pt-2 text-center">
+							<div th:text="${item.emotionResult}" class="text-xl font-extrabold tracking-tight"></div>
+							<div class="text-xs text-neutral-500 mt-0.5" th:text="'신뢰도: ' + ${item.confidence} + '%'">
+							</div>
+							<div class="text-xs text-neutral-400" th:text="'날짜: ' + ${item.analyzedAt}"></div>
+						</div>
+					</div>
+				</div>
+			</div>
 
-  let currentEmotion = 'happy';
-  const galleryScrolls = {};
+	</div>
 
-  function showGallery(emotion) {
-    document.querySelectorAll('.emotion-btn').forEach(btn => {
-      btn.classList.remove('active');
-      if (btn.textContent.toLowerCase().includes(emotion)) btn.classList.add('active');
-    });
 
-    document.querySelectorAll('.gallery-section').forEach(sec => sec.classList.remove('active'));
-    document.getElementById('section-' + emotion).classList.add('active');
+	<script>
+		document.addEventListener('DOMContentLoaded', () => {
+			buildRowsForAllSections(4);     // 4장씩 한 행
+			showGallery('happy');           // 초기 탭
+		});
 
-    currentEmotion = emotion;
-  }
+		let currentEmotion = 'happy';
 
-  function loopGalleryScroll(emotion) {
-    const track = document.getElementById('track-' + emotion);
-    let scrollX = 0;
+		function showGallery(emotion) {
+			document.querySelectorAll('.emotion-btn').forEach(btn => {
+				btn.classList.toggle('active', btn.textContent.toLowerCase().includes(emotion));
+			});
+			document.querySelectorAll('.gallery-section').forEach(sec => sec.classList.remove('active'));
+			document.getElementById('section-' + emotion).classList.add('active');
+			currentEmotion = emotion;
+		}
 
-    function animate() {
-      if (currentEmotion !== emotion) return requestAnimationFrame(animate); // 현재 탭 아니면 패스
-      scrollX += 0.5;
-      if (track.scrollWidth - scrollX <= track.clientWidth) scrollX = 0;
-      track.style.transform = 'translateX(-' + scrollX + 'px)';
-      requestAnimationFrame(animate);
-    }
+		/** 각 섹션의 .gallery-item을 rowSize씩 잘라 row-a/row-b로 감싸고,
+		 *  컨테이너 .gallery-track -> .gallery-board로 변경
+		 */
+		function buildRowsForAllSections(rowSize = 4) {
+			document.querySelectorAll('.gallery-section').forEach(section => {
+				const track = section.querySelector('.gallery-track');
+				if (!track) return;
 
-    requestAnimationFrame(animate);
-  }
+				// 컨테이너 클래스 전환
+				track.classList.remove('gallery-track');
+				track.classList.add('gallery-board');
 
-  ['happy', 'relaxed', 'sad', 'scared'].forEach(emotion => {
-    loopGalleryScroll(emotion);
-  });
-</script>
-</div>
-</main>
+				// 아이템 수집
+				const items = Array.from(track.querySelectorAll('.gallery-item'));
+				// 기존 노드 제거
+				track.innerHTML = '';
+
+				// 행 만들기 (A/B 번갈아)
+				let rowIndex = 0;
+				for (let i = 0; i < items.length; i += rowSize) {
+					const slice = items.slice(i, i + rowSize);
+					const row = document.createElement('div');
+					row.className = 'row ' + (rowIndex % 2 === 0 ? 'row-a' : 'row-b');
+					rowIndex++;
+
+					slice.forEach(item => {
+						item.classList.remove('gallery-item');
+						item.classList.add('card');
+						// lazy 보장 + 대체 텍스트
+						const img = item.querySelector('img');
+						if (img) {
+							img.loading = img.loading || 'lazy';
+							if (!img.alt || img.alt === 'Pet Image') {
+								const title = item.querySelector('strong')?.textContent?.trim() || 'photo';
+								img.alt = title;
+							}
+						}
+						row.appendChild(item);
+					});
+					track.appendChild(row);
+				}
+			});
+		}
+	</script>
+
+	</div>
+	</main>
 </body>
+
 </html>
