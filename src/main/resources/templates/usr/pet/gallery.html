@@ -48,7 +48,6 @@
 		}
 
 		.gallery-track {
-			display: flex;
 			gap: 20px;
 			transition: transform 0.2s linear;
 			will-change: transform;
@@ -86,7 +85,7 @@
 			display: flex;
 			align-items: flex-end;
 			gap: 18px;
-			justify-content: center;
+			justify-content: flex-start;
 			position: relative;
 		}
 
@@ -222,7 +221,91 @@
 				--overlap-x: -12px;
 			}
 		}
+
+		/* === ▼ 행 장식 공통 변수/기본값 (gallery.html에 추가) === */
+		.gallery-board {
+			--deco-color: #A8C7AF;
+			/* 장식 색상 (currentColor) */
+			--deco-size: 80px;
+			/* 장식 기본 크기 */
+		}
+
+		/* 공통: 마스크 장식을 위한 베이스 (::before/::after에 적용) */
+		.row,
+		.card {
+			position: relative;
+		}
+
+		/* ===== 1행(=row-a): 왼쪽 상단 '클립' 장식 - 첫 번째 카드에 부착 ===== */
+		.row-a::before {
+			z-index: 10;
+			content: "";
+			position: absolute;
+			top: -10px;
+			left: -10px;
+			width: var(--deco-size);
+			height: var(--deco-size);
+			color: var(--deco-color);
+			background-color: currentColor;
+			filter: drop-shadow(0 1px 3px rgba(0, 0, 0, .25));
+			transform: rotate(-12deg);
+			/* Safari & 표준 마스크 */
+			-webkit-mask: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 91 91' fill='currentColor'%3E%3Cpath d='M88.3,34.924c-1.304-1.305-3.419-1.305-4.724,0L40.378,78.117c-3.561,3.561-8.238,5.568-13.175,5.652c-4.922,0.104-9.454-1.732-12.843-5.121c-7.027-7.027-6.789-18.701,0.529-26.02c0.01-0.01,0.016-0.021,0.026-0.032l41.019-41.016c4.5-4.492,11.817-4.49,16.319,0.009c4.503,4.504,4.503,11.832,0,16.336c-0.005,0.005-0.008,0.011-0.013,0.016L30.501,69.68c-0.002,0.002-0.002,0.003-0.004,0.005c-1.873,1.865-4.92,1.864-6.789-0.005c-0.908-0.906-1.41-2.113-1.41-3.396c0-1.281,0.498-2.482,1.4-3.388c0.005-0.004,0.01-0.007,0.014-0.011l37.43-37.438c1.304-1.305,1.304-3.418-0.001-4.723s-3.419-1.305-4.724,0l-37.41,37.418c-0.007,0.007-0.016,0.011-0.021,0.018c-2.172,2.168-3.367,5.055-3.367,8.123s1.195,5.951,3.369,8.125c2.238,2.234,5.179,3.352,8.118,3.352c2.94-0.002,5.881-1.117,8.118-3.354c0.005-0.005,0.008-0.011,0.014-0.016l41.736-41.735c0.001-0.002,0.003-0.003,0.005-0.005c0.003-0.003,0.006-0.007,0.009-0.01l0.711-0.711c0.182-0.181,0.331-0.38,0.462-0.588c5.896-7.155,5.505-17.787-1.183-24.477c-6.69-6.686-17.318-7.074-24.469-1.181c-0.208,0.131-0.407,0.281-0.588,0.462L10.163,47.904c-0.01,0.009-0.015,0.02-0.023,0.029C0.243,57.859,0.017,73.748,9.638,83.371c4.578,4.578,10.683,7.084,17.235,7.084c0.148,0,0.297-0.004,0.445-0.006c6.677-0.113,12.993-2.816,17.784-7.609c0.004-0.003,0.006-0.008,0.009-0.011L88.3,39.646C89.604,38.344,89.604,36.229,88.3,34.924z'/%3E%3C/svg%3E") no-repeat center / contain;
+			mask: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 91 91' fill='currentColor'%3E%3Cpath d='M88.3,34.924c-1.304-1.305-3.419-1.305-4.724,0L40.378,78.117c-3.561,3.561-8.238,5.568-13.175,5.652c-4.922,0.104-9.454-1.732-12.843-5.121c-7.027-7.027-6.789-18.701,0.529-26.02c0.01-0.01,0.016-0.021,0.026-0.032l41.019-41.016c4.5-4.492,11.817-4.49,16.319,0.009c4.503,4.504,4.503,11.832,0,16.336c-0.005,0.005-0.008,0.011-0.013,0.016L30.501,69.68c-0.002,0.002-0.002,0.003-0.004,0.005c-1.873,1.865-4.92,1.864-6.789-0.005c-0.908-0.906-1.41-2.113-1.41-3.396c0-1.281,0.498-2.482,1.4-3.388c0.005-0.004,0.01-0.007,0.014-0.011l37.43-37.438c1.304-1.305,1.304-3.418-0.001-4.723s-3.419-1.305-4.724,0l-37.41,37.418c-0.007,0.007-0.016,0.011-0.021,0.018c-2.172,2.168-3.367,5.055-3.367,8.123s1.195,5.951,3.369,8.125c2.238,2.234,5.179,3.352,8.118,3.352c2.94-0.002,5.881-1.117,8.118-3.354c0.005-0.005,0.008-0.011,0.014-0.016l41.736-41.735c0.001-0.002,0.003-0.003,0.005-0.005c0.003-0.003,0.006-0.007,0.009-0.01l0.711-0.711c0.182-0.181,0.331-0.38,0.462-0.588c5.896-7.155,5.505-17.787-1.183-24.477c-6.69-6.686-17.318-7.074-24.469-1.181c-0.208,0.131-0.407,0.281-0.588,0.462L10.163,47.904c-0.01,0.009-0.015,0.02-0.023,0.029C0.243,57.859,0.017,73.748,9.638,83.371c4.578,4.578,10.683,7.084,17.235,7.084c0.148,0,0.297-0.004,0.445-0.006c6.677-0.113,12.993-2.816,17.784-7.609c0.004-0.003,0.006-0.008,0.009-0.011L88.3,39.646C89.604,38.344,89.604,36.229,88.3,34.924z'/%3E%3C/svg%3E") no-repeat center / contain;
+		}
+
+		/* 행 컨테이너는 기준이 되어야 함 */
+		.row-b {
+			position: relative;
+			--deco-gap: 56px;
+		}
+
+		/* 두 아이콘 사이 간격 조절 */
+
+		.row-b::before,
+		.row-b::after {
+			content: "";
+			position: absolute;
+			top: -30px;
+			width: calc(var(--deco-size) * 1.15);
+			height: calc(var(--deco-size) * 1.15);
+			color: var(--deco-color);
+			background-color: #F3DF85;
+			filter: drop-shadow(0 1px 3px rgba(0, 0, 0, .25));
+			pointer-events: none;
+			z-index: 10;
+			mask-mode: alpha;
+			/* 파이어폭스 일관성 */
+		}
+
+		/* 왼쪽(센터에서 -gap) : 기존 24x24 기어 아이콘 */
+		.row-b::before {
+			top:-30px;
+			left: 50%;
+			transform: translateX(-50%) rotate(-6deg);
+			-webkit-mask: url("data:image/svg+xml;utf8,%3Csvg width='24' height='24' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M20 9c1.66 0 3 1.34 3 3s-1.34 3-3 3h-.76l.54.54a3 3 0 0 1 0 4.24 3 3 0 0 1-4.24 0l-.54-.54V20c0 1.66-1.34 3-3 3s-3-1.34-3-3v-.76l-.54.54a3 3 0 0 1-4.24 0 3 3 0 0 1 0-4.24l.54-.54H4c-1.66 0-3-1.34-3-3s1.34-3 3-3h.76l-.54-.54a3 3 0 0 1 0-4.24 3 3 0 0 1 4.24 0l.54.54V4c0-1.66 1.34-3 3-3s3 1.34 3 3v.76l.54-.54a3 3 0 0 1 4.24 0 3 3 0 0 1 0 4.24l-.54.54H20Zm-4 3a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z'/%3E%3C/svg%3E") no-repeat center / contain;
+			mask: url("data:image/svg+xml;utf8,%3Csvg width='24' height='24' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M20 9c1.66 0 3 1.34 3 3s-1.34 3-3 3h-.76l.54.54a3 3 0 0 1 0 4.24 3 3 0 0 1-4.24 0l-.54-.54V20c0 1.66-1.34 3-3 3s-3-1.34-3-3v-.76l-.54.54a3 3 0 0 1-4.24 0 3 3 0 0 1 0-4.24l.54-.54H4c-1.66 0-3-1.34-3-3s1.34-3 3-3h.76l-.54-.54a3 3 0 0 1 0-4.24 3 3 0 0 1 4.24 0l.54.54V4c0-1.66 1.34-3 3-3s3 1.34 3 3v.76l.54-.54a3 3 0 0 1 4.24 0 3 3 0 0 1 0 4.24l-.54.54H20Zm-4 3a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z'/%3E%3C/svg%3E") no-repeat center / contain;
+		}
+
+		/* 오른쪽(센터에서 +gap) : 새 18x18 핀 아이콘 */
+		.row-b::after {
+			background-color: #DBE09A;
+			top: -50px;
+			left: 960px;
+			transform: translateX(-50%) rotate(6deg);
+			-webkit-mask: url("data:image/svg+xml;utf8,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2018%2018'%20fill='%23000'%3E%3Cpath%20d='M14%2010a1%201%200%200%201-1%201h-3v4l-1%203-1-3v-4H5a1%201%200%200%201-1-1c0-1.1.9-3%202-3V2a1%201%200%200%201%200-2h6a1%201%200%200%201%200%202v5c1.1%200%202%201.9%202%203z'/%3E%3C/svg%3E") no-repeat center / contain;
+			mask: url("data:image/svg+xml;utf8,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2018%2018'%20fill='%23000'%3E%3Cpath%20d='M14%2010a1%201%200%200%201-1%201h-3v4l-1%203-1-3v-4H5a1%201%200%200%201-1-1c0-1.1.9-3%202-3V2a1%201%200%200%201%200-2h6a1%201%200%200%201%200%202v5c1.1%200%202%201.9%202%203z'/%3E%3C/svg%3E") no-repeat center / contain;
+		}
+
+
+		/* 반응형 보정(선택): 모바일에서 장식 크기 줄이기 */
+		@media (max-width:640px) {
+			.gallery-board {
+				--deco-size: 22px;
+			}
+		}
 	</style>
+
 </head>
 
 <body class="bg-gradient-to-b from-[#e4f0b9] to-[#fcdca9] h-screen min-h-dvh min-w-[1400px]">
@@ -248,23 +331,29 @@
 
 
 
-			<div th:each="emotion : ${emotionList}" th:class="'gallery-section ' + (emotion == 'happy' ? 'active' : '')"
-				th:id="'section-' + ${emotion}">
-				<div th:id="'track-' + ${emotion}" class="gallery-track">
-					<div th:each="item : ${analysisList}" th:if="${item.emotionResult == emotion}" class="relative gallery-item group bg-white rounded-[22px] p-2 shadow-[0_12px_30px_rgba(0,0,0,0.12)]
+			<div class="max-w-[1100px] mx-auto md:px-10">
+				<div th:each="emotion : ${emotionList}"
+					th:class="'gallery-section ' + (emotion == 'happy' ? 'active' : '')"
+					th:id="'section-' + ${emotion}">
+					<div th:id="'track-' + ${emotion}" class="gallery-track">
+						<div th:each="item : ${analysisList}" th:if="${item.emotionResult == emotion}" class="relative gallery-item group bg-white rounded-[22px] p-2 shadow-[0_12px_30px_rgba(0,0,0,0.12)]
 							ring-1 ring-black/5 transition-transform hover:-translate-y-0.5">
-						<img th:src="${item.imagePath}" alt="Pet Image" loading="lazy"
-							class="w-full h-full object-cover">
-						<div class="px-3 pb-3 pt-2 text-center">
-							<div th:text="${item.emotionResult}" class="text-xl font-extrabold tracking-tight"></div>
-							<div class="text-xs text-neutral-500 mt-0.5" th:text="'신뢰도: ' + ${item.confidence} + '%'">
+							<img th:src="${item.imagePath}" alt="Pet Image" loading="lazy"
+								class="w-full h-full object-cover">
+							<div class="px-3 pb-3 pt-2 text-center">
+								<div th:text="${item.emotionResult}" class="text-xl font-extrabold tracking-tight">
+								</div>
+								<div class="text-xs text-neutral-500 mt-0.5"
+									th:text="'신뢰도: ' + ${item.confidence} + '%'">
+								</div>
+								<div class="text-xs text-neutral-400" th:text="'날짜: ' + ${item.analyzedAt}"></div>
 							</div>
-							<div class="text-xs text-neutral-400" th:text="'날짜: ' + ${item.analyzedAt}"></div>
 						</div>
+
 					</div>
 				</div>
 			</div>
-
+		</main>
 	</div>
 
 
@@ -330,8 +419,7 @@
 		}
 	</script>
 
-	</div>
-	</main>
+
 </body>
 
 </html>
