@@ -1,18 +1,28 @@
 server:
   port: 8080
+  tomcat:
+    max-swallow-size: -1          # 업로드 스트림 제한 해제
+    max-http-form-post-size: -1   # (urlencoded 폼) 제한 해제
 
 spring:
   mail:
     host: smtp.gmail.com
     port: 587
-    #   username: 구글 계정
-    #   password: 구글 계정 앱 비밀번호
+    # username: 구글 계정
+    # password: 구글 계정 앱 비밀번호
     properties:
       mail:
         smtp:
           auth: true
           starttls:
             enable: true
+
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 300MB        # 업로드 파일 최대 용량
+      max-request-size: 300MB     # 요청 전체 최대 용량
+
 
   oauth2:
     google:
@@ -103,6 +113,26 @@ aniwell:
   qr:
     base: https://aniwell.s3.ap-northeast-2.amazonaws.com/qr.html
 
+  # (선택) ESP32-CAM 기기 인증 토큰 — IngestController에서 X-Device-Key로 검사
+  device:
+    key: ""     # 예: "my-super-secret"; 빈 값이면 검사 안 함
+
+  # Python 분석기 설정 (PythonRunner에서 사용)
+  python:
+    exe: "/Users/e-suul/Desktop/HES/.venv/bin/python"          # 가상환경 python 경로
+    script: "/Users/e-suul/Desktop/HES/litter_video_test.py"   # 스크립트 절대경로
+    frames: 8
+    model: "gpt-4o"
+    ignoreEmpty: true      # true면 '들렀다-나감' 프리필터 ON
+    timeoutSec: 90         # 분석 최대 대기(초) — PythonRunner에 추가한 옵션
+
+  # 프레임 수집/조립 경로 및 ffmpeg 경로 (ESP32-CAM 프레임 업로드용)
+  ingest:
+    baseDir: /tmp/aniwell_ingest    # 프레임 임시 저장 루트 (쓰기 권한 필요)
+
+  ffmpeg:
+    bin: /opt/homebrew/bin/ffmpeg   # 맥 Homebrew 기준. 환경에 맞춰 경로 지정
+
     # CloudFront 쓰면 여기를 CloudFront 도메인으로 교체
 
   api:
@@ -112,6 +142,7 @@ aniwell:
 openai:
   api-base: https://api.openai.com/v1
   api-key:
+
 
 
 

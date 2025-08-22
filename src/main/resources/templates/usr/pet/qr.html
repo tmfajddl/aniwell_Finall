@@ -64,12 +64,6 @@
 <div class="wrap">
   <div>
     <span class="pill">QR 리포트</span>
-	
-	<a th:href="@{/usr/pet/ocr(petId=${pet.id})}"
-							class="pill">
-						OCR</a>
-							
-							
     <h1 id="title">로딩 중...</h1>
     <div class="muted" id="subtitle"></div>
   </div>
@@ -332,8 +326,10 @@
   /* ==== weight & feed helpers ==== */
   const DATE_KEYS = ['measuredAt','logDate','visitDate','date','createdAt','updatedAt'];
   const WEIGHT_KEYS = ['weight','bodyWeight','weightKg','weight_kg','petWeight','kg'];
-  const FEED_KEYS = ['feedType','foodType','사료','feed_type'];
-  const BRAND_KEYS = ['brand','feedBrand','브랜드'];
+  const FEED_KEYS   = ['feedType','foodType','사료','feed_type'];
+  const BRAND_KEYS  = ['brand','feedBrand','브랜드'];
+  const PRODUCT_KEYS= ['productName','product','feedProduct','제품명'];
+  const FLAVOR_KEYS = ['flavor','taste','원료','맛'];
 
   function findFirst(obj, keys){
     for (const k of keys){ if (obj && obj[k] != null && obj[k] !== '') return obj[k]; }
@@ -357,7 +353,9 @@
   function pickFeedMeta(obj){
     const ft = findFirst(obj, FEED_KEYS);
     const br = findFirst(obj, BRAND_KEYS);
-    return { feedType: ft || null, brand: br || null };
+    const pn = findFirst(obj, PRODUCT_KEYS);
+    const fl = findFirst(obj, FLAVOR_KEYS);
+    return { feedType: ft || null, brand: br || null, productName: pn || null, flavor: fl || null };
   }
   function feedPointStyle(ft){
     const s = String(ft||'').toLowerCase();
@@ -372,8 +370,9 @@
       const w = parseWeightValue(findFirst(obj, WEIGHT_KEYS));
       const t = normalizeTime(findFirst(obj, DATE_KEYS));
       if (w != null && isFinite(w) && t != null){
-        const {feedType, brand} = pickFeedMeta(obj);
-        items.push({ x: t, y: w, feedType, brand });
+        const {feedType, brand, productName, flavor} = pickFeedMeta(obj);
+        items.push({ x: t, y: w, feedType, brand, productName, flavor });
+
       }
     };
     (Array.isArray(visits) ? visits : []).forEach(v=> pushIfValid(v));
@@ -392,8 +391,12 @@
     const buckets = new Map();
     for (const p of points){
       const style = feedPointStyle(p.feedType);
-      const label = p.feedType ? (p.brand ? `${p.feedType} (${p.brand})` : p.feedType)
-              : (p.brand ? `브랜드: ${p.brand}` : '사료 정보 없음');
+      const label = (() => {
+        const name = [p.brand, p.productName].filter(Boolean).join(' / ');
+        const head = p.feedType ? p.feedType : null;          // dry/wet…
+        const tail = p.flavor ? `(${p.flavor})` : null;
+        return [head, name, tail].filter(Boolean).join(' · ');
+      })();
       if (!buckets.has(style)) buckets.set(style, new Set());
       buckets.get(style).add(label);
     }
@@ -519,6 +522,8 @@
           y: Number(p.y),
           feedType: p.feedType ?? p.ft ?? null,
           brand:    p.brand    ?? p.br ?? null,
+          productName: p.productName ?? null,
+          flavor:      p.flavor ?? null,
           _orig: x
         });
       }
@@ -586,23 +591,29 @@
           legend: { display: false },
           tooltip: {
             callbacks: {
-              // title은 labels 그대로(날짜)
               label: (ctx)=>{
-                const i = ctx.dataIndex;
-                const dp = dayPoints[i];
+                const i = ctx.dataIndex, dp = dayPoints[i];
                 const parts = [`${Number(ctx.parsed.y).toFixed(2)} kg`];
                 if (dp?.feedType) parts.push(`사료: ${dp.feedType}`);
-                if (dp?.brand)    parts.push(`브랜드: ${dp.brand}`);
+                const name = [dp?.brand, dp?.productName].filter(Boolean).join(' / ');
+                if (name) parts.push(name);
+                if (dp?.flavor) parts.push(`맛: ${dp.flavor}`);
                 return parts.join(' · ');
               }
             }
           }
+
         }
       }
     });
 
     // === 3) 범례 업데이트 ===
-    renderFeedLegend(dayPoints.map(d => ({ x: d.date, y: d.y, feedType: d.feedType, brand: d.brand })));
+    renderFeedLegend(dayPoints.map(d => ({
+      x: d.date, y: d.y,
+      feedType: d.feedType, brand: d.brand,
+      productName: d.productName, flavor: d.flavor
+    })));
+
   }
 
 
@@ -611,26 +622,19 @@
 
   /* ==== fetch weight timeline (백엔드 전용 API) ==== */
   async function loadWeightTimeline(petId){
-    try{
-      const r = await fetch(`${API_BASE}/api/pet/weight-timeline?petId=${petId}`, {
-        mode:'cors',
-        credentials:'include',           // 세션 사용 시
-        headers:{ 'Accept':'application/json' }
-      });
-      if(!r.ok) throw new Error(`HTTP ${r.status}`);
-      const d = await r.json();
-      const list = Array.isArray(d.points) ? d.points : (Array.isArray(d) ? d : []);
-      return list.map(p=>({
-        x: new Date(String(p.measuredAt).replace(' ','T')),
-        y: Number(p.weightKg),
-        feedType: p.foodType || p.feedType || null,
-        brand: p.brand || null
-      })).sort((a,b)=> a.x - b.x);
-    }catch(e){
-      console.warn('weight-timeline fetch failed:', e);
-      return [];
-    }
+    const r = await fetch(`${API_BASE}/api/pet/weight-timeline?petId=${petId}`, { /* 생략 */ });
+    const d = await r.json();
+    const list = Array.isArray(d.points) ? d.points : (Array.isArray(d) ? d : []);
+    return list.map(p=>({
+      x: new Date(String(p.measuredAt).replace(' ','T')),
+      y: Number(p.weightKg),
+      feedType: p.foodType || p.feedType || null,
+      brand: p.brand || null,
+      productName: p.productName || null,   // ★ 추가
+      flavor: p.flavor || null              // ★ 추가
+    })).sort((a,b)=> a.x - b.x);
   }
+
 
   /* ==== top/stats ==== */
   function renderPet(pet){
@@ -640,9 +644,17 @@
     $('petGender').textContent = safe(pet.gender);
     $('petBirth').textContent = `${safe(pet.birthDate)} (${ageFromBirth(pet.birthDate)})`;
     $('petWeight').textContent = pet.weight!=null ? `${pet.weight}` : '-';
-    let feedType = pet.feedType || pet.foodType;
-    let brand = pet.brand || pet.feedBrand;
-    $('petFeed').textContent = (feedType || brand) ? `${feedType || ''}${brand ? (feedType? ' / ' : '') + brand : ''}` : '-';
+    const feedType    = pet.feedType || pet.foodType || null;
+    const brand       = pet.brand || pet.feedBrand || null;
+    const productName = pet.productName || pet.product || null;
+    const flavor      = pet.flavor || null;
+
+    const parts = [];
+    if (feedType) parts.push(feedType);
+    const name = [brand, productName].filter(Boolean).join(' / ');
+    if (name) parts.push(name);
+    if (flavor) parts.push(`(${flavor})`);
+    $('petFeed').textContent = parts.length ? parts.join(' · ') : '-';
     $('petPhoto').src = pet.photo || 'https://placehold.co/160x160?text=No+Photo';
     $('subtitle').textContent = `ID #${pet.id}`;
     applyThemeByGender(pet.gender);
