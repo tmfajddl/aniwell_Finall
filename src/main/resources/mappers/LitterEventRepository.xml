@@ -35,4 +35,37 @@
             LIMIT #{limit}
     </select>
 
+    <!-- 하루치 이벤트 리스트 -->
+    <select id="findByPetAndDate"
+            parameterType="map"
+            resultType="com.example.RSW.vo.LitterEvent">
+  <![CDATA[
+        SELECT
+            id, petId, detectedAt, type, confidence,
+            CAST(visualSignals AS CHAR) AS visualSignalsJson,
+            CAST(anomalies AS CHAR)     AS anomaliesJson,
+            notes, sourceVideo, logId
+        FROM litter_event
+        WHERE petId = #{petId}
+          AND detectedAt >= #{from}
+          AND detectedAt <  #{to}
+        ORDER BY detectedAt ASC, id ASC
+        ]]>
+</select>
+
+    <select id="countByPetAndDateGroupByType"
+            parameterType="map"
+            resultType="map">
+  <![CDATA[
+        SELECT type, COUNT(*) AS cnt
+        FROM litter_event
+        WHERE petId = #{petId}
+          AND detectedAt >= #{from}
+          AND detectedAt <  #{to}
+        GROUP BY type
+        ]]>
+</select>
+
+
+
 </mapper>

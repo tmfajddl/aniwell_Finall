@@ -10,7 +10,6 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 @Service
 @RequiredArgsConstructor
@@ -24,61 +23,37 @@ public class PythonRunner {
     @Value("${aniwell.python.script}")
     private String scriptPath;
 
-    @Value("${aniwell.python.frames:6}")
-    private int frames;
+    @Value("${aniwell.python.frames:8}")
+    private int defaultFrames;
 
     @Value("${aniwell.python.model:gpt-4o}")
     private String model;
 
-    /** true 이고 force=false 면 --ignore-empty 를 넘긴다 */
     @Value("${aniwell.python.ignoreEmpty:true}")
     private boolean ignoreEmpty;
 
-    /** 프로세스 타임아웃(초) */
-    @Value("${aniwell.python.timeoutSec:120}")
-    private long timeoutSec;
-
-    /** OPENAI_API_KEY 를 여기서 환경변수로 주입 */
     @Value("${openai.api-key:}")
     private String openaiApiKey;
 
-    /* -------------------- Public API (오버로드) -------------------- */
+    /** squatOnly/frames/force 모두 반영하는 메인 엔트리 */
+    public LitterAnalysisDto runOnVideo(File video,
+                                        Double lingerSec,
+                                        boolean force,
+                                        Integer framesOverride,
+                                        boolean squatOnly) throws Exception {
 
-    public LitterAnalysisDto runOnVideo(File video, Double lingerSec) throws Exception {
-        return runOnVideo(video, lingerSec, false, null, false);
-    }
-
-    public LitterAnalysisDto runOnVideo(File video, Double lingerSec, boolean force) throws Exception {
-        return runOnVideo(video, lingerSec, force, null, false);
-    }
-
-    public LitterAnalysisDto runOnVideo(
-            File video,
-            Double lingerSec,
-            boolean force,
-            Integer framesOverride,
-            boolean squatOnly
-    ) throws Exception {
-        if (video == null || !video.exists()) {
-            throw new FileNotFoundException("Video not found: " + video);
-        }
+        int frames = (framesOverride != null ? framesOverride : defaultFrames);
 
         List<String> cmd = new ArrayList<>();
         cmd.add(pythonExe);
         cmd.add(scriptPath);
         cmd.add("--video");   cmd.add(video.getAbsolutePath());
-        cmd.add("--frames");  cmd.add(String.valueOf(framesOverride != null ? framesOverride : this.frames));
+        cmd.add("--frames");  cmd.add(String.valueOf(frames));
         cmd.add("--model");   cmd.add(model);
 
-        if (lingerSec != null) {
-            cmd.add("--linger"); cmd.add(String.valueOf(lingerSec));
-        }
-        if (ignoreEmpty && !force) {
-            cmd.add("--ignore-empty");
-        }
-        if (squatOnly) {
-            cmd.add("--squat-only");
-        }
+        if (lingerSec != null) { cmd.add("--linger"); cmd.add(String.valueOf(lingerSec)); }
+        if (squatOnly)        { cmd.add("--squat-only"); }     // ⬅️ 파이썬 스크립트에서 이 플래그 처리
+        if (ignoreEmpty && !force) { cmd.add("--ignore-empty"); } // force=true면 프리필터 우회
 
         ProcessBuilder pb = new ProcessBuilder(cmd);
         if (openaiApiKey != null && !openaiApiKey.isBlank()) {
@@ -87,47 +62,38 @@ public class PythonRunner {
         pb.redirectErrorStream(true);
 
         Process p = pb.start();
-
-        String stdout;
-        try (BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream(), StandardCharsets.UTF_8))) {
-            // 타임아웃 대기
-            boolean finished = p.waitFor(timeoutSec, TimeUnit.SECONDS);
-            StringBuilder out = new StringBuilder();
+        StringBuilder out = new StringBuilder();
+        try (BufferedReader br = new BufferedReader(
+                new InputStreamReader(p.getInputStream(), StandardCharsets.UTF_8))) {
             String line;
             while ((line = br.readLine()) != null) out.append(line).append("\n");
-            stdout = out.toString().trim();
-
-            if (!finished) {
-                p.destroyForcibly();
-                throw new RuntimeException("Python runner timeout (" + timeoutSec + "s)");
-            }
         }
+        int exit = p.waitFor();
+        String stdout = out.toString().trim();
 
-        // [Ignored] 로 시작하면 무시 케이스
         if (stdout.startsWith("[Ignored]")) {
             LitterAnalysisDto dto = new LitterAnalysisDto();
             dto.setIgnored(true);
             dto.setIgnoreReason(stdout);
             return dto;
         }
-
-        if (stdout.isEmpty()) {
-            throw new RuntimeException("Python returned empty output");
+        if (exit != 0 && stdout.isEmpty()) {
+            throw new RuntimeException("Python process failed (exit=" + exit + ")");
         }
-
         String json = extractFirstJson(stdout);
         return om.readValue(json, LitterAnalysisDto.class);
     }
 
-    /* -------------------- Helpers -------------------- */
+    // 기존 analyze 엔드포인트에서 쓰던 오버로드(호환용)
+    public LitterAnalysisDto runOnVideo(File video,
+                                        Double lingerSec,
+                                        boolean force,
+                                        Integer framesOverride) throws Exception {
+        return runOnVideo(video, lingerSec, force, framesOverride, false);
+    }
 
     private String extractFirstJson(String s) {
-        int first = s.indexOf('{');
-        int last  = s.lastIndexOf('}');
-        if (first >= 0 && last >= first) {
-            return s.substring(first, last + 1);
-        }
-        // 혹시 이미 JSON이면 그대로 반환
-        return s;
+        int first = s.indexOf('{'); int last = s.lastIndexOf('}');
+        return (first >= 0 && last >= first) ? s.substring(first, last + 1) : s;
     }
 }
