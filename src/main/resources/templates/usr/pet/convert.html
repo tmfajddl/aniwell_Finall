@@ -336,20 +336,6 @@
         el.className = 'delta ' + cls; el.innerHTML = `<b>${txt}</b>`;
     }
 
-    function renderCountDelta(el, prev, curr){
-        let cls='same', txt='-';
-        if (prev==null && curr==null){ el.className='delta same'; el.textContent='데이터 없음'; return; }
-        if (prev==null){ el.className='delta up'; el.innerHTML = `<b>${curr}건</b>`; return; }
-        if (curr==null){ el.className='delta same'; el.textContent='-'; return; }
-        const diff = curr - prev;
-        if (diff===0){ cls='same'; txt='0건'; }
-        else if (diff>0){ cls='up'; txt=`▲ ${diff}건`; }
-        else { cls='down'; txt=`▼ ${Math.abs(diff)}건`; }
-        el.className = 'delta ' + cls;
-        el.innerHTML = `<b>${txt}</b>`;
-    }
-
-
     /* ===== Chart: 몸무게 (x라벨 숨김 + 가로스크롤, 기본 30일) ===== */
     let wtChart;
     function feedPointStyle(ft){
@@ -851,17 +837,27 @@
         return { prev: pick(prevStart,thisStart), curr: pick(thisStart,nextStart) };
     }
     function renderLitterDeltas(prev, curr){
-        // 개별 숫자 채우기
+        // 개별(pee, poop) 숫자 채우기
         $('#peePrev').textContent  = prev ? prev.pee  : '-';
         $('#peeThis').textContent  = curr ? curr.pee  : '-';
         $('#poopPrev').textContent = prev ? prev.poop : '-';
         $('#poopThis').textContent = curr ? curr.poop : '-';
 
-        // 각 항목 증감 화살표
-        renderCountDelta($('#peeDelta'),  prev?.pee,  curr?.pee);
-        renderCountDelta($('#poopDelta'), prev?.poop, curr?.poop);
-    }
+        // 합계 기준 델타
+        const pPrev = prev ? (prev.pee + prev.poop) : null;
+        const pCurr = curr ? (curr.pee + curr.poop) : null;
+        const el = $('#litterDelta');
 
+        let cls='same', txt='변화 없음';
+        if (pPrev===null && pCurr===null){ el.className='delta same'; el.textContent='데이터 없음'; return; }
+        if (pPrev===null){ el.className='delta up'; el.innerHTML=`<b>이번주 ${pCurr}건</b>`; return; }
+        if (pCurr===null){ el.className='delta same'; el.textContent='이번주 데이터 없음'; return; }
+        const diff = pCurr - pPrev;
+        if (diff===0){ cls='same'; txt='변화 없음'; }
+        else if (diff>0){ cls='up'; txt=`▲ ${diff}건`; }
+        else { cls='down'; txt=`▼ ${Math.abs(diff)}건`; }
+        el.className = 'delta ' + cls; el.innerHTML = `<b>${txt}</b>`;
+    }
 
     /* ===== 초기 로드 ===== */
     (async function init(){
