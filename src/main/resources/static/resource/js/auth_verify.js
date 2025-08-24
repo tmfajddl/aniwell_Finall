@@ -1,67 +1,41 @@
 /* =========================
-   auth_verify.js  (최종)
-   - 회원가입: 이메일 인증 (purpose='signup')
-   - 전화번호: 성공 시 버튼 텍스트만 '인증완료'로 변경 (입력칸 색 변경 X)
-   - 서버 API: /api/verify/email/send, /api/verify/email/check
+   auth_verify.js  (최종 수정, 충돌 해결)
 ========================= */
 
-/* ---- 전역 안전 스텁(덮어쓰기 않도록) ---- */
+/* ---- 전역 안전 스텁 ---- */
 window.sendEmailVerificationCode = window.sendEmailVerificationCode || function(){};
 window.verifyEmailCode          = window.verifyEmailCode          || function(){};
 window.sendVerificationCode     = window.sendVerificationCode     || function(){};
 window.verifyPhoneCode          = window.verifyPhoneCode          || function(){};
 
 /* ---- 공통 유틸 ---- */
-const $ = (id) => document.getElementById(id);
+const byId = (id) => document.getElementById(id);
 const show = (el) => el && el.classList.remove('hidden');
 const hide = (el) => el && el.classList.add('hidden');
 const setWarn = (el, msg) => { if(!el) return; el.textContent = msg || ''; el.classList.toggle('hidden', !msg); };
 
-/* 버튼을 '인증완료' 상태로 바꾸기 (배지 미사용) */
-function markButtonAsDone(btn){
-    if(!btn) return;
-    btn.disabled = true;
-    btn.textContent = '인증완료';
-    btn.classList.add('opacity-60','cursor-not-allowed');
-}
-
-/* 입력을 잠그되, 배경색은 건드리지 않음 */
-function lockInputNoColor(inputEl){
-    if (inputEl) inputEl.readOnly = true;
-}
-function unlockInputNoColor(inputEl){
-    if (inputEl) inputEl.readOnly = false;
-}
+function markButtonAsDone(btn){ if(!btn) return; btn.disabled = true; btn.textContent = '인증완료'; btn.classList.add('opacity-60','cursor-not-allowed'); }
+function lockInputNoColor(inputEl){ if (inputEl) inputEl.readOnly = true; }
+function unlockInputNoColor(inputEl){ if (inputEl) inputEl.readOnly = false; }
 
 /* =========================
-   A) 전화번호: 성공 시 UI 정리(배지 삭제, 버튼만 변경)
+   A) 전화번호 인증 (변경 없음)
 ========================= */
 (function patchPhoneVerify(){
-    // 초기 렌더에서 혹시 보이는 배지는 숨김
-    document.addEventListener('DOMContentLoaded', () => {
-        hide($('phoneVerifiedTag'));
-    });
+    document.addEventListener('DOMContentLoaded', () => hide(byId('phoneVerifiedTag')));
+    function phoneSendBtn(){ const b = byId('phoneSendBtn'); if (b) return b; const c = byId('cellphone'); return c ? c.parentElement?.querySelector('button.auth') : null; }
 
-    function phoneSendBtn(){
-        return $('phoneSendBtn') || $('cellphone')?.parentElement?.querySelector('button.auth') || null;
-    }
-
-    // 기존 onclick="verifyPhoneCode()"를 유지하기 위해 같은 이름으로 정의
     window.verifyPhoneCode = async function(){
-        const code = $('verificationCode')?.value?.trim();
+        const code = byId('verificationCode')?.value?.trim();
         if (!window.confirmationResult) { alert('먼저 인증번호를 요청하세요.'); return; }
         if (!code) { alert('인증번호를 입력하세요.'); return; }
-
         try {
-            const result = await window.confirmationResult.confirm(code);
-
-            // ✅ 성공 처리: 인증칸 숨김 + 입력 잠금 + 버튼 '인증완료'
-            hide($('phone-verification-box'));
-            lockInputNoColor($('cellphone'));
+            await window.confirmationResult.confirm(code);
+            hide(byId('phone-verification-box'));
+            lockInputNoColor(byId('cellphone'));
             markButtonAsDone(phoneSendBtn());
-            hide($('phoneVerifiedTag')); // 배지는 사용 안 함
-            setWarn($('cellphoneWarning'), '');
-
+            hide(byId('phoneVerifiedTag'));
+            setWarn(byId('cellphoneWarning'), '');
             alert('전화번호 인증이 완료되었습니다.');
         } catch (err) {
             console.error('❌ 인증 실패', err);
@@ -69,30 +43,33 @@ function unlockInputNoColor(inputEl){
         }
     };
 
-    // 값이 바뀌면(다시 수정하면) 원상복귀
-    $('cellphone')?.addEventListener('input', () => {
-        hide($('phone-verification-box'));
-        setWarn($('cellphoneWarning'),'');
-        unlockInputNoColor($('cellphone'));
-        const btn = phoneSendBtn();
-        if (btn) { btn.disabled = false; btn.textContent = '인증'; btn.classList.remove('opacity-60','cursor-not-allowed'); }
-        hide($('phoneVerifiedTag'));
-    });
+    const cellEl = byId('cellphone');
+    if (cellEl) {
+        cellEl.addEventListener('input', () => {
+            hide(byId('phone-verification-box'));
+            setWarn(byId('cellphoneWarning'),'');
+            unlockInputNoColor(cellEl);
+            const btn = phoneSendBtn();
+            if (btn) { btn.disabled = false; btn.textContent = '인증'; btn.classList.remove('opacity-60','cursor-not-allowed'); }
+            hide(byId('phoneVerifiedTag'));
+        });
+    }
 })();
 
 /* =========================
-   B) 이메일: 회원가입용 인증 (purpose='signup')
+   B) 이메일 인증 (회원가입)
+   👉 즉시실행(IIFE) 제거, DOMContentLoaded에서 init 호출
 ========================= */
-(function initEmailVerifyForSignup(){
-    const emailInput = $('email');
+function initEmailVerifyForSignup(){
+    const emailInput = byId('email');
     if (!emailInput) return;
 
-    // 버튼/배지/경고 영역 핸들
-    let emailSendBtn = $('emailSendBtn');
-    let emailBadge   = $('emailVerifiedTag'); // 배지는 쓰지 않음
+    const emailSendBtn = byId('emailSendBtn');
+    const emailCheckBtn = byId('emailCheckBtn');
+    const emailBadge = byId('emailVerifiedTag');
     hide(emailBadge);
 
-    let emailWarn = $('emailWarning');
+    let emailWarn = byId('emailWarning');
     if (!emailWarn) {
         emailWarn = document.createElement('p');
         emailWarn.id = 'emailWarning';
@@ -100,31 +77,21 @@ function unlockInputNoColor(inputEl){
         (emailSendBtn?.parentElement || emailInput).insertAdjacentElement('afterend', emailWarn);
     }
 
-    let emailBox = $('email-verification-box');
-    if (!emailBox) {
-        emailBox = document.createElement('div');
-        emailBox.id = 'email-verification-box';
-        emailBox.className = 'mt-2 hidden';
-        emailBox.innerHTML = `
-      <input class="form-wrapper__input w-[250px] h-[30px] mt-1" id="emailVerificationCode" type="text" placeholder="인증번호 입력"/>
-      <button type="button" class="auth mt-1" id="emailCheckBtn">확인</button>
-    `;
-        emailWarn.insertAdjacentElement('afterend', emailBox);
-    } else {
-        // 확인 버튼 id 보강
-        const hasIdBtn = emailBox.querySelector('#emailCheckBtn');
-        if (!hasIdBtn) {
-            const anyBtn = emailBox.querySelector('button.auth');
-            if (anyBtn) anyBtn.id = 'emailCheckBtn';
-        }
-    }
-
+    const emailBox = byId('email-verification-box');
     const isValidEmail = (v)=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v||'');
     let emailTxId = null;
 
     async function sendEmailVerificationCode(){
+        if (!emailSendBtn) return;
+        if (emailSendBtn.dataset.sending === '1') return;   // ✅ 중복 가드
+        emailSendBtn.dataset.sending = '1';
+
         const email = (emailInput.value||'').trim();
-        if (!isValidEmail(email)) { setWarn(emailWarn, '유효한 이메일 주소를 입력해주세요.'); return; }
+        if (!isValidEmail(email)) {
+            setWarn(emailWarn, '유효한 이메일 주소를 입력해주세요.');
+            emailSendBtn.dataset.sending = '0';
+            return;
+        }
         setWarn(emailWarn, '');
         emailSendBtn.disabled = true;
 
@@ -134,23 +101,33 @@ function unlockInputNoColor(inputEl){
                 headers:{'Content-Type':'application/json'},
                 body: JSON.stringify({ email, purpose:'signup' })
             });
-            const json = await res.json();
+            let json = null;
+            try { json = await res.json(); } catch(_) {}
             if (!res.ok || !(json?.resultCode||'').startsWith('S-')) {
                 setWarn(emailWarn, json?.msg || '인증번호 전송에 실패했습니다.');
                 emailSendBtn.disabled = false;
+                emailSendBtn.dataset.sending = '0';
                 return;
             }
-            emailTxId = json.txId ?? json?.data?.txId ?? json?.data1?.txId ?? (typeof json?.data1==='string' ? json.data1 : null);
+            // ✅ emailTxId 안전하게 저장 (모든 경우 커버)
+            emailTxId = json?.txId
+                ?? json?.data?.txId
+                ?? json?.data1?.txId
+                ?? (typeof json?.data1 === 'string' ? json.data1 : null);
+
             show(emailBox);
-            setWarn(emailWarn, '인증번호를 이메일로 전송했습니다. 메일함을 확인해주세요.');
+            setWarn(emailWarn, '인증번호를 이메일로 전송했습니다.');
+
+            // 성공 후에는 다음 단계(확인)로 진행하므로 sending 유지해도 중복 전송 방지됨
         } catch (e) {
             setWarn(emailWarn, '네트워크 오류로 전송에 실패했습니다.');
             emailSendBtn.disabled = false;
+            emailSendBtn.dataset.sending = '0';
         }
     }
 
     async function verifyEmailCode(){
-        const code = ($('emailVerificationCode')?.value||'').trim();
+        const code = (byId('emailVerificationCode')?.value||'').trim();
         if (!emailTxId) { setWarn(emailWarn, '먼저 인증번호를 요청해주세요.'); return; }
         if (!code)      { setWarn(emailWarn, '인증번호를 입력해주세요.');   return; }
 
@@ -160,13 +137,13 @@ function unlockInputNoColor(inputEl){
                 headers:{'Content-Type':'application/json'},
                 body: JSON.stringify({ txId: emailTxId, code, purpose:'signup' })
             });
-            const json = await res.json();
+            let json = null;
+            try { json = await res.json(); } catch(_) {}
             if (!res.ok || !(json?.resultCode||'').startsWith('S-')) {
                 setWarn(emailWarn, json?.msg || '인증번호가 올바르지 않습니다.');
                 return;
             }
 
-            // ✅ 성공 처리: 인증칸 숨김 + 입력 잠금 + 버튼 '인증완료'
             hide(emailBox);
             lockInputNoColor(emailInput);
             markButtonAsDone(emailSendBtn);
@@ -178,21 +155,43 @@ function unlockInputNoColor(inputEl){
         }
     }
 
-    // 바인딩
-    emailSendBtn?.addEventListener('click', sendEmailVerificationCode);
-    const emailCheckBtn = emailBox.querySelector('#emailCheckBtn') || emailBox.querySelector('button.auth');
-    emailCheckBtn?.addEventListener('click', verifyEmailCode);
+    // ✅ 바인딩: 중복 방지
+    if (emailSendBtn && !emailSendBtn.dataset.bound) {
+        emailSendBtn.dataset.bound = '1';
+        emailSendBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            clearTimeout(emailSendBtn._deb);
+            emailSendBtn._deb = setTimeout(() => sendEmailVerificationCode(), 120);
+        });
+    }
+    if (emailCheckBtn && !emailCheckBtn.dataset.bound) {
+        emailCheckBtn.dataset.bound = '1';
+        emailCheckBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            verifyEmailCode();
+        });
+    }
 
     // 값 변경 시 상태 초기화
     emailInput.addEventListener('input', ()=>{
         hide(emailBox); setWarn(emailWarn, '');
         unlockInputNoColor(emailInput);
-        if (emailSendBtn) { emailSendBtn.disabled = false; emailSendBtn.textContent = '인증'; emailSendBtn.classList.remove('opacity-60','cursor-not-allowed'); }
+        if (emailSendBtn) {
+            emailSendBtn.disabled = false;
+            emailSendBtn.textContent = '인증';
+            emailSendBtn.classList.remove('opacity-60','cursor-not-allowed');
+            emailSendBtn.dataset.sending = '0';
+        }
         hide(emailBadge);
         emailTxId = null;
     });
 
-    // 외부에서 호출할 수 있도록
+    // 전역 호환 유지
     window.sendEmailVerificationCode = sendEmailVerificationCode;
-    window.verifyEmailCode          = verifyEmailCode;
-})();
+    window.verifyEmailCode           = verifyEmailCode;
+}
+
+// ✅ defer 없이: DOM 로드 후 init
+document.addEventListener('DOMContentLoaded', initEmailVerifyForSignup);

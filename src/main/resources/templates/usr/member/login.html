@@ -219,28 +219,44 @@
 
                         <label class="form-wrapper__label" for="cellphone">전화번호</label>
                         <div class="flex items-center gap-1">
-                            <input class="form-wrapper__input w-[250px] h-[30px]" id="cellphone" name="cellphone"
-                                   type="text" required placeholder="PHONE NUMBER" th:value="${param.cellphone}"/>
-                            <button type="button" class="auth" id="phoneSendBtn" onclick="sendVerificationCode()">인증</button>
+                            <input class="form-wrapper__input w-[250px] h-[30px]"
+                                   id="cellphone" name="cellphone"
+                                   type="text" required placeholder="PHONE NUMBER"
+                                   th:value="${param.cellphone}"/>
+                            <button type="button" class="auth" id="phoneSendBtn" onclick="sendVerificationCode()">인증
+                            </button>
                             <span id="phoneVerifiedTag" class="text-green-600 text-xs ml-2 hidden">인증됨</span>
                         </div>
                         <p id="cellphoneWarning" class="block text-xs text-red-600 mt-1 hidden"></p>
+
                         <div id="phone-verification-box" class="mt-2 hidden">
-                            <input class="form-wrapper__input w-[250px] h-[30px] mt-1" id="verificationCode" type="text" placeholder="인증번호 입력"/>
-                            <button type="button" class="auth mt-1" onclick="verifyPhoneCode()">확인</button>
+                            <div class="flex items-center gap-1">
+                                <input class="form-wrapper__input w-[250px] h-[30px]"
+                                       id="verificationCode"
+                                       type="text"
+                                       placeholder="인증번호 입력"/>
+                                <button type="button" class="auth" onclick="verifyPhoneCode()">확인</button>
+                            </div>
                         </div>
 
                         <label class="form-wrapper__label mt-4" for="email">이메일</label>
                         <div class="flex items-center gap-1">
-                            <input class="form-wrapper__input w-[250px] h-[30px]" id="email" name="email"
-                                   type="email" required placeholder="EMAIL" th:value="${param.email}"/>
-                            <button type="button" class="auth" id="emailSendBtn" onclick="sendEmailVerificationCode()">인증</button>
+                            <input class="form-wrapper__input w-[250px] h-[30px]"
+                                   id="email" name="email"
+                                   type="email" required placeholder="EMAIL"
+                                   th:value="${param.email}"/>
+                            <button type="button" class="auth" id="emailSendBtn">인증</button>
                             <span id="emailVerifiedTag" class="text-green-600 text-xs ml-2 hidden">인증됨</span>
                         </div>
                         <p id="emailWarning" class="block text-xs text-red-600 mt-1 hidden"></p>
                         <div id="email-verification-box" class="mt-2 hidden">
-                            <input class="form-wrapper__input w-[250px] h-[30px] mt-1" id="emailVerificationCode" type="text" placeholder="인증번호 입력"/>
-                            <button type="button" class="auth mt-1" onclick="verifyEmailCode()">확인</button>
+                            <div class="flex items-center gap-1">
+                                <input class="form-wrapper__input w-[250px] h-[30px] mt-1"
+                                       id="emailVerificationCode"
+                                       type="text"
+                                       placeholder="인증번호 입력"/>
+                                <button type="button" class="auth mt-1" id="emailCheckBtn">확인</button>
+                            </div>
                         </div>
 
                         <label class="form-wrapper__label" for="address">주소</label>
@@ -521,7 +537,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 
 <!-- ✅ reCAPTCHA(visible) 표시 위치 -->
-<div id="recaptcha-visible-box" style="margin-top:8px"></div>
+<div id="recaptcha-visible-box" class="fixed bottom-2 right-1 z-50"></div>
 
 <script>
     // ===== Firebase 설정 =====
@@ -564,11 +580,17 @@
             theme: 'light',
             callback: () => {
                 recaptchaSolved = true;
-                try { grecaptcha.getResponse(recaptchaWidgetId); } catch {}
+                try {
+                    grecaptcha.getResponse(recaptchaWidgetId);
+                } catch {
+                }
             },
             'expired-callback': () => {
                 recaptchaSolved = false;
-                try { if (recaptchaWidgetId != null) grecaptcha.reset(recaptchaWidgetId); } catch {}
+                try {
+                    if (recaptchaWidgetId != null) grecaptcha.reset(recaptchaWidgetId);
+                } catch {
+                }
             }
         });
 
@@ -582,24 +604,29 @@
 
     // ===== 유틸 =====
     const toE164KR = v => '+82' + v.replace(/-/g, '').replace(/^0/, '');
-    const isPhone  = v => /^\d{3}-\d{3,4}-\d{4}$/.test(v);
-    const sendBtn  = () => document.getElementById('phoneSendBtn'); // ✅ 특정 버튼만
+    const isPhone = v => /^\d{3}-\d{3,4}-\d{4}$/.test(v);
+    const sendBtn = () => document.getElementById('phoneSendBtn'); // ✅ 특정 버튼만
 
     // ===== 점증 쿨다운 =====
     const COOLDOWN_KEY = 'smsCooldownUntil';
     const FAILCOUNT_KEY = 'smsFailCount';
 
     const coolingLeftMs = () => Math.max(0, (Number(localStorage.getItem(COOLDOWN_KEY)) || 0) - Date.now());
+
     function startCooldown(ms) {
         localStorage.setItem(COOLDOWN_KEY, String(Date.now() + ms));
         paintCooldown();
     }
+
     function incFailCount() {
         const n = (Number(localStorage.getItem(FAILCOUNT_KEY)) || 0) + 1;
         localStorage.setItem(FAILCOUNT_KEY, String(n));
         return n;
     }
-    function resetFailCount() { localStorage.removeItem(FAILCOUNT_KEY); }
+
+    function resetFailCount() {
+        localStorage.removeItem(FAILCOUNT_KEY);
+    }
 
     function paintCooldown() {
         const btn = sendBtn();
@@ -613,16 +640,20 @@
             btn.textContent = '인증';
         }
     }
+
     setInterval(paintCooldown, 1000);
     document.addEventListener('visibilitychange', paintCooldown);
 
     // ===== 인증번호 전송 =====
     async function sendVerificationCode() {
-        if (coolingLeftMs() > 0) { paintCooldown(); return; }
+        if (coolingLeftMs() > 0) {
+            paintCooldown();
+            return;
+        }
 
         const phone = document.getElementById('cellphone').value.trim();
-        const warn  = document.getElementById('cellphoneWarning');
-        const btn   = sendBtn();
+        const warn = document.getElementById('cellphoneWarning');
+        const btn = sendBtn();
 
         if (!isPhone(phone)) {
             warn.innerText = '전화번호 형식이 올바르지 않습니다.';
@@ -661,7 +692,10 @@
             const msg = (err?.code || err?.message || '').toString();
 
             if (msg.includes('invalid-app-credential') || msg.includes('captcha')) {
-                try { if (recaptchaWidgetId != null) grecaptcha.reset(recaptchaWidgetId); } catch {}
+                try {
+                    if (recaptchaWidgetId != null) grecaptcha.reset(recaptchaWidgetId);
+                } catch {
+                }
                 recaptchaSolved = false;
             }
 
@@ -678,6 +712,7 @@
             paintCooldown();
         }
     }
+
     // ⚠️ verifyPhoneCode()는 auth_verify.js에서 성공 UI 처리까지 담당하므로 이 파일에서는 정의하지 않습니다.
 </script>
 
