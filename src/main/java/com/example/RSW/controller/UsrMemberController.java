@@ -223,28 +223,28 @@ public class UsrMemberController {
 
         // 필수 입력값 체크
         if (Ut.isEmptyOrNull(loginId)) {
-            return Ut.jsHistoryBack("F-1", "아이디를 입력해");
+            return Ut.jsHistoryBack("F-1", "아이디를 입력하세요");
         }
         if (Ut.isEmptyOrNull(loginPw)) {
-            return Ut.jsHistoryBack("F-2", "비밀번호를 입력해");
+            return Ut.jsHistoryBack("F-2", "비밀번호를 입력하세요");
         }
         if (Ut.isEmptyOrNull(name)) {
-            return Ut.jsHistoryBack("F-3", "이름을 입력해");
+            return Ut.jsHistoryBack("F-3", "이름을 입력하세요");
         }
         if (Ut.isEmptyOrNull(nickname)) {
-            return Ut.jsHistoryBack("F-4", "닉네임을 입력해");
+            return Ut.jsHistoryBack("F-4", "닉네임을 입력하세요");
         }
         if (Ut.isEmptyOrNull(cellphone)) {
-            return Ut.jsHistoryBack("F-5", "전화번호를 입력해");
+            return Ut.jsHistoryBack("F-5", "전화번호를 입력하세요");
         }
         if (Ut.isEmptyOrNull(email)) {
-            return Ut.jsHistoryBack("F-6", "이메일을 입력해");
+            return Ut.jsHistoryBack("F-6", "이메일을 입력하세요");
         }
         if (Ut.isEmptyOrNull(address)) {
-            return Ut.jsHistoryBack("F-7", "주소를 입력해");
+            return Ut.jsHistoryBack("F-7", "주소를 입력하세요");
         }
         if (Ut.isEmptyOrNull(authName)) {
-            return Ut.jsHistoryBack("F-8", "인증명을 입력해");
+            return Ut.jsHistoryBack("F-8", "인증명을 입력하세요");
         }
 
         // 이메일 정규화 + 형식/도메인 체크
