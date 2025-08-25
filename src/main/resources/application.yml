@@ -9,7 +9,7 @@ spring:
     host: smtp.sendgrid.net
     port: 587
     username: apikey
-    password:   # 푸시할 떄마다 지우기
+    password:    # 푸시할 떄마다 지우기
     properties:
       mail.smtp.auth: true
       mail.smtp.starttls.enable: true
