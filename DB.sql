@@ -137,6 +137,7 @@ CREATE TABLE pet
 
 ALTER TABLE pet ADD COLUMN photo VARCHAR(255);
 
+-- 반려동물 감정/행동 분석 결과를 저장하는 테이블
 
 CREATE TABLE pet_analysis (
   id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY COMMENT '분석 결과 ID',
@@ -260,7 +261,7 @@ UPDATE Qna SET isSecret = 0 WHERE id IN (4, 5, 6, 11); -- 공개글
 ALTER TABLE reply ADD COLUMN goodReactionPoint INT(10) UNSIGNED NOT NULL DEFAULT 0;
 ALTER TABLE reply ADD COLUMN badReactionPoint INT(10) UNSIGNED NOT NULL DEFAULT 0;
 
--- reactionPoint 테이블 생성
+-- 좋아요, 싫어요 테이블 생성
 CREATE TABLE reactionPoint
 (
     id          INT(10) UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
@@ -333,15 +334,6 @@ isRead BOOLEAN NOT NULL DEFAULT FALSE  -- 읽음 여부
 
 ALTER TABLE notification ADD senderId INT(10) UNSIGNED DEFAULT NULL;
 
-create table vet_certificate(
-id int(10) unsigned not null primary key auto_increment,
-memberId int(10) unsigned not null comment '회원 ID (FK)',
-fileName varchar(255) not null comment '업로드된 원본 파일명',
-filepath varchar(500) not null comment '서버 저장 경로',
-uploadedAt datetime not null,
-approved tinyint(1) unsigned not null default 0 comment '승인 여부 (0=대기, 1=승인, 2=거절)'
-);
-
 -- ｍｅｍｂｅｒ테이블에　컬럼　추가
 ALTER TABLE member
 ADD COLUMN vetCertUrl VARCHAR(255),
@@ -380,7 +372,7 @@ CREATE TABLE schedule_participant (
   FOREIGN KEY (memberId) REFERENCES member(id) ON DELETE CASCADE
 );
 
-## 진단서 / 검사결과지 DB
+## 처방전 / 진단서 / 검사결과지 DB
 
 -- 방문기록
 CREATE TABLE visit (
@@ -483,6 +475,20 @@ CREATE TABLE pet_food (
     ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='펫별 사료/간식 정보 + 섭취 기간/기본사료 관리';
 
+-- ✅ 반려동물 배변 이벤트 기록 테이블
+CREATE TABLE IF NOT EXISTS litter_event (
+  id           BIGINT PRIMARY KEY AUTO_INCREMENT,
+  petId        BIGINT NOT NULL,
+  detectedAt   DATETIME NOT NULL,     -- 분석 기준 시각(= logDate)
+  type         ENUM('pee','poop','unknown') NOT NULL,
+  confidence   DECIMAL(4,3) NULL,
+  visualSignals JSON NULL,
+  anomalies     JSON NULL,
+  notes        TEXT NULL,
+  sourceVideo  VARCHAR(255) NULL,     -- (선택) 원본 영상 경로/URL
+  logId        BIGINT NULL,           -- (선택) pet_health_log.id와 연결
+  INDEX idx_pet_time (petId, detectedAt)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 ############# 💣 트리거 ###################
 -- :흰색_확인_표시: INSERT 트리거: 백신 접종 등록 시 자동으로 예정일 계산
