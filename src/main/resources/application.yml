@@ -76,12 +76,8 @@ naver:
 gcv:
   ocrMode: DOCUMENT_TEXT_DETECTION   # TEXT_DETECTION | DOCUMENT_TEXT_DETECTION
   credentials:
-    json: |-  # 푸시할 떄마다 괄호 안에 내용 지우기
-      { 
-        
-      }
-
-    path: ""
+    json: ""
+    path: file:/C:/RSW_spring_work/keys/gcv.json # 로컬 키 파일 경로
     base64: ""
 # [추가] 없으면 생성
 app:

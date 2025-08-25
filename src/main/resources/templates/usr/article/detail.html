@@ -73,13 +73,13 @@ body {
 }
 </style>
 </head>
-<body class="bg-gradient-to-b from-[#e4f0b9] to-[#fcdca9]  min-h-[720px]">
+<body class="bg-gradient-to-b from-[#e4f0b9] to-[#fcdca9] h-screen min-h-dvh min-w-[1400px]">
 	<div class="flex h-screen">
 		<!-- Sidebar -->
 		<div th:replace="common :: siteHeader"></div>
 
 		<!-- Main content -->
-		<main class="main_page  min-h-[720px] flex-1 p-6 grid grid-cols-12 gap-4">
+		<main class="main_page h-full overflow-y-auto min-h-dvh box-border flex-1 p-6 grid grid-cols-12 gap-4">
 
 			<script th:inline="javascript">
 	const params = {};
