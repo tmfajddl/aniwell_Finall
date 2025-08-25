@@ -8,7 +8,7 @@ spring:
     host: smtp.sendgrid.net
     port: 587
     username: apikey
-    password: # 푸시할 떄마다 지우기
+    password:  # 푸시할 떄마다 지우기
     properties:
       mail.smtp.auth: true
       mail.smtp.starttls.enable: true
@@ -24,7 +24,7 @@ spring:
       redirect-uri: "http://localhost:8080/usr/member/google"
   session:
     store-type: none   # Redis 비활성화
-  #    store-type: redis # Redis 활성화
+#    store-type: redis # Redis 활성화
   autoconfigure:
     exclude:
       - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
@@ -64,9 +64,9 @@ kakao:
   client-secret: "61Ng1JnIKgkQRXgxaJOpY9wo4gffwvn2"
   redirect-uri: "http://localhost:8080/usr/member/kakao"  #로그인 redirect URI
 cloudinary:
-  cloud_name: dfiqktimk
-  api_key: 145284189636895
-  api_secret: 4TS23PL5HMWPolljcIRqitpWwU0
+    cloud_name: dfiqktimk
+    api_key: 145284189636895
+    api_secret: 4TS23PL5HMWPolljcIRqitpWwU0
 naver:
   client-id: "ZdyW5GGtNSgCCaduup7_"
   client-secret: "pJh4IlGi2_"
@@ -76,8 +76,12 @@ naver:
 gcv:
   ocrMode: DOCUMENT_TEXT_DETECTION   # TEXT_DETECTION | DOCUMENT_TEXT_DETECTION
   credentials:
-    json: ""
-    path: file:/C:/RSW_spring_work/keys/gcv.json # 로컬 키 파일 경로
+    json: |-  # 푸시할 떄마다 괄호 안에 내용 지우기
+      { 
+        
+      }
+
+    path: ""
     base64: ""
 # [추가] 없으면 생성
 app:
