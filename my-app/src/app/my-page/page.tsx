@@ -34,7 +34,7 @@ export default function MyPage() {
   };
 
   useEffect(() => {
-    fetch("http://localhost:8080/api/member/myPage", {
+    fetch("http://localhost:8080/api/member/getUsrInfo", {
       credentials: "include",
     })
       .then((res) => {
