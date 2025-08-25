@@ -113,7 +113,7 @@
 					data: { city, district },
 					success: function (response) {
 						console.log("✅ 동 리스트:", response);
-						const dongs = response.data1.dongs; // ✅ 유지
+						const dongs = (response.data && response.data.dongs) || (response.data1 && response.data1.dongs) || [];  // ✅ [수정] data/data1 모두 대응
 
 						localStorage.setItem("userCity", city);
 						localStorage.setItem("userDistrict", district);
@@ -198,16 +198,21 @@
     let query = ($('#searchInput').val() || '').trim(); // ← [수정] 기존: const query = $('#searchInput').val();
 
     /* ✅ [추가] 검색어가 공백이면 첫 로드(전체 리스트)와 동일하게 동 필터 제거 */
-   /*  if (query === '') {
-      skipDongFilter = true;
-    } */
-
+     if (!localStorage.getItem("selectedDong") && query === '') {
+  skipDongFilter = true;  }
+ 
     const dong = skipDongFilter ? '' :
       (localStorage.getItem("selectedDong") || localStorage.getItem("userDong")); // 🔸 선택된 동 가져오기
 
     const lat = localStorage.getItem("userLat");
     const lng = localStorage.getItem("userLng");
 
+    
+ // ✅ 파라미터를 동적으로 구성: 비어 있으면 '키 자체'를 보내지 않음
+    const params = { sortBy: 'createdAt' };
+    if (query) params.query = query;                     // 값 있을 때만
+    if (!skipDongFilter && dong) params.dong = dong;     // 동 필터 활성 + 값 있을 때만
+    
     // ✅ 서버에 검색어와 동 둘 다 전달
     $.ajax({
       url: '/usr/walkCrew/api/list',
@@ -217,14 +222,19 @@
         query: query || '',      // ✅ null 방지
         dong: dong || '',        // ✅ null 방지
         sortBy: 'createdAt'      // or 'title' / 기본 정렬 기준 명시
-      },
+      }, 
+      
+      /* data: params, */
+      
       success: function (response) {
         if (response.resultCode !== 'S-1') {
           alert('❌ 불러오기 실패: ' + response.msg);
           return;
         }
 
-        const crewList = response.data1.crews;
+        const crewList = (response.data1 && response.data1.crews)
+        || (response.data && response.data.crews)
+        || [];
         const container = $('#crewListContainer');
         container.empty();
 
@@ -298,8 +308,20 @@
 
 
 	<script>
-	window.parent.closeModal(); // 모달 닫기
-	window.parent.loadCrewList(); // 모달 닫고 목록 갱신
+  // ✅ 현재 문서가 부모 모달 내부일 때만 시도 (Cross-origin/undefined 안전)
+  try {
+    if (window.parent && window.parent !== window
+        && typeof window.parent.closeModal === 'function') {
+      window.parent.closeModal();
+    }
+    if (window.parent && window.parent !== window
+        && typeof window.parent.loadCrewList === 'function') {
+      window.parent.loadCrewList();
+    }
+  } catch (e) {
+    // 콘솔에만 참고 로그 (서비스 동작엔 영향 없음)
+    console.debug('parent modal hooks not available:', e);
+  }
 </script>
 
 

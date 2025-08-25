@@ -4,6 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Aniwell QR Report</title>
+
+    <!-- 스타일(간결/일관) -->
     <style>
         :root{ --bg:#FFF8F3; --card:#fff; --accent:#FFC4C4; --chip:#f6f6f6; --ok:#16a34a; --down:#ef4444; --muted:#6b7280; --border:#ececec;}
         html[data-theme="male"]{ --bg:#F3F8FF; --accent:#BFD9FF; --chip:#EEF4FF; }
@@ -18,47 +20,60 @@
         .hero img{width:110px;height:110px;border-radius:16px;object-fit:cover;border:6px solid #fff;box-shadow:0 6px 18px rgba(0,0,0,.08)}
         .kv{display:grid;grid-template-columns:110px 1fr;gap:6px 12px;font-size:14px}
         .muted{color:var(--muted)}
-        .stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+
+        .stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
         .stat{border:1px solid var(--border);border-radius:14px;padding:14px}
         .row{display:flex;align-items:center;justify-content:space-between;gap:10px}
         .delta.up{color:var(--ok)} .delta.down{color:var(--down)} .delta.same{color:var(--muted)}
         .delta b{font-weight:700}
-        .cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
-        .visit{border:1px solid var(--border);border-radius:14px;padding:14px;display:grid;gap:8px}
+
         .btn{appearance:none;border:1px solid var(--border);background:#fff;border-radius:10px;padding:8px 12px;cursor:pointer}
         .btn:hover{box-shadow:0 6px 16px rgba(0,0,0,.06)}
-        .chips{display:flex;gap:6px;flex-wrap:wrap}
-        .chip{background:var(--chip);border-radius:999px;padding:4px 10px;font-size:12px}
-        .chip.muted{opacity:.6}
-        .tag{background:var(--chip);border-radius:999px;padding:4px 10px;font-size:12px;display:inline-block;margin-right:6px}
-        table{width:100%;border-collapse:collapse} th,td{padding:8px 10px;border-bottom:1px solid var(--border);text-align:left;font-size:13px}
-        .flag-H{color:#b91c1c;font-weight:700}
-        .flag-L{color:#1d4ed8;font-weight:700}
-        .flag-N{color:#16a34a;font-weight:700}
-        .modal{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:center;justify-content:center;padding:16px;z-index:999}
-        .dialog{background:#fff;border-radius:16px;box-shadow:0 20px 40px rgba(0,0,0,.25);width:min(840px,94vw);max-height:86vh;display:flex;flex-direction:column;overflow:hidden}
-        .dialog .hd{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;gap:10px;align-items:center;justify-content:space-between}
-        .dialog .hd .title{font-weight:700}
-        .dialog .bd{padding:14px 16px;overflow:auto}
-        .dialog .ft{padding:12px 16px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px}
-        .close-x{border:none;background:transparent;font-size:20px;cursor:pointer}
-        .btn.primary{background:#111;color:#fff;border-color:#111}
-        .thumbs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
-        .thumb{border:1px solid var(--border);border-radius:10px;overflow:hidden;background:#fafafa}
-        .thumb img{width:100%;height:160px;object-fit:cover;display:block}
-        .thumb .meta{padding:8px;font-size:12px;color:#555;display:flex;justify-content:space-between;gap:8px;align-items:center}
-        .thumb a{font-size:12px}
-        .empty{color:var(--muted);padding:8px}
+        .chip{background:var(--chip);border-radius:999px;padding:6px 12px;font-size:12px;border:1px solid var(--border);cursor:pointer}
+        .chip--active{background:#111;color:#fff;border-color:#111}
+
         .legend{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
         .legend .item{display:flex;align-items:center;gap:6px;font-size:12px;color:#444;background:var(--chip);padding:4px 8px;border-radius:999px}
         .point-swatch{width:10px;height:10px;border:1px solid #bbb;border-radius:2px}
         .swatch-dry{border-radius:50%}
         .swatch-wet{border-radius:2px}
         .swatch-mix{clip-path:polygon(50% 0,0 100%,100% 100%)}
-        @media (max-width:760px){ .cards{grid-template-columns:1fr} .hero{flex-direction:column;align-items:flex-start} .dialog{width:96vw} .thumbs{grid-template-columns:repeat(2,1fr)} }
+
+        table{width:100%;border-collapse:collapse}
+        th,td{padding:10px;border-bottom:1px solid var(--border);text-align:left;font-size:13px}
+
+        /* 방문 카드 */
+        .cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+        .visit{border:1px solid var(--border);border-radius:14px;padding:14px;display:grid;gap:8px}
+
+        /* 모달 */
+        .modal{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:center;justify-content:center;padding:16px;z-index:999}
+        .dialog{background:#fff;border-radius:16px;box-shadow:0 20px 40px rgba(0,0,0,.25);width:min(840px,94vw);max-height:86vh;display:flex;flex-direction:column;overflow:hidden}
+        .dialog .hd{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;gap:10px;align-items:center;justify-content:space-between}
+        .dialog .bd{padding:14px 16px;overflow:auto}
+        .dialog .ft{padding:12px 16px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px}
+        .close-x{border:none;background:transparent;font-size:20px;cursor:pointer}
+
+        @media (max-width:760px){
+            .cards{grid-template-columns:1fr}
+            .hero{flex-direction:column;align-items:flex-start}
+            .stats{grid-template-columns:1fr}
+            .dialog{width:96vw}
+        }
+
+        .twins{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:8px}
+        .mini{border:1px solid var(--border);border-radius:12px;padding:10px;background:#fff}
+        .mini table{width:100%;border-collapse:collapse}
+        .mini th,.mini td{padding:6px 8px;border:0;font-size:12px}
+
+        @media (max-width:760px){
+            .twins{grid-template-columns:1fr}
+        }
+
     </style>
+
+    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3"></script>
 </head>
 <body>
 <div class="wrap">
@@ -68,7 +83,7 @@
         <div class="muted" id="subtitle"></div>
     </div>
 
-    <!-- 상단 펫 정보 -->
+    <!-- 펫 정보 -->
     <section class="card" id="petCard" hidden>
         <div class="hero">
             <img id="petPhoto" src="" alt="pet photo">
@@ -85,7 +100,7 @@
         </div>
     </section>
 
-    <!-- 급식/급수 -->
+    <!-- 이번 주 변화: 급식/급수/배변 -->
     <section class="card">
         <h3 style="margin:0 0 12px">이번 주 변화</h3>
         <div class="stats">
@@ -103,16 +118,97 @@
                 <tr><th>이번주 평균</th><td id="waterThis">-</td></tr>
                 </tbody></table>
             </div>
+            <div class="stat">
+                <div class="row"><b>배변/배뇨</b></div>
+
+                <!-- 두 칸 레이아웃 -->
+                <div class="twins">
+                    <!-- 소변 -->
+                    <div class="mini">
+                        <div class="row">
+                            <span>💧 소변</span>
+                            <div id="peeDelta" class="delta">-</div>
+                        </div>
+                        <table class="mini-table"><tbody>
+                        <tr><th>전주</th><td id="peePrev">-</td></tr>
+                        <tr><th>이번주</th><td id="peeThis">-</td></tr>
+                        </tbody></table>
+                    </div>
+
+                    <!-- 대변 -->
+                    <div class="mini">
+                        <div class="row">
+                            <span>💩 대변</span>
+                            <div id="poopDelta" class="delta">-</div>
+                        </div>
+                        <table class="mini-table"><tbody>
+                        <tr><th>전주</th><td id="poopPrev">-</td></tr>
+                        <tr><th>이번주</th><td id="poopThis">-</td></tr>
+                        </tbody></table>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </section>
 
-    <!-- 몸무게 변화 -->
-    <section class="card" id="weightCard" hidden>
-        <h3 style="margin:0 0 6px">몸무게 변화</h3>
-        <div class="muted" style="font-size:12px">포인트 모양으로 사료를 구분합니다 (건식 ● / 습식 ■ / 혼합 ▲)</div>
-        <div style="height:280px;margin-top:10px"><canvas id="weightChart"></canvas></div>
-        <div class="legend" id="feedLegend"></div>
-        <div id="weightEmpty" class="muted" style="padding-top:6px" hidden>몸무게 기록이 없습니다</div>
+    <!-- 몸무게 & 배변(요약/필터/더보기) -->
+    <section class="card" style="padding:18px">
+        <h3 style="margin:0 0 12px">몸무게 & 배변</h3>
+
+        <!-- 컨트롤바 -->
+        <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
+            <!-- 기간칩: 몸무게 -->
+            <div style="display:flex;gap:6px;align-items:center">
+                <span class="muted" style="font-size:12px">몸무게 기간</span>
+                <button class="chip js-period" data-days="7">7일</button>
+                <button class="chip js-period chip--active" data-days="30">30일</button>
+                <button class="chip js-period" data-days="90">3개월</button>
+                <button class="chip js-period" data-days="0">전체</button>
+            </div>
+
+            <!-- 배변 필터 -->
+            <div style="display:flex;gap:6px;align-items:center;margin-left:auto">
+                <button class="chip js-type chip--active" data-type="all">최근</button>
+                <button class="chip js-type" data-type="pee">💧 소변</button>
+                <button class="chip js-type" data-type="poop">💩 대변</button>
+                <button class="chip js-type" data-type="unknown">❓ 미분류</button>
+                <label class="chip" style="display:flex;align-items:center;gap:6px">
+                    <input id="litAnom" type="checkbox" style="accent-color:#111"> 이상만
+                </label>
+            </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:500px 1fr;gap:16px;align-items:start">
+            <!-- 왼쪽: 몸무게(가로 스크롤, x라벨 제거) -->
+            <div>
+                <div id="wtScroll" style="overflow-x:auto;border:1px solid var(--border);border-radius:14px;background:#fff;padding:10px">
+                    <canvas id="wtChart" height="260"></canvas>
+                </div>
+                <div id="feedLegend" class="legend"></div>
+            </div>
+
+            <!-- 오른쪽: 배변 표(요약 기본, 더보기) -->
+            <div>
+
+                <div style="border:1px solid var(--border);border-radius:14px;background:#fff;height:300px;overflow:auto">
+                    <table>
+                        <thead>
+                        <tr>
+                            <th style="width:170px">시간</th>
+                            <th style="width:90px">종류</th>
+                            <th>특이사항</th>
+                        </tr>
+                        </thead>
+                        <tbody id="litTbody"></tbody>
+                    </table>
+                </div>
+
+                <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:8px">
+                    <button id="btnMoreLitter" class="btn">더보기</button>
+                </div>
+            </div>
+        </div>
     </section>
 
     <!-- 방문 기록 -->
@@ -134,7 +230,7 @@
             </div>
         </div>
         <div class="bd" id="visitBody"></div>
-        <div class="ft"><button class="btn primary" id="closeVisitModal2">닫기</button></div>
+        <div class="ft"><button class="btn" id="closeVisitModal2">닫기</button></div>
     </div>
 </div>
 
@@ -146,298 +242,480 @@
             <button class="close-x" id="closeDocsModal" aria-label="닫기">✕</button>
         </div>
         <div class="bd" id="docsBody"></div>
-        <div class="ft"><button class="btn primary" id="closeDocsModal2">닫기</button></div>
+        <div class="ft"><button class="btn" id="closeDocsModal2">닫기</button></div>
     </div>
 </div>
 
 <script>
-    /* ==== API ==== */
-    const API_BASE = 'http://localhost:8080';
-    const FOOD_UNIT = 'g';
-    const WATER_UNIT = 'mL';
-
+    /* ===== 기본 유틸 ===== */
+    const API_BASE = ''; // 같은 도메인이면 빈 문자열 유지
     const qs = new URLSearchParams(location.search);
     const petId = qs.get('petId');
-    const selectedVisitId = qs.get('visitId');
 
-    /* ==== utils ==== */
-    const $ = (id) => document.getElementById(id);
-    const safe = (v, d='-') => (v===null || v===undefined || v==='') ? d : v;
-    const num = (v) => (v===null || v===undefined || v==='') ? null : Number(v);
-    const pad = (n)=> String(n).padStart(2,'0');
-    const fmtDateTime = (s)=>{
-        if (!s) return '-';
+    const $  = (s,root=document)=>root.querySelector(s);
+    const $$ = (s,root=document)=>Array.from(root.querySelectorAll(s));
+    const pad = n=>String(n).padStart(2,'0');
+    const fmt = s => {
         const d = new Date(String(s).replace(' ','T'));
         if (isNaN(d)) return s;
         return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
     };
-    const ageFromBirth = (birth)=>{
-        if (!birth) return '-';
-        const b = new Date(birth); if (isNaN(b)) return birth;
-        const now = new Date();
-        let y = now.getFullYear() - b.getFullYear();
-        let m = now.getMonth() - b.getMonth();
-        if (m < 0){ y--; m += 12; }
-        return y>0 ? `${y}세 ${m}개월` : `${m}개월`;
-    };
-    const startOfWeekMon = (d0=new Date())=>{
+    const safe = (v,d='-') => (v===null||v===undefined||v==='')?d:v;
+
+    function startOfWeekMon(d0=new Date()){
         const d = new Date(d0); d.setHours(0,0,0,0);
-        const day = d.getDay(); const diff = (day===0 ? -6 : 1 - day);
-        d.setDate(d.getDate() + diff); return d;
-    };
-    const inRange = (t, from, to) => t>=from.getTime() && t<to.getTime();
-
-
-    function toDateOnly(d){
-        const x = new Date(d);
-        x.setHours(0,0,0,0);
-        return x;
+        const wd = d.getDay(); const diff = (wd===0 ? -6 : 1 - wd);
+        d.setDate(d.getDate()+diff); return d;
     }
-    function dateKey(d){
-        return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+    function inRange(ts, from, to){ return ts>=from.getTime() && ts<to.getTime(); }
+
+    /* ===== 펫 카드/테마 ===== */
+    function applyThemeByGender(gender){
+        const g = String(gender||'').toLowerCase();
+        const male   = ['수컷','남','남아','m','male'].some(k=>g.includes(k));
+        const female = ['암컷','여','여아','f','female'].some(k=>g.includes(k));
+        const root = document.documentElement;
+        if (male) root.setAttribute('data-theme','male');
+        else if (female) root.setAttribute('data-theme','female');
+        else root.removeAttribute('data-theme');
     }
-    /* 같은 날 여러 기록이 있으면 '가장 늦은 시간' 기록을 채택 */
-    function toDaySeries(points){
-        const byDay = new Map(); // key: yyyy-mm-dd -> point
-        for (const p of (points||[])){
-            const k = dateKey(p.x);
-            if (!byDay.has(k) || p.x > byDay.get(k)._orig){
-                byDay.set(k, { ...p, x: toDateOnly(p.x), _orig: p.x });
-            }
-        }
-        return Array.from(byDay.values())
-            .map(({_orig, ...rest}) => rest)
-            .sort((a,b)=> a.x - b.x);
+    function renderPet(p){
+        $('#petCard').hidden = false;
+        $('#petName').textContent = `${safe(p.name)} (${safe(p.species)})`;
+        $('#petBreed').textContent = safe(p.breed);
+        $('#petGender').textContent = safe(p.gender);
+        $('#petBirth').textContent = safe(p.birthDate);
+        $('#petWeight').textContent = p.weight!=null ? `${p.weight}` : '-';
+
+        const feedType = p.feedType || p.foodType || null;
+        const brand    = p.brand || p.feedBrand || null;
+        const prod     = p.productName || p.product || null;
+        const flavor   = p.flavor || null;
+        const parts = [];
+        if (feedType) parts.push(feedType);
+        const name = [brand, prod].filter(Boolean).join(' / ');
+        if (name) parts.push(name);
+        if (flavor) parts.push(`(${flavor})`);
+        $('#petFeed').textContent = parts.length ? parts.join(' · ') : '-';
+
+        $('#petPhoto').src = p.photo || 'https://placehold.co/160x160?text=No+Photo';
+        $('#subtitle').textContent = `ID #${p.id}`;
+        applyThemeByGender(p.gender);
     }
 
-
-    /* averages */
+    /* ===== 이번 주 변화(급식/급수) ===== */
     function weeklyAverages(logs, key){
         const now = new Date();
         const thisStart = startOfWeekMon(now);
         const nextStart = new Date(thisStart); nextStart.setDate(thisStart.getDate()+7);
         const prevStart = new Date(thisStart); prevStart.setDate(thisStart.getDate()-7);
-        const pick = (from, to)=>{
+
+        const pick = (from,to)=>{
             let sum=0, cnt=0;
             for(const l of (logs||[])){
-                const v = num(l[key]); if (v===null || isNaN(v)) continue;
+                const v = (l[key]!==null && l[key]!==undefined) ? Number(l[key]) : null;
+                if (v===null || isNaN(v)) continue;
                 const when = l.logDate || l.date || l.createdAt;
-                const t = new Date(String(when).replace(' ','T')).getTime(); if (isNaN(t)) continue;
-                if (inRange(t, from, to)){ sum += v; cnt++; }
+                const t = new Date(String(when).replace(' ','T')).getTime();
+                if (isNaN(t)) continue;
+                if (inRange(t,from,to)){ sum+=v; cnt++; }
             }
             return cnt ? (sum/cnt) : null;
         };
-        return { prev: pick(prevStart, thisStart), curr: pick(thisStart, nextStart) };
+        return { prev: pick(prevStart,thisStart), curr: pick(thisStart,nextStart) };
     }
-
-    function renderDelta(el, prev, curr, unit){
-        let cls = 'same', txt = '변화 없음';
+    function renderDelta(el, prev, curr, unitText){
+        let cls='same', txt='변화 없음';
         if (prev===null && curr===null){ el.className='delta same'; el.textContent='데이터 없음'; return; }
-        if (prev===null){ el.className='delta up'; el.textContent=`이번주 ${curr.toFixed(2)}${unit}`; return; }
-        if (curr===null){ el.className='delta same'; el.textContent=`이번주 데이터 없음`; return; }
+        if (prev===null){ el.className='delta up'; el.innerHTML=`<b>이번주 ${curr.toFixed(2)}${unitText}</b>`; return; }
+        if (curr===null){ el.className='delta same'; el.textContent='이번주 데이터 없음'; return; }
         const diff = curr - prev;
-        if (Math.abs(diff) < 1e-9){ cls='same'; txt='변화 없음'; }
-        else if (diff > 0){ cls='up';  txt = `▲ ${diff.toFixed(2)}${unit} (+${((diff/prev)*100).toFixed(1)}%)`; }
-        else { cls='down'; txt = `▼ ${Math.abs(diff).toFixed(2)}${unit} (${((diff/prev)*100).toFixed(1)}%)`; }
+        if (Math.abs(diff) < 1e-9) { cls='same'; txt='변화 없음'; }
+        else if (diff > 0) { cls='up'; txt=`▲ ${diff.toFixed(2)}${unitText} (+${((diff/prev)*100).toFixed(1)}%)`; }
+        else { cls='down'; txt=`▼ ${Math.abs(diff).toFixed(2)}${unitText} (${((diff/prev)*100).toFixed(1)}%)`; }
         el.className = 'delta ' + cls; el.innerHTML = `<b>${txt}</b>`;
     }
 
-    /* tables */
-    function doseStr(p){
-        const v = (p.doseValue!=null ? p.doseValue : null);
-        const unit = p.doseUnit ? p.doseUnit : '';
-        const theFreq = (p.freqPerDay!=null ? `${p.freqPerDay}회/일` : null);
-        const days = (p.durationDays!=null ? `${p.durationDays}일` : null);
-        const parts = [];
-        if (v!=null) parts.push(`${v}${unit? ' '+unit : ''}`);
-        if (theFreq) parts.push(theFreq);
-        if (days) parts.push(days);
-        return parts.length ? parts.join(' · ') : '-';
-    }
-
-    function prescriptionsTableHTML(list){
-        if (!Array.isArray(list) || list.length===0) return `<div class="empty">처방전 없음</div>`;
-        const rows = list.map(p => `
-      <tr><td>${safe(p.drugName)}</td><td>${doseStr(p)}</td><td>${safe(p.notes)}</td></tr>
-    `).join('');
-        return `<table>
-      <thead><tr><th style="width:40%">약품명</th><th style="width:40%">용법/용량</th><th>비고</th></tr></thead>
-      <tbody>${rows}</tbody></table>`;
-    }
-
-    function labsTableHTML(list){
-        if (!Array.isArray(list) || list.length===0) return `<div class="empty">검사 결과 없음</div>`;
-        const rows = list.map(l => {
-            const flag = (l.flag || 'N').toUpperCase(); const cls = `flag-${flag}`;
-            const ref = (l.refLow!=null || l.refHigh!=null) ? `${l.refLow??''} ~ ${l.refHigh??''}` : '-';
-            return `<tr>
-        <td>${safe(l.testName)}</td>
-        <td>${l.resultValue!=null? l.resultValue : '-' } ${safe(l.unit,'')}</td>
-        <td>${ref}</td>
-        <td class="${cls}">${flag}</td>
-        <td>${safe(l.notes)}</td>
-      </tr>`;
-        }).join('');
-        return `<table>
-      <thead><tr><th style="width:28%">검사 항목</th><th style="width:22%">결과</th><th style="width:22%">참고범위</th><th style="width:8%">Flag</th><th>비고</th></tr></thead>
-      <tbody>${rows}</tbody></table>`;
-    }
-
-    /* docs */
-    function isImage(url){ return /\.(png|jpe?g|webp|gif)$/i.test(url||''); }
-    function isPdf(url){ return /\.pdf$/i.test(url||''); }
-    function labelDoc(t){
-        const m = String(t||'').toLowerCase();
-        if (m==='prescription') return '처방전';
-        if (m==='lab') return '검사';
-        if (m==='receipt') return '영수증';
-        if (m==='diagnosis') return '진단서';
-        return '문서';
-    }
-    function docsGridHTML(docs){
-        if (!Array.isArray(docs) || docs.length===0) return `<div class="empty">원본 문서가 없습니다</div>`;
-        const items = docs.map(d=>{
-            const u = d.fileUrl || d.file_url || d.url || '';
-            const t = labelDoc(d.docType || d.doc_type);
-            if (isImage(u)) {
-                return `<div class="thumb"><img src="${u}" alt="${t}">
-          <div class="meta"><span>${t}</span><a href="${u}" target="_blank" rel="noopener">새 창</a></div></div>`;
-            } else if (isPdf(u)) {
-                return `<div class="thumb"><div style="height:160px;display:grid;place-items:center;color:#666">PDF</div>
-          <div class="meta"><span>${t}</span><a href="${u}" target="_blank" rel="noopener">열기</a></div></div>`;
-            } else {
-                return `<div class="thumb"><div style="height:160px;display:grid;place-items:center;color:#666">파일</div>
-          <div class="meta"><span>${t}</span><a href="${u}" target="_blank" rel="noopener">다운로드</a></div></div>`;
-            }
-        }).join('');
-        return `<div class="thumbs">${items}</div>`;
-    }
-
-    function applyThemeByGender(gender){
-        const g = String(gender||'').toLowerCase();
-        const isMale   = ['수컷','남','남아','m','male'].some(k => g.includes(k));
-        const isFemale = ['암컷','여','여아','f','female'].some(k => g.includes(k));
-        const root = document.documentElement;
-        if (isMale) root.setAttribute('data-theme','male');
-        else if (isFemale) root.setAttribute('data-theme','female');
-        else root.removeAttribute('data-theme');
-    }
-
-    /* ==== weight & feed helpers ==== */
-    const DATE_KEYS = ['measuredAt','logDate','visitDate','date','createdAt','updatedAt'];
-    const WEIGHT_KEYS = ['weight','bodyWeight','weightKg','weight_kg','petWeight','kg'];
-    const FEED_KEYS   = ['feedType','foodType','사료','feed_type'];
-    const BRAND_KEYS  = ['brand','feedBrand','브랜드'];
-    const PRODUCT_KEYS= ['productName','product','feedProduct','제품명'];
-    const FLAVOR_KEYS = ['flavor','taste','원료','맛'];
-
-    function findFirst(obj, keys){
-        for (const k of keys){ if (obj && obj[k] != null && obj[k] !== '') return obj[k]; }
-        return null;
-    }
-    function parseWeightValue(vRaw){
-        if (vRaw == null || vRaw === '') return null;
-        if (typeof vRaw === 'number'){ return vRaw > 50 ? (vRaw/1000) : vRaw; }
-        const s = String(vRaw).trim().toLowerCase();
-        const m = s.match(/([\d.]+)/); if (!m) return null;
-        const val = parseFloat(m[1]);
-        if (s.includes('kg')) return val;
-        if (s.includes('g')) return val/1000;
-        return val;
-    }
-    function normalizeTime(tRaw){
-        if (!tRaw) return null;
-        const t = new Date(String(tRaw).replace(' ','T'));
-        return isNaN(t) ? null : t;
-    }
-    function pickFeedMeta(obj){
-        const ft = findFirst(obj, FEED_KEYS);
-        const br = findFirst(obj, BRAND_KEYS);
-        const pn = findFirst(obj, PRODUCT_KEYS);
-        const fl = findFirst(obj, FLAVOR_KEYS);
-        return { feedType: ft || null, brand: br || null, productName: pn || null, flavor: fl || null };
-    }
+    /* ===== Chart: 몸무게 (x라벨 숨김 + 가로스크롤, 기본 30일) ===== */
+    let wtChart;
     function feedPointStyle(ft){
         const s = String(ft||'').toLowerCase();
         if (s.includes('dry') || s.includes('건')) return 'circle';
         if (s.includes('wet') || s.includes('습') || s.includes('캔')) return 'rect';
-        if (s.includes('mix') || s.includes('혼') || s.includes('blend')) return 'triangle';
+        if (s.includes('mix') || s.includes('혼')) return 'triangle';
         return 'triangle';
     }
-    function extractWeightSeries(pet, visits, logs){
-        const items = [];
-        const pushIfValid = (obj)=>{
-            const w = parseWeightValue(findFirst(obj, WEIGHT_KEYS));
-            const t = normalizeTime(findFirst(obj, DATE_KEYS));
-            if (w != null && isFinite(w) && t != null){
-                const {feedType, brand, productName, flavor} = pickFeedMeta(obj);
-                items.push({ x: t, y: w, feedType, brand, productName, flavor });
-
-            }
-        };
-        (Array.isArray(visits) ? visits : []).forEach(v=> pushIfValid(v));
-        (Array.isArray(logs) ? logs : []).forEach(l=> pushIfValid(l));
-        items.sort((a,b)=> a.x - b.x);
-        const uniq = []; const seen = new Set();
-        for (const it of items){
-            const key = it.x.toISOString() + '|' + it.y.toFixed(3);
-            if (!seen.has(key)){ seen.add(key); uniq.push(it); }
-        }
-        return uniq;
-    }
     function renderFeedLegend(points){
-        const legend = $('feedLegend'); legend.innerHTML = '';
-        if (!points.length) return;
-        const buckets = new Map();
-        for (const p of points){
-            const style = feedPointStyle(p.feedType);
-            const label = (() => {
-                const name = [p.brand, p.productName].filter(Boolean).join(' / ');
-                const head = p.feedType ? p.feedType : null;          // dry/wet…
-                const tail = p.flavor ? `(${p.flavor})` : null;
-                return [head, name, tail].filter(Boolean).join(' · ');
-            })();
-            if (!buckets.has(style)) buckets.set(style, new Set());
-            buckets.get(style).add(label);
-        }
-        for (const [style, set] of buckets.entries()){
-            const swatchClass = style === 'circle' ? 'swatch-dry' : style === 'rect' ? 'swatch-wet' : 'swatch-mix';
-            const labels = Array.from(set).slice(0,5);
+        const box = $('#feedLegend'); box.innerHTML = '';
+        if (!points?.length) return;
+        const kinds = new Set(points.map(p=>feedPointStyle(p.feedType)));
+        kinds.forEach(k=>{
+            const sw = k==='circle' ? 'swatch-dry' : k==='rect' ? 'swatch-wet' : 'swatch-mix';
+            const label = k==='circle' ? '건식' : (k==='rect' ? '습식' : '혼합');
             const el = document.createElement('div');
             el.className = 'item';
-            el.innerHTML = `<span class="point-swatch ${swatchClass}"></span><span>${labels.join(' · ')}</span>`;
-            legend.appendChild(el);
-        }
+            el.innerHTML = `<span class="point-swatch ${sw}"></span><span>${label}</span>`;
+            box.appendChild(el);
+        });
     }
 
-    /* ==== visit cards ==== */
+
+
+    let wtRaw = [];            // 서버에서 한번 받아 둔 전체
+    let wtPeriodDays = 30;     // 기본 30일
+    const DAY_MS = 24*60*60*1000;
+
+    async function fetchWeightAll(){
+        const url = `${API_BASE}/api/pet/weight-timeline?petId=${petId}`;
+        const r = await fetch(url, { headers:{ 'Accept':'application/json' } });
+        if (!r.ok){ renderWeight([]); return; }
+        const js = await r.json();
+
+        wtRaw = (Array.isArray(js.points) ? js.points : js)
+            .map(p=>{
+                const t = p.measuredAt || p.date || p.createdAt;
+                const x = new Date(String(t).replace(' ','T'));
+                const y = Number(p.weightKg ?? p.weight ?? p.kg ?? p.bodyWeight);
+                const feedType = p.foodType || p.feedType || null;
+                return (x instanceof Date && !isNaN(x) && isFinite(y)) ? { x, y, feedType } : null;
+            })
+            .filter(Boolean)
+            .sort((a,b)=> a.x - b.x);
+
+        renderWeight(applyWeightFilter());
+    }
+
+    function applyWeightFilter(){
+        if (!wtPeriodDays || wtPeriodDays <= 0) return [...wtRaw]; // 전체
+        const end = new Date(); end.setHours(23,59,59,999);
+        const start = new Date(end - (wtPeriodDays-1)*DAY_MS); start.setHours(0,0,0,0);
+        return wtRaw.filter(p => p.x >= start && p.x <= end);
+    }
+
+    function dateKey(d){
+        return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    }
+    function dedupLastPerDay(points){
+        const byDay = new Map(); // key: YYYY-MM-DD -> point
+        for (const p of (points || [])){
+            if (!p?.x || isNaN(p.x)) continue;
+            const key = dateKey(p.x);
+            const prev = byDay.get(key);
+            // 기존보다 시간이 같거나 더 늦으면 교체(= '마지막' 기록 유지)
+            if (!prev || p.x.getTime() >= prev.x.getTime()){
+                byDay.set(key, p);
+            }
+        }
+        return Array.from(byDay.values()).sort((a,b)=>a.x - b.x);
+    }
+
+    let wtResizeObs;
+    function setupWeightResizeObserver(){
+        const el = document.getElementById('wtScroll');
+        if (!el) return;
+        if (wtResizeObs) wtResizeObs.disconnect();
+        wtResizeObs = new ResizeObserver(()=>{
+            // 컨테이너 폭이 변하면 현재 기간의 데이터로 다시 그리기
+            renderWeight(applyWeightFilter());
+        });
+        wtResizeObs.observe(el);
+    }
+
+
+    function renderWeight(points){
+        const scroll = document.getElementById('wtScroll');
+        const canvas = document.getElementById('wtChart');
+
+        // ✅ 같은 날짜 중 마지막 1개만 남긴다
+        const pts = dedupLastPerDay(points);
+
+        const pxPer = 40; // 포인트당 가로폭
+        const wantW = Math.max(scroll.clientWidth, (pts.length * pxPer) + 60);
+        canvas.width = wantW;             // 속성으로 지정해야 가로 스크롤 OK
+        canvas.height = 260;
+
+        if (wtChart) wtChart.destroy();
+
+        const labels = pts.map(p => `${p.x.getFullYear()}-${String(p.x.getMonth()+1).padStart(2,'0')}-${String(p.x.getDate()).padStart(2,'0')}`);
+        const data   = pts.map(p => p.y);
+
+        wtChart = new Chart(canvas.getContext('2d'), {
+            type:'line',
+            data:{ labels, datasets:[{
+                    label:'몸무게(kg)',
+                    data,
+                    borderWidth:2, borderColor:'#111', backgroundColor:'#111',
+                    tension:.25, pointRadius:5, pointHoverRadius:6,
+                    pointStyle:(ctx)=>feedPointStyle(pts[ctx.dataIndex]?.feedType)
+                }]},
+            options:{
+                responsive:false, maintainAspectRatio:false,
+                scales:{
+                    x:{ ticks:{ display:false }, grid:{ display:false } }, // x 라벨 숨김
+                    y:{ title:{ display:true, text:'kg' } }
+                },
+                plugins:{ legend:{ display:false } }
+            }
+        });
+
+        // 범례도 중복 제거된 포인트 기준으로
+        renderFeedLegend(pts);
+    }
+
+
+
+    /* ===== 배변 표(최근 14일/20건 기본 + 필터/이상만/더보기) ===== */
+    // 배변 표 상태
+    const litState = { limit:20, offset:0, days:14, types:['pee','poop','unknown'], anomaliesOnly:false, loading:false };
+    // ✅ 이미 추가한 항목 키(중복 방지용)
+    const litSeenKeys = new Set();
+
+    // 각 이벤트의 고유 키 생성: id가 있으면 그걸 쓰고, 없으면 날짜+종류(+노트 일부)로 대체
+    function litKey(it){
+        if (it && it.id != null) return `id:${it.id}`;
+        const t = it?.detectedAt || it?.createdAt || it?.time || '';
+        const type = it?.type || '';
+        const note = (normalizeNotesField(it?.notes) || '').slice(0,50); // 너무 길면 잘라서
+        return `t:${t}|${type}|${note}`;
+    }
+
+
+    function mapType(t){ return t==='pee' ? '💧 소변' : t==='poop' ? '💩 대변' : '❓ 미분류'; }
+    function hasNotable(it){
+        if (Array.isArray(it.anomalies) && it.anomalies.length) return true;
+        const n = (it.notes||'');
+        return /(색=.+이상|체류=길다|힘주기|과도한 파기|혈|검붉|녹색|거품|점액)/.test(n);
+    }
+    async function fetchLitter({append=false}={}){
+        if (litState.loading) return;             // 중복 클릭 방지
+        litState.loading = true;
+        const moreBtn = document.getElementById('btnMoreLitter');
+        moreBtn.disabled = true;                  // 로딩 중 잠깐 비활성화
+        moreBtn.textContent = '불러오는 중...';
+
+        // append=false면 처음부터 다시
+        if (!append) {
+            litRaw = [];
+            litSeenKeys.clear();
+            litState.offset = 0;
+        }
+
+        const q = new URLSearchParams();
+        q.set('petId', petId);
+        q.set('limit', litState.limit);
+        q.set('offset', litState.offset);
+        if (litState.days) q.set('days', litState.days);
+        if (litState.types.length && litState.types.length < 3){
+            q.set('type',  litState.types.join(','));
+            q.set('types', litState.types.join(','));
+        }
+        if (litState.anomaliesOnly) q.set('anomaliesOnly','true');
+
+        let r = await fetch(`${API_BASE}/api/litter/events?${q}`, { headers:{'Accept':'application/json'} });
+        if (!r.ok) r = await fetch(`${API_BASE}/api/litter/recent?${q}`, { headers:{'Accept':'application/json'} });
+        if (!r.ok) {
+            moreBtn.disabled = false;
+            moreBtn.textContent = '더보기';
+            litState.loading = false;
+            return;
+        }
+
+        const js = await r.json();
+        const list = Array.isArray(js.data) ? js.data : (Array.isArray(js) ? js : []);
+
+        // ✅ 중복 제거하여 litRaw에만 추가
+        const before = litSeenKeys.size;
+        for (const it of list) {
+            const k = litKey(it);
+            if (!litSeenKeys.has(k)) {
+                litSeenKeys.add(k);
+                litRaw.push(it);
+            }
+        }
+        const added = litSeenKeys.size - before;
+
+        // 화면 갱신(항상 로컬 필터 적용)
+        renderLitter(applyLitterFilters());
+
+        // 페이지 이동/버튼 상태 갱신
+        if (append) {
+            if (added === 0) {
+                // 서버가 같은 페이지를 다시 보냈거나 더 이상 없음
+                moreBtn.disabled = true;
+                moreBtn.textContent = '더 이상 없음';
+            } else {
+                // 다음 페이지로 전진
+                litState.offset += litState.limit;
+                moreBtn.disabled = false;
+                moreBtn.textContent = '더보기';
+            }
+        } else {
+            // 첫 로드
+            litState.offset = list.length ? litState.limit : 0;
+            moreBtn.disabled = list.length < litState.limit;
+            moreBtn.textContent = moreBtn.disabled ? '더 이상 없음' : '더보기';
+        }
+
+        litState.loading = false;
+    }
+
+
+
+    // ▼ 정상/불필요 문구 제거 + 이상 키워드만 남기기
+    const BAD_RE = /(혈|피|검붉|적색|녹색|검은|흑색|거품|점액|설사|묽|딱딱|악취|장시간|오래|>\s*\d+\s*초|분|무노출|배뇨없음|배변없음|소량|과다|힘주기)/;
+
+    function tryParseJSON(s){ try{ return JSON.parse(s); } catch { return null; } }
+
+    function normalizeNotesField(n){
+        if (n == null) return '';
+        if (Array.isArray(n)) return n.join('; ');
+        if (typeof n === 'object') return Object.values(n).join('; ');
+        if (typeof n === 'string'){
+            const t = n.trim();
+            const parsed = (t.startsWith('[') || t.startsWith('{')) ? tryParseJSON(t) : null;
+            if (Array.isArray(parsed)) return parsed.join('; ');
+            if (parsed && typeof parsed === 'object') return Object.values(parsed).join('; ');
+            return t.replace(/^\[|\]$/g,'').replace(/['"]/g,''); // bracket/quote 제거
+        }
+        return String(n);
+    }
+
+    function onlyAbnormal(text){
+        if (!text) return '';
+        const tokens = text
+            .replace(/근거\s*:\s*/gi,'')
+            .replace(/특이사항\s*:\s*/gi,'')
+            .split(/[;,·]/)                  // 세미콜론/콤마/중점 기준 분리
+            .map(s => s.trim())
+            .filter(Boolean)
+            .filter(s => BAD_RE.test(s) && !/정상|보통|경미|없음/.test(s))  // 정상/보통/경미 제외
+            .map(s => s.replace('=', ': ')); // 보기 좋게
+        return tokens.join(' · ');
+    }
+
+    function summarizeNotes(it){
+        // 1) anomalies 우선
+        let an = it.anomalies;
+        if (typeof an === 'string') { const p = tryParseJSON(an); if (p) an = p; }
+        if (Array.isArray(an) && an.length){
+            const txt = onlyAbnormal(an.map(a => typeof a === 'string' ? a : (a.desc||a.name||a.type||'')).join('; '));
+            if (txt) return txt;
+        }
+        // 2) notes 보조
+        const txt2 = onlyAbnormal(normalizeNotesField(it.notes));
+        return txt2 || '-';
+    }
+
+    function applyLitterFilters(){
+        let list = [...litRaw];
+
+        // 타입 필터
+        if (litState.types.length && litState.types.length < 3){
+            list = list.filter(x => litState.types.includes(x.type));
+        }
+        // 이상만
+        if (litState.anomaliesOnly){
+            list = list.filter(x => summarizeNotes(x) !== '-');
+        }
+        return list;
+    }
+
+    function renderLitter(list){
+        list = [...list].sort((a,b)=>{
+            const ta = new Date(String(a.detectedAt||a.createdAt).replace(' ','T')).getTime() || 0;
+            const tb = new Date(String(b.detectedAt||b.createdAt).replace(' ','T')).getTime() || 0;
+            return tb - ta; // 최신 우선
+        });
+        const tb = document.getElementById('litTbody');
+        tb.innerHTML = '';
+        list.forEach(it=>{
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+      <td>${fmt(it.detectedAt)}</td>
+      <td>${it.type==='pee'?'💧 소변':it.type==='poop'?'💩 대변':'❓ 미분류'}</td>
+      <td>${summarizeNotes(it)}</td>
+    `;
+            tb.appendChild(tr);
+        });
+    }
+
+
+    // 필터칩
+    // 타입 칩
+    $$('.js-type').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+            $$('.js-type').forEach(b=>b.classList.remove('chip--active'));
+            btn.classList.add('chip--active');
+            const t = btn.dataset.type;
+            litState.types = (t==='all') ? ['pee','poop','unknown'] : [t];
+            // 서버 재요청 X, 즉시 반영
+            renderLitter(applyLitterFilters());
+        });
+    });
+
+    $$('.js-period').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+            $$('.js-period').forEach(b=>b.classList.remove('chip--active'));
+            btn.classList.add('chip--active');
+            wtPeriodDays = Number(btn.dataset.days || 0);  // 0 = 전체
+            renderWeight(applyWeightFilter());             // 즉시 반영
+        });
+    });
+
+
+    // 이상만 체크
+    document.getElementById('litAnom').addEventListener('change', e=>{
+        litState.anomaliesOnly = !!e.target.checked;
+        // 서버 재요청 X, 즉시 반영
+        renderLitter(applyLitterFilters());
+    });
+
+    // 더보기(추가 로드만 서버 호출)
+    document.getElementById('btnMoreLitter').addEventListener('click', ()=>{
+        litState.offset += litState.limit;
+        fetchLitter({ append:true });
+    });
+
+
+    /* ===== 방문 카드(간단) ===== */
     let _visits = [];
     function visitCardHTML(v){
-        const date = fmtDateTime(v.visitDate);
-        const pres = Array.isArray(v.prescriptions) ? v.prescriptions : [];
-        const labs = Array.isArray(v.labResults) ? v.labResults : [];
-        const pCount = pres.length, lCount = labs.length;
+        const date = fmt(v.visitDate);
+        const pCount = Array.isArray(v.prescriptions)? v.prescriptions.length : 0;
+        const lCount = Array.isArray(v.labResults)? v.labResults.length : 0;
         return `
       <div class="row" style="justify-content:space-between">
         <div><b>${safe(v.hospital,'(병원 미입력)')}</b></div>
         <div class="muted">방문일 · ${date}</div>
       </div>
-      <div class="chips">
-        <span class="chip">의사: ${safe(v.doctor)}</span>
-        <span class="chip">진단: ${safe(v.diagnosis)}</span>
-        <span class="chip ${pCount?'':'muted'}">처방 ${pCount}건</span>
-        <span class="chip ${lCount?'':'muted'}">검사 ${lCount}건</span>
-      </div>
-      ${v.notes ? `<div class="muted" style="margin-top:6px">${v.notes}</div>` : ''}
-      <div class="row" style="margin-top:8px">
-        <button class="btn btn-detail" data-id="${v.id}">상세보기</button>
+      <div class="muted">${safe(v.diagnosis,'진단 미입력')}</div>
+      <div class="row" style="margin-top:8px;gap:8px">
+        <span class="chip ${pCount?'':'chip--muted'}">처방 ${pCount}건</span>
+        <span class="chip ${lCount?'':'chip--muted'}">검사 ${lCount}건</span>
+        <button class="btn btn-detail" data-id="${v.id}" style="margin-left:auto">상세보기</button>
       </div>
     `;
     }
+
+    function bindVisitClickHandler(){
+        const box = $('#visitCards');
+        if (!box || box.dataset.bound === '1') return; // 이미 바인딩 됨
+
+        box.addEventListener('click', (e)=>{
+            const btn = e.target.closest('.btn-detail');
+            if (!btn) return;
+            const id = Number(btn.dataset.id);
+            const v = _visits.find(x => String(x.id) === String(id));
+            if (v) openVisitModal(v);
+        }); // ❌ once:true 제거!
+
+        box.dataset.bound = '1';
+    }
+
     function renderVisits(visits){
-        const box = $('visitCards'); box.innerHTML = '';
-        if (!Array.isArray(visits) || !visits.length){ $('visitEmpty').hidden = false; return; }
-        $('visitEmpty').hidden = true;
+        const box = $('#visitCards'); box.innerHTML = '';
+        if (!Array.isArray(visits)||!visits.length){ $('#visitEmpty').hidden=false; return; }
+        $('#visitEmpty').hidden = true;
         visits.sort((a,b)=>{
             const da = a.visitDate ? new Date(String(a.visitDate).replace(' ','T')).getTime() : 0;
             const db = b.visitDate ? new Date(String(b.visitDate).replace(' ','T')).getTime() : 0;
@@ -450,258 +728,195 @@
             card.innerHTML = visitCardHTML(v);
             box.appendChild(card);
         });
-        box.addEventListener('click', (e)=>{
-            const btn = e.target.closest('.btn-detail'); if (!btn) return;
-            const id = Number(btn.getAttribute('data-id'));
-            const v = _visits.find(x=>String(x.id)===String(id));
-            if (v) openVisitModal(v);
-        });
-        if (selectedVisitId){
-            const v = _visits.find(x=>String(x.id)===String(selectedVisitId));
-            if (v) openVisitModal(v);
-        }
+        bindVisitClickHandler();
     }
-
-    /* ==== modals ==== */
-    function openModal(el){ el.style.display='flex'; document.body.style.overflow='hidden'; }
-    function closeModal(el){ el.style.display='none'; document.body.style.overflow=''; }
-
+    function prescriptionsTableHTML(list){
+        if (!Array.isArray(list)||!list.length) return `<div class="muted">처방전 없음</div>`;
+        const rows = list.map(p=>`
+      <tr><td>${safe(p.drugName)}</td><td>${doseStr(p)}</td><td>${safe(p.notes)}</td></tr>`).join('');
+        return `<table><thead><tr><th style="width:40%">약품명</th><th style="width:40%">용법/용량</th><th>비고</th></tr></thead><tbody>${rows}</tbody></table>`;
+    }
+    function doseStr(p){
+        const v = (p.doseValue!=null ? p.doseValue : null);
+        const unit = p.doseUnit ? p.doseUnit : '';
+        const f = (p.freqPerDay!=null ? `${p.freqPerDay}회/일` : null);
+        const d = (p.durationDays!=null ? `${p.durationDays}일` : null);
+        return [v!=null?`${v}${unit? ' '+unit:''}`:null, f, d].filter(Boolean).join(' · ') || '-';
+    }
+    function labsTableHTML(list){
+        if (!Array.isArray(list)||!list.length) return `<div class="muted">검사 결과 없음</div>`;
+        const rows = list.map(l=>{
+            const ref = (l.refLow!=null || l.refHigh!=null) ? `${l.refLow??''} ~ ${l.refHigh??''}` : '-';
+            const flag = (l.flag||'N').toUpperCase();
+            const cls = flag==='H'?'color:#b91c1c;font-weight:700' : flag==='L'?'color:#1d4ed8;font-weight:700' : 'color:#16a34a;font-weight:700';
+            return `<tr>
+        <td>${safe(l.testName)}</td>
+        <td>${l.resultValue!=null?l.resultValue:'-'} ${safe(l.unit,'')}</td>
+        <td>${ref}</td>
+        <td style="${cls}">${flag}</td>
+        <td>${safe(l.notes)}</td>
+      </tr>`;
+        }).join('');
+        return `<table><thead><tr><th style="width:28%">검사 항목</th><th style="width:22%">결과</th><th style="width:22%">참고범위</th><th style="width:8%">Flag</th><th>비고</th></tr></thead><tbody>${rows}</tbody></table>`;
+    }
     function openVisitModal(v){
-        const when = fmtDateTime(v.visitDate);
-        $('visitTitle').textContent = `${safe(v.hospital)} · 방문일 ${when}`;
-        $('visitBody').innerHTML = `
-      <div class="chips" style="margin-bottom:10px">
-        <span class="chip">방문일: ${when}</span>
-        <span class="chip">의사: ${safe(v.doctor)}</span>
-        <span class="chip">진단: ${safe(v.diagnosis)}</span>
-        <span class="chip ${Array.isArray(v.prescriptions)&&v.prescriptions.length?'':'muted'}">처방 ${(v.prescriptions||[]).length}건</span>
-        <span class="chip ${Array.isArray(v.labResults)&&v.labResults.length?'':'muted'}">검사 ${(v.labResults||[]).length}건</span>
-      </div>
-      <h4 style="margin:8px 0 6px">처방전</h4>
+        $('#visitTitle').textContent = `${safe(v.hospital)} · 방문일 ${fmt(v.visitDate)}`;
+        $('#visitBody').innerHTML = `
+      <div class="chip">의사: ${safe(v.doctor)}</div>
+      <div class="chip">진단: ${safe(v.diagnosis)}</div>
+      <h4 style="margin:10px 0 6px">처방전</h4>
       ${prescriptionsTableHTML(v.prescriptions||[])}
       <h4 style="margin:14px 0 6px">검사 결과</h4>
       ${labsTableHTML(v.labResults||[])}
     `;
-        $('btnOpenDocs').onclick = ()=> openDocsModal(v);
-        $('closeVisitModal').onclick = ()=> closeModal($('visitModal'));
-        $('closeVisitModal2').onclick = ()=> closeModal($('visitModal'));
-        $('visitModal').onclick = (e)=>{ if(e.target === $('visitModal')) closeModal($('visitModal')); };
-        openModal($('visitModal'));
+        $('#btnOpenDocs').onclick = ()=> openDocsModal(v);
+        $('#closeVisitModal').onclick = ()=> closeModal('#visitModal');
+        $('#closeVisitModal2').onclick = ()=> closeModal('#visitModal');
+        $('#visitModal').onclick = (e)=>{ if(e.target.id==='visitModal') closeModal('#visitModal'); };
+        openModal('#visitModal');
     }
-
+    function docsGridHTML(docs){
+        if (!Array.isArray(docs)||!docs.length) return `<div class="muted">원본 문서가 없습니다</div>`;
+        const isImg = u=>/\.(png|jpe?g|webp|gif)$/i.test(u||'');
+        const isPdf = u=>/\.pdf$/i.test(u||'');
+        const items = docs.map(d=>{
+            const u = d.fileUrl || d.url || '';
+            const t = (d.docType||'문서');
+            if (isImg(u)){
+                return `<div style="border:1px solid var(--border);border-radius:10px;overflow:hidden;background:#fafafa">
+          <img src="${u}" alt="${t}" style="width:100%;height:160px;object-fit:cover;display:block">
+          <div style="padding:8px;font-size:12px;color:#555;display:flex;justify-content:space-between;gap:8px;align-items:center">
+            <span>${t}</span><a href="${u}" target="_blank" rel="noopener">새 창</a>
+          </div>
+        </div>`;
+            } else if (isPdf(u)){
+                return `<div style="border:1px solid var(--border);border-radius:10px;overflow:hidden;background:#fafafa">
+          <div style="height:160px;display:grid;place-items:center;color:#666">PDF</div>
+          <div style="padding:8px;font-size:12px;color:#555;display:flex;justify-content:space-between;gap:8px;align-items:center">
+            <span>${t}</span><a href="${u}" target="_blank" rel="noopener">열기</a>
+          </div>
+        </div>`;
+            } else {
+                return `<div style="border:1px solid var(--border);border-radius:10px;overflow:hidden;background:#fafafa">
+          <div style="height:160px;display:grid;place-items:center;color:#666">파일</div>
+          <div style="padding:8px;font-size:12px;color:#555;display:flex;justify-content:space-between;gap:8px;align-items:center">
+            <span>${t}</span><a href="${u}" target="_blank" rel="noopener">다운로드</a>
+          </div>
+        </div>`;
+            }
+        }).join('');
+        return `<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px">${items}</div>`;
+    }
     function openDocsModal(v){
-        $('docsTitle').textContent = `원본 문서 · 방문 #${safe(v.id)}`;
-        $('docsBody').innerHTML = docsGridHTML(v.documents || []);
-        $('closeDocsModal').onclick = ()=> closeModal($('docsModal'));
-        $('closeDocsModal2').onclick = ()=> closeModal($('docsModal'));
-        $('docsModal').onclick = (e)=>{ if(e.target === $('docsModal')) closeModal($('docsModal')); };
-        openModal($('docsModal'));
+        $('#docsTitle').textContent = `원본 문서 · 방문 #${safe(v.id)}`;
+        $('#docsBody').innerHTML = docsGridHTML(v.documents||[]);
+        $('#closeDocsModal').onclick = ()=> closeModal('#docsModal');
+        $('#closeDocsModal2').onclick = ()=> closeModal('#docsModal');
+        $('#docsModal').onclick = (e)=>{ if(e.target.id==='docsModal') closeModal('#docsModal'); };
+        openModal('#docsModal');
     }
+    function openModal(sel){ $(sel).style.display='flex'; document.body.style.overflow='hidden'; }
+    function closeModal(sel){ $(sel).style.display='none'; document.body.style.overflow=''; }
 
-    /* ==== weight chart ==== */
-    let weightChart;
-    function renderWeightChart(points){
-        const card = $('weightCard');
-        const empty = $('weightEmpty');
-
-        // === 1) 날짜(자정) 기준으로 하루 1건만 남기기 ===
-        const byDay = new Map(); // 'YYYY-MM-DD' -> {label, date, y, feedType, brand, _orig}
-        for (const p of (points || [])){
-            if (!p || p.y == null || p.x == null) continue;
-            const x = (p.x instanceof Date) ? new Date(p.x) : new Date(String(p.x).replace(' ','T'));
-            if (isNaN(x)) continue;
-
-            const d0  = new Date(x.getFullYear(), x.getMonth(), x.getDate(), 0, 0, 0, 0); // 자정 고정
-            const lab = `${d0.getFullYear()}-${pad(d0.getMonth()+1)}-${pad(d0.getDate())}`;
-
-            const prev = byDay.get(lab);
-            if (!prev || x > prev._orig){
-                byDay.set(lab, {
-                    label: lab,
-                    date: d0,
-                    y: Number(p.y),
-                    feedType: p.feedType ?? p.ft ?? null,
-                    brand:    p.brand    ?? p.br ?? null,
-                    productName: p.productName ?? null,
-                    flavor:      p.flavor ?? null,
-                    _orig: x
-                });
+    /* ===== 이번 주 변화(배변 요약) ===== */
+    function weeklyCountsFromEvents(events){
+        const thisStart = startOfWeekMon(new Date());
+        const nextStart = new Date(thisStart); nextStart.setDate(thisStart.getDate()+7);
+        const prevStart = new Date(thisStart); prevStart.setDate(thisStart.getDate()-7);
+        const pick = (from,to)=>{
+            let pee=0, poop=0;
+            for(const e of (events||[])){
+                const t = new Date(String(e.detectedAt).replace(' ','T')).getTime();
+                if (isNaN(t)) continue;
+                if (!inRange(t,from,to)) continue;
+                if (e.type==='pee') pee++;
+                else if (e.type==='poop') poop++;
             }
+            return { pee, poop };
+        };
+        return { prev: pick(prevStart,thisStart), curr: pick(thisStart,nextStart) };
+    }
+    function renderLitterDeltas(prev, curr){
+        // 개별(pee, poop) 숫자 채우기
+        $('#peePrev').textContent  = prev ? prev.pee  : '-';
+        $('#peeThis').textContent  = curr ? curr.pee  : '-';
+        $('#poopPrev').textContent = prev ? prev.poop : '-';
+        $('#poopThis').textContent = curr ? curr.poop : '-';
+
+        // 합계 기준 델타
+        const pPrev = prev ? (prev.pee + prev.poop) : null;
+        const pCurr = curr ? (curr.pee + curr.poop) : null;
+        const el = $('#litterDelta');
+
+        let cls='same', txt='변화 없음';
+        if (pPrev===null && pCurr===null){ el.className='delta same'; el.textContent='데이터 없음'; return; }
+        if (pPrev===null){ el.className='delta up'; el.innerHTML=`<b>이번주 ${pCurr}건</b>`; return; }
+        if (pCurr===null){ el.className='delta same'; el.textContent='이번주 데이터 없음'; return; }
+        const diff = pCurr - pPrev;
+        if (diff===0){ cls='same'; txt='변화 없음'; }
+        else if (diff>0){ cls='up'; txt=`▲ ${diff}건`; }
+        else { cls='down'; txt=`▼ ${Math.abs(diff)}건`; }
+        el.className = 'delta ' + cls; el.innerHTML = `<b>${txt}</b>`;
+    }
+
+    /* ===== 초기 로드 ===== */
+    (async function init(){
+        if (!petId){ $('#title').textContent='petId가 필요합니다'; return; }
+
+        // 1) 기본 리포트
+        const url = `${API_BASE}/api/pet/report?petId=${petId}`;
+        try{
+            const r = await fetch(url,{headers:{'Accept':'application/json'}});
+            if(!r.ok) throw new Error(`HTTP ${r.status}`);
+            const data = await r.json();
+            const pet = data.pet || {};
+            const visits = data.visits || [];
+            const logs = data.logs || [];
+
+            const displayName = (pet.name && pet.name.trim()) ? pet.name : `펫 #${petId}`;
+            $('#title').textContent = `${displayName} 리포트`;
+            document.title = `${displayName} 리포트`;
+
+            renderPet(pet);
+
+            // 급식/급수 델타
+            const food  = weeklyAverages(logs,'foodWeight');
+            const water = weeklyAverages(logs,'waterWeight');
+            $('#foodPrev').textContent  = (food.prev==null ? '-' : `${food.prev.toFixed(2)} g`);
+            $('#foodThis').textContent  = (food.curr==null ? '-' : `${food.curr.toFixed(2)} g`);
+            $('#waterPrev').textContent = (water.prev==null ? '-' : `${water.prev.toFixed(2)} mL`);
+            $('#waterThis').textContent = (water.curr==null ? '-' : `${water.curr.toFixed(2)} mL`);
+            renderDelta($('#foodDelta'),  food.prev,  food.curr,  ' g');
+            renderDelta($('#waterDelta'), water.prev, water.curr, ' mL');
+
+            renderVisits(visits);
+        } catch(e){
+            $('#title').textContent='불러오기 실패';
+            alert(`불러오기 실패: ${e.message}\n요청: ${url}`);
         }
-        const dayPoints = Array.from(byDay.values()).sort((a,b)=> a.date - b.date);
 
-        if (!dayPoints.length){
-            card.hidden = false;
-            empty.hidden = false;
-            if (weightChart){ weightChart.destroy(); weightChart = null; }
-            return;
-        }
-        card.hidden = false;
-        empty.hidden = true;
+        // 2) 몸무게(기본 30일)
+        wtPeriodDays = 30;
+        await fetchWeightAll();
+        setupWeightResizeObserver();
 
-        // === 2) 카테고리 축 데이터 구성 ===
-        const labels = dayPoints.map(d => d.label);
-        const ydata  = dayPoints.map(d => d.y);
+        // 3) 배변 표 기본(최근 14일 20건)
+        litState.limit=20; litState.offset=0; litState.days=14;
+        fetchLitter();
 
-        const ctx = $('weightChart').getContext('2d');
-        if (weightChart) weightChart.destroy();
-
-        weightChart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels,
-                datasets: [{
-                    label: '몸무게(kg)',
-                    data: ydata,                // 숫자 배열
-                    borderWidth: 2,
-                    tension: 0.25,
-                    fill: false,
-                    pointRadius: 5,
-                    pointHoverRadius: 6,
-                    // ✅ 보기 확실하게 — 색을 명시(테마에 안 묻히게)
-                    borderColor: '#111',
-                    backgroundColor: '#111',
-                    pointBackgroundColor: '#111',
-                    pointBorderColor: '#111',
-                    // ✅ 포인트 모양: 데이터 인덱스별로 스크립터블
-                    pointStyle: (ctx) => {
-                        const i = ctx.dataIndex;
-                        return feedPointStyle(dayPoints[i]?.feedType);
-                    },
-                }]
-            },
-            options: {
-                // parsing 옵션은 생략(기본값 true) — 숫자 배열을 안전하게 처리
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    x: {
-                        type: 'category',
-                        ticks: { autoSkip: false, maxRotation: 0 },
-                        grid: { color: '#f0f0f0' }
-                    },
-                    y: {
-                        title: { display: true, text: 'kg' },
-                        suggestedMin: Math.max(0, Math.min(...ydata) - 1),
-                        suggestedMax: Math.max(...ydata) + 1,
-                        grid: { color: '#f0f0f0' }
-                    }
-                },
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        callbacks: {
-                            label: (ctx)=>{
-                                const i = ctx.dataIndex, dp = dayPoints[i];
-                                const parts = [`${Number(ctx.parsed.y).toFixed(2)} kg`];
-                                if (dp?.feedType) parts.push(`사료: ${dp.feedType}`);
-                                const name = [dp?.brand, dp?.productName].filter(Boolean).join(' / ');
-                                if (name) parts.push(name);
-                                if (dp?.flavor) parts.push(`맛: ${dp.flavor}`);
-                                return parts.join(' · ');
-                            }
-                        }
-                    }
-
-                }
+        // 4) “이번 주 변화” 배변 요약(전주/이번주 비교)
+        //    비교를 위해 최소 21일 정도 조회
+        try{
+            const q = new URLSearchParams({petId, days:'21', limit:'100'});
+            let r = await fetch(`${API_BASE}/api/litter/events?${q}`,{headers:{'Accept':'application/json'}});
+            if (!r.ok) r = await fetch(`${API_BASE}/api/litter/recent?${q}`,{headers:{'Accept':'application/json'}});
+            if (r.ok){
+                const js = await r.json();
+                const list = Array.isArray(js.data) ? js.data : (Array.isArray(js) ? js : []);
+                const {prev, curr} = weeklyCountsFromEvents(list);
+                renderLitterDeltas(prev, curr);
             }
-        });
-
-        // === 3) 범례 업데이트 ===
-        renderFeedLegend(dayPoints.map(d => ({
-            x: d.date, y: d.y,
-            feedType: d.feedType, brand: d.brand,
-            productName: d.productName, flavor: d.flavor
-        })));
-
-    }
-
-
-
-
-
-    /* ==== fetch weight timeline (백엔드 전용 API) ==== */
-    async function loadWeightTimeline(petId){
-        const r = await fetch(`${API_BASE}/api/pet/weight-timeline?petId=${petId}`, { /* 생략 */ });
-        const d = await r.json();
-        const list = Array.isArray(d.points) ? d.points : (Array.isArray(d) ? d : []);
-        return list.map(p=>({
-            x: new Date(String(p.measuredAt).replace(' ','T')),
-            y: Number(p.weightKg),
-            feedType: p.foodType || p.feedType || null,
-            brand: p.brand || null,
-            productName: p.productName || null,   // ★ 추가
-            flavor: p.flavor || null              // ★ 추가
-        })).sort((a,b)=> a.x - b.x);
-    }
-
-
-    /* ==== top/stats ==== */
-    function renderPet(pet){
-        $('petCard').hidden = false;
-        $('petName').textContent = `${safe(pet.name)} (${safe(pet.species)})`;
-        $('petBreed').textContent = safe(pet.breed);
-        $('petGender').textContent = safe(pet.gender);
-        $('petBirth').textContent = `${safe(pet.birthDate)} (${ageFromBirth(pet.birthDate)})`;
-        $('petWeight').textContent = pet.weight!=null ? `${pet.weight}` : '-';
-        const feedType    = pet.feedType || pet.foodType || null;
-        const brand       = pet.brand || pet.feedBrand || null;
-        const productName = pet.productName || pet.product || null;
-        const flavor      = pet.flavor || null;
-
-        const parts = [];
-        if (feedType) parts.push(feedType);
-        const name = [brand, productName].filter(Boolean).join(' / ');
-        if (name) parts.push(name);
-        if (flavor) parts.push(`(${flavor})`);
-        $('petFeed').textContent = parts.length ? parts.join(' · ') : '-';
-        $('petPhoto').src = pet.photo || 'https://placehold.co/160x160?text=No+Photo';
-        $('subtitle').textContent = `ID #${pet.id}`;
-        applyThemeByGender(pet.gender);
-    }
-
-    function renderStats(logs){
-        const food = weeklyAverages(logs,'foodWeight');
-        const water = weeklyAverages(logs,'waterWeight');
-        $('foodPrev').textContent  = (food.prev==null ? '-' : `${food.prev.toFixed(2)} ${FOOD_UNIT}`);
-        $('foodThis').textContent  = (food.curr==null ? '-' : `${food.curr.toFixed(2)} ${FOOD_UNIT}`);
-        $('waterPrev').textContent = (water.prev==null ? '-' : `${water.prev.toFixed(2)} ${WATER_UNIT}`);
-        $('waterThis').textContent = (water.curr==null ? '-' : `${water.curr.toFixed(2)} ${WATER_UNIT}`);
-        renderDelta($('foodDelta'),  food.prev,  food.curr,  ` ${FOOD_UNIT}`);
-        renderDelta($('waterDelta'), water.prev, water.curr, ` ${WATER_UNIT}`);
-    }
-
-    /* ==== init ==== */
-    (function init(){
-        if (!petId){ $('title').textContent = 'petId가 필요합니다'; return; }
-        $('title').textContent = '로딩 중...';
-
-        const url = `${API_BASE}/api/pet/report?petId=${petId}${selectedVisitId ? `&visitId=${selectedVisitId}` : ''}`;
-
-        fetch(url,{ headers:{'Accept':'application/json'}, mode:'cors', credentials:'include' })
-            .then(r=>{ if(!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
-            .then(async (data)=>{
-                const pet = data.pet || {};
-                const visits = data.visits || [];
-                const logs = data.logs || [];
-
-                const displayName = (pet.name && pet.name.trim()) ? pet.name : `펫 #${petId}`;
-                $('title').textContent = `${displayName} 리포트`;
-                document.title = `${displayName} 리포트`;
-
-                renderPet(pet);
-                renderStats(logs);
-                renderVisits(visits);
-
-                // 1순위: weight-timeline API, 2순위: 기존 추출
-                const apiPoints = await loadWeightTimeline(petId);
-                const points = apiPoints.length ? apiPoints : extractWeightSeries(pet, visits, logs);
-                renderWeightChart(points);
-            })
-            .catch(e=>{
-                $('title').textContent = '불러오기 실패';
-                alert(`불러오기 실패: ${e.message}\n요청: ${url}`);
-            });
+        } catch{ /* 무시: 배변 카드만 비어있음 */ }
     })();
 </script>
 </body>

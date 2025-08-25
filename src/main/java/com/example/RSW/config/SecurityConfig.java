@@ -90,6 +90,7 @@ public class SecurityConfig {
                                 "/usr/member/join", "/usr/member/doJoin",
                                 "/usr/member/doFindLoginId", "/usr/member/doFindLoginPw",
                                 "/usr/member/findLoginId", "/usr/member/findLoginPw",
+                                "/usr/member/doModify", "/usr/member/modify",
                                 "/usr/member/naver/**", "/usr/member/kakao/**", "/usr/member/google/**",
                                 "/usr/member/social-login",
                                 "/usr/member/firebase-session-login",

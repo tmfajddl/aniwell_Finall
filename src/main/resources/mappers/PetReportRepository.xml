@@ -26,8 +26,6 @@
         WHERE w.petId = #{petId}
         ORDER BY w.measuredAt ASC
         ]]>
-
 	</select>
-
 
 </mapper>

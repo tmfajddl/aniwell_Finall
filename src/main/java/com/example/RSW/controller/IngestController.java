@@ -2,20 +2,20 @@ package com.example.RSW.controller;
 
 import com.example.RSW.dto.LitterAnalysisDto;
 import com.example.RSW.dto.LitterAnalyzeResponse;
-import com.example.RSW.vo.LitterEvent;
 import com.example.RSW.repository.LitterEventRepository;
 import com.example.RSW.service.IngestService;
 import com.example.RSW.service.PythonRunner;
+import com.example.RSW.vo.LitterEvent;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
-import java.io.File;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 
@@ -37,13 +37,17 @@ public class IngestController {
 
     private void assertDevice(String header) {
         if (StringUtils.hasText(deviceKey) && !deviceKey.equals(header)) {
-            throw new RuntimeException("Unauthorized device");
+            // 401로 명확히 반환 (500 방지)
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Unauthorized device");
         }
     }
 
     /** 프레임 1장 업로드: Content-Type: image/jpeg, raw body */
-    @PostMapping(value = "/ingest/frame",
-            consumes = { MediaType.IMAGE_JPEG_VALUE, MediaType.APPLICATION_OCTET_STREAM_VALUE })
+    @PostMapping(
+            value = "/ingest/frame",
+            consumes = { MediaType.IMAGE_JPEG_VALUE, MediaType.APPLICATION_OCTET_STREAM_VALUE },
+            produces = MediaType.TEXT_PLAIN_VALUE
+    )
     public ResponseEntity<String> ingestFrame(
             @RequestParam String session,
             @RequestParam int seq,
@@ -51,6 +55,12 @@ public class IngestController {
             @RequestBody byte[] jpeg
     ) throws Exception {
         assertDevice(key);
+        if (jpeg == null || jpeg.length == 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "empty body");
+        }
+        if (seq < 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "seq must be >= 0");
+        }
         ingestService.saveJpegFrame(session, seq, jpeg);
         return ResponseEntity.ok("OK");
     }
@@ -69,13 +79,17 @@ public class IngestController {
     ) throws Exception {
         assertDevice(key);
 
-        Path dir = ingestService.sessionDir(session);
         Path mp4 = ingestService.assembleMp4(session, fps);
+        if (mp4 == null || !mp4.toFile().exists() || mp4.toFile().length() == 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "no frames for session or mp4 empty");
+        }
 
-        // Python 분석
-        LitterAnalysisDto dto = pythonRunner.runOnVideo(mp4.toFile(), linger, force, frames, squatOnly);
+        // Python 분석 호출 (squatOnly/frames/force 반영)
+        LitterAnalysisDto dto = pythonRunner.runOnVideo(
+                mp4.toFile(), linger, force, frames, squatOnly
+        );
 
-        // 들렀다-나감이면 저장 스킵(원하면 저장하도록 변경 가능)
+        // 무시 케이스는 저장 스킵(정책에 따라 바꿀 수 있음)
         if (!Boolean.TRUE.equals(dto.getIgnored())) {
             LitterEvent e = new LitterEvent();
             e.setPetId(petId);
