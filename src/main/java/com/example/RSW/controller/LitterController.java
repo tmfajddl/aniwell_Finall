@@ -132,4 +132,23 @@ public class LitterController {
 
 
 
+    @GetMapping(value = "/events", produces = MediaType.APPLICATION_JSON_VALUE, params = {"petId","days"})
+    public ResponseEntity<?> listEventsByDays(
+            @RequestParam Long petId,
+            @RequestParam int days,
+            @RequestParam(defaultValue = "0")  int offset,
+            @RequestParam(defaultValue = "20") int limit
+    ) {
+        var to   = java.time.LocalDateTime.now();
+        var from = to.minusDays(Math.max(1, days));
+
+        // 레포지토리에 페이징이 없으면 일단 기간으로 긁고 메모리에서 슬라이싱
+        var all  = litterEventRepo.findByPetAndDate(petId, from, to);
+        all.sort((a,b)-> b.getDetectedAt().compareTo(a.getDetectedAt()));
+        int start = Math.min(offset, all.size());
+        int end   = Math.min(start + Math.max(1, limit), all.size());
+        var page  = all.subList(start, end);
+
+        return ResponseEntity.ok(page);
+    }
 }
