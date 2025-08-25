@@ -784,10 +784,14 @@
 					if (dateInput) {
 						dateInput.value = todayStr;
 						loadDataAndDraw(todayStr);
+						loadLitterEvents(todayStr);
+						loadLitterSummary(todayStr);
 						if (!dateInput.__bound) {
 							dateInput.addEventListener('change', () => {
 								disconnectWebSocket();
 								loadDataAndDraw(dateInput.value);
+								loadLitterEvents(dateInput.value);
+								loadLitterSummary(dateInput.value);
 							});
 							dateInput.__bound = true;
 						}
@@ -1541,6 +1545,61 @@
 			// 외부에서 재호출용
 			window.__reloadActivityTimeline = loadActivities;
 		</script>
+
+		<script>
+			// 한글 라벨 매핑
+			const TYPE_LABEL = { pee: '소변', poop: '대변', unknown: '미확인' };
+
+			function fmtTimeHHMM(iso) {
+				const d = new Date(iso);
+				return d.toTimeString().slice(0,5);
+			}
+
+			async function loadLitterEvents(dateStr) {
+				const tbody = document.getElementById('poopTableBody');
+				tbody.innerHTML = '<tr><td class="p-2 border text-gray-500" colspan="2">불러오는 중...</td></tr>';
+
+				try {
+					const url = `/api/litter/events?petId=${petId}&date=${dateStr}&_=${Date.now()}`;
+					const res = await fetch(url, { headers: { 'Accept': 'application/json' }, cache: 'no-store' });
+					if (!res.ok) throw new Error(`HTTP ${res.status}`);
+					const list = await res.json();
+
+					if (!Array.isArray(list) || list.length === 0) {
+						tbody.innerHTML = '<tr><td class="p-2 border text-gray-500 text-center" colspan="2">기록 없음</td></tr>';
+						return;
+					}
+
+					// 렌더링
+					tbody.innerHTML = list.map(ev => {
+						const t = TYPE_LABEL[ev.type] ?? ev.type;
+						return `
+          <tr>
+            <td class="p-2 border">${fmtTimeHHMM(ev.detectedAt)}</td>
+            <td class="p-2 border">${t}</td>
+          </tr>
+        `;
+					}).join('');
+				} catch (e) {
+					console.error('[loadLitterEvents] error:', e);
+					tbody.innerHTML = '<tr><td class="p-2 border text-red-500 text-center" colspan="2">불러오기 실패</td></tr>';
+				}
+			}
+
+			async function loadLitterSummary(dateStr) {
+				try {
+					const url = `/api/litter/summary?petId=${petId}&date=${dateStr}&_=${Date.now()}`;
+					const res = await fetch(url, { headers: { 'Accept': 'application/json' }, cache: 'no-store' });
+					if (!res.ok) throw new Error(`HTTP ${res.status}`);
+					const sum = await res.json();
+					// 필요하다면 어디에든 표시하세요. 예) 콘솔/배지 등
+					console.log('🚽 요약:', sum); // {date, pee, poop, unknown, total}
+				} catch (e) {
+					console.error('[loadLitterSummary] error:', e);
+				}
+			}
+		</script>
+
 
 
 

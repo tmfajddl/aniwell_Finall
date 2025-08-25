@@ -8,7 +8,11 @@ spring:
     host: smtp.sendgrid.net
     port: 587
     username: apikey
+<<<<<<< HEAD
     password:  # 푸시할 떄마다 지우기
+=======
+    password: # 푸시할 떄마다 지우기
+>>>>>>> 73b6a897bb02fbc9751c969f1d1e1b21308efd85
     properties:
       mail.smtp.auth: true
       mail.smtp.starttls.enable: true
@@ -24,7 +28,11 @@ spring:
       redirect-uri: "http://localhost:8080/usr/member/google"
   session:
     store-type: none   # Redis 비활성화
+<<<<<<< HEAD
 #    store-type: redis # Redis 활성화
+=======
+  #    store-type: redis # Redis 활성화
+>>>>>>> 73b6a897bb02fbc9751c969f1d1e1b21308efd85
   autoconfigure:
     exclude:
       - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
@@ -64,9 +72,15 @@ kakao:
   client-secret: "61Ng1JnIKgkQRXgxaJOpY9wo4gffwvn2"
   redirect-uri: "http://localhost:8080/usr/member/kakao"  #로그인 redirect URI
 cloudinary:
+<<<<<<< HEAD
     cloud_name: dfiqktimk
     api_key: 145284189636895
     api_secret: 4TS23PL5HMWPolljcIRqitpWwU0
+=======
+  cloud_name: dfiqktimk
+  api_key: 145284189636895
+  api_secret: 4TS23PL5HMWPolljcIRqitpWwU0
+>>>>>>> 73b6a897bb02fbc9751c969f1d1e1b21308efd85
 naver:
   client-id: "ZdyW5GGtNSgCCaduup7_"
   client-secret: "pJh4IlGi2_"
@@ -110,4 +124,8 @@ aniwell:
     # CloudFront 쓰면 여기를 CloudFront 도메인으로 교체
 openai:
   api-base: https://api.openai.com/v1
+<<<<<<< HEAD
   api-key:
+=======
+  api-key:
+>>>>>>> 73b6a897bb02fbc9751c969f1d1e1b21308efd85
