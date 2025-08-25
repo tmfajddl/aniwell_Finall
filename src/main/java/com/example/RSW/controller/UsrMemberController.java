@@ -547,12 +547,11 @@ public class UsrMemberController {
 
     @RequestMapping("/usr/member/doWithdraw")
     @ResponseBody
-
-    public String doWithdraw(HttpServletRequest req, HttpServletResponse resp) {
+    public ResultData<?> doWithdraw(HttpServletRequest req, HttpServletResponse resp) {
         Rq rq = (Rq) req.getAttribute("rq");
 
         if (!rq.isLogined()) {
-            return Ut.jsHistoryBack("F-1", "로그인 후 이용해주세요.");
+            return ResultData.from("F-1", "로그인 후 이용해주세요.");
         }
 
 
@@ -591,7 +590,7 @@ public class UsrMemberController {
         // 로그아웃
         rq.logout();
 
-        return Ut.jsReplace("S-1", "회원 탈퇴가 완료되었습니다.", "/");
+        return ResultData.from("S-1", "회원 탈퇴가 완료되었습니다.");
     }
 
 
