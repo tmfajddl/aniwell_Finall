@@ -22,25 +22,16 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class SmsVerifyService {
 
-    // === 설정 값 (application.yml에 정의) ===
-    @Value("${solapi.api-key}")
-    private String apiKey;
-
-    @Value("${solapi.api-secret}")
-    private String apiSecret;
-
-    @Value("${solapi.domain:https://api.solapi.com}")
-    private String domain;
-
-    @Value("${solapi.from}") // 솔라피 콘솔에 등록/승인된 발신번호(숫자만)
-    private String from;
-
-    // === 정책 상수 (EmailVerificationService 스타일) ===
-    private static final Duration CODE_TTL = Duration.ofMinutes(5);   // 코드 유효시간
-    private static final Duration COOLDOWN = Duration.ofSeconds(60);  // 재전송 쿨다운
+    // === 설정값 (application.yml) ===
+    @Value("${coolsms.api-key}")  private String apiKey;
+    @Value("${coolsms.api-secret}") private String apiSecret;
+    @Value("${coolsms.domain:https://api.solapi.com}") private String domain;
+    @Value("${coolsms.from}") private String from; // 콘솔 승인된 발신번호 (숫자만 권장)
+    @Value("${coolsms.ttl-seconds:180}") private int ttlSeconds;           // 인증코드 유효시간(초)
+    @Value("${coolsms.cooldown-seconds:60}") private int cooldownSeconds;  // 재전송 쿨다운(초)
 
     // === 인프라 ===
-    private final RedisTemplate<String, String> redis; // 프로젝트에서 이미 쓰는 타입과 동일
+    private final RedisTemplate<String, String> redis;
     private DefaultMessageService messageService;
 
     @PostConstruct
@@ -49,15 +40,13 @@ public class SmsVerifyService {
     }
 
     // === 키 규칙 ===
-    private String keyCode(String phone) { return "sms:verify:code:" + phone; }
-    private String keyCooldown(String phone) { return "sms:verify:cooldown:" + phone; }
+    private String keyCode(String phone)    { return "sms:verify:code:" + phone; }
+    private String keyCooldown(String phone){ return "sms:verify:cooldown:" + phone; }
 
     // 숫자만 남기기
-    private String normalize(String rawPhone) {
-        return rawPhone == null ? "" : rawPhone.replaceAll("\\D", "");
-    }
+    private String normalize(String raw) { return raw == null ? "" : raw.replaceAll("\\D", ""); }
 
-    // 코드 해시(원문 코드는 저장하지 않음)
+    // 코드 해시(원문 저장 안 함)
     private String sha256(String s) {
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-256");
@@ -65,20 +54,16 @@ public class SmsVerifyService {
             StringBuilder sb = new StringBuilder(d.length * 2);
             for (byte b : d) sb.append(String.format("%02x", b));
             return sb.toString();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        } catch (Exception e) { throw new RuntimeException(e); }
     }
 
     /** 인증코드 전송 */
     public ResultData<?> sendCode(String rawPhone) {
-        final String phone = normalize(rawPhone);
-        if (phone.isBlank()) {
-            return ResultData.from("F-PHONE", "전화번호를 입력하세요.");
-        }
+        final String to = normalize(rawPhone);
+        if (to.isBlank()) return ResultData.from("F-PHONE", "전화번호를 입력하세요.");
 
         // 재전송 쿨다운 체크
-        String cdKey = keyCooldown(phone);
+        final String cdKey = keyCooldown(to);
         if (Boolean.TRUE.equals(redis.hasKey(cdKey))) {
             Long remain = redis.getExpire(cdKey, TimeUnit.SECONDS);
             long retryAfter = Math.max(1, remain == null ? 0 : remain);
@@ -86,36 +71,51 @@ public class SmsVerifyService {
                     "retryAfterSec", retryAfter);
         }
 
-        // 6자리 코드 생성
-        String code = String.format("%06d", (int)(Math.random() * 1_000_000));
+        // 발신번호/형식 가드 (숫자만 10~11자리 국내 휴대폰 가정)
+        final String fromClean = normalize(from);
+        if (!fromClean.matches("^01\\d{8,9}$")) {
+            log.warn("[SMS] invalid from number format: {}", from);
+            return ResultData.from("F-FROM", "발신번호 형식이 올바르지 않습니다. (숫자만 10~11자리)");
+        }
 
-        // 코드 해시 저장(원문 미보관): code + phone
-        String hash = sha256(code + "|" + phone);
-        redis.opsForValue().set(keyCode(phone), hash, CODE_TTL.getSeconds(), TimeUnit.SECONDS);
+        // 6자리 코드 생성 + 해시 저장
+        final String code = String.format("%06d", (int)(Math.random() * 1_000_000));
+        final String hash = sha256(code + "|" + to);
+        redis.opsForValue().set(keyCode(to), hash, ttlSeconds, TimeUnit.SECONDS);
 
         // 쿨다운 시작
-        redis.opsForValue().set(cdKey, "1", COOLDOWN.getSeconds(), TimeUnit.SECONDS);
+        redis.opsForValue().set(cdKey, "1", cooldownSeconds, TimeUnit.SECONDS);
 
         // 문자 발송
         Message msg = new Message();
-        msg.setFrom(from);
-        msg.setTo(phone);
-        msg.setText("[Aniwell] 인증번호 " + code + " (유효 " + CODE_TTL.toMinutes() + "분)");
+        msg.setFrom(fromClean);
+        msg.setTo(to);
+        int ttlMin = Math.max(1, (int)Math.ceil(ttlSeconds / 60.0));
+        msg.setText("[Aniwell] 인증번호 " + code + " (유효 " + ttlMin + "분)");
+
+        log.info("[SMS] try send from={} to={}", fromClean, to);
 
         try {
             messageService.send(msg);
             return ResultData.from("S-OK", "인증번호를 전송했습니다.",
-                    "ttlSec", CODE_TTL.getSeconds(),
-                    "cooldownSec", COOLDOWN.getSeconds());
+                    "ttlSec", ttlSeconds,
+                    "cooldownSec", cooldownSeconds);
         } catch (NurigoMessageNotReceivedException e) {
-            log.warn("Solapi send failed: {}", e.getMessage());
-            // 실패 시, 보관한 코드/쿨다운 정리(선택)
-            redis.delete(keyCode(phone));
+            String m = e.getMessage() == null ? "" : e.getMessage();
+            log.warn("[SMS] send failed: {}", m);
+            // 실패 시 보관 데이터 정리
+            redis.delete(keyCode(to));
             redis.delete(cdKey);
-            return ResultData.from("F-SEND", "문자 발송에 실패했습니다: " + e.getMessage());
+
+            // 통신사 차단(3059/번호도용/변작) 매핑
+            if (m.contains("3059") || m.contains("번호도용") || m.contains("변작")) {
+                return ResultData.from("F-SENDER-BLOCK",
+                        "발신번호가 통신사 정책에 따라 차단되었습니다. 승인된 발신번호(숫자만)로 설정 후 다시 시도해 주세요.");
+            }
+            return ResultData.from("F-SEND", "문자 발송에 실패했습니다: " + m);
         } catch (Exception e) {
-            log.error("Solapi error", e);
-            redis.delete(keyCode(phone));
+            log.error("[SMS] system error", e);
+            redis.delete(keyCode(to));
             redis.delete(cdKey);
             return ResultData.from("F-ERROR", "시스템 오류가 발생했습니다.");
         }
@@ -124,14 +124,14 @@ public class SmsVerifyService {
     /** 인증코드 확인 */
     public ResultData<?> confirmCode(String rawPhone, String inputCode) {
         final String phone = normalize(rawPhone);
-        final String code = (inputCode == null) ? "" : inputCode.trim();
+        final String code  = (inputCode == null) ? "" : inputCode.trim();
 
         if (phone.isBlank()) return ResultData.from("F-PHONE", "전화번호를 입력하세요.");
         if (code.isBlank())  return ResultData.from("F-CODE", "코드를 입력해 주세요.");
 
         String savedHash = redis.opsForValue().get(keyCode(phone));
         if (savedHash == null) {
-            return ResultData.from("F-NOTFOUND", "인증번호가 만료되었습니다. 다시 요청해 주세요.");
+            return ResultData.from("F-NOTFOUND", "유효한 인증번호가 없습니다. 재전송해 주세요.");
         }
 
         String calcHash = sha256(code + "|" + phone);
@@ -139,7 +139,7 @@ public class SmsVerifyService {
             return ResultData.from("F-MISMATCH", "인증번호가 일치하지 않습니다.");
         }
 
-        // 성공: 일회용 코드 소멸
+        // 성공: 일회용 소멸
         redis.delete(keyCode(phone));
         return ResultData.from("S-OK", "전화번호 인증이 완료되었습니다.", "phone", phone);
     }

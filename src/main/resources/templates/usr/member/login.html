@@ -225,7 +225,6 @@
                                    th:value="${param.cellphone}"/>
                             <button type="button" class="auth" id="phoneSendBtn" onclick="sendVerificationCode()">인증
                             </button>
-                            <span id="phoneVerifiedTag" class="text-green-600 text-xs ml-2 hidden">인증됨</span>
                         </div>
                         <p id="cellphoneWarning" class="block text-xs text-red-600 mt-1 hidden"></p>
 
@@ -237,6 +236,7 @@
                                        placeholder="인증번호 입력"/>
                                 <button type="button" class="auth" onclick="verifyPhoneCode()">확인</button>
                             </div>
+                            <p id="codeWarning" class="block text-xs text-red-600 mt-1 hidden"></p>
                         </div>
 
                         <label class="form-wrapper__label mt-4" for="email">이메일</label>
@@ -246,7 +246,6 @@
                                    type="email" required placeholder="EMAIL"
                                    th:value="${param.email}"/>
                             <button type="button" class="auth" id="emailSendBtn">인증</button>
-                            <span id="emailVerifiedTag" class="text-green-600 text-xs ml-2 hidden">인증됨</span>
                         </div>
                         <p id="emailWarning" class="block text-xs text-red-600 mt-1 hidden"></p>
                         <div id="email-verification-box" class="mt-2 hidden">
@@ -257,6 +256,7 @@
                                        placeholder="인증번호 입력"/>
                                 <button type="button" class="auth mt-1" id="emailCheckBtn">확인</button>
                             </div>
+                            <p id="emailCodeWarning" class="block text-xs text-red-600 mt-1 hidden"></p>
                         </div>
 
                         <label class="form-wrapper__label" for="address">주소</label>
@@ -538,6 +538,14 @@
 
 <script>
     // ===== Firebase 설정 =====
+    const firebaseConfig = {
+        apiKey: "AIzaSyCmNd8OplshhbhpJqNzhoDXgKAaLYunl3k",
+        authDomain: "aniwell-2a90b.firebaseapp.com",
+        projectId: "aniwell-2a90b",
+        storageBucket: "aniwell-2a90b.appspot.com",
+        messagingSenderId: "399675409170",
+        appId: "1:399675409170:web:2fb665a85291a8c9a6a9cb"
+    };
 
     // 초기화 완료 시점을 보장
     let initFirebaseResolve;
