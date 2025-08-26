@@ -86,15 +86,6 @@ body {
 }
 
 
-/* 성능 힌트 */
-.right-anim,
-.sec3-layer,
-.sec3-dog,
-.sec3-heart,
-.sec3-sparkle {
-	will-change: transform, opacity;
-}
-
 
 /* .img_body는 HTML에서 Tailwind 'absolute' 사용중 — 여기선 사이즈만 */
 .img_body {
@@ -105,34 +96,12 @@ body {
    Buttons / Icons
 ========================= */
 .icon {
-	
-	bottom: 100px;
-	display: flex;
-	padding-left: 70%;
-}
-
-.up-icon,
-.in-icon {
-	position: relative;
-	z-index: 2;
-	background-color: #2e576d;
-	border-radius: 50%;
-	width: 8vw;
-	height: 8vw;
-	max-width: 100px;
-	max-height: 100px;
-	min-width: 30px;
-	min-height: 30px;
-}
-
-.in-icon>img,
-.up-icon>img {
+	top: 70%;
+	left: 66%;
 	position: absolute;
-	width: 30px;
-	height: 30px;
-	top: 25%;
-	left: 30%;
+	display: flex;
 }
+
 
 
 /* =========================
@@ -288,7 +257,7 @@ body {
 	}
 
 	to {
-		transform: translateX(-50%);
+		transform: translateX(-49%);
 	}
 
 	/* 2장 타일 중 절반만큼 이동해서 루프 */
@@ -355,4 +324,107 @@ body {
 	mix-blend-mode: screen;
 	opacity: 0;
 	transition: opacity .2s ease;
+}
+
+
+
+/**/
+
+.btn {
+	width: 300px;
+	flex: 1 1 auto;
+	margin: 10px;
+	padding: 20px;
+	text-align: center;
+	text-transform: uppercase;
+	transition: 0.5s;
+	background-size: 200% auto;
+	color: white;
+	/* text-shadow: 0px 0px 10px rgba(0,0,0,0.2);*/
+	box-shadow: 0 0 20px #2E576D;
+	border-radius: 999px;
+}
+
+.btn:hover {
+	background-position: right center;
+	/* change the direction of the change here */
+	box-shadow: 0 0 20px #eee;
+}
+
+.btn-4 {
+	background-image: linear-gradient(to right, #DBE09A 0%, #A8C7AF 51%, #DBE09A 100%);
+}
+
+/**/
+
+
+
+/* 속도와 간격을 변수로 제어 */
+.marquee {
+	--gap: 2.5rem;
+	/* 아이템 간 간격 */
+	--duration: 18s;
+	/* 한 바퀴 도는 시간 (작을수록 빠름) */
+	position:absolute;
+	display: flex;
+	/* 트랙 2개를 가로로 나열 */
+	overflow: hidden;
+	width: 100%;
+	padding-block: .5rem;
+}
+
+.marquee__track {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--gap);
+	white-space: nowrap;
+	flex: none;
+	/* 내용 길이만큼만 차지 */
+	will-change: transform;
+	animation: marquee var(--duration) linear infinite;
+}
+
+.marquee__track span {
+	font-weight: 700;
+	font-size: clamp(1rem, 2.2vw, 1.5rem);
+	letter-spacing: 0.02em;
+	color: #0f172a;
+	/* slate-900 */
+}
+
+/* 호버 시 일시정지 (선택) */
+.marquee:hover .marquee__track {
+	animation-play-state: paused;
+}
+
+/* 오른쪽 -> 왼쪽으로 이동 */
+@keyframes marquee {
+	from {
+		transform: translateX(0);
+	}
+
+	to {
+		transform: translateX(-100%);
+	}
+}
+
+/* 가장자리 페이드(선택) - 배경색 맞춰 바꾸세요 */
+.marquee::before,
+.marquee::after {
+	content: "";
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	width: 5rem;
+	pointer-events: none;
+}
+
+.marquee::before {
+	left: 0;
+	background: linear-gradient(to right, white, transparent);
+}
+
+.marquee::after {
+	right: 0;
+	background: linear-gradient(to left, white, transparent);
 }
