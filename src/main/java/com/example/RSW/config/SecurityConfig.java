@@ -58,6 +58,7 @@ public class SecurityConfig {
                                 "/api/pet/report",
                                 "/api/pet/weight-timeline"
                         ).permitAll()
+                        .requestMatchers("/api/verify/sms/**").permitAll()
                         .requestMatchers("/api/pet/**").authenticated()
                         .requestMatchers("/api/member/**").authenticated()
                         .anyRequest().permitAll()

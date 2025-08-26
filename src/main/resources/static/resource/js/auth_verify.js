@@ -1,66 +1,46 @@
 /* =========================
-   auth_verify.js  (최종 수정, 충돌 해결)
+   auth_verify.js  (최종 통합본)
 ========================= */
 
 /* ---- 전역 안전 스텁 ---- */
-window.sendEmailVerificationCode = window.sendEmailVerificationCode || function(){};
-window.verifyEmailCode          = window.verifyEmailCode          || function(){};
-window.sendVerificationCode     = window.sendVerificationCode     || function(){};
-window.verifyPhoneCode          = window.verifyPhoneCode          || function(){};
+window.sendEmailVerificationCode = window.sendEmailVerificationCode || function () {
+};
+window.verifyEmailCode = window.verifyEmailCode || function () {
+};
+window.sendVerificationCode = window.sendVerificationCode || function () {
+};
+window.verifyPhoneCode = window.verifyPhoneCode || function () {
+};
 
 /* ---- 공통 유틸 ---- */
 const byId = (id) => document.getElementById(id);
 const show = (el) => el && el.classList.remove('hidden');
 const hide = (el) => el && el.classList.add('hidden');
-const setWarn = (el, msg) => { if(!el) return; el.textContent = msg || ''; el.classList.toggle('hidden', !msg); };
+const setWarn = (el, msg) => {
+    if (!el) return;
+    el.textContent = msg || '';
+    el.classList.toggle('hidden', !msg);
+};
 
-function markButtonAsDone(btn){ if(!btn) return; btn.disabled = true; btn.textContent = '인증완료'; btn.classList.add('opacity-60','cursor-not-allowed'); }
-function lockInputNoColor(inputEl){ if (inputEl) inputEl.readOnly = true; }
-function unlockInputNoColor(inputEl){ if (inputEl) inputEl.readOnly = false; }
+function markButtonAsDone(btn) {
+    if (!btn) return;
+    btn.disabled = true;
+    btn.textContent = '인증완료';
+    btn.classList.add('opacity-60', 'cursor-not-allowed');
+}
 
-/* =========================
-   A) 전화번호 인증 (변경 없음)
-========================= */
-(function patchPhoneVerify(){
-    document.addEventListener('DOMContentLoaded', () => hide(byId('phoneVerifiedTag')));
-    function phoneSendBtn(){ const b = byId('phoneSendBtn'); if (b) return b; const c = byId('cellphone'); return c ? c.parentElement?.querySelector('button.auth') : null; }
+function lockInputNoColor(el) {
+    if (el) el.readOnly = true;
+}
 
-    window.verifyPhoneCode = async function(){
-        const code = byId('verificationCode')?.value?.trim();
-        if (!window.confirmationResult) { alert('먼저 인증번호를 요청하세요.'); return; }
-        if (!code) { alert('인증번호를 입력하세요.'); return; }
-        try {
-            await window.confirmationResult.confirm(code);
-            hide(byId('phone-verification-box'));
-            lockInputNoColor(byId('cellphone'));
-            markButtonAsDone(phoneSendBtn());
-            hide(byId('phoneVerifiedTag'));
-            setWarn(byId('cellphoneWarning'), '');
-            alert('전화번호 인증이 완료되었습니다.');
-        } catch (err) {
-            console.error('❌ 인증 실패', err);
-            alert('인증에 실패했습니다. ' + (err?.message || ''));
-        }
-    };
-
-    const cellEl = byId('cellphone');
-    if (cellEl) {
-        cellEl.addEventListener('input', () => {
-            hide(byId('phone-verification-box'));
-            setWarn(byId('cellphoneWarning'),'');
-            unlockInputNoColor(cellEl);
-            const btn = phoneSendBtn();
-            if (btn) { btn.disabled = false; btn.textContent = '인증'; btn.classList.remove('opacity-60','cursor-not-allowed'); }
-            hide(byId('phoneVerifiedTag'));
-        });
-    }
-})();
+function unlockInputNoColor(el) {
+    if (el) el.readOnly = false;
+}
 
 /* =========================
-   B) 이메일 인증 (회원가입)
-   👉 즉시실행(IIFE) 제거, DOMContentLoaded에서 init 호출
+   이메일 인증 (회원가입)
 ========================= */
-function initEmailVerifyForSignup(){
+function initEmailVerifyForSignup() {
     const emailInput = byId('email');
     if (!emailInput) return;
 
@@ -78,15 +58,15 @@ function initEmailVerifyForSignup(){
     }
 
     const emailBox = byId('email-verification-box');
-    const isValidEmail = (v)=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v||'');
+    const isValidEmail = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v || '');
     let emailTxId = null;
 
-    async function sendEmailVerificationCode(){
+    async function sendEmailVerificationCode() {
         if (!emailSendBtn) return;
-        if (emailSendBtn.dataset.sending === '1') return;   // ✅ 중복 가드
+        if (emailSendBtn.dataset.sending === '1') return;   // 중복 가드
         emailSendBtn.dataset.sending = '1';
 
-        const email = (emailInput.value||'').trim();
+        const email = (emailInput.value || '').trim();
         if (!isValidEmail(email)) {
             setWarn(emailWarn, '유효한 이메일 주소를 입력해주세요.');
             emailSendBtn.dataset.sending = '0';
@@ -97,19 +77,24 @@ function initEmailVerifyForSignup(){
 
         try {
             const res = await fetch('/api/verify/email/send', {
-                method:'POST',
-                headers:{'Content-Type':'application/json'},
-                body: JSON.stringify({ email, purpose:'signup' })
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({email, purpose: 'signup'})
             });
             let json = null;
-            try { json = await res.json(); } catch(_) {}
-            if (!res.ok || !(json?.resultCode||'').startsWith('S-')) {
+            try {
+                json = await res.json();
+            } catch (_) {
+            }
+
+            if (!res.ok || !(json?.resultCode || '').startsWith('S-')) {
                 setWarn(emailWarn, json?.msg || '인증번호 전송에 실패했습니다.');
                 emailSendBtn.disabled = false;
                 emailSendBtn.dataset.sending = '0';
                 return;
             }
-            // ✅ emailTxId 안전하게 저장 (모든 경우 커버)
+
+            // txId 확보
             emailTxId = json?.txId
                 ?? json?.data?.txId
                 ?? json?.data1?.txId
@@ -117,8 +102,7 @@ function initEmailVerifyForSignup(){
 
             show(emailBox);
             setWarn(emailWarn, '인증번호를 이메일로 전송했습니다.');
-
-            // 성공 후에는 다음 단계(확인)로 진행하므로 sending 유지해도 중복 전송 방지됨
+            // sending 유지 → 중복 전송 방지(원하면 해제 가능)
         } catch (e) {
             setWarn(emailWarn, '네트워크 오류로 전송에 실패했습니다.');
             emailSendBtn.disabled = false;
@@ -126,20 +110,30 @@ function initEmailVerifyForSignup(){
         }
     }
 
-    async function verifyEmailCode(){
-        const code = (byId('emailVerificationCode')?.value||'').trim();
-        if (!emailTxId) { setWarn(emailWarn, '먼저 인증번호를 요청해주세요.'); return; }
-        if (!code)      { setWarn(emailWarn, '인증번호를 입력해주세요.');   return; }
+    async function verifyEmailCode() {
+        const code = (byId('emailVerificationCode')?.value || '').trim();
+        if (!emailTxId) {
+            setWarn(emailWarn, '먼저 인증번호를 요청해주세요.');
+            return;
+        }
+        if (!code) {
+            setWarn(emailWarn, '인증번호를 입력해주세요.');
+            return;
+        }
 
         try {
             const res = await fetch('/api/verify/email/check', {
-                method:'POST',
-                headers:{'Content-Type':'application/json'},
-                body: JSON.stringify({ txId: emailTxId, code, purpose:'signup' })
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({txId: emailTxId, code, purpose: 'signup'})
             });
             let json = null;
-            try { json = await res.json(); } catch(_) {}
-            if (!res.ok || !(json?.resultCode||'').startsWith('S-')) {
+            try {
+                json = await res.json();
+            } catch (_) {
+            }
+
+            if (!res.ok || !(json?.resultCode || '').startsWith('S-')) {
                 setWarn(emailWarn, json?.msg || '인증번호가 올바르지 않습니다.');
                 return;
             }
@@ -155,7 +149,7 @@ function initEmailVerifyForSignup(){
         }
     }
 
-    // ✅ 바인딩: 중복 방지
+    // 바인딩(중복 방지)
     if (emailSendBtn && !emailSendBtn.dataset.bound) {
         emailSendBtn.dataset.bound = '1';
         emailSendBtn.addEventListener('click', (e) => {
@@ -175,23 +169,213 @@ function initEmailVerifyForSignup(){
     }
 
     // 값 변경 시 상태 초기화
-    emailInput.addEventListener('input', ()=>{
-        hide(emailBox); setWarn(emailWarn, '');
+    emailInput.addEventListener('input', () => {
+        hide(emailBox);
+        setWarn(emailWarn, '');
         unlockInputNoColor(emailInput);
         if (emailSendBtn) {
             emailSendBtn.disabled = false;
             emailSendBtn.textContent = '인증';
-            emailSendBtn.classList.remove('opacity-60','cursor-not-allowed');
+            emailSendBtn.classList.remove('opacity-60', 'cursor-not-allowed');
             emailSendBtn.dataset.sending = '0';
         }
         hide(emailBadge);
         emailTxId = null;
     });
 
-    // 전역 호환 유지
+    // 전역 호환
     window.sendEmailVerificationCode = sendEmailVerificationCode;
-    window.verifyEmailCode           = verifyEmailCode;
+    window.verifyEmailCode = verifyEmailCode;
 }
 
-// ✅ defer 없이: DOM 로드 후 init
-document.addEventListener('DOMContentLoaded', initEmailVerifyForSignup);
+/* =========================
+   전화번호(SMS) 인증 (회원가입/정보수정 공용)
+   - 서버: /api/verify/sms/send, /api/verify/sms/confirm
+   - 서비스 결과코드: S-OK / F-COOLDOWN(retryAfterSec)
+========================= */
+function initPhoneVerify() {
+    const phoneInput = byId('cellphone');
+    if (!phoneInput) return;
+
+    const sendBtn = byId('phoneSendBtn');
+    const verifyBtn = byId('verifyPhoneBtn') || document.querySelector('[data-role="verify-phone"]');
+    const phoneBox = byId('phone-verification-box');
+    const codeInput = byId('verificationCode');
+    const badge = byId('phoneVerifiedTag');
+
+    hide(badge);
+
+    let phoneWarn = byId('phoneWarning') || byId('cellphoneWarning');
+    if (!phoneWarn) {
+        phoneWarn = document.createElement('p');
+        phoneWarn.id = 'phoneWarning';
+        phoneWarn.className = 'block text-xs text-red-600 mt-1 hidden';
+        (sendBtn?.parentElement || phoneInput).insertAdjacentElement('afterend', phoneWarn);
+    }
+
+    const normalize = v => (v || '').replace(/\D/g, '');
+
+    // 쿨다운
+    let cdTimer = null, cdRemain = 0;
+    const sendBtnLabel = (sendBtn && sendBtn.textContent) ? sendBtn.textContent : '인증';
+
+    function startCooldown(sec) {
+        if (!sendBtn) return;
+        clearInterval(cdTimer);
+        cdRemain = Number(sec) || 60;
+        sendBtn.disabled = true;
+        sendBtn.textContent = `재전송(${cdRemain}s)`;
+        cdTimer = setInterval(() => {
+            cdRemain--;
+            if (cdRemain <= 0) {
+                clearInterval(cdTimer);
+                sendBtn.disabled = false;
+                sendBtn.textContent = sendBtnLabel;
+            } else {
+                sendBtn.textContent = `재전송(${cdRemain}s)`;
+            }
+        }, 1000);
+    }
+
+    async function sendVerificationCode() {
+        if (!sendBtn) return;
+        if (sendBtn.dataset.sending === '1') return;
+        sendBtn.dataset.sending = '1';
+
+        const phone = normalize(phoneInput.value);
+        if (!phone) {
+            setWarn(phoneWarn, '전화번호를 입력하세요.');
+            sendBtn.dataset.sending = '0';
+            return;
+        }
+        setWarn(phoneWarn, '');
+
+        try {
+            const res = await fetch('/api/verify/sms/send', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({phone})
+            });
+            let json = null;
+            try {
+                json = await res.json();
+            } catch (_) {
+            }
+
+            if (res.ok && json?.resultCode === 'S-OK') {
+                show(phoneBox);
+                const cooldown = json?.data?.cooldownSec ?? 60;
+                startCooldown(cooldown);
+                setWarn(phoneWarn, '인증번호를 전송했습니다.');
+                return;
+            }
+
+            if (json?.resultCode === 'F-COOLDOWN') {
+                const remain = json?.data?.retryAfterSec ?? 60;
+                show(phoneBox);
+                startCooldown(remain);
+                setWarn(phoneWarn, json?.msg || '재전송 대기 중입니다.');
+                return;
+            }
+
+            setWarn(phoneWarn, json?.msg || '인증번호 전송에 실패했습니다.');
+            sendBtn.dataset.sending = '0';
+        } catch (e) {
+            setWarn(phoneWarn, '네트워크 오류로 전송에 실패했습니다.');
+            sendBtn.dataset.sending = '0';
+        }
+    }
+
+    async function verifyPhoneCode() {
+        const phone = normalize(phoneInput.value);
+        const code = (codeInput?.value || '').trim();
+
+        if (!phone) {
+            setWarn(phoneWarn, '전화번호를 입력하세요.');
+            return;
+        }
+        if (!code) {
+            setWarn(phoneWarn, '인증코드를 입력하세요.');
+            return;
+        }
+
+        try {
+            const res = await fetch('/api/verify/sms/confirm', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({phone, code})
+            });
+            let json = null;
+            try {
+                json = await res.json();
+            } catch (_) {
+            }
+
+            if (res.ok && json?.resultCode === 'S-OK') {
+                hide(phoneBox);
+                lockInputNoColor(phoneInput);
+                lockInputNoColor(codeInput);
+                markButtonAsDone(sendBtn);
+                if (sendBtn) sendBtn.disabled = true;
+                if (verifyBtn) verifyBtn.disabled = true;
+                hide(phoneWarn);
+                show(badge);
+                alert('전화번호 인증이 완료되었습니다.');
+                return;
+            }
+
+            setWarn(phoneWarn, json?.msg || '인증번호가 올바르지 않습니다.');
+        } catch (e) {
+            setWarn(phoneWarn, '네트워크 오류로 인증에 실패했습니다.');
+        }
+    }
+
+    // 바인딩(중복 방지)
+    if (sendBtn && !sendBtn.dataset.bound) {
+        sendBtn.dataset.bound = '1';
+        sendBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            clearTimeout(sendBtn._deb);
+            sendBtn._deb = setTimeout(() => sendVerificationCode(), 120);
+        });
+    }
+    if (verifyBtn && !verifyBtn.dataset.bound) {
+        verifyBtn.dataset.bound = '1';
+        verifyBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            verifyPhoneCode();
+        });
+    }
+
+    // 입력 변경 시 초기화
+    phoneInput.addEventListener('input', () => {
+        clearInterval(cdTimer);
+        if (sendBtn) {
+            sendBtn.disabled = false;
+            sendBtn.textContent = sendBtnLabel;
+            sendBtn.dataset.sending = '0';
+        }
+        unlockInputNoColor(phoneInput);
+        if (codeInput) {
+            codeInput.readOnly = false;
+            codeInput.value = '';
+        }
+        hide(badge);
+        hide(phoneBox);
+        setWarn(phoneWarn, '');
+    });
+
+    // 전역 호환
+    window.sendVerificationCode = sendVerificationCode;
+    window.verifyPhoneCode = verifyPhoneCode;
+}
+
+/* =========================
+   init
+========================= */
+document.addEventListener('DOMContentLoaded', () => {
+    initEmailVerifyForSignup();
+    initPhoneVerify();
+});
