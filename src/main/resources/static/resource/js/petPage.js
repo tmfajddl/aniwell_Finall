@@ -116,7 +116,7 @@ function addPet() {
 	        <!-- 사료 종류 + 브랜드 -->
 	        <div>
 
-	          <label for="feedType" class="block text-sm font-medium mb-1">사료 종류</label>
+	          <label for="foodType" class="block text-sm font-medium mb-1">사료 종류</label>
 	          <select id="feedType" name="feedType" class="w-full border rounded px-3 py-1.5">
 	            <option value="">선택</option>
 	            <option value="습식">습식</option>
