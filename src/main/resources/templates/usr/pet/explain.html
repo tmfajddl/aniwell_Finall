@@ -26,7 +26,7 @@
             --card:#ffffff;
 
             /* 기존 코드 호환용 */
-            --accent:#15803d;
+            --accent:#e4f0b9;
             --accent-600:#166534;
             --accent-soft:#eef7f2;
 
@@ -216,13 +216,13 @@
 
 </head>
 
-<body class="bg-gradient-to-b from-[#e4f0b9] to-[#fcdca9] min-h-[770px]">
-<div class="flex h-screen">
+<body class="bg-gradient-to-b from-[#e4f0b9] to-[#fcdca9] h-screen min-h-dvh min-w-[1400px]">
+<div class="flex h-screen w-full">
     <!-- Sidebar -->
     <div th:replace="common :: siteHeader"></div>
 
     <!-- Main content -->
-    <main class="main_page min-h-[770px] flex-1 p-6 grid grid-cols-12 gap-4">
+    <main class="main_page h-full overflow-y-auto min-h-dvh box-border flex-1 p-6 grid grid-cols-12 gap-4">
         <div class="wrap col-span-12">
             <div class="row mb-2">
                 <h1 class="flex items-center gap-2">상세 리포트</h1>

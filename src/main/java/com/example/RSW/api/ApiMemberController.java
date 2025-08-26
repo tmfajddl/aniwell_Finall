@@ -35,17 +35,14 @@ public class ApiMemberController {
 
 	// id기준 유저 api
 	@GetMapping("/getUsrInfo")
-	public ResponseEntity<Member> getUsrInfo(HttpServletRequest req, int memberId) {
+	public ResponseEntity<Member> getUsrInfo(HttpServletRequest req) {
 
-		System.out.println(memberId);
 		Rq rq = (Rq) req.getAttribute("rq");
-		Member loginedMember = rq.getLoginedMember();
+		int loginedMemberId = rq.getLoginedMemberId();
 
-		if (loginedMember == null) {
-			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-		}
-
-		Member member = memberService.getMemberById(memberId);
+		System.out.println(loginedMemberId);
+		
+		Member member = memberService.getMemberById(loginedMemberId);
 
 		return ResponseEntity.ok(member);
 	}

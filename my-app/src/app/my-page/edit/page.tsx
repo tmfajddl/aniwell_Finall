@@ -47,7 +47,7 @@ export default function EditPage() {
   const [member, setMember] = useState<Member | null>(null);
 
   useEffect(() => {
-    fetch("http://localhost:8080/api/member/myPage", {
+    fetch("http://localhost:8080/api/member/getUsrInfo", {
       method: "GET",
       credentials: "include",
     })
