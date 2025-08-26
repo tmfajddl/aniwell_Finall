@@ -18,34 +18,34 @@
 	<div class="bg-gradient-to-b from-[#E4F0B9] to-[#FCDCA9] section section-top mx-auto z-0 w-full h-[100dvh]">
 		<!-- TOP -->
 		<svg class="absolute inset-0 w-full h-[100dvh] z-[-9]" viewBox="0 0 960 540"
-		     preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
-		  <defs>
-		    <linearGradient id="gradTop" x1="40%" y1="1%" x2="60%" y2="99%">
-		      <stop offset="5%"  stop-color="#dbe09a"/>
-		      <stop offset="95%" stop-color="#2e576d"/>
-		    </linearGradient>
-		  </defs>
-		  <g transform="translate(960, 0) scale(1.1)">
-		    <path
-		      d="M0 297C-34.4 259.4 -68.9 221.8 -116.5 201.8C-164.1 181.7 -224.9 179.2 -257.2 148.5C-289.5 117.8 -293.2 58.9 -297 0L0 0Z"
-		      fill="url(#gradTop)"/>
-		  </g>
+			preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+			<defs>
+				<linearGradient id="gradTop" x1="40%" y1="1%" x2="60%" y2="99%">
+					<stop offset="5%" stop-color="#dbe09a" />
+					<stop offset="95%" stop-color="#2e576d" />
+				</linearGradient>
+			</defs>
+			<g transform="translate(960, 0) scale(1.1)">
+				<path
+					d="M0 297C-34.4 259.4 -68.9 221.8 -116.5 201.8C-164.1 181.7 -224.9 179.2 -257.2 148.5C-289.5 117.8 -293.2 58.9 -297 0L0 0Z"
+					fill="url(#gradTop)" />
+			</g>
 		</svg>
 
 		<!-- BOTTOM -->
 		<svg class="absolute inset-0 w-screen h-[100dvh] z-[-11]" viewBox="0 0 960 540"
-		     preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
-		  <defs>
-		    <linearGradient id="gradBottom" x1="40%" y1="1%" x2="60%" y2="99%">
-		      <stop offset="5%"  stop-color="#dbe09a"/>
-		      <stop offset="95%" stop-color="#2e576d"/>
-		    </linearGradient>
-		  </defs>
-		  <g transform="translate(0, 540) scale(1.1)">
-		    <path
-		      d="M0 -297C41.1 -271 82.2 -244.9 129 -223.4C175.8 -201.9 228.3 -185 257.2 -148.5C286.2 -112 291.6 -56 297 0L0 0Z"
-		      fill="url(#gradBottom)"/>
-		  </g>
+			preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+			<defs>
+				<linearGradient id="gradBottom" x1="40%" y1="1%" x2="60%" y2="99%">
+					<stop offset="5%" stop-color="#dbe09a" />
+					<stop offset="95%" stop-color="#2e576d" />
+				</linearGradient>
+			</defs>
+			<g transform="translate(0, 540) scale(1.1)">
+				<path
+					d="M0 -297C41.1 -271 82.2 -244.9 129 -223.4C175.8 -201.9 228.3 -185 257.2 -148.5C286.2 -112 291.6 -56 297 0L0 0Z"
+					fill="url(#gradBottom)" />
+			</g>
 		</svg>
 
 		<svg class="logo absolute left-1/2 top-0 -translate-x-1/2" id="eqx5j4MNSvi1" xmlns="http://www.w3.org/2000/svg"
@@ -224,35 +224,24 @@
 				</svg>
 			</div>
 
-			<div class="icon absolute w-full bottom-0 mx-auto z-10 pb-6 ">
-				<!-- 로그인 버튼 -->
-				<button type="button" class="" th:if="${!rq.isLogined}"
-					onclick="setTimeout(() => { location.href='/usr/member/login'; }, 1000)">
-					<div class="toggle dog-rollover">
-						<input type="checkbox" id="doggo">
-						<label for="doggo" class="toggle-item">
-							<div class="dog">
-								<div class="ear"></div>
-								<div class="ear right"></div>
-								<div class="face">
-									<div class="eyes"></div>
-									<div class="mouth"></div>
-								</div>
-							</div>
-						</label>
-					</div>
-				</button>
 
-				<div class="up-icon z-10">
-					<button id="vetList" type="button" class="in-icon hidden">
-						vetlist
-						<img src="https://i.imgur.com/2ZJPrGR.png" alt="vetlist">
-					</button>
-					<button id="petlist" type="button" class="in-icon hidden">
-						petlist
-						<img src="https://i.imgur.com/2ZJPrGR.png" alt="petlist">
-					</button>
-				</div>
+		</div>
+		<div class="icon z-10">
+
+			<a class="btn btn-4" th:if="${!rq.isLogined}" th:href="@{/usr/member/login}">
+				Let's go!
+			</a>
+
+			<!-- 2) 로그인 O: 등급/자격에 따라 분기 -->
+			<!--    - 예시: 수의사 인증(vetCertApproved == 1) 또는 높은 권한(authLevel >= 7)면 Vet 페이지
+						          - 그 외엔 Pet 리스트로 (memberId 전달) -->
+			<div th:if="${rq.isLogined}">
+				<button class="btn btn-4 hidden" id="vetList" type="button">
+					Let's go!
+				</button>
+				<button class="btn btn-4 hidden" id="petlist" type="button">
+					Let's go!
+				</button>
 			</div>
 		</div>
 
