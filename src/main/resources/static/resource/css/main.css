@@ -86,15 +86,6 @@ body {
 }
 
 
-/* 성능 힌트 */
-.right-anim,
-.sec3-layer,
-.sec3-dog,
-.sec3-heart,
-.sec3-sparkle {
-	will-change: transform, opacity;
-}
-
 
 /* .img_body는 HTML에서 Tailwind 'absolute' 사용중 — 여기선 사이즈만 */
 .img_body {
@@ -356,10 +347,11 @@ width: 300px;
 
 .btn:hover {
   background-position: right center; /* change the direction of the change here */
+  box-shadow: 0 0 20px #eee;
 }
 
 .btn-4 {
-  background-image: linear-gradient(to right, #DBE09A 0%, #F3DF85 51%, #DBE09A 100%);
+  background-image: linear-gradient(to right, #DBE09A 0%, #A8C7AF 51%, #DBE09A 100%);
 }
 
 /**/

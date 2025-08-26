@@ -229,7 +229,7 @@
 		<div class="icon z-10">
 
 			<a class="btn btn-4" th:if="${!rq.isLogined}" th:href="@{/usr/member/login}">
-				Let's go!
+				sign in/up
 			</a>
 
 			<!-- 2) 로그인 O: 등급/자격에 따라 분기 -->
@@ -258,7 +258,7 @@
 
 			<div class="mx-auto grid md:grid-cols-2 items-center gap-6 md:gap-10 px-6 md:px-16 py-32">
 				<!-- 왼쪽: 문구 -->
-				<div class="max-w-2xl" data-aos="fade-right">
+				<div class="max-w-2xl z-[2]" data-aos="fade-right">
 					<h2 class="text-5xl font-extrabold text-[#2b2b2b] drop-shadow mb-4">
 						우리 아이의 하루,<br>발자국까지 기록합니다 🐾
 					</h2>
@@ -270,8 +270,10 @@
 				<!-- 오른쪽: 애니메이션 요소 -->
 				<div class="relative h-[40vh] md:h-[60vh] overflow-visible">
 					<!-- 원하는 이미지/SVG/Lottie로 교체 가능 -->
-					<img src="/img/default-pet.png" alt="paw"
-						class="right-anim absolute right-0 bottom-0 w-[55%] max-w-[420px]" />
+					<div class="right-anim absolute right-0 top-4 w-full z-0">
+						<img src="https://imgur.com/shebTBU.png" class="p-1" />
+						<img src="https://imgur.com/H3z8KZi.png" class="p-1" />
+					</div>
 				</div>
 			</div>
 		</section>
@@ -401,19 +403,21 @@
 
 		// 오른쪽 패럴랙스 (세션2)
 		gsap.fromTo(".right-anim",
-			{y: 80, opacity: 0, rotate: -4, scale: 0.96},
+			{y: 20, opacity: 0, rotate: -4, scale: 0.96},
 			{
-				y: -40, opacity: 1, rotate: 0, scale: 1,
+				y: 40, opacity: 1, rotate: 0, scale: 1.5,
 				ease: "power2.out",
 				scrollTrigger: {
 					pinSpacing: true,
 					trigger: "#sec2",             // ✅ 섹션 자체를 트리거
 					start: "top bottom",          // 섹션 top이 뷰포트 bottom에 닿을 때 시작
-					end: "bottom top",            // 섹션 bottom이 뷰포트 top에 닿을 때 끝
+					end: "bottom bottom",            // 섹션 bottom이 뷰포트 top에 닿을 때 끝
 					scrub: true
 				}
 			}
 		);
+
+
 
 
 		const tl3 = gsap.timeline({
